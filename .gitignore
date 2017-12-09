@@ -1,6 +1,8 @@
 # Ignore everything
 *
 # Decend into following subdirectories/files
+!.vim
+!.vim/**
 !.bashrc
 !.vimrc
 !.gitignore
