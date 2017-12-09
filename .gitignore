@@ -1,0 +1,4 @@
+# Ignore everything
+*
+# Decend into following subdirectories/files
+!.gitignore
