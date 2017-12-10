@@ -105,33 +105,17 @@ alias "commit"="git add --all && git commit"
 alias "co"="git add --all && git commit"
 alias "vimrc"="vim ~/.vimrc"
 alias "bashrc"="vim ~/.bashrc"
-alias "learning"="cd ~/1_programming/0_active/learning/"
-alias "matlab"="/usr/local/MATLAB/R2017a/bin/matlab"
-alias "jan"="cd ~/3_work/jan/"
-alias "ee1c11"="cd ~/2_school/3_y/1_lp/ee1c11/"
-alias "ee2e11"="cd ~/2_school/3_y/1_lp/ee2e11/"
-alias "in4303"="cd ~/2_school/3_y/1_lp/in4303/"
-alias "wheretrip"="cd ~/2_school/3_y/2_lp/ti3806/"
-alias "wheretrip-server"="ssh -p 6132 wheretrip@wheretrip.com"
 alias "south-pole"="ssh root@139.59.144.120"
-alias "current"="cd ~/1_programming/python/2_tutorials/3_pygame/game_dev/"
-alias "ypp"="/home/rasmus/yohoho/yohoho"
-alias "website"="cd ~/1_programming/0_active/personal_website/dev"
-# ssh-keys
-ssh-add /home/rasmus/.ssh/id_github
-ssh-add /home/rasmus/.ssh/id_south-pole
-ssh-add /home/rasmus/.ssh/id_gitlab
-ssh-add /home/rasmus/.ssh/id_north-pole
 # powerline
 powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
 export TERM="screen-256color"
-. /home/rasmus/.local/lib/python3.5/site-packages/powerline/bindings/bash/powerline.sh
+if [ -f /usr/local/lib/python2.7/dist-packages/powerline/bindings/bash/powerline.sh ]; then
+      source /usr/local/lib/python2.7/dist-packages/powerline/bindings/bash/powerline.sh
+    fi
 # Virualenvs
 export WORKON_HOME=$HOME/.virtualenvs
 export PROJECT_HOME=$HOME/Envs
 source /usr/local/bin/virtualenvwrapper.sh
 clear
-
-

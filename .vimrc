@@ -91,7 +91,6 @@ let g:AutoPairsShortcutFastWrap=''
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 let g:syntastic_javascript_checkers = ["eslint"]
 let g:ycm_server_log_level = "debug"
-execute pathogen#infect()
 filetype plugin indent on
 syntax on 
 " Mappings
@@ -160,6 +159,7 @@ for [key, value] in items(pairs)
   exe "nnoremap va".value." F".key."vf".value
 endfor
 " Auto
+" Handle Non-Vim filetypes
 augroup nonvim 
     au!
     " au BufRead *.png,*.jpg,*.pdf,*.gif,*.xls*,*.scpt sil exe "!xdg-open " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
