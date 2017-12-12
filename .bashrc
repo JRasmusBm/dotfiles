@@ -105,6 +105,8 @@ alias "commit"="git add --all && git commit"
 alias "co"="git add --all && git commit"
 alias "vimrc"="vim ~/.vimrc"
 alias "bashrc"="vim ~/.bashrc"
+alias "wheretrip"="cd ~/2_school/3_y/2_lp/wheretrip/"
+alias "in4303"="cd ~/2_school/3_y/2_lp/in4303/"
 alias "south-pole"="ssh root@139.59.144.120"
 # powerline
 powerline-daemon -q

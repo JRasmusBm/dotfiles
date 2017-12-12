@@ -1,6 +1,8 @@
 " Setup
 let g:name="Rasmus Bergström"
 set nocompatible              " be improved, required
+set shell=/bin/bash
+execute pathogen#infect()
 colorscheme afterglow
 " Basic options
 set mouse=a
@@ -70,29 +72,22 @@ let g:netrw_liststyle=3
 set rtp+=/home/rasmus/.local/lib/python3.5/site-packages/powerline/bindings/vim
 set laststatus=2
 set t_Co=256
+" Matchit
+runtime macros/matchit.vim
 " Vundle
-" set the runtime path to include Vundle and initialize
-set rtp+=~/.vim/bundle/Vundle.vim
+set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
-" let Vundle manage Vundle, required
 Plugin 'VundleVim/Vundle.vim'
-" All of your Plugins must be added before the following line
-Plugin 'Valloric/YouCompleteMe'
-Plugin 'Valloric/MatchTagAlways'
-Plugin 'mxm/vim-jsx'
-Plugin 'scrooloose/nerdtree'
-Plugin 'kien/ctrlp.vim'
-Plugin 'tpope/vim-fugitive'
 Plugin 'Lokaltog/powerline', {'rtp' : '/home/rasmus/.local/lib/python3.5/site-packages/powerline/bindings/vim/'}
 call vundle#end()            " required
-"Bundle "lepture/vim-jinja"
 " Syntax
+autocmd BufNewFile,BufRead *.ts,*.tsx setfiletype=typescript
 let g:AutoPairsShortcutFastWrap=''
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 let g:syntastic_javascript_checkers = ["eslint"]
 let g:ycm_server_log_level = "debug"
 filetype plugin indent on
-syntax on 
+syntax enable 
 " Mappings
 " Leader
 let mapleader = ";"
@@ -159,16 +154,7 @@ for [key, value] in items(pairs)
   exe "nnoremap va".value." F".key."vf".value
 endfor
 " Auto
-" Handle Non-Vim filetypes
-augroup nonvim 
-    au!
-    " au BufRead *.png,*.jpg,*.pdf,*.gif,*.xls*,*.scpt sil exe "!xdg-open " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
-    " au BufRead *.ppt*,*.doc*,*.rtf sil exe "!xdg-open " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
-    au BufRead *.ppt*,*.doc*,*.rtf let g:output_pdf = shellescape(expand("%:r") . ".pdf")
-    au BufRead *.ppt*,*.doc*,*.rtf sil exe "!$HOME/.bin/pdf " . shellescape(expand("%:p"))
-    au BufRead *.ppt*,*.doc*,*.rtf sil exe "!xdg-open " . g:output_pdf | bd | let &ft=&ft | redraw!
-    au BufRead *.pdf sil exe "!zathura " . expand("%:p") | bd | let &ft=&ft | redraw!
-augroup end
+
 " Autosave Folds
 augroup AutoSaveFolds
   autocmd!
