@@ -80,21 +80,32 @@ runtime macros/matchit.vim
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'Valloric/YouCompleteMe'
 Plugin 'alessioalex/syntastic-local-tslint.vim'
 call vundle#end()            " required
-" Syntax
-let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
-let g:AutoPairsShortcutFastWrap=''
-let g:jsx_ext_required = 0 " Allow JSX in normal JS files
-let g:tsuquyomi_disable_quickfix = 1
-let g:syntastic_javascript_checkers = ["eslint"]
-let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
-let g:syntastic_always_populate_loc_list = 1
-au filetype typescript nnoremap <leader>q :SyntasticCheck tslint<cr>
-let g:syntastic_aggregate_errors = 1
-let g:ycm_server_log_level = "debug"
-filetype plugin indent on
+" Syntax checking & Omnicompletion
+" General
+set omnifunc=syntaxcomplete#Complete
 syntax enable 
+filetype plugin indent on
+set completeopt=longest,menuone,preview
+set splitbelow
+set noshowmatch
+let g:AutoPairsShortcutFastWrap=''
+let g:syntastic_aggregate_errors = 1
+let g:syntastic_always_populate_loc_list = 1
+" C#
+let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
+let g:OmniSharp_timeout = 1
+" Typescript
+let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
+let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
+let g:tsuquyomi_disable_quickfix = 1
+au filetype typescript nnoremap <leader>q :SyntasticCheck<cr>
+" Javascript
+let g:syntastic_javascript_checkers = ["eslint"]
+let g:jsx_ext_required = 0 " Allow JSX in normal JS files
+let g:ycm_server_log_level = "debug"
 " Mappings
 " Leader
 let mapleader = ";"
