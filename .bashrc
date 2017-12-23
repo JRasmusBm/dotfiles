@@ -96,6 +96,9 @@ if ! shopt -oq posix; then
 fi
 # vi editing mode
 set editing-mode vi
+# Set default editor
+export VISUAL=vim
+export EDITOR="$VISUAL"
 # Aliases
 alias ll='ls -alF'
 alias la='ls -A'
