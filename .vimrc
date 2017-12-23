@@ -68,8 +68,10 @@ let g:netrw_banner=0
 let g:netrw_preview=1
 let g:netrw_winsize=25
 let g:netrw_liststyle=3
-" Powerline
-set rtp+=/home/rasmus/.local/lib/python3.5/site-packages/powerline/bindings/vim
+" Buffers
+set hidden
+" Airline
+let g:airline#extensions#tabline#enabled = 1
 set laststatus=2
 set t_Co=256
 " Matchit
@@ -78,13 +80,18 @@ runtime macros/matchit.vim
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
-Plugin 'Lokaltog/powerline', {'rtp' : '/home/rasmus/.local/lib/python3.5/site-packages/powerline/bindings/vim/'}
+Plugin 'alessioalex/syntastic-local-tslint.vim'
 call vundle#end()            " required
 " Syntax
-autocmd BufNewFile,BufRead *.ts,*.tsx setfiletype=typescript
+let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
 let g:AutoPairsShortcutFastWrap=''
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
+let g:tsuquyomi_disable_quickfix = 1
 let g:syntastic_javascript_checkers = ["eslint"]
+let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
+let g:syntastic_always_populate_loc_list = 1
+au filetype typescript nnoremap <leader>q :SyntasticCheck tslint<cr>
+let g:syntastic_aggregate_errors = 1
 let g:ycm_server_log_level = "debug"
 filetype plugin indent on
 syntax enable 
@@ -99,6 +106,26 @@ map <Leader>f :find
 map <Leader>d :Ex<CR>
 map <Leader>o :browse oldfiles<cr>
 map <Leader>b :b 
+
+ "To open a new empty buffer
+ " This replaces :tabnew which I used to bind to this mapping
+ nmap <leader>T :enew<cr>
+
+ "Move to the next buffer
+ nmap <leader>l :bnext<CR>
+
+ " Move to the previous buffer
+ nmap <leader>h :bprevious<CR>
+
+ "Close the current buffer and move to the previous one
+ " This replicates the idea of closing a tab
+ nmap <leader>bq :bp <BAR> bd #<CR>
+
+ "Show all open buffers and their status
+ nmap <leader>bl :ls<CR>
+ "
+ "
+ "
 " Dotfiles
 :command Vrc e ~/.vimrc
 :command Brc e ~/.bashrc
@@ -154,7 +181,7 @@ for [key, value] in items(pairs)
   exe "nnoremap va".value." F".key."vf".value
 endfor
 " Auto
-
+au BufRead, BufNewFile *.j let comment=";"
 " Autosave Folds
 augroup AutoSaveFolds
   autocmd!
