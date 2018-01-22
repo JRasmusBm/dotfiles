@@ -96,6 +96,12 @@ if ! shopt -oq posix; then
 fi
 # vi editing mode
 set editing-mode vi
+# Fuzzy finder
+[ -f ~/.fzf.bash  ] && source ~/.fzf.bash
+export FZF_DEFAULT_COMMAND='rg --files --no-ignore --hidden --follow -g "!{.git,node_modules}/*" 2> /dev/null'
+export FZF_CTRL_T_COMMAND="$FZF_DEFAULT_COMMAND"
+bind -x '"\C-p": vim $(fzf);'
+export FZF_ALT_C_COMMAND="cd ~/; bfs -type d -nohidden | sed s/^\./~/"  
 # Set default editor
 export VISUAL=vim
 export EDITOR="$VISUAL"
@@ -112,6 +118,7 @@ alias "wheretrip"="cd ~/2_school/3_y/2_lp/wheretrip/"
 alias "ee1c11"="cd ~/2_school/3_y/1_lp/ee1c11/"
 alias "jan"="cd ~/3_work/jan/"
 alias "in4303"="cd ~/2_school/3_y/2_lp/in4303/"
+alias "ward-council"="cd ~/5_church/meetings/ward_council"
 alias "south-pole"="ssh root@139.59.144.120"
 # powerline
 powerline-daemon -q

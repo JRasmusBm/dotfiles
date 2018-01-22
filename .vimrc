@@ -32,7 +32,7 @@ set shiftwidth=2
 set softtabstop=2
 set expandtab
 set wrap
-set textwidth=67
+set textwidth=79
 set formatoptions=qrn1j
 set colorcolumn=+1
 " File Browsing
@@ -62,6 +62,14 @@ set wildignore+=classes
 set wildignore+=lib
 " Finding Files
 set path+=**
+" Fuzzy finder
+set rtp+=~/.fzf
+let g:rg_command = '
+  \ rg --column --line-number --no-heading --fixed-strings --ignore-case --no-ignore --hidden --follow --color "always"
+  \ -g "*.{js,json,php,md,styl,jade,html,config,py,cpp,c,go,hs,rb,conf}"
+  \ -g "!{.git,node_modules,vendor}/*" '
+
+command! -bang -nargs=* F call fzf#vim#grep(g:rg_command .shellescape(<q-args>), 1, <bang>0)
 " netrw
 let g:netrw_bufsettings='noma nomod nu relativenumber nobl nowrap ro'
 let g:netrw_banner=0
@@ -80,6 +88,7 @@ runtime macros/matchit.vim
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'alessioalex/syntastic-local-tslint.vim'
 call vundle#end()            " required
@@ -88,6 +97,9 @@ call vundle#end()            " required
 set omnifunc=syntaxcomplete#Complete
 syntax enable 
 filetype plugin indent on
+set dictionary=/usr/share/dict/words
+set fo+=t
+set fo-=l
 set completeopt=longest,menuone,preview
 set splitbelow
 set noshowmatch
@@ -117,6 +129,7 @@ map <Leader>f :find
 map <Leader>d :Ex<CR>
 map <Leader>o :browse oldfiles<cr>
 map <Leader>b :b 
+map <Leader>w :%s/ $//g<cr>
 
  "To open a new empty buffer
  " This replaces :tabnew which I used to bind to this mapping
@@ -201,3 +214,5 @@ augroup AutoSaveFolds
 augroup END
 " Resize splits
 au VimResized * exe "normal! \<c-w>="
+" NonVim Files
+au BufRead *.pdf sil exe "!chr " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
