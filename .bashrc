@@ -114,8 +114,11 @@ alias "commit"="git add --all && git commit"
 alias "co"="git add --all && git commit"
 alias "vimrc"="vim ~/.vimrc"
 alias "bashrc"="vim ~/.bashrc"
+alias "studio"="/usr/local/android-studio/bin/studio.sh"
+alias "app"="cd ~/1_programming/active/Spendy/"
 alias "wheretrip"="cd ~/2_school/3_y/2_lp/wheretrip/"
 alias "ee1c11"="cd ~/2_school/3_y/1_lp/ee1c11/"
+alias "church"="cd ~/5_church/"
 alias "jan"="cd ~/3_work/jan/"
 alias "in4303"="cd ~/2_school/3_y/2_lp/in4303/"
 alias "ward-council"="cd ~/5_church/meetings/ward_council"
@@ -131,5 +134,9 @@ if [ -f /usr/local/lib/python2.7/dist-packages/powerline/bindings/bash/powerline
 # Virualenvs
 export WORKON_HOME=$HOME/.virtualenvs
 export PROJECT_HOME=$HOME/Envs
+export ANDROID_HOME=$HOME/Android/Sdk
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform-tools
+export PATH=$PATH:/opt/gradle/gradle-4.5/bin
 source /usr/local/bin/virtualenvwrapper.sh
 clear
