@@ -95,7 +95,7 @@ call vundle#end()            " required
 " Syntax checking & Omnicompletion
 " General
 set omnifunc=syntaxcomplete#Complete
-syntax enable 
+syntax enable
 filetype plugin indent on
 set dictionary=/usr/share/dict/words
 set fo+=t
@@ -110,9 +110,14 @@ let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
 " Typescript
+autocmd FileType typescript nmap <buffer> <Leader>r <Plug>(TsuquyomiRenameSymbol)
 let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
 let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
 let g:tsuquyomi_disable_quickfix = 1
+au FileType qf call AdjustWindowHeight(3, 10)
+function! AdjustWindowHeight(minheight, maxheight)
+  exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
+endfunction
 au filetype typescript nnoremap <leader>q :SyntasticCheck<cr>
 " Javascript
 let g:syntastic_javascript_checkers = ["eslint"]
@@ -123,12 +128,13 @@ let g:ycm_server_log_level = "debug"
 let mapleader = ";"
 vnoremap <leader>S y:@"<CR>
 nnoremap <leader>S ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
+map <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
 map <Leader>i ^]
 map <Leader>, ~
-map <Leader>f :find 
+map <Leader>f :find
 map <Leader>d :Ex<CR>
 map <Leader>o :browse oldfiles<cr>
-map <Leader>b :b 
+map <Leader>b :b
 map <Leader>w :%s/ $//g<cr>
 
  "To open a new empty buffer
@@ -151,8 +157,8 @@ map <Leader>w :%s/ $//g<cr>
  "
  "
 " Dotfiles
-:command Vrc e ~/.vimrc
-:command Brc e ~/.bashrc
+:command Vrc e ~/.vimrc<cr>
+:command Brc e ~/.bashrc<cr>
 " Split Screen
 nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k
@@ -167,9 +173,9 @@ nnoremap d<C-k> <C-w>k<C-w>c
 nnoremap d<C-h> <C-w>h<C-w>c
 nnoremap d<C-l> <C-w>l<C-w>c
 " F9
-" Python 
+" Python
 autocmd FileType python nnoremap <buffer> <F9> :w<cr> :exec "!python" shellescape(@%, 1)<cr>
-" C# 
+" C#
 autocmd FileType cs nnoremap <buffer> <F9> :exec "!dotnet run" <cr>
 " Searching in file
 nnoremap / /\v
@@ -182,7 +188,7 @@ nnoremap K kJ
 nnoremap <Space> za
 map <tab> %
 " Extended Text Objects
-let pairs =   { "<bar>" : "<bar>", 
+let pairs =   { "<bar>" : "<bar>",
               \  ":" : ":" ,
               \  "." : "." ,
               \  "$" : "$" ,
