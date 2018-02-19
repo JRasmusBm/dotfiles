@@ -117,6 +117,8 @@ alias "bashrc"="vim ~/.bashrc"
 alias "studio"="/usr/local/android-studio/bin/studio.sh"
 alias "app"="cd ~/1_programming/active/Spendy/"
 alias "wheretrip"="cd ~/2_school/3_y/wheretrip/"
+alias "security"="cd ~/2_school/3_y/network_security/"
+alias "probability"="cd ~/2_school/3_y/probability_and_statistics/"
 alias "church"="cd ~/5_church/"
 alias "jan"="cd ~/3_work/jan/"
 alias "in4303"="cd ~/2_school/3_y/in4303/"
@@ -134,8 +136,11 @@ if [ -f /usr/local/lib/python2.7/dist-packages/powerline/bindings/bash/powerline
 export WORKON_HOME=$HOME/.virtualenvs
 export PROJECT_HOME=$HOME/Envs
 export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/platform-tools
-export PATH=$PATH:/opt/gradle/gradle-4.5/bin
+PATH=$PATH:$ANDROID_HOME/tools
+PATH=$PATH:$ANDROID_HOME/platform-tools
+PATH=$PATH:/opt/gradle/gradle-4.5/bin
+export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
+export PATH;
 source /usr/local/bin/virtualenvwrapper.sh
+
 clear
