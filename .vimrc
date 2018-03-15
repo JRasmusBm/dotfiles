@@ -22,7 +22,6 @@ set list
 set listchars=tab:>-
 set showcmd
 set hlsearch
-set gdefault
 set showmatch
 set formatoptions+=r
 set formatoptions+=o
