@@ -126,8 +126,8 @@ map <Leader>w :%s/ $//g<cr>
  "Show all open buffers and their status
  nmap <leader>bl :ls<CR>
 " Dotfiles
-:command Vrc e ~/.vimrc<cr>
-:command Brc e ~/.bashrc<cr>
+:command! Vrc e ~/.vimrc<cr>
+:command! Brc e ~/.bashrc<cr>
 " Split Screen
 nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k
