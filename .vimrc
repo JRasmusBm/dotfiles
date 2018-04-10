@@ -18,13 +18,12 @@ set smartindent
 set showmatch
 set incsearch
 set ruler
+set fileformat=unix
 set list
 set listchars=tab:>-
 set showcmd
 set hlsearch
 set showmatch
-set formatoptions+=r
-set formatoptions+=o
 set pastetoggle=<F2>
 set tabstop=2
 set shiftwidth=2
@@ -32,7 +31,7 @@ set softtabstop=2
 set expandtab
 set wrap
 set textwidth=79
-set formatoptions=qrn1j
+set formatoptions=qrn1jo
 set colorcolumn=+1
 set signcolumn=yes
 set hidden
@@ -50,13 +49,16 @@ runtime macros/matchit.vim
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'nvie/vim-flake8'
+Plugin 'vim-scripts/indentpython.vim'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'airblade/vim-gitgutter'
+Plugin 'tmhedberg/SimpylFold'
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'alessioalex/syntastic-local-tslint.vim'
 call vundle#end()            " required
-" Syntax checking & Omnicompletion
+" Syntax checking & completion
 " General
 syntax enable
 filetype plugin indent on
@@ -65,6 +67,8 @@ set completeopt=longest,menuone,preview
 set splitbelow
 set noshowmatch
 let g:AutoPairsShortcutFastWrap=''
+" YCM
+let g:ycm_autoclose_preview_window_after_completion=1
 " Statusline
 set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
@@ -100,11 +104,23 @@ let g:ycm_server_log_level = "debug"
 let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
 let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
 let g:tsuquyomi_disable_quickfix = 1
+" Python
+let python_highlight_all=1
+py << EOF
+import os
+import sys
+if 'VIRTUAL_ENV' in os.environ:
+  project_base_dir = os.environ['VIRTUAL_ENV']
+  activate_this = os.path.join(project_base_dir, 'bin/activate_this.py')
+  execfile(activate_this, dict(__file__=activate_this))
+EOF
+let g:SimpylFold_docstring_preview=1
 " Mappings
 " Leader
 let mapleader = ";"
 vnoremap <leader>S y:@"<CR>
 nnoremap <leader>S ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
+map <leader>gd :YcmCompleter GoToDefinitionElseDeclaration<CR>
 map <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
 map <Leader>i ^]
 map <Leader>, ~
@@ -193,6 +209,8 @@ augroup AutoSaveFolds
   autocmd BufWinLeave *.* mkview
   autocmd BufWinEnter *.* silent loadview
 augroup END
+" Flag unneccesary whitespace 
+au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 " Resize splits
 au VimResized * exe "normal! \<c-w>="
 " NonVim Files
