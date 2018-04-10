@@ -35,6 +35,9 @@ set textwidth=79
 set formatoptions=qrn1j
 set colorcolumn=+1
 set hidden
+" netrw
+let g:netrw_menu = 0
+let g:netrw_banner = 0
 " Airline
 let g:airline#extensions#tabline#enabled = 1
 set laststatus=2
@@ -52,35 +55,34 @@ Plugin 'alessioalex/syntastic-local-tslint.vim'
 call vundle#end()            " required
 " Syntax checking & Omnicompletion
 " General
-set omnifunc=syntaxcomplete#Complete
 syntax enable
 filetype plugin indent on
-set dictionary=/usr/share/dict/words
-set fo+=t
-set fo-=l
+set omnifunc=syntaxcomplete#Complete
 set completeopt=longest,menuone,preview
+" Dictionary
+set dictionary=/usr/share/dict/words
+" Format options (Text width)
+set fo+=tc
+set fo-=l
 set splitbelow
 set noshowmatch
 let g:AutoPairsShortcutFastWrap=''
+" Syntastic
+let g:syntastic_enable_highlighting=1
+let g:syntastic_enable_signs=1
 let g:syntastic_aggregate_errors = 1
 let g:syntastic_always_populate_loc_list = 1
 " C#
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
-" Typescript
-autocmd FileType typescript nmap <buffer> <Leader>r <Plug>(TsuquyomiRenameSymbol)
-let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
-let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
-let g:tsuquyomi_disable_quickfix = 1
-au FileType qf call AdjustWindowHeight(3, 10)
-function! AdjustWindowHeight(minheight, maxheight)
-  exe max([min([line("$"), a:maxheight]), a:minheight]) . "wincmd _"
-endfunction
-au filetype typescript nnoremap <leader>q :SyntasticCheck<cr>
 " Javascript
 let g:syntastic_javascript_checkers = ["eslint"]
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 let g:ycm_server_log_level = "debug"
+" Typescript
+let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
+let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
+let g:tsuquyomi_disable_quickfix = 1
 " Mappings
 " Leader
 let mapleader = ";"
@@ -122,7 +124,9 @@ nnoremap d<C-j> <C-w>j<C-w>c
 nnoremap d<C-k> <C-w>k<C-w>c
 nnoremap d<C-h> <C-w>h<C-w>c
 nnoremap d<C-l> <C-w>l<C-w>c
-" F9
+" Typescript
+autocmd FileType typescript nmap <buffer> <Leader>r <Plug>(TsuquyomiRenameSymbol)
+au filetype typescript nnoremap <leader>q :SyntasticCheck<cr>
 " Python
 autocmd FileType python nnoremap <buffer> <F9> :w<cr> :exec "!python" shellescape(@%, 1)<cr>
 " C#
