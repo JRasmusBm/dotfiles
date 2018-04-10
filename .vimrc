@@ -34,48 +34,6 @@ set wrap
 set textwidth=79
 set formatoptions=qrn1j
 set colorcolumn=+1
-" File Browsing
-" Wildmenu
-set wildmenu
-set wildmode=list:longest
-
-set wildignore+=.hg,.git,.svn                    " Version control
-set wildignore+=*.aux,*.out,*.toc                " LaTeX intermediate files
-set wildignore+=*.jpg,*.bmp,*.gif,*.png,*.jpeg   " binary images
-set wildignore+=*.o,*.obj,*.exe,*.dll,*.manifest " compiled object files
-set wildignore+=*.spl                            " compiled spelling word lists
-set wildignore+=*.sw?                            " Vim swap files
-set wildignore+=*.DS_Store                       " OSX bullshit
-
-set wildignore+=*.luac                           " Lua byte code
-
-set wildignore+=migrations                       " Django migrations
-set wildignore+=*.pyc                            " Python byte code
-
-set wildignore+=*.orig                           " Merge resolution files
-
-set wildignore+=*.fasl                           " Lisp FASLs
-
-" Clojure/Leiningen
-set wildignore+=classes
-set wildignore+=lib
-" Finding Files
-set path+=**
-" Fuzzy finder
-set rtp+=~/.fzf
-let g:rg_command = '
-  \ rg --column --line-number --no-heading --fixed-strings --ignore-case --no-ignore --hidden --follow --color "always"
-  \ -g "*.{js,json,php,md,styl,jade,html,config,py,cpp,c,go,hs,rb,conf}"
-  \ -g "!{.git,node_modules,vendor}/*" '
-
-command! -bang -nargs=* F call fzf#vim#grep(g:rg_command .shellescape(<q-args>), 1, <bang>0)
-" netrw
-let g:netrw_bufsettings='noma nomod nu relativenumber nobl nowrap ro'
-let g:netrw_banner=0
-let g:netrw_preview=1
-let g:netrw_winsize=25
-let g:netrw_liststyle=3
-" Buffers
 set hidden
 " Airline
 let g:airline#extensions#tabline#enabled = 1
@@ -136,26 +94,18 @@ map <Leader>d :Ex<CR>
 map <Leader>o :browse oldfiles<cr>
 map <Leader>b :b
 map <Leader>w :%s/ $//g<cr>
-
+" Buffers
  "To open a new empty buffer
- " This replaces :tabnew which I used to bind to this mapping
  nmap <leader>T :enew<cr>
-
  "Move to the next buffer
  nmap <leader>l :bnext<CR>
-
  " Move to the previous buffer
  nmap <leader>h :bprevious<CR>
-
  "Close the current buffer and move to the previous one
  " This replicates the idea of closing a tab
  nmap <leader>bq :bp <BAR> bd #<CR>
-
  "Show all open buffers and their status
  nmap <leader>bl :ls<CR>
- "
- "
- "
 " Dotfiles
 :command Vrc e ~/.vimrc<cr>
 :command Brc e ~/.bashrc<cr>
