@@ -34,8 +34,10 @@ set wrap
 set textwidth=79
 set formatoptions=qrn1j
 set colorcolumn=+1
+set signcolumn=yes
 set hidden
 " netrw
+let g:netrw_bufsettings = 'noma nomod nu nobl nowrap ro'
 let g:netrw_menu = 0
 let g:netrw_banner = 0
 " Airline
@@ -50,6 +52,7 @@ call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plugin 'airblade/vim-gitgutter'
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'alessioalex/syntastic-local-tslint.vim'
 call vundle#end()            " required
@@ -59,19 +62,33 @@ syntax enable
 filetype plugin indent on
 set omnifunc=syntaxcomplete#Complete
 set completeopt=longest,menuone,preview
+set splitbelow
+set noshowmatch
+let g:AutoPairsShortcutFastWrap=''
+" Statusline
+set statusline+=%#warningmsg#
+set statusline+=%{SyntasticStatuslineFlag()}
+set statusline+=%*
 " Dictionary
 set dictionary=/usr/share/dict/words
 " Format options (Text width)
 set fo+=tc
 set fo-=l
-set splitbelow
-set noshowmatch
-let g:AutoPairsShortcutFastWrap=''
 " Syntastic
+highlight SyntasticError ctermfg=darkred
+highlight SyntasticWarning ctermfg=darkyellow
+highlight SyntasticErrorSign ctermfg=darkred
+highlight SyntasticWarningSign ctermfg=darkyellow
+let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_auto_loc_list = 1
+let g:syntastic_check_on_open = 1
+let g:syntastic_check_on_wq = 0
+let g:syntastic_aggregate_errors = 1
 let g:syntastic_enable_highlighting=1
 let g:syntastic_enable_signs=1
 let g:syntastic_aggregate_errors = 1
-let g:syntastic_always_populate_loc_list = 1
+let g:syntastic_error_symbol = "\u2717"
+let g:syntastic_warning_symbol = "\u2717"
 " C#
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
