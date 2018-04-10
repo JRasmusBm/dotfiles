@@ -87,6 +87,7 @@ runtime macros/matchit.vim
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'alessioalex/syntastic-local-tslint.vim'
@@ -181,6 +182,10 @@ nnoremap / /\v
 nnoremap n nzzzv
 nnoremap N Nzzzv
 " Other remaps
+nnoremap <Leader>j :m+<CR>==
+nnoremap <Leader>k :m--<CR>==
+vnoremap <Leader>j :m '>+1<CR>gv=gv
+vnoremap <Leader>k :m '<-2<CR>gv=gv
 map H ^
 map L $
 nnoremap K kJ
