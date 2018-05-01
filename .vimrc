@@ -68,7 +68,7 @@ set splitbelow
 set noshowmatch
 let g:AutoPairsShortcutFastWrap=''
 " YCM
-let g:ycm_autoclose_preview_window_after_completion=1
+" let g:ycm_autoclose_preview_window_after_completion=1
 " Statusline
 set statusline+=%#warningmsg#
 set statusline+=%{SyntasticStatuslineFlag()}
@@ -105,6 +105,7 @@ let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
 let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
 let g:tsuquyomi_disable_quickfix = 1
 " Python
+highlight BadWhitespace ctermbg=darkred
 let python_highlight_all=1
 py << EOF
 import os
@@ -215,3 +216,5 @@ au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 au VimResized * exe "normal! \<c-w>="
 " NonVim Files
 au BufRead *.pdf sil exe "!chr " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
+autocmd BufNewFile,BufRead *.wast   set syntax=wast
+

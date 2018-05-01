@@ -116,12 +116,26 @@ alias "vimrc"="vim ~/.vimrc"
 alias "bashrc"="vim ~/.bashrc"
 alias "active"="cd ~/1_programming/active/"
 alias "studio"="/usr/local/android-studio/bin/studio.sh"
-alias "idea"="/opt/idea-IC-173.4674.33/bin/idea.sh"
 alias "app"="cd ~/1_programming/active/Spendy/"
 alias "wheretrip"="cd ~/2_school/3_y/wheretrip/"
+alias "wython"="cd ~/2_school/3_y/wython/"
 alias "security"="cd ~/2_school/3_y/network_security/"
 alias "probability"="cd ~/2_school/3_y/probability_and_statistics/"
 alias "systems"="cd ~/2_school/3_y/systems_and_control/"
+alias "spectest-interp"="~/wabt/bin/spectest-interp"
+alias "wabt-unittests"="~/wabt/bin/wabt-unittests"
+alias "wasm2c"="~/wabt/bin/wasm2c"
+alias "wasm2wat"="~/wabt/bin/wasm2wat"
+alias "wasm-interp"="~/wabt/bin/wasm-interp"
+alias "wasm-objdump"="~/wabt/bin/wasm-objdump"
+alias "wasm-opcodecnt"="~/wabt/bin/wasm-opcodecnt"
+alias "wasm-validate"="~/wabt/bin/wasm-validate"
+alias "wast2json"="~/wabt/bin/wast2json"
+alias "wat2wasm"="~/wabt/bin/wat2wasm"
+alias "wat-desugar"="~/wabt/bin/wat-desugar"
+alias "testing"="cd ~/2_school/3_y/testing/"
+alias "gource"="~/.gource/gource"
+alias "graphics"="cd ~/2_school/3_y/graphics/"
 alias "church"="cd ~/5_church/"
 alias "jan"="cd ~/3_work/jan/"
 alias "ph-frontend"="cd ~/3_work/jan/PhotoHistory/PhotoHistory.Web/js/ph-frontend"
@@ -145,6 +159,3 @@ PATH=$PATH:$ANDROID_HOME/platform-tools
 PATH=$PATH:/opt/gradle/gradle-4.5/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
 export PATH;
-source /usr/local/bin/virtualenvwrapper.sh
-
-clear
