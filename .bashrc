@@ -94,6 +94,9 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+# WebAssembly
+source ~/emsdk/emsdk_set_env.sh
+
 # vi editing mode
 set editing-mode vi
 # Fuzzy finder
@@ -134,7 +137,6 @@ alias "wast2json"="~/wabt/bin/wast2json"
 alias "wat2wasm"="~/wabt/bin/wat2wasm"
 alias "wat-desugar"="~/wabt/bin/wat-desugar"
 alias "testing"="cd ~/2_school/3_y/testing/"
-alias "gource"="~/.gource/gource"
 alias "graphics"="cd ~/2_school/3_y/graphics/"
 alias "church"="cd ~/5_church/"
 alias "jan"="cd ~/3_work/jan/"
@@ -158,4 +160,4 @@ PATH=$PATH:$ANDROID_HOME/tools
 PATH=$PATH:$ANDROID_HOME/platform-tools
 PATH=$PATH:/opt/gradle/gradle-4.5/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
-export PATH;
+export PATH

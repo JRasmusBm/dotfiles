@@ -128,7 +128,7 @@ map <Leader>, ~
 map <Leader>f :find
 map <Leader>d :Ex<CR>
 map <Leader>o :browse oldfiles<cr>
-map <Leader>b :b
+map <Leader>b :%!xxd<cr>
 map <Leader>w :%s/ $//g<cr>
 " Buffers
  "To open a new empty buffer
