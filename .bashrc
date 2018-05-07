@@ -94,6 +94,7 @@ if ! shopt -oq posix; then
     . /etc/bash_completion
   fi
 fi
+
 # WebAssembly
 source ~/emsdk/emsdk_set_env.sh
 

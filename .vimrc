@@ -41,6 +41,10 @@ let g:netrw_menu = 0
 let g:netrw_banner = 0
 " Airline
 let g:airline#extensions#tabline#enabled = 1
+" TmuxLine
+let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
+" PromptLine
+let g:promptline_theme = 'airline'
 set laststatus=2
 set t_Co=256
 " Matchit
@@ -53,8 +57,11 @@ Plugin 'nvie/vim-flake8'
 Plugin 'vim-scripts/indentpython.vim'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Bundle 'edkolev/tmuxline.vim'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'tmhedberg/SimpylFold'
+Plugin 'vim-airline/vim-airline'
+Plugin 'vim-airline/vim-airline-themes'
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'alessioalex/syntastic-local-tslint.vim'
 call vundle#end()            " required
