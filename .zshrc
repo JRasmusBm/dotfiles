@@ -19,10 +19,17 @@ antigen bundle heroku
 antigen bundle pip
 antigen bundle lein
 antigen bundle command-not-found
-#
+
+# Other Bundles
+antigen bundle colored-man-pages
+antigen bundle chrissicool/zsh-256color
+
 # # Syntax highlighting bundle.
 antigen bundle zsh-users/zsh-syntax-highlighting
-#
+
+# diff-so-fancy
+antigen bundle zdharma/zsh-diff-so-fancy
+
 # # Tell Antigen that you're done.
 antigen apply
 
@@ -72,6 +79,12 @@ zstyle ':completion:*' verbose true
 
 zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
+
+# Plugins
+source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
+bindkey '^ ' autosuggest-accept
+
+
 
 # WebAssembly
 source ~/emsdk/emsdk_set_env.sh
