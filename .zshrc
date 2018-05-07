@@ -1,5 +1,3 @@
-if [ "$TMUX" = ""  ]; then tmux; fi
-
 # Set up the prompt
 
 autoload -Uz promptinit
