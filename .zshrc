@@ -1,3 +1,5 @@
+if [ "$TMUX" = ""  ]; then tmux; fi
+
 # Set up the prompt
 
 autoload -Uz promptinit
@@ -22,9 +24,6 @@ antigen bundle command-not-found
 #
 # # Syntax highlighting bundle.
 antigen bundle zsh-users/zsh-syntax-highlighting
-#
-# # Load the theme.
-antigen theme mortalscumbag
 #
 # # Tell Antigen that you're done.
 antigen apply
