@@ -221,6 +221,7 @@ augroup END
 au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 " Resize splits
 au VimResized * exe "normal! \<c-w>="
+au FileType gitcommit set tw=72
 " NonVim Files
 au BufRead *.pdf sil exe "!chr " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
 autocmd BufNewFile,BufRead *.wast   set syntax=wast
