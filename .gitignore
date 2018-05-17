@@ -5,6 +5,7 @@
 !.vim/**
 !.bashrc
 !.zshrc
+!.tmux.conf
 !.bash_profile
 !.vimrc
 !.gitignore
