@@ -1,0 +1,20 @@
+# This is Git's per-user configuration file.
+[user]
+  name = jrasmusbm
+  username = jrasmusbm
+  email = JRasmusBm@gmail.com
+[alias]
+  apply-gitignore = "!git ls-files -ci --exclude-standard -z | xargs -0 git rm --cached"
+[color]
+	ui = true
+[color "diff-highlight"]
+	oldNormal = red bold
+	newNormal = green bold
+	newHighlight = green bold 22
+[color "diff"]
+	meta = yellow
+	frag = magenta bold
+	commit = yellow bold
+	old = red bold
+	new = green bold
+	whitespace = red reverse
