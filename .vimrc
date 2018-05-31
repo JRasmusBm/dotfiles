@@ -59,6 +59,7 @@ Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Bundle 'edkolev/tmuxline.vim'
 Plugin 'airblade/vim-gitgutter'
+Plugin 'rhysd/vim-clang-format'
 Plugin 'tmhedberg/SimpylFold'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
@@ -100,6 +101,14 @@ let g:syntastic_enable_signs=1
 let g:syntastic_aggregate_errors = 1
 let g:syntastic_error_symbol = "\u2717"
 let g:syntastic_warning_symbol = "\u2717"
+" clang
+let g:clang_format#style_options = {
+            \ "BasedOnStyle": "Google",
+            \ "ColumnLimit": 76,
+            \ "AccessModifierOffset" : -4,
+            \ "AllowShortIfStatementsOnASingleLine" : "true",
+            \ "AlwaysBreakTemplateDeclarations" : "true",
+            \ "Standard" : "C++11" }
 " C#
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
@@ -224,5 +233,10 @@ au VimResized * exe "normal! \<c-w>="
 au FileType gitcommit set tw=72
 " NonVim Files
 au BufRead *.pdf sil exe "!chr " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
-autocmd BufNewFile,BufRead *.wast   set syntax=wast
-
+autocmd BufNewFile,BufRead *.wast call WasmSetOptions() WasmSetOptions()
+function! WasmSetOptions()
+  set softtabstop=0
+  set expandtab
+  set tabstop=2
+  set shiftwidth=2
+endfunction
