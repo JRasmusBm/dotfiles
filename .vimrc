@@ -53,11 +53,12 @@ runtime macros/matchit.vim
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
 Plugin 'VundleVim/Vundle.vim'
+Plugin 'JamshedVesuna/vim-markdown-preview'
 Plugin 'nvie/vim-flake8'
 Plugin 'vim-scripts/indentpython.vim'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Bundle 'edkolev/tmuxline.vim'
+Plugin 'edkolev/tmuxline.vim'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'rhysd/vim-clang-format'
 Plugin 'tmhedberg/SimpylFold'
@@ -109,6 +110,9 @@ let g:clang_format#style_options = {
             \ "AllowShortIfStatementsOnASingleLine" : "true",
             \ "AlwaysBreakTemplateDeclarations" : "true",
             \ "Standard" : "C++11" }
+" map to <Leader>cf in C++ code
+autocmd FileType c,cpp,objc nnoremap <buffer><Leader>p :<C-u>ClangFormat<CR>
+autocmd FileType c,cpp,objc vnoremap <buffer><Leader>p :ClangFormat<CR>
 " C#
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
@@ -120,6 +124,11 @@ let g:ycm_server_log_level = "debug"
 let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
 let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
 let g:tsuquyomi_disable_quickfix = 1
+" Markdown
+let vim_markdown_preview_hotkey='<C-p>'
+let vim_markdown_preview_browser='Google Chrome'
+let vim_markdown_preview_github=1
+let vim_markdown_preview_toggle=1
 " Python
 highlight BadWhitespace ctermbg=darkred
 let python_highlight_all=1
