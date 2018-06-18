@@ -52,6 +52,8 @@ runtime macros/matchit.vim
 " Vundle
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
+Plugin 'SirVer/ultisnips'
+Plugin 'honza/vim-snippets'
 Plugin 'VundleVim/Vundle.vim'
 Plugin 'JamshedVesuna/vim-markdown-preview'
 Plugin 'nvie/vim-flake8'
@@ -60,6 +62,7 @@ Plugin 'tmhedberg/SimpylFold'
 Plugin 'Konfekt/FastFold'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plugin 'junegunn/fzf.vim'
 Plugin 'edkolev/tmuxline.vim'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'rhysd/vim-clang-format'
@@ -122,6 +125,8 @@ let g:OmniSharp_timeout = 1
 let g:syntastic_javascript_checkers = ["eslint"]
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 let g:ycm_server_log_level = "debug"
+let g:ycm_filetype_blacklist = { "vim": 1 }
+
 " Typescript
 let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
 let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
@@ -135,6 +140,7 @@ let vim_markdown_preview_toggle=1
 highlight BadWhitespace ctermbg=darkred
 autocmd FileType python :nnoremap <leader>p :call Yapf()<CR>
 let g:yapf_style = "pep8"
+let g:ycm_python_binary_path = '/usr/bin/python3.6'
 let python_highlight_all=1
 py << EOF
 import os
@@ -149,16 +155,32 @@ EOF
 let mapleader = ";"
 vnoremap <leader>S y:@"<CR>
 nnoremap <leader>S ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
-map <leader>gd :YcmCompleter GoToDefinitionElseDeclaration<CR>
-map <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
-map <Leader>i ^]
-map <Leader>, ~
-map <Leader>f :find
-map <Leader>d :Ex<CR>
-map <Leader>o :browse oldfiles<cr>
-map <Leader>b :%!xxd<cr>
-map <Leader>w :%s/ $//g<cr>
-map <Leader>n :call QuitNetrw()<cr>
+nnoremap <Leader>ff :Files .<CR>
+nnoremap <Leader>fgf :GFiles<CR>
+nnoremap <Leader>fgs :GFiles?<CR>
+nnoremap <Leader>fb :Buffers<CR>
+nnoremap <Leader>fl :Lines<CR>
+nnoremap <Leader>ft :Tags<CR>
+nnoremap <Leader>fm :Marks<CR>
+nnoremap <Leader>fw :Windows<CR>
+nnoremap <Leader>fhf :History<CR>
+nnoremap <Leader>fhc :History:<CR>
+nnoremap <Leader>fhs :History/<CR>
+nnoremap <Leader>fs :Snippets<CR>
+nnoremap <Leader>fco :Commits<CR>
+nnoremap <Leader>fcm :Commands<CR>
+nnoremap <Leader>fm :Maps<CR>
+nnoremap <Leader>fh :Helptags<CR>
+nnoremap <Leader>fp :Filetypes<CR>
+nnoremap <leader>gd :YcmCompleter GoToDefinitionElseDeclaration<CR>
+nnoremap <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
+nnoremap <Leader>i ^]
+nnoremap <Leader>, ~
+nnoremap <Leader>d :Ex<CR>
+nnoremap <Leader>o :browse oldfiles<cr>
+nnoremap <Leader>b :%!xxd<cr>
+nnoremap <Leader>w :%s/ $//g<cr>
+nnoremap <Leader>n :call QuitNetrw()<cr>
 " Buffers
  "To open a new empty buffer
  nmap <leader>T :enew<cr>
