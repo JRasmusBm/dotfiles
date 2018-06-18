@@ -47,8 +47,6 @@ let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
 let g:promptline_theme = 'airline'
 set laststatus=2
 set t_Co=256
-" Matchit
-runtime macros/matchit.vim
 " Vundle
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
@@ -59,6 +57,7 @@ Plugin 'JamshedVesuna/vim-markdown-preview'
 Plugin 'nvie/vim-flake8'
 Plugin 'vim-scripts/indentpython.vim'
 Plugin 'tmhedberg/SimpylFold'
+Plugin 'tmhedberg/matchit'
 Plugin 'Konfekt/FastFold'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
