@@ -56,12 +56,14 @@ Plugin 'VundleVim/Vundle.vim'
 Plugin 'JamshedVesuna/vim-markdown-preview'
 Plugin 'nvie/vim-flake8'
 Plugin 'vim-scripts/indentpython.vim'
+Plugin 'tmhedberg/SimpylFold'
+Plugin 'Konfekt/FastFold'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'edkolev/tmuxline.vim'
 Plugin 'airblade/vim-gitgutter'
 Plugin 'rhysd/vim-clang-format'
-Plugin 'tmhedberg/SimpylFold'
+Plugin 'mindriot101/vim-yapf'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'Valloric/YouCompleteMe'
@@ -131,6 +133,8 @@ let vim_markdown_preview_github=1
 let vim_markdown_preview_toggle=1
 " Python
 highlight BadWhitespace ctermbg=darkred
+autocmd FileType python :nnoremap <leader>p :call Yapf()<CR>
+let g:yapf_style = "pep8"
 let python_highlight_all=1
 py << EOF
 import os
@@ -140,7 +144,6 @@ if 'VIRTUAL_ENV' in os.environ:
   activate_this = os.path.join(project_base_dir, 'bin/activate_this.py')
   execfile(activate_this, dict(__file__=activate_this))
 EOF
-let g:SimpylFold_docstring_preview=1
 " Mappings
 " Leader
 let mapleader = ";"
@@ -155,6 +158,7 @@ map <Leader>d :Ex<CR>
 map <Leader>o :browse oldfiles<cr>
 map <Leader>b :%!xxd<cr>
 map <Leader>w :%s/ $//g<cr>
+map <Leader>n :call QuitNetrw()<cr>
 " Buffers
  "To open a new empty buffer
  nmap <leader>T :enew<cr>
@@ -229,7 +233,23 @@ for [key, value] in items(pairs)
 endfor
 " Auto
 au BufRead, BufNewFile *.j let comment=";"
-" Autosave Folds
+" Folds
+nmap zuz <Plug>(FastFoldUpdate)
+let g:fastfold_savehook = 1
+let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
+let g:fastfold_fold_movement_commands = [']z', '[z', 'zj', 'zk']
+let g:markdown_folding = 1
+let g:tex_fold_enabled = 1
+let g:vimsyn_folding = 'af'
+let g:xml_syntax_folding = 1
+let g:javaScript_fold = 1
+let g:sh_fold_enabled= 7
+let g:ruby_fold = 1
+let g:perl_fold = 1
+let g:perl_fold_blocks = 1
+let g:r_syntax_folding = 1
+let g:rust_fold = 1
+let g:php_folding = 1
 augroup AutoSaveFolds
   autocmd!
   autocmd BufWinLeave *.* mkview
@@ -248,4 +268,13 @@ function! WasmSetOptions()
   set expandtab
   set tabstop=2
   set shiftwidth=2
+endfunction
+function! QuitNetrw()
+  for i in range(1, bufnr('$'))
+    if buflisted(i)
+      if getbufvar(i, '&filetype') == "netrw"
+        silent exe 'bwipeout ' . i
+      endif
+    endif
+  endfor
 endfunction
