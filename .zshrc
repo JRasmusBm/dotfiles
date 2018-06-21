@@ -94,6 +94,8 @@ export VISUAL=vim
 export EDITOR="$VISUAL"
 
 # Aliases
+alias "translate"="python3.6 ~/1_programming/active/learning/scraping/wikipedia-translator.py"
+alias "update-mouse"="sudo modprobe -r psmouse && sudo modprobe psmouse"
 alias "chr"="google-chrome"
 alias "co"="git add --all && git commit"
 alias "vimrc"="vim ~/.vimrc"
@@ -130,3 +132,6 @@ export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}";
 
 # Promptline
 source ~/.shell_prompt.sh
+
+# Swap Keys
+xmodmap ~/.swapkeys
