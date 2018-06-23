@@ -50,26 +50,55 @@ set t_Co=256
 " Vundle
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
-Plugin 'SirVer/ultisnips'
-Plugin 'honza/vim-snippets'
-Plugin 'VundleVim/Vundle.vim'
-Plugin 'JamshedVesuna/vim-markdown-preview'
-Plugin 'nvie/vim-flake8'
-Plugin 'vim-scripts/indentpython.vim'
-Plugin 'tmhedberg/SimpylFold'
-Plugin 'tmhedberg/matchit'
 Plugin 'Konfekt/FastFold'
-Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
+Plugin 'Latex-Text-Formatter'
+Plugin 'tmhedberg/SimpylFold'
+Plugin 'Valloric/YouCompleteMe'
+Plugin 'jiangmiao/auto-pairs'
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'junegunn/fzf.vim'
+Plugin 'vim-scripts/indentpython.vim'
+Plugin 'othree/javascript-libraries-syntax.vim'
+Plugin 'tmhedberg/matchit'
+Plugin 'OmniSharp/omnisharp-vim'
+Plugin 'powerline/powerline'
+Plugin 'edkolev/promptline.vim'
+Plugin 'mtscout6/syntastic-local-eslint.vim'
+Plugin 'alessioalex/syntastic-local-tslint.vim'
+Plugin 'vim-syntastic/syntastic'
+Plugin 'Ron89/thesaurus_query.vim'
 Plugin 'edkolev/tmuxline.vim'
-Plugin 'airblade/vim-gitgutter'
-Plugin 'rhysd/vim-clang-format'
-Plugin 'mindriot101/vim-yapf'
+Plugin 'Quramy/tsuquyomi'
+Plugin 'leafgarland/typescript-vim'
+Plugin 'SirVer/ultisnips'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
-Plugin 'Valloric/YouCompleteMe'
-Plugin 'alessioalex/syntastic-local-tslint.vim'
+Plugin 'rhysd/vim-clang-format'
+Plugin 'tpope/vim-commentary'
+Plugin 'hail2u/vim-css3-syntax'
+Plugin 'tpope/vim-endwise'
+Plugin 'nvie/vim-flake8'
+Plugin 'tpope/vim-fugitive'
+Plugin 'airblade/vim-gitgutter'
+Plugin 'takac/vim-hardtime'
+Plugin 'ivanov/vim-ipython'
+Plugin 'pangloss/vim-javascript'
+Plugin 'elzr/vim-json'
+Plugin 'mxw/vim-jsx'
+Plugin 'JamshedVesuna/vim-markdown-preview'
+Plugin 'sickill/vim-pasta'
+Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
+Plugin 'tpope/vim-repeat'
+Plugin 'honza/vim-snippets'
+Plugin 'styled-components/vim-styled-components'
+Plugin 'tpope/vim-surround'
+Plugin 'heavenshell/vim-tslint-config'
+Plugin 'ianks/vim-tsx'
+Plugin 'tpope/vim-unimpaired'
+Plugin 'rhysd/vim-wasm'
+Plugin 'mindriot101/vim-yapf'
+Plugin 'Shougo/vimproc.vim'
+Plugin 'VundleVim/Vundle.vim'
 call vundle#end()            " required
 " Syntax checking & completion
 " General
@@ -115,6 +144,8 @@ let g:clang_format#style_options = {
 " map to <Leader>cf in C++ code
 autocmd FileType c,cpp,objc nnoremap <buffer><Leader>p :<C-u>ClangFormat<CR>
 autocmd FileType c,cpp,objc vnoremap <buffer><Leader>p :ClangFormat<CR>
+" Latex
+autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>i
 " C#
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
@@ -150,6 +181,7 @@ EOF
 " Mappings
 " Leader
 let mapleader = ";"
+nnoremap <C-s> <C-a>
 " fzf
 nnoremap <Leader>ff :Files .<CR>
 nnoremap <Leader>fgf :GFiles<CR>
@@ -223,8 +255,6 @@ nnoremap <Leader>j :m+<CR>==
 nnoremap <Leader>k :m--<CR>==
 vnoremap <Leader>j :m '>+1<CR>gv=gv
 vnoremap <Leader>k :m '<-2<CR>gv=gv
-map H ^
-map L $
 nnoremap K kJ
 nnoremap <Space> za
 map <tab> %
@@ -298,3 +328,6 @@ function! QuitNetrw()
     endif
   endfor
 endfunction
+let g:hardtime_default_on = 1
+let g:hardtime_maxcount = 2
+

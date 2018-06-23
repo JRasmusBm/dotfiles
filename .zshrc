@@ -133,5 +133,5 @@ export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}";
 # Promptline
 source ~/.shell_prompt.sh
 
-# Swap Keys
-xmodmap ~/.swapkeys
+stty -ixon
+
