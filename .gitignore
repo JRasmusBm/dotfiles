@@ -8,6 +8,7 @@
 !.xbindkeysrc
 !.gitconfig
 !.zshrc
+!.zshenv
 !.tmux.conf
 !.bash_profile
 !.vimrc

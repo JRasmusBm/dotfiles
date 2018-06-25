@@ -1,7 +1,7 @@
 " Setup
 let g:name="Rasmus Bergström"
 set nocompatible              " be improved, required
-set shell=/bin/bash
+set shell=/bin/zsh
 execute pathogen#infect()
 colorscheme afterglow
 " Basic options
@@ -95,6 +95,7 @@ Plugin 'tpope/vim-surround'
 Plugin 'heavenshell/vim-tslint-config'
 Plugin 'ianks/vim-tsx'
 Plugin 'tpope/vim-unimpaired'
+Plugin 'nixon/vim-vmath'
 Plugin 'rhysd/vim-wasm'
 Plugin 'mindriot101/vim-yapf'
 Plugin 'Shougo/vimproc.vim'
@@ -203,6 +204,9 @@ nnoremap <Leader>fp :Filetypes<CR>
 " Source
 vnoremap <leader>S y:@"<CR>
 nnoremap <leader>S ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
+nnoremap <leader>s  :call VMATH_Analyse()<CR>
+vnoremap <leader>s  y:call VMATH_Analyse()<CR>
+nnoremap <leader>r !!sh<CR>
 nnoremap <leader>gd :YcmCompleter GoToDefinitionElseDeclaration<CR>
 nnoremap <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
 nnoremap <Leader>i ^]
