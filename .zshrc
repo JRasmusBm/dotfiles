@@ -84,8 +84,6 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 bindkey '^ ' autosuggest-accept
 
-
-
 # Set default editor
 export VISUAL=vim
 export EDITOR="$VISUAL"

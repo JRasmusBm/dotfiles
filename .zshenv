@@ -1,5 +1,3 @@
-setopt aliases
-
 # WebAssembly
 source ~/emsdk/emsdk_set_env.sh
 
@@ -39,4 +37,3 @@ PATH=$PATH:$ANDROID_HOME/tools
 PATH=$PATH:$ANDROID_HOME/platform-tools
 PATH=$PATH:/opt/gradle/gradle-4.5/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
-
