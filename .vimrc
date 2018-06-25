@@ -35,6 +35,7 @@ set formatoptions=qrn1jo
 set colorcolumn=+1
 set signcolumn=yes
 set hidden
+let $BASH_ENV="~/.zshenv"
 " netrw
 let g:netrw_bufsettings = 'noma nomod nu nobl nowrap ro'
 let g:netrw_menu = 0
@@ -57,6 +58,7 @@ Plugin 'Valloric/YouCompleteMe'
 Plugin 'jiangmiao/auto-pairs'
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'junegunn/fzf.vim'
+Plugin 'gregsexton/gitv'
 Plugin 'vim-scripts/indentpython.vim'
 Plugin 'othree/javascript-libraries-syntax.vim'
 Plugin 'tmhedberg/matchit'
