@@ -4,7 +4,6 @@
 !.vim/*
 !.vim/**
 !.bashrc
-!.swapkeys
 !.xbindkeysrc
 !.gitconfig
 !.zshrc

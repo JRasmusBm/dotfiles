@@ -55,6 +55,7 @@ Plugin 'Latex-Text-Formatter'
 Plugin 'tmhedberg/SimpylFold'
 Plugin 'Valloric/YouCompleteMe'
 Plugin 'jiangmiao/auto-pairs'
+Plugin 'easymotion/vim-easymotion'
 Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plugin 'junegunn/fzf.vim'
 Plugin 'gregsexton/gitv'
@@ -120,6 +121,11 @@ set dictionary=/usr/share/dict/words
 " Format options (Text width)
 set fo+=tc
 set fo-=l
+" Other highlighting
+highlight SpellBad ctermfg=darkred ctermbg=NONE
+highlight SpellCap ctermfg=darkred ctermbg=NONE
+highlight SpellLocal ctermfg=darkred ctermbg=NONE
+highlight SpellRare ctermfg=darkred ctermbg=NONE
 " Syntastic
 highlight SyntasticError ctermfg=darkred
 highlight SyntasticWarning ctermfg=darkyellow
@@ -135,6 +141,7 @@ let g:syntastic_enable_signs=1
 let g:syntastic_aggregate_errors = 1
 let g:syntastic_error_symbol = "\u2717"
 let g:syntastic_warning_symbol = "\u2717"
+
 " clang
 let g:clang_format#style_options = {
             \ "BasedOnStyle": "Google",
@@ -162,6 +169,7 @@ let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
 let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
 let g:tsuquyomi_disable_quickfix = 1
 " Markdown
+
 let vim_markdown_preview_hotkey='<C-p>'
 let vim_markdown_preview_browser='Google Chrome'
 let vim_markdown_preview_github=1
@@ -207,6 +215,8 @@ vnoremap <leader>S y:@"<CR>
 nnoremap <leader>S ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
 nnoremap <leader>s  :call VMATH_Analyse()<CR>
 vnoremap <leader>s  y:call VMATH_Analyse()<CR>
+nnoremap <leader>ce :setlocal spell spelllang=en_us<CR>
+nnoremap <leader>cc :set nospell<CR>
 nnoremap <leader>r !!sh<CR>
 nnoremap <leader>gd :YcmCompleter GoToDefinitionElseDeclaration<CR>
 nnoremap <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
@@ -229,8 +239,10 @@ nnoremap <Leader>n :call QuitNetrw()<cr>
  "Show all open buffers and their status
  nmap <leader>bl :ls<CR>
 " Dotfiles
-:command! Vrc e ~/.vimrc<cr>
-:command! Brc e ~/.bashrc<cr>
+:command! Vrc e ~/.vimrc
+:command! Brc e ~/.bashrc
+:command! Zrc e ~/.zshrc
+:command! Zenv e ~/.zshenv
 " Split Screen
 nnoremap <C-j> <C-w>j
 nnoremap <C-k> <C-w>k

@@ -1,9 +1,3 @@
-# WebAssembly
-source ~/emsdk/emsdk_set_env.sh
-
-# fzf
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-
 # Virtualenvs
 source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
 export WORKON_HOME=$HOME/.virtualenvs
