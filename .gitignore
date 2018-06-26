@@ -3,6 +3,8 @@
 # Decend into following subdirectories/files
 !.vim
 !.vim/colors
+!.vim/spell
+!.vim/spell/*.add
 !.vim/colors/*
 !.bashrc
 !.xbindkeysrc
