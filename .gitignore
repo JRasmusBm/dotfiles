@@ -1,8 +1,7 @@
 # Ignore everything
 *
 # Decend into following subdirectories/files
-!.vim/*
-!.vim/**
+!.vim/colors/afterglow.vim
 !.bashrc
 !.xbindkeysrc
 !.gitconfig
