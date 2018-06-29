@@ -87,6 +87,18 @@ bindkey '^ ' autosuggest-accept
 # WebAssembly
 source ~/emsdk/emsdk_set_env.sh
 
+# Paths
+export ANDROID_HOME=$HOME/Android/Sdk
+PATH=$PATH:$ANDROID_HOME/tools
+PATH=$PATH:$ANDROID_HOME/platform-tools
+PATH=$PATH:/opt/gradle/gradle-4.5/bin
+export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
+
+# Virtualenvs
+source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+export WORKON_HOME=$HOME/.virtualenvs
+export PROJECT_HOME=$HOME/Envs
+
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 

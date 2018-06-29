@@ -2,7 +2,6 @@
 let g:name="Rasmus Bergström"
 set nocompatible              " be improved, required
 set shell=/bin/zsh
-execute pathogen#infect()
 colorscheme afterglow
 " Basic options
 set mouse=a
@@ -72,7 +71,6 @@ Plugin 'Ron89/thesaurus_query.vim'
 Plugin 'edkolev/tmuxline.vim'
 Plugin 'Quramy/tsuquyomi'
 Plugin 'leafgarland/typescript-vim'
-Plugin 'SirVer/ultisnips'
 Plugin 'vim-airline/vim-airline'
 Plugin 'vim-airline/vim-airline-themes'
 Plugin 'rhysd/vim-clang-format'
@@ -87,11 +85,11 @@ Plugin 'ivanov/vim-ipython'
 Plugin 'pangloss/vim-javascript'
 Plugin 'elzr/vim-json'
 Plugin 'mxw/vim-jsx'
+Plugin 'xuhdev/vim-latex-live-preview'
 Plugin 'JamshedVesuna/vim-markdown-preview'
 Plugin 'sickill/vim-pasta'
 Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
 Plugin 'tpope/vim-repeat'
-Plugin 'honza/vim-snippets'
 Plugin 'styled-components/vim-styled-components'
 Plugin 'tpope/vim-surround'
 Plugin 'heavenshell/vim-tslint-config'
@@ -122,6 +120,7 @@ set dictionary=/usr/share/dict/words
 set fo+=tc
 set fo-=l
 " Other highlighting
+highlight Error ctermfg=darkred ctermbg=NONE
 highlight SpellBad ctermfg=darkred ctermbg=NONE
 highlight SpellCap ctermfg=darkred ctermbg=NONE
 highlight SpellLocal ctermfg=darkred ctermbg=NONE
@@ -154,7 +153,11 @@ let g:clang_format#style_options = {
 autocmd FileType c,cpp,objc nnoremap <buffer><Leader>p :<C-u>ClangFormat<CR>
 autocmd FileType c,cpp,objc vnoremap <buffer><Leader>p :ClangFormat<CR>
 " Latex
-autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>i
+let g:livepreview_previewer = 'mupdf'
+let g:livepreview_previewer = 'pdflatex'
+let g:syntastic_tex_checkers = ["lacheck", "chktex"]
+autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
+autocmd Filetype plaintex,context,tex nnoremap <c-p> <ESC>:LLPStartPreview<CR>
 " C#
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
@@ -189,6 +192,11 @@ if 'VIRTUAL_ENV' in os.environ:
   execfile(activate_this, dict(__file__=activate_this))
 EOF
 " Mappings
+inoremap ;g <Esc>/\v\<\+\+\><CR>:noh<CR>4s
+nnoremap <Leader>g /\v\<\+\+\><CR>:noh<CR>4s
+set timeoutlen=300 ttimeoutlen=0
+autocmd FileType python source ~/.vim/snippets/python.vim
+autocmd FileType html,javascript,typescript source ~/.vim/snippets/html.vim
 " Leader
 let mapleader = ";"
 nnoremap <C-s> <C-a>
@@ -204,7 +212,6 @@ nnoremap <Leader>fw :Windows<CR>
 nnoremap <Leader>fhf :History<CR>
 nnoremap <Leader>fhc :History:<CR>
 nnoremap <Leader>fhs :History/<CR>
-nnoremap <Leader>fs :Snippets<CR>
 nnoremap <Leader>fco :Commits<CR>
 nnoremap <Leader>fcm :Commands<CR>
 nnoremap <Leader>fm :Maps<CR>
@@ -218,13 +225,13 @@ vnoremap <leader>s  y:call VMATH_Analyse()<CR>
 nnoremap <leader>ce :setlocal spell spelllang=en_us<CR>
 nnoremap <leader>cc :set nospell<CR>
 nnoremap <leader>r !!sh<CR>
-nnoremap <leader>gd :YcmCompleter GoToDefinitionElseDeclaration<CR>
 nnoremap <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
 nnoremap <Leader>i ^]
 nnoremap <Leader>, ~
 nnoremap <Leader>d :Ex<CR>
 nnoremap <Leader>b :%!xxd<cr>
-nnoremap <Leader>w :%s/ $//g<cr>
+nnoremap <Leader>ws :%s/ $//g<cr>:noh
+nnoremap <Leader>wl :v/\S/d<cr>:noh
 nnoremap <Leader>n :call QuitNetrw()<cr>
 " Buffers
  "To open a new empty buffer
@@ -258,15 +265,16 @@ nnoremap d<C-h> <C-w>h<C-w>c
 nnoremap d<C-l> <C-w>l<C-w>c
 " Typescript
 autocmd FileType typescript nmap <buffer> <Leader>r <Plug>(TsuquyomiRenameSymbol)
-au filetype typescript nnoremap <leader>q :SyntasticCheck<cr>
+nnoremap <leader>cp :SyntasticCheck<cr>
 " Python
 autocmd FileType python nnoremap <buffer> <F9> :w<cr> :exec "!python" shellescape(@%, 1)<cr>
 " C#
 autocmd FileType cs nnoremap <buffer> <F9> :exec "!dotnet run" <cr>
 " Searching in file
-nnoremap / /\v
 nnoremap n nzzzv
 nnoremap N Nzzzv
+vnoremap n nzzzv
+vnoremap N Nzzzv
 " Other remaps
 nnoremap <Leader>j :m+<CR>==
 nnoremap <Leader>k :m--<CR>==
@@ -274,7 +282,6 @@ vnoremap <Leader>j :m '>+1<CR>gv=gv
 vnoremap <Leader>k :m '<-2<CR>gv=gv
 nnoremap K kJ
 nnoremap <Space> za
-map <tab> %
 " Extended Text Objects
 let pairs =   { "<bar>" : "<bar>",
               \  ":" : ":" ,
@@ -301,6 +308,12 @@ endfor
 " Auto
 au BufRead, BufNewFile *.j let comment=";"
 " Folds
+nnoremap H Hzz
+nnoremap M Mzz
+nnoremap L Lzz
+vnoremap H Hzz
+vnoremap M Mzz
+vnoremap L Lzz
 nmap zuz <Plug>(FastFoldUpdate)
 let g:fastfold_savehook = 1
 let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
@@ -347,4 +360,5 @@ function! QuitNetrw()
 endfunction
 let g:hardtime_default_on = 1
 let g:hardtime_maxcount = 2
-
+highlight MyGroup ctermfg=yellow
+match MyGroup /<++>/

@@ -4,6 +4,8 @@
 !.vim
 !.vim/colors
 !.vim/spell
+!.vim/snippets
+!.vim/snippets/*
 !.vim/spell/*.add
 !.vim/colors/*
 !.bashrc
