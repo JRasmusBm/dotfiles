@@ -49,6 +49,7 @@ set t_Co=256
 " Vundle
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
+Plugin 'AndrewRadev/splitjoin.vim'
 Plugin 'Konfekt/FastFold'
 Plugin 'Latex-Text-Formatter'
 Plugin 'tmhedberg/SimpylFold'
@@ -192,13 +193,13 @@ if 'VIRTUAL_ENV' in os.environ:
   execfile(activate_this, dict(__file__=activate_this))
 EOF
 " Mappings
-inoremap ;g <Esc>/\v\<\+\+\><CR>:noh<CR>4s
-nnoremap <Leader>g /\v\<\+\+\><CR>:noh<CR>4s
-set timeoutlen=300 ttimeoutlen=0
-autocmd FileType python source ~/.vim/snippets/python.vim
-autocmd FileType html,javascript,typescript source ~/.vim/snippets/html.vim
-" Leader
 let mapleader = ";"
+inoremap ;dd /\v\<\+\+\>:nohdd
+nnoremap ;dd /\v\<\+\+\>:nohdd
+inoremap ;g /\v\<\+\+\>:noh4s
+nnoremap <Leader>g /\v\<\+\+\>:noh4s
+set timeoutlen=300 ttimeoutlen=0
+" Leader
 nnoremap <C-s> <C-a>
 " fzf
 nnoremap <Leader>ff :Files .<CR>
@@ -224,7 +225,7 @@ nnoremap <leader>s  :call VMATH_Analyse()<CR>
 vnoremap <leader>s  y:call VMATH_Analyse()<CR>
 nnoremap <leader>ce :setlocal spell spelllang=en_us<CR>
 nnoremap <leader>cc :set nospell<CR>
-nnoremap <leader>r !!sh<CR>
+nnoremap <leader>rc !!sh<CR>
 nnoremap <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
 nnoremap <Leader>i ^]
 nnoremap <Leader>, ~
@@ -362,3 +363,10 @@ let g:hardtime_default_on = 1
 let g:hardtime_maxcount = 2
 highlight MyGroup ctermfg=yellow
 match MyGroup /<++>/
+autocmd FileType python source ~/.vim/snippets/python.vim
+autocmd FileType html,javascript,typescript source ~/.vim/snippets/html.vim
+autocmd FileType html,javascript,typescript,css source ~/.vim/snippets/css.vim
+autocmd FileType markdown source ~/.vim/snippets/markdown.vim
+autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
+autocmd FileType javascript,typescript source ~/.vim/snippets/javascript.vim
+autocmd FileType typescript source ~/.vim/snippets/typescript.vim
