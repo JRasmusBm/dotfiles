@@ -33,6 +33,7 @@ set textwidth=79
 set formatoptions=qrn1jo
 set colorcolumn=+1
 set signcolumn=yes
+set viewoptions=cursor,folds,slash,unix
 set hidden
 " netrw
 let g:netrw_bufsettings = 'noma nomod nu nobl nowrap ro'
@@ -49,6 +50,7 @@ set t_Co=256
 " Vundle
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
 call vundle#begin()
+Plugin 'mileszs/ack.vim'
 Plugin 'AndrewRadev/splitjoin.vim'
 Plugin 'Konfekt/FastFold'
 Plugin 'Latex-Text-Formatter'
@@ -65,9 +67,11 @@ Plugin 'tmhedberg/matchit'
 Plugin 'OmniSharp/omnisharp-vim'
 Plugin 'powerline/powerline'
 Plugin 'edkolev/promptline.vim'
+"Plugin 'vim-scripts/searchfold.vim'
 Plugin 'mtscout6/syntastic-local-eslint.vim'
 Plugin 'alessioalex/syntastic-local-tslint.vim'
 Plugin 'vim-syntastic/syntastic'
+Plugin 'vim-scripts/restore_view.vim'
 Plugin 'Ron89/thesaurus_query.vim'
 Plugin 'edkolev/tmuxline.vim'
 Plugin 'Quramy/tsuquyomi'
@@ -158,7 +162,7 @@ let g:livepreview_previewer = 'mupdf'
 let g:livepreview_previewer = 'pdflatex'
 let g:syntastic_tex_checkers = ["lacheck", "chktex"]
 autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
-autocmd Filetype plaintex,context,tex nnoremap <c-p> <ESC>:LLPStartPreview<CR>
+autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<CR>
 " C#
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 let g:OmniSharp_timeout = 1
@@ -173,7 +177,6 @@ let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
 let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
 let g:tsuquyomi_disable_quickfix = 1
 " Markdown
-
 let vim_markdown_preview_hotkey='<C-p>'
 let vim_markdown_preview_browser='Google Chrome'
 let vim_markdown_preview_github=1
@@ -194,10 +197,13 @@ if 'VIRTUAL_ENV' in os.environ:
 EOF
 " Mappings
 let mapleader = ";"
-inoremap ;dd /\v\<\+\+\>:nohdd
-nnoremap ;dd /\v\<\+\+\>:nohdd
-inoremap ;g /\v\<\+\+\>:noh4s
-nnoremap <Leader>g /\v\<\+\+\>:noh4s
+nmap ö ;
+inoremap ;dd :call DeleteMarkerRow(1)
+inoremap ;dm :call DeleteMarker(1)
+nnoremap ;dd :call DeleteMarkerRow(1)
+nnoremap ;dm :call DeleteMarker(1)
+inoremap ;g :call ForwardMarker(1)
+nnoremap <Leader>g :call ForwardMarker(1)
 set timeoutlen=300 ttimeoutlen=0
 " Leader
 nnoremap <C-s> <C-a>
@@ -221,16 +227,17 @@ nnoremap <Leader>fp :Filetypes<CR>
 " Source
 vnoremap <leader>S y:@"<CR>
 nnoremap <leader>S ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
-nnoremap <leader>s  :call VMATH_Analyse()<CR>
-vnoremap <leader>s  y:call VMATH_Analyse()<CR>
+nnoremap <leader>st  :call VMATH_Analyse()<CR>
+vnoremap <leader>st  y:call VMATH_Analyse()<CR>
 nnoremap <leader>ce :setlocal spell spelllang=en_us<CR>
+nnoremap <leader>cv :setlocal spell spelllang=sv<CR>
 nnoremap <leader>cc :set nospell<CR>
 nnoremap <leader>rc !!sh<CR>
 nnoremap <Leader>a :set invcursorline<cr>:set invcursorcolumn<cr>
 nnoremap <Leader>i ^]
 nnoremap <Leader>, ~
 nnoremap <Leader>d :Ex<CR>
-nnoremap <Leader>b :%!xxd<cr>
+nnoremap <Leader>bf :%!xxd<cr>
 nnoremap <Leader>ws :%s/ $//g<cr>:noh
 nnoremap <Leader>wl :v/\S/d<cr>:noh
 nnoremap <Leader>n :call QuitNetrw()<cr>
@@ -243,7 +250,7 @@ nnoremap <Leader>n :call QuitNetrw()<cr>
  nmap <leader>h :bprevious<CR>
  "Close the current buffer and move to the previous one
  " This replicates the idea of closing a tab
- nmap <leader>bq :bp <BAR> bd #<CR>
+ nmap <leader>bd :bp <BAR> bd #<CR>
  "Show all open buffers and their status
  nmap <leader>bl :ls<CR>
 " Dotfiles
@@ -272,11 +279,14 @@ autocmd FileType python nnoremap <buffer> <F9> :w<cr> :exec "!python" shellescap
 " C#
 autocmd FileType cs nnoremap <buffer> <F9> :exec "!dotnet run" <cr>
 " Searching in file
+nnoremap <C-O> <C-O>zz
+nnoremap <C-I> <C-I>zz
 nnoremap n nzzzv
 nnoremap N Nzzzv
 vnoremap n nzzzv
 vnoremap N Nzzzv
 " Other remaps
+inoremap ;sy b:ThesaurusQueryReplaceCurrentWord<CR>
 nnoremap <Leader>j :m+<CR>==
 nnoremap <Leader>k :m--<CR>==
 vnoremap <Leader>j :m '>+1<CR>gv=gv
@@ -331,11 +341,6 @@ let g:perl_fold_blocks = 1
 let g:r_syntax_folding = 1
 let g:rust_fold = 1
 let g:php_folding = 1
-augroup AutoSaveFolds
-  autocmd!
-  autocmd BufWinLeave *.* mkview
-  autocmd BufWinEnter *.* silent loadview
-augroup END
 " Flag unneccesary whitespace 
 au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
 " Resize splits
@@ -361,6 +366,36 @@ function! QuitNetrw()
 endfunction
 let g:hardtime_default_on = 1
 let g:hardtime_maxcount = 2
+function! BackwardMarker(n)
+  if a:n > 0
+    execute "normal! ?<++> "  . a:n . "n\"_d4l"
+  else 
+    execute "normal! ?<++>\"_d4l"
+  endif
+  execute "startinsert"
+endfunction
+function! ForwardMarker(n)
+  if a:n > 1
+    execute "normal! /<++> "  . (a:n - 1) . "n\"_d4l"
+  else 
+    execute "normal! /<++>\"_d4l"
+  endif
+  execute "startinsert"
+endfunction
+function! DeleteMarker(n)
+  if a:n > 1
+    execute "normal! /<++> "  . (a:n - 1) . "n\"_d4l"
+  else 
+    execute "normal! /<++>\"_d4l"
+  endif
+endfunction
+function! DeleteMarkerRow(n)
+  if a:n > 1
+    execute "normal! /<++> "  . (a:n - 1) . "n\"_dd"
+  else 
+    execute "normal! /<++>\"_dd"
+  endif
+endfunction
 highlight MyGroup ctermfg=yellow
 match MyGroup /<++>/
 autocmd FileType python source ~/.vim/snippets/python.vim
@@ -370,3 +405,5 @@ autocmd FileType markdown source ~/.vim/snippets/markdown.vim
 autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
 autocmd FileType javascript,typescript source ~/.vim/snippets/javascript.vim
 autocmd FileType typescript source ~/.vim/snippets/typescript.vim
+autocmd FileType vim source ~/.vim/snippets/vim.vim
+nnoremap <Leader>es :Files ~/.vim/snippets/<CR>

@@ -1,8 +1,8 @@
 "Function Definition
-inoremap ;fd <++>Odef <++>:<++>?<++>n4s
+inoremap ;fd <++>Odef <++>:<++>:call BackwardMarker(2)
 "Class Definition
-inoremap ;cd <++>Oclass <++>:<++>?<++>n4s
+inoremap ;cd <++>Oclass <++>:<++>:call BackwardMarker(2)
 "Print
-inoremap ;pr <++>Oprint(<++>)?<++>4s
+inoremap ;pr <++>Oprint(<++>):call BackwardMarker(1)
 "Dunder Declaration
-inoremap ;dd <++>Odef __<++>__(self, <++>):<++>?<++>2n4s
+inoremap ;dd <++>Odef __<++>__(self, <++>):<++>:call BackwardMarker(3)

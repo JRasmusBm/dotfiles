@@ -1,18 +1,20 @@
 " Styled component
-inoremap ;sc <++>O`Oconst <++> = styled.<++>`	<++>?<++>2n:noh4s
+inoremap ;sc <++>O`Oconst <++> = styled.<++>`	<++>:call BackwardMarker(2)
 " Imports
-inoremap ;ia <++>Oimport * as <++> from "<++>";?<++>:nohn4s
-inoremap ;ir <++>Oimport * as React from "react";/<++>:noh4s
-inoremap ;in <++>Oimport { <++> } from "<++>";?<++>n:noh4s
-inoremap ;id <++>Oimport <++> from "<++>";?<++>n:noh4s
+inoremap ;ia <++>Oimport * as <++> from "<++>";:call BackwardMarker(1)
+inoremap ;ir <++>Oimport * as React from "react";:call ForwardMarker(1)
+inoremap ;in <++>Oimport { <++> } from "<++>";:call BackwardMarker(1)
+
+inoremap ;id <++>Oimport <++> from "<++>";:call BackwardMarker(1)
+
 " Exports
-inoremap ;en <++>O}O	<++>Oexport {/<++>:noh4s
-inoremap ;ed <++>Oexport default <++>;?<++>:noh4s
+inoremap ;en <++>O}O	<++>Oexport {:call ForwardMarker(1)
+inoremap ;ed <++>Oexport default <++>;:call BackwardMarker(0)
 " React Component
 inoremap ;rc <++>O}O	<++>O
-      \class <++> extends React.Component {?<++>:noh4s
+      \class <++> extends React.Component {:call BackwardMarker(0)
 inoremap ;rr <++>O}O	<++>O
-      \render() {/<++>:noh4s
+      \render() {:call ForwardMarker(1)
 inoremap ;rf import * as React from "react";
  \import styled from "styled-components";
  \const View = styled.div``;

@@ -1,6 +1,6 @@
 " CSS Attribute
-inoremap ;sa <++>O<++>: <++>;?<++>:nohn4s
+inoremap ;sa <++>O<++>: <++>;:call BackwardMarker(2)
 " CSS Width
-inoremap ;sw <++>Owidth: <++>;?<++>:noh4s
+inoremap ;sw <++>Owidth: <++>;:call BackwardMarker(1)
 " CSS Rule
-inoremap ;sr <++>O}O<++> {	<++>?<++>:nohn4s
+inoremap ;sr <++>O}O<++> {	<++>:call BackwardMarker(2)

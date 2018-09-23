@@ -1,11 +1,10 @@
 " Tag
-inoremap ;tg <++>O<<++> <++>/>?<++>:nohn4s
+inoremap ;tg <++>O<<++> <++>/>:call BackwardMarker(2)
 " Close Tag
-inoremap ;ct T<ye/<++>n4s0?<++>4s
+inoremap ;ct T<ye/<++>n4s0:call BackwardMarker(1)
 " Open Tag
-inoremap ;ot <++>O</<++>>O<<++> <++>>	<++>?<++>2n:noh4s
+inoremap ;ot <++>O</<++>>O<<++> <++>>	<++>:call BackwardMarker(3)
 " Plain Tag Argument
-inoremap ;ap <++>="<++>" <++>?<++>2n:noh4s
+inoremap ;ap <++>="<++>" <++>:call BackwardMarker(3)
 " JSX Tag Argument
-inoremap ;aj <++>={<++>} <++>?<++>2n:noh4s
-
+inoremap ;aj <++>={<++>} <++>:call BackwardMarker(3)
