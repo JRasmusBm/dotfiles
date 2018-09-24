@@ -1,5 +1,5 @@
 " Setup {{{
-set g:name="Rasmus Bergström"
+let g:name="Rasmus Bergström"
 syntax enable
 set nocompatible
 set shell=/bin/zsh
