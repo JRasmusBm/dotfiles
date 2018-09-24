@@ -1,4 +1,4 @@
-" Setup {{{
+" Setup {{{{{{
 let g:name="Rasmus Bergström"
 syntax enable
 set nocompatible
@@ -9,72 +9,14 @@ set noswapfile
 set fileformat=unix
 set hidden
 set modelines=0
-set timeoutlen=300 ttimeoutlen=0
 set viewoptions=cursor,folds,slash,unix
-" }}}
-
-" Search {{{
 set hlsearch
 set showmatch
 set ignorecase
 set smartcase
 set incsearch
-" }}}
-
-" Layout {{{
-colorscheme afterglow
-set background=dark
-set relativenumber
-set number
-set showcmd
-set list
-set listchars=tab:>-
-set signcolumn=yes
-set ruler
-
-" Error Styling{{{
-highlight Error ctermfg=darkred ctermbg=NONE
-
-" Spelling {{{
-highlight SpellBad ctermfg=darkred ctermbg=NONE
-highlight SpellCap ctermfg=darkred ctermbg=NONE
-highlight SpellLocal ctermfg=darkred ctermbg=NONE
-highlight SpellRare ctermfg=darkred ctermbg=NONE
-"}}}
-
-" Syntastic {{{
-highlight SyntasticError ctermfg=darkred
-highlight SyntasticWarning ctermfg=darkyellow
-highlight SyntasticErrorSign ctermfg=darkred
-highlight SyntasticWarningSign ctermfg=darkyellow
-" }}}
-" }}}
-" General {{{
-set omnifunc=syntaxcomplete#Complete
-set completeopt=longest,menuone,preview
-set splitbelow
-set noshowmatch
-" }}}
-
-" Airline {{{
-let g:airline#extensions#tabline#enabled = 1
-let airline#extensions#syntastic#error_symbol = 'E:'
-let airline#extensions#syntastic#stl_format_err = '%E{[%e(#%fe)]}'
-let airline#extensions#syntastic#warning_symbol = 'W:'
-let airline#extensions#syntastic#stl_format_warn = '%W{[%w(#%fw)]}'
-" }}}
-
-" TmuxLine {{{
-let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
-" }}}
-
-" PromptLine {{{
-let g:promptline_theme = 'airline'
-set laststatus=2
-set t_Co=256
-" }}}
-
-" }}}
+set timeoutlen=300 ttimeoutlen=0
+" }}}}}}
 
 " Plugins {{{
 
@@ -143,6 +85,69 @@ let g:netrw_bufsettings = 'noma nomod nu nobl nowrap ro'
 let g:netrw_menu = 0
 let g:netrw_banner = 0
 " }}}
+
+" Hardtime {{{
+let g:hardtime_default_on = 1
+let g:hardtime_maxcount = 2
+"}}}
+
+" }}}
+
+" Layout {{{
+colorscheme afterglow
+set background=dark
+set relativenumber
+set number
+set showcmd
+set list
+set listchars=tab:>-
+set signcolumn=yes
+set ruler
+
+" Error Styling{{{
+highlight Error ctermfg=darkred ctermbg=NONE
+highlight BadWhitespace ctermbg=darkred
+
+" Spelling {{{
+highlight SpellBad ctermfg=darkred ctermbg=NONE
+highlight SpellCap ctermfg=darkred ctermbg=NONE
+highlight SpellLocal ctermfg=darkred ctermbg=NONE
+highlight SpellRare ctermfg=darkred ctermbg=NONE
+"}}}
+
+" Syntastic {{{
+highlight SyntasticError ctermfg=darkred
+highlight SyntasticWarning ctermfg=darkyellow
+highlight SyntasticErrorSign ctermfg=darkred
+highlight SyntasticWarningSign ctermfg=darkyellow
+" }}}
+" }}}
+
+" General {{{
+set omnifunc=syntaxcomplete#Complete
+set completeopt=longest,menuone,preview
+set splitbelow
+set noshowmatch
+" }}}
+
+" Airline {{{
+let g:airline#extensions#tabline#enabled = 1
+let airline#extensions#syntastic#error_symbol = 'E:'
+let airline#extensions#syntastic#stl_format_err = '%E{[%e(#%fe)]}'
+let airline#extensions#syntastic#warning_symbol = 'W:'
+let airline#extensions#syntastic#stl_format_warn = '%W{[%w(#%fw)]}'
+" }}}
+
+" TmuxLine {{{
+let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
+" }}}
+
+" PromptLine {{{
+let g:promptline_theme = 'airline'
+set laststatus=2
+set t_Co=256
+" }}}
+
 " }}}
 
 " Formatting {{{
@@ -163,7 +168,6 @@ set fo+=tc
 set fo-=l
 " }}}
 
-
 " Language Specific {{{
 
 " clang {{{
@@ -176,6 +180,29 @@ let g:clang_format#style_options = {
             \ "Standard" : "C++11" }
 autocmd FileType c,cpp,objc nnoremap <buffer><Leader>p :<C-u>ClangFormat<CR>
 autocmd FileType c,cpp,objc vnoremap <buffer><Leader>p :ClangFormat<CR>
+au BufRead,BufNewFile *.c,*.h match BadWhitespace /\s\+$/
+" }}}
+
+" Python {{{
+au BufRead,BufNewFile *.py,*.pyw match BadWhitespace /\s\+$/
+" }}}
+
+" Git Commit {{{
+au FileType gitcommit set textwidth=72
+" }}}
+
+" NonVim Files {{{
+au BufRead *.pdf sil exe "!chr " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
+"}}}
+
+" WebAssembly {{{
+autocmd BufNewFile,BufRead *.wast call WasmSetOptions() WasmSetOptions()
+function! WasmSetOptions()
+  set softtabstop=0
+  set expandtab
+  set tabstop=2
+  set shiftwidth=2
+endfunction
 " }}}
 
 " vim {{{
@@ -216,8 +243,6 @@ au BufRead, BufNewFile *.j let comment=";"
 let g:livepreview_previewer = 'mupdf'
 let g:livepreview_previewer = 'pdflatex'
 let g:syntastic_tex_checkers = ["lacheck", "chktex"]
-autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
-autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<CR>
 " }}}
 
 " C# {{{
@@ -237,15 +262,12 @@ let g:tsuquyomi_disable_quickfix = 1
 " }}}
 
 " Markdown {{{
-let vim_markdown_preview_hotkey='<C-p>'
 let vim_markdown_preview_browser='Google Chrome'
 let vim_markdown_preview_github=1
 let vim_markdown_preview_toggle=1
 " }}}
 
 " Python {{{
-highlight BadWhitespace ctermbg=darkred
-autocmd FileType python :nnoremap <leader>p :call Yapf()<CR>
 let g:yapf_style = "pep8"
 let g:ycm_python_binary_path = '/usr/bin/python3.6'
 let python_highlight_all=1
@@ -367,11 +389,6 @@ nnoremap <leader>st  :call VMATH_Analyse()<CR>
 vnoremap <leader>st  y:call VMATH_Analyse()<CR>
 " }}}
 " }}}
-nnoremap <Leader>ac :set invcursorline<cr>:set invcursorcolumn<cr>
-nnoremap <Leader>d :Ex<CR>
-nnoremap <Leader>bf :%!xxd<cr>
-nnoremap <Leader>ws :%s/ $//g<cr>:noh
-nnoremap <Leader>wl :v/\S/d<cr>:noh
 
 " Buffer Navigation {{{
  nmap <leader>T :enew<cr>
@@ -404,12 +421,23 @@ nnoremap d<C-l> <C-w>l<C-w>c
 " }}}
 
 " FileType Specific {{{
+
 " Typescript {{{
 autocmd FileType typescript nmap <buffer> <Leader>r <Plug>(TsuquyomiRenameSymbol)
 nnoremap <leader>cp :SyntasticCheck<cr>
 " }}}
 
+" Markdown {{{
+let vim_markdown_preview_hotkey='<C-p>'
+" }}}
+
+" Latex {{{
+autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
+autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<CR>
+" }}}
+
 " Python {{{
+autocmd FileType python :nnoremap <leader>p :call Yapf()<CR>
 autocmd FileType python nnoremap <buffer> <F9> :w<cr> :exec "!python" shellescape(@%, 1)<cr>
 " }}}
 
@@ -427,8 +455,7 @@ vnoremap n nzzzv
 vnoremap N Nzzzv
 " }}}
 
-" Move {{{
-
+" Move line {{{
 nnoremap <Leader>j :m+<CR>==
 nnoremap <Leader>k :m--<CR>==
 vnoremap <Leader>j :m '>+1<CR>gv=gv
@@ -482,6 +509,11 @@ command! Delview call MyDeleteView()
 nnoremap <C-s> <C-a>
 nnoremap <leader>rc !!sh<CR>
 nnoremap K kJ
+nnoremap <Leader>ac :set invcursorline<cr>:set invcursorcolumn<cr>
+nnoremap <Leader>d :Ex<CR>
+nnoremap <Leader>bf :%!xxd<cr>
+nnoremap <Leader>ws :%s/ $//g<cr>:noh
+nnoremap <Leader>wl :v/\S/d<cr>:noh
 " }}}
 " }}}
 
@@ -505,28 +537,6 @@ let g:rust_fold = 1
 let g:php_folding = 1
 " }}}
 
-" Flag unneccesary whitespace {{{
-au BufRead,BufNewFile *.py,*.pyw,*.c,*.h match BadWhitespace /\s\+$/
-" }}}
-
 " Resize splits {{{
 au VimResized * exe "normal! \<c-w>="
-au FileType gitcommit set tw=72
 " }}}
-
-" NonVim Files {{{
-au BufRead *.pdf sil exe "!chr " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
-autocmd BufNewFile,BufRead *.wast call WasmSetOptions() WasmSetOptions()
-function! WasmSetOptions()
-  set softtabstop=0
-  set expandtab
-  set tabstop=2
-  set shiftwidth=2
-endfunction
-"}}}
-
-" Hardtime {{{
-let g:hardtime_default_on = 1
-let g:hardtime_maxcount = 2
-"}}}
-
