@@ -56,6 +56,7 @@ Plugin 'tpope/vim-endwise'
 Plugin 'nvie/vim-flake8'
 Plugin 'tpope/vim-fugitive'
 Plugin 'airblade/vim-gitgutter'
+Plugin 'jparise/vim-graphql'
 Plugin 'takac/vim-hardtime'
 Plugin 'ivanov/vim-ipython'
 Plugin 'pangloss/vim-javascript'
@@ -208,6 +209,11 @@ endfunction
 " vim {{{
 autocmd FileType vim setlocal foldmethod=marker
 " }}}
+
+" Markdown
+autocmd FileType markdown set tabstop=4
+autocmd FileType markdown set shiftwidth=4
+autocmd FileType markdown set softtabstop=4
 
 " }}}
 
