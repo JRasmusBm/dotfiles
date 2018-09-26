@@ -9,3 +9,4 @@ inoremap ;rf import * as React from "react";
  \}
  \}
  \export default <++>;
+inoremap ;if interface <++> {<++>}<++>:call BackwardMarker(3)
