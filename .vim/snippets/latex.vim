@@ -11,12 +11,14 @@ inoremap ;h3 I<++>OO\subsubsection{<++>}\label{sec:<++>}:call BackwardMarker
 
 inoremap ;qu I<++>OO\end{quote}O\begin{quote} 
 
-inoremap ;so I<++>OO\end{thebibliography}O\begin{thebibliography}{<++>}<++>:call BackwardMarker(2)
-inoremap ;si I<++>OO\bibitem{<++>}<++>:call BackwardMarker(2)
+inoremap ;sl I<++>OO\end{thebibliography}O\begin{thebibliography}{<++>}<++>:call BackwardMarker(2)
+inoremap ;si O<++>OO\bibitem{<++>}<++>:call BackwardMarker(2)
+inoremap ;so ~\cite{<++>} <++>:call BackwardMarker(2)
 
-inoremap ;ci ~\cite{<++>} <++>:call BackwardMarker(2)
+inoremap ;ci \mintinline{<++>}{<++>} <++>:call BackwardMarker(3)
+inoremap ;cb \begin{figure}\centering\begin{minted}{<++>}<++>\end{minted}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(5)
 
-inoremap ;im I<++>OO\end{figure}O\caption{\label{fig:<++>}<++>}>>O\includegraphics{<++>}O\begin{figure}<<:call ForwardMarker(1)
+inoremap ;im \begin{figure}\centering\includegraphics{<++>}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(4)
 inoremap ;pk \usepackage{<++>} <++>:call BackwardMarker(2)
 
 inoremap ;rf ~\ref{<++>} <++>:call BackwardMarker(2)
