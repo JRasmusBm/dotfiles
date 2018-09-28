@@ -351,6 +351,8 @@ inoremap ;dd :call DeleteMarkerRow(1)
 inoremap ;dm :call DeleteMarker(1)
 nnoremap ;dd :call DeleteMarkerRow(1)
 nnoremap ;dm :call DeleteMarker(1)
+inoremap ;G :call BackwardMarker(1)
+nnoremap <Leader>G :call BackwardMarker(1)
 inoremap ;g :call ForwardMarker(1)
 nnoremap <Leader>g :call ForwardMarker(1)
 " }}}
