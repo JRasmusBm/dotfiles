@@ -214,7 +214,6 @@ autocmd FileType vim setlocal foldmethod=marker
 autocmd FileType markdown set tabstop=4
 autocmd FileType markdown set shiftwidth=4
 autocmd FileType markdown set softtabstop=4
-
 " }}}
 
 " }}}
@@ -430,7 +429,6 @@ nnoremap d<C-l> <C-w>l<C-w>c
 
 " Typescript {{{
 autocmd FileType typescript nmap <buffer> <Leader>r <Plug>(TsuquyomiRenameSymbol)
-nnoremap <leader>cp :SyntasticCheck<cr>
 " }}}
 
 " Markdown {{{
@@ -439,6 +437,7 @@ let vim_markdown_preview_hotkey='<C-p>'
 
 " Latex {{{
 autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
+autocmd Filetype plaintex,context,tex vnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
 autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<CR>
 " }}}
 
@@ -520,6 +519,8 @@ nnoremap <Leader>d :Ex<CR>
 nnoremap <Leader>bf :%!xxd<cr>
 nnoremap <Leader>ws :%s/ $//g<cr>:noh
 nnoremap <Leader>wl :v/\S/d<cr>:noh
+nnoremap <leader>cp :SyntasticCheck<cr>
+nnoremap <leader>pp :SyntasticToggleMode<cr>
 " }}}
 " }}}
 
