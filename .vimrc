@@ -22,8 +22,7 @@ set timeoutlen=300 ttimeoutlen=0
 
 " Plug {{{
 
-set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
-call plug#begin('.vim/plugged')
+call plug#begin('~/.local/share/nvim/plugged')
 Plug 'mileszs/ack.vim'
 Plug 'AndrewRadev/splitjoin.vim'
 Plug 'Konfekt/FastFold'
@@ -45,7 +44,6 @@ Plug 'vim-scripts/indentpython.vim'
 Plug 'othree/javascript-libraries-syntax.vim'
 Plug 'tmhedberg/matchit'
 Plug 'OmniSharp/omnisharp-vim'
-Plug 'powerline/powerline'
 Plug 'edkolev/promptline.vim'
 Plug 'mtscout6/syntastic-local-eslint.vim'
 Plug 'alessioalex/syntastic-local-tslint.vim'
@@ -72,10 +70,10 @@ Plug 'mxw/vim-jsx'
 Plug 'xuhdev/vim-latex-live-preview'
 Plug 'JamshedVesuna/vim-markdown-preview'
 Plug 'sickill/vim-pasta'
-Plug 'prettier/vim-prettier', { 'do': 'yarn install' }
+Plug 'prettier/vim-prettier', { 'do': 'npm install' }
 Plug 'tpope/vim-repeat'
 Plug 'zhimsel/vim-stay'
-Plug 'styled-components/vim-styled-components'
+Plug 'styled-components/vim-styled-components', { 'branch': 'main' }
 Plug 'tpope/vim-surround'
 Plug 'heavenshell/vim-tslint-config'
 Plug 'ianks/vim-tsx'
@@ -85,7 +83,7 @@ Plug 'rhysd/vim-wasm'
 Plug 'mindriot101/vim-yapf'
 Plug 'Shougo/vimproc.vim'
 Plug 'VundleVim/Vundle.vim'
-call plug#end()            " required
+call plug#end()
 " }}}
 
 " netrw {{{
@@ -102,6 +100,7 @@ let g:hardtime_maxcount = 2
 " }}}
 
 " Layout {{{
+set t_Co=256
 colorscheme jellybeans
 set termguicolors
 set background=dark
@@ -112,6 +111,7 @@ set list
 set listchars=tab:>-
 set signcolumn=yes
 set ruler
+set laststatus=2
 
 " Error Styling{{{
 highlight Error ctermfg=darkred ctermbg=NONE
@@ -141,6 +141,7 @@ set noshowmatch
 
 " Airline {{{
 let g:airline#extensions#tabline#enabled = 1
+let g:airline_exclude_previous=0
 let airline#extensions#syntastic#error_symbol = 'E:'
 let airline#extensions#syntastic#stl_format_err = '%E{[%e(#%fe)]}'
 let airline#extensions#syntastic#warning_symbol = 'W:'
@@ -152,8 +153,6 @@ let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
 " }}}
 
 " PromptLine {{{
-set laststatus=2
-set t_Co=256
 " }}}
 
 " }}}
@@ -240,11 +239,6 @@ let g:syntastic_error_symbol = "\u2717"
 let g:syntastic_warning_symbol = "\u2717"
 " }}}
 
-" YCM {{{
-let g:ycm_server_log_level = "debug"
-let g:ycm_filetype_blacklist = { "vim": 1 }
-" }}}
-
 " FileTypes {{{
 
 " Jasmin {{{
@@ -281,7 +275,6 @@ let vim_markdown_preview_toggle=1
 
 " Python {{{
 let g:yapf_style = "pep8"
-let g:ycm_python_binary_path = '/usr/bin/python3.6'
 let python_highlight_all=1
 py << EOF
 import os
@@ -304,7 +297,6 @@ nmap ö ;
 " }}}
 
 " Snippets {{{
-
 highlight MyGroup ctermfg=yellow
 match MyGroup /<++>/
 nnoremap <Leader>es :Files ~/.vim/snippets/<CR>
