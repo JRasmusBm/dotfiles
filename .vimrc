@@ -96,6 +96,7 @@ let g:hardtime_maxcount = 2
 
 " Layout {{{
 colorscheme afterglow
+set termguicolors
 set background=dark
 set relativenumber
 set number
@@ -407,6 +408,7 @@ vnoremap <leader>st  y:call VMATH_Analyse()<CR>
 
 " Dotfiles {{{
 :command! Vrc e ~/.vimrc
+:command! Nrc e ~/.config/nvim/init.vim
 :command! Brc e ~/.bashrc
 :command! Zrc e ~/.zshrc
 :command! Zenv e ~/.zshenv
