@@ -113,8 +113,10 @@ fi
 
 export EDITOR="$VISUAL"
 
+d="$HOME/.dircolors"
+test -r $d && eval "$(dircolors -b $d)"
 # Promptline
-source ~/.shell_prompt.sh
+source ~/.promptline.sh
 
 stty -ixon
 

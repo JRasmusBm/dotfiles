@@ -20,65 +20,72 @@ set timeoutlen=300 ttimeoutlen=0
 
 " Plugins {{{
 
-" Vundle {{{
+" Plug {{{
+
 set rtp+=~/.vim/bundle/Vundle.vim " Runtimepath
-call vundle#begin()
-Plugin 'mileszs/ack.vim'
-Plugin 'AndrewRadev/splitjoin.vim'
-Plugin 'Konfekt/FastFold'
-Plugin 'Latex-Text-Formatter'
-Plugin 'tmhedberg/SimpylFold'
-Plugin 'Valloric/YouCompleteMe'
-Plugin 'jiangmiao/auto-pairs'
-Plugin 'easymotion/vim-easymotion'
-Plugin 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plugin 'junegunn/fzf.vim'
-Plugin 'gregsexton/gitv'
-Plugin 'vim-scripts/indentpython.vim'
-Plugin 'othree/javascript-libraries-syntax.vim'
-Plugin 'tmhedberg/matchit'
-Plugin 'OmniSharp/omnisharp-vim'
-Plugin 'powerline/powerline'
-Plugin 'edkolev/promptline.vim'
-Plugin 'mtscout6/syntastic-local-eslint.vim'
-Plugin 'alessioalex/syntastic-local-tslint.vim'
-Plugin 'vim-syntastic/syntastic'
-Plugin 'Ron89/thesaurus_query.vim'
-Plugin 'edkolev/tmuxline.vim'
-Plugin 'Quramy/tsuquyomi'
-Plugin 'leafgarland/typescript-vim'
-Plugin 'vim-airline/vim-airline'
-Plugin 'vim-airline/vim-airline-themes'
-Plugin 'rhysd/vim-clang-format'
-Plugin 'tpope/vim-commentary'
-Plugin 'hail2u/vim-css3-syntax'
-Plugin 'tpope/vim-endwise'
-Plugin 'nvie/vim-flake8'
-Plugin 'tpope/vim-fugitive'
-Plugin 'airblade/vim-gitgutter'
-Plugin 'jparise/vim-graphql'
-Plugin 'takac/vim-hardtime'
-Plugin 'ivanov/vim-ipython'
-Plugin 'pangloss/vim-javascript'
-Plugin 'elzr/vim-json'
-Plugin 'mxw/vim-jsx'
-Plugin 'xuhdev/vim-latex-live-preview'
-Plugin 'JamshedVesuna/vim-markdown-preview'
-Plugin 'sickill/vim-pasta'
-Plugin 'prettier/vim-prettier', { 'do': 'yarn install' }
-Plugin 'tpope/vim-repeat'
-Plugin 'zhimsel/vim-stay'
-Plugin 'styled-components/vim-styled-components'
-Plugin 'tpope/vim-surround'
-Plugin 'heavenshell/vim-tslint-config'
-Plugin 'ianks/vim-tsx'
-Plugin 'tpope/vim-unimpaired'
-Plugin 'nixon/vim-vmath'
-Plugin 'rhysd/vim-wasm'
-Plugin 'mindriot101/vim-yapf'
-Plugin 'Shougo/vimproc.vim'
-Plugin 'VundleVim/Vundle.vim'
-call vundle#end()            " required
+call plug#begin('.vim/plugged')
+Plug 'mileszs/ack.vim'
+Plug 'AndrewRadev/splitjoin.vim'
+Plug 'Konfekt/FastFold'
+Plug 'vim-scripts/Latex-Text-Formatter'
+Plug 'tmhedberg/SimpylFold'
+if has('nvim')
+  Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+else
+  Plug 'Shougo/deoplete.nvim'
+  Plug 'roxma/nvim-yarp'
+  Plug 'roxma/vim-hug-neovim-rpc'
+endif
+Plug 'jiangmiao/auto-pairs'
+Plug 'easymotion/vim-easymotion'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
+Plug 'gregsexton/gitv'
+Plug 'vim-scripts/indentpython.vim'
+Plug 'othree/javascript-libraries-syntax.vim'
+Plug 'tmhedberg/matchit'
+Plug 'OmniSharp/omnisharp-vim'
+Plug 'powerline/powerline'
+Plug 'edkolev/promptline.vim'
+Plug 'mtscout6/syntastic-local-eslint.vim'
+Plug 'alessioalex/syntastic-local-tslint.vim'
+Plug 'vim-syntastic/syntastic'
+Plug 'Ron89/thesaurus_query.vim'
+Plug 'edkolev/tmuxline.vim'
+Plug 'Quramy/tsuquyomi'
+Plug 'leafgarland/typescript-vim'
+Plug 'vim-airline/vim-airline'
+Plug 'vim-airline/vim-airline-themes'
+Plug 'rhysd/vim-clang-format'
+Plug 'tpope/vim-commentary'
+Plug 'hail2u/vim-css3-syntax'
+Plug 'tpope/vim-endwise'
+Plug 'nvie/vim-flake8'
+Plug 'tpope/vim-fugitive'
+Plug 'airblade/vim-gitgutter'
+Plug 'jparise/vim-graphql'
+Plug 'takac/vim-hardtime'
+Plug 'ivanov/vim-ipython'
+Plug 'pangloss/vim-javascript'
+Plug 'elzr/vim-json'
+Plug 'mxw/vim-jsx'
+Plug 'xuhdev/vim-latex-live-preview'
+Plug 'JamshedVesuna/vim-markdown-preview'
+Plug 'sickill/vim-pasta'
+Plug 'prettier/vim-prettier', { 'do': 'yarn install' }
+Plug 'tpope/vim-repeat'
+Plug 'zhimsel/vim-stay'
+Plug 'styled-components/vim-styled-components'
+Plug 'tpope/vim-surround'
+Plug 'heavenshell/vim-tslint-config'
+Plug 'ianks/vim-tsx'
+Plug 'tpope/vim-unimpaired'
+Plug 'nixon/vim-vmath'
+Plug 'rhysd/vim-wasm'
+Plug 'mindriot101/vim-yapf'
+Plug 'Shougo/vimproc.vim'
+Plug 'VundleVim/Vundle.vim'
+call plug#end()            " required
 " }}}
 
 " netrw {{{
@@ -95,7 +102,7 @@ let g:hardtime_maxcount = 2
 " }}}
 
 " Layout {{{
-colorscheme afterglow
+colorscheme jellybeans
 set termguicolors
 set background=dark
 set relativenumber
@@ -145,7 +152,6 @@ let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
 " }}}
 
 " PromptLine {{{
-let g:promptline_theme = 'airline'
 set laststatus=2
 set t_Co=256
 " }}}
