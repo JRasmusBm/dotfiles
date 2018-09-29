@@ -103,7 +103,14 @@ export PROJECT_HOME=$HOME/Envs
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Set default editor
-export VISUAL=vim
+if type "nvim" &> /dev/null;
+then
+  export VISUAL="nvim"
+  alias "vim"="nvim"
+else
+  export VISUAL="vim"
+fi
+
 export EDITOR="$VISUAL"
 
 # Promptline
