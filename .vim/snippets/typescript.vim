@@ -1,4 +1,4 @@
-inoremap ;rf import * as React from "react";
+inoremap <buffer> ;rf import * as React from "react";
  \import styled from "styled-components";
  \interface Props {<++>}
  \interface State {<++>}
@@ -9,4 +9,4 @@ inoremap ;rf import * as React from "react";
  \}
  \}
  \export default <++>;
-inoremap ;if interface <++> {<++>}<++>:call BackwardMarker(3)
+inoremap <buffer> ;if interface <++> {<++>}<++>:call BackwardMarker(3)

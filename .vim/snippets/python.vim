@@ -1,8 +1,8 @@
 "Function Definition
-inoremap ;fd <++>Odef <++>:<++>:call BackwardMarker(2)
+inoremap <buffer> ;fd <++>Odef <++>:<++>:call BackwardMarker(2)
 "Class Definition
-inoremap ;cd <++>Oclass <++>:<++>:call BackwardMarker(2)
+inoremap <buffer> ;cd <++>Oclass <++>:<++>:call BackwardMarker(2)
 "Print
-inoremap ;pr <++>Oprint(<++>):call BackwardMarker(1)
+inoremap <buffer> ;pr <++>Oprint(<++>):call BackwardMarker(1)
 "Dunder Declaration
-inoremap ;dd <++>Odef __<++>__(self, <++>):<++>:call BackwardMarker(3)
+inoremap <buffer> ;dd <++>Odef __<++>__(self, <++>):<++>:call BackwardMarker(3)

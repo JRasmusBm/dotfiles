@@ -17,3 +17,7 @@
 !.bash_profile
 !.vimrc
 !.gitignore
+!.config
+!.config/nvim/
+!.config/nvim/*
+!.config/nvim/**/*
