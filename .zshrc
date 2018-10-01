@@ -92,6 +92,7 @@ export ANDROID_HOME=$HOME/Android/Sdk
 PATH=$PATH:$ANDROID_HOME/tools
 PATH=$PATH:$ANDROID_HOME/platform-tools
 PATH=$PATH:/opt/gradle/gradle-4.5/bin
+PATH=$PATH:$HOME/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
 
 # Virtualenvs

@@ -30,7 +30,10 @@ Plug 'vim-scripts/Latex-Text-Formatter'
 Plug 'tmhedberg/SimpylFold'
 if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
+  Plug 'cyansprite/deoplete-omnisharp' , {'do': './install.sh'}
+  Plug 'zchee/deoplete-jedi'
 else
+  Plug 'OmniSharp/omnisharp-vim'
   Plug 'Shougo/deoplete.nvim'
   Plug 'roxma/nvim-yarp'
   Plug 'roxma/vim-hug-neovim-rpc'
@@ -43,7 +46,6 @@ Plug 'gregsexton/gitv'
 Plug 'vim-scripts/indentpython.vim'
 Plug 'othree/javascript-libraries-syntax.vim'
 Plug 'tmhedberg/matchit'
-Plug 'OmniSharp/omnisharp-vim'
 Plug 'edkolev/promptline.vim'
 Plug 'mtscout6/syntastic-local-eslint.vim'
 Plug 'alessioalex/syntastic-local-tslint.vim'
@@ -253,7 +255,12 @@ let g:syntastic_tex_checkers = ["lacheck", "chktex"]
 
 " C# {{{
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
-let g:OmniSharp_timeout = 1
+if has('nvim')
+  let g:deoplete_omnisharp_exe_path   = get(g:, "deoplete_omnisharp_exe_path", '~/.local/share/nvim/plugged/deoplete-omnisharp/omnisharp-server/OmniSharp/bin/Debug/OmniSharp.exe')
+  let g:deoplete_omnisharp_port   = get(g:, "deoplete_omnisharp_port", 9999)
+else
+  let g:OmniSharp_timeout = 1
+endif
 " }}}
 
 " Javascript {{{
