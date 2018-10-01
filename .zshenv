@@ -1,3 +1,6 @@
+if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
+  source "${VIRTUAL_ENV}/bin/activate"
+fi
 # Aliases
 alias "translate"="python3.6 ~/1_programming/active/learning/scraping/wikipedia-translator.py"
 alias "update-mouse"="sudo modprobe -r psmouse && sudo modprobe psmouse"
