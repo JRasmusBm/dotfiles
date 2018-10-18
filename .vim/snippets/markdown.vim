@@ -1,7 +1,7 @@
 inoremap <buffer> ;bl * 	<++><++><<$:call BackwardMarker(2)
 inoremap <buffer> ;nl 1.	<++><++><<$:call BackwardMarker(2)
-inoremap <buffer> ;nn ?^ *[0-9]:nohyy}kpWc$
-inoremap <buffer> ;bn ?^ *\* :nohyy}kpWc$
+inoremap <buffer> ;nn ?^ *[0-9]:nohyy0}PWc$
+inoremap <buffer> ;bn ?^ *\* :nohyy0}PWc$
 inoremap <buffer> ;h1 I<++>OO# $a
 inoremap <buffer> ;h2 I<++>OO## $a
 inoremap <buffer> ;h3 I<++>OO### $a
