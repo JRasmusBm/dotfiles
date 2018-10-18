@@ -24,3 +24,5 @@ inoremap <buffer> ;rf import * as React from "react";
  \}
  \}
  \export default <++>;:call BackwardMarker(2)
+inoremap <buffer> ;of <++>: <++>,<++>:call BackwardMarker(3) 
+inoremap <buffer> ;cu const {<++> } = <++>;<++>:call BackwardMarker(3) 
