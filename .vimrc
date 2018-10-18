@@ -26,12 +26,13 @@ call plug#begin('~/.local/share/nvim/plugged')
 Plug 'mileszs/ack.vim'
 Plug 'AndrewRadev/splitjoin.vim'
 Plug 'Konfekt/FastFold'
-Plug 'vim-scripts/Latex-Text-Formatter'
+Plug 'jrasmusbm/Latex-Text-Formatter'
 Plug 'tmhedberg/SimpylFold'
 if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-  Plug 'cyansprite/deoplete-omnisharp' , {'do': './install.sh'}
   Plug 'zchee/deoplete-jedi'
+  Plug 'HerringtonDarkholme/yats.vim'
+  Plug 'mhartington/nvim-typescript', {'do': './install.sh'}
 else
   Plug 'OmniSharp/omnisharp-vim'
   Plug 'Shougo/deoplete.nvim'
@@ -228,6 +229,10 @@ autocmd FileType markdown set softtabstop=4
 
 " Syntax Checking & completion {{{
 
+" Deoplete {{{
+let g:deoplete#enable_at_startup = 1
+"}}}
+
 " Syntastic {{{
 let g:syntastic_always_populate_loc_list = 1
 let g:syntastic_auto_loc_list = 1
@@ -256,8 +261,6 @@ let g:syntastic_tex_checkers = ["lacheck", "chktex"]
 " C# {{{
 let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
 if has('nvim')
-  let g:deoplete_omnisharp_exe_path   = get(g:, "deoplete_omnisharp_exe_path", '~/.local/share/nvim/plugged/deoplete-omnisharp/omnisharp-server/OmniSharp/bin/Debug/OmniSharp.exe')
-  let g:deoplete_omnisharp_port   = get(g:, "deoplete_omnisharp_port", 9999)
 else
   let g:OmniSharp_timeout = 1
 endif
@@ -407,7 +410,7 @@ vnoremap <leader>st  y:call VMATH_Analyse()<CR>
  nmap <leader>T :enew<cr>
  nmap <leader>l :bnext<CR>
  nmap <leader>h :bprevious<CR>
- nmap <leader>bd :bp <BAR> bd #<CR>
+ nmap <leader>bd :bp! <BAR> bd #<CR>
  nmap <leader>bl :ls<CR>
  " }}}
 
@@ -452,7 +455,7 @@ autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<C
 
 " Python {{{
 autocmd FileType python :nnoremap <leader>p :call Yapf()<CR>
-autocmd FileType python nnoremap <buffer> <F9> :w<cr> :exec "!python" shellescape(@%, 1)<cr>
+autocmd FileType python nnoremap <buffer>  :w<cr> :exec "!python" shellescape(@%, 1)<cr>
 " }}}
 
 " C# {{{
