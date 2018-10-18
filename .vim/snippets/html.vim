@@ -1,9 +1,14 @@
 " Tag
-inoremap <buffer> ;tg <++>O<<++> <++>/>:call BackwardMarker(2)
+inoremap <buffer> ;tg <<++> />	<++>:call BackwardMarker(2)
 " Close Tag
-inoremap <buffer> ;ct T<ye/<++>n4s0:call BackwardMarker(1)
-" Open Tag
-inoremap <buffer> ;ot <++>O</<++>>O<<++> <++>>	<++>:call BackwardMarker(3)
+function! CloseTag()
+  let save_pos = getpos(".")
+  execute "normal! T<ye/<\/<++>>" . 
+        \":call ForwardMarker(1)0"
+  call setpos('.', save_pos)
+endfunction
+inoremap <buffer> ;ct :call CloseTag()
+inoremap <buffer> ;ot <<++>>	<++></<++>><++>:call BackwardMarker(4)
 " Plain Tag Argument
 inoremap <buffer> ;ap <++>="<++>" <++>:call BackwardMarker(3)
 " JSX Tag Argument
