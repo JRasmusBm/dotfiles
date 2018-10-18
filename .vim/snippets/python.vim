@@ -1,5 +1,5 @@
 "Function Definition
-inoremap <buffer> ;fd <++>Odef <++>:<++>:call BackwardMarker(2)
+inoremap <buffer> ;fd def <++>(<++>):<++><++><<:call BackwardMarker(3)
 "Class Definition
 inoremap <buffer> ;cd <++>Oclass <++>:<++>:call BackwardMarker(2)
 "Print
