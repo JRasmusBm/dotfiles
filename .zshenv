@@ -27,3 +27,11 @@ alias "wat-desugar"="~/wabt/bin/wat-desugar"
 alias "wat2wasm"="~/wabt/bin/wat2wasm"
 alias "zshrc"="vim ~/.zshrc"
 alias "zshenv"="vim ~/.zshenv"
+function anki() {
+  directory=$(pwd)
+  file="$directory"/"$1"
+  echo File: "$file"
+  cd ~/.anki
+  pipenv run python anki.py "$file" "$2"
+  cd "$directory"
+}
