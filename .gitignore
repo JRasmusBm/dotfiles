@@ -21,5 +21,8 @@
 !.gitignore
 !.config
 !.config/nvim/
-!.config/nvim/*
-!.config/nvim/**/*
+!.config/nvim/colors/
+!.config/nvim/colors/*
+!.config/nvim/spell/
+!.config/nvim/spell/*
+!.config/nvim/init.vim
