@@ -10,33 +10,41 @@ inoremap <buffer> ;h1 I<++>OO\section{<++>}\label{sec:<++>}:call BackwardMar
 inoremap <buffer> ;h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
 inoremap <buffer> ;h3 I<++>OO\subsubsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
      
+inoremap <buffer> ;tg \begin{<++>}<++>\end{<++>}<++>:call BackwardMarker(4) 
+inoremap <buffer> ;ct yi{:call ForwardMarker(2)":call BackwardMarker(1) 
 
-inoremap <buffer> ;t1 \begin{table}\centering\begin{tabular}{\| c \|} 
-      \<++>\end{tabular}\caption{\label{tab:<++>} <++>}\end{table}
+inoremap <buffer> ;t1 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}\begin{tabular}{\| c \|} 
+      \<++>\end{tabular}\end{table}
       \<++>:call BackwardMarker(4)
-inoremap <buffer> ;t2 \begin{table}\centering\begin{tabular}{\| c \| c \|} 
+inoremap <buffer> ;t2 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}\begin{tabular}{\| c \| c \|} 
       \<++> & <++>\end{tabular}
-      \\caption{\label{tab:<++>} <++>}\end{table}
+      \\end{table}
       \<++>:call BackwardMarker(5)
-inoremap <buffer> ;t3 \begin{table}\centering
+inoremap <buffer> ;t3 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \|} 
       \<++> & <++> & <++>\end{tabular}
-      \\caption{\label{tab:<++>} <++>}\end{table}
+      \\end{table}
       \<++>:call BackwardMarker(6)
-inoremap <buffer> ;t4 \begin{table}\centering
+inoremap <buffer> ;t4 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \| c \|} 
       \<++> & <++> & <++> & <++>\end{tabular}
-      \\caption{\label{tab:<++>} <++>}\end{table}
+      \\end{table}
       \<++>:call BackwardMarker(7)
-inoremap <buffer> ;t5 \begin{table}\centering
+inoremap <buffer> ;t5 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \| c \| c \|} 
       \<++> & <++> & <++> & <++> & <++>\end{tabular}
-      \\caption{\label{tab:<++>} <++>}\end{table}
+      \\end{table}
       \<++>:call BackwardMarker(8)
-inoremap <buffer> ;t6 \begin{table}\centering
+inoremap <buffer> ;t6 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \| c \| c \| c \|} 
       \<++> & <++> & <++> & <++> & <++> & <++>\end{tabular}
-      \\caption{\label{tab:<++>} <++>}\end{table}
+      \\end{table}
       \<++>:call BackwardMarker(9)
 inoremap <buffer> ;qu I<++>OO\end{quote}O\begin{quote} 
    
