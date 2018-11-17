@@ -346,13 +346,17 @@ endfunction
 
 " File Types {{{
 autocmd FileType python source ~/.vim/snippets/python.vim
-autocmd FileType html,javascript,typescript source ~/.vim/snippets/html.vim
-autocmd FileType html,javascript,typescript,css source ~/.vim/snippets/css.vim
+autocmd FileType html,htmldjango,javascript,typescript source ~/.vim/snippets/html.vim
+autocmd FileType html,htmldjango,javascript,typescript,css source ~/.vim/snippets/css.vim
 autocmd FileType markdown source ~/.vim/snippets/markdown.vim
 autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
 autocmd FileType javascript,typescript source ~/.vim/snippets/javascript.vim
 autocmd FileType typescript source ~/.vim/snippets/typescript.vim
 autocmd FileType vim source ~/.vim/snippets/vim.vim
+autocmd FileType vue source ~/.vim/snippets/vue.vim
+autocmd FileType vue source ~/.vim/snippets/javascript.vim
+autocmd FileType vue source ~/.vim/snippets/typescript.vim
+autocmd FileType vue source ~/.vim/snippets/html.vim
 " }}}
 
 " Movement {{{
@@ -454,7 +458,7 @@ autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<C
 " }}}
 
 " Python {{{
-autocmd FileType python :nnoremap <leader>p :call Yapf()<CR>
+autocmd FileType python :nnoremap <buffer> <leader>p :call Yapf()<CR>
 autocmd FileType python nnoremap <buffer>  :w<cr> :exec "!python" shellescape(@%, 1)<cr>
 " }}}
 
