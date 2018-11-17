@@ -26,3 +26,7 @@ inoremap <buffer> ;rf import * as React from "react";
  \export default <++>;:call BackwardMarker(2)
 inoremap <buffer> ;of <++>: <++>,<++>:call BackwardMarker(3) 
 inoremap <buffer> ;cu const {<++> } = <++>;<++>:call BackwardMarker(3) 
+inoremap <buffer> ;st JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
+inoremap <buffer> ;pr console.log(<++>);<++>:call BackwardMarker(2) 
+inoremap <buffer> ;od const <++> = {<++>}<++><<$:call BackwardMarker(3)
+inoremap <buffer> ;fd function(<++>) {<++>}<++><<$:call BackwardMarker(2)
