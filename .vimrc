@@ -83,7 +83,7 @@ Plug 'ianks/vim-tsx'
 Plug 'tpope/vim-unimpaired'
 Plug 'nixon/vim-vmath'
 Plug 'rhysd/vim-wasm'
-Plug 'mindriot101/vim-yapf'
+Plug 'ambv/black'
 Plug 'Shougo/vimproc.vim'
 Plug 'VundleVim/Vundle.vim'
 call plug#end()
@@ -284,7 +284,9 @@ let vim_markdown_preview_toggle=1
 " }}}
 
 " Python {{{
-let g:yapf_style = "pep8"
+let g:black_fast = 0
+let g:black_linelength = 76
+let g:black_skip_string_normalization = 0
 let python_highlight_all=1
 py << EOF
 import os
@@ -458,7 +460,7 @@ autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<C
 " }}}
 
 " Python {{{
-autocmd FileType python :nnoremap <buffer> <leader>p :call Yapf()<CR>
+autocmd FileType python :nnoremap <buffer> <leader>p :Black<CR>
 autocmd FileType python nnoremap <buffer>  :w<cr> :exec "!python" shellescape(@%, 1)<cr>
 " }}}
 
