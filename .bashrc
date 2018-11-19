@@ -116,6 +116,7 @@ alias l='ls -CF'
 alias "chr"="google-chrome"
 alias "commit"="git add --all && git commit"
 alias "co"="git add --all && git commit"
+alias "st"="clear; git status"
 alias "vimrc"="vim ~/.vimrc"
 alias "bashrc"="vim ~/.bashrc"
 alias "active"="cd ~/1_programming/active/"
@@ -162,3 +163,5 @@ PATH=$PATH:$ANDROID_HOME/platform-tools
 PATH=$PATH:/opt/gradle/gradle-4.5/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
 export PATH
+
+source ~/.promptline.sh

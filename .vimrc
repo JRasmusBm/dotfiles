@@ -159,9 +159,6 @@ let airline#extensions#syntastic#stl_format_warn = '%W{[%w(#%fw)]}'
 let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
 " }}}
 
-" PromptLine {{{
-" }}}
-
 " }}}
 
 " Formatting {{{
