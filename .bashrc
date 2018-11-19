@@ -146,6 +146,7 @@ alias "ph-frontend"="cd ~/3_work/jan/PhotoHistory/PhotoHistory.Web/js/ph-fronten
 alias "in4303"="cd ~/2_school/3_y/in4303/"
 alias "ward-council"="cd ~/5_church/meetings/ward_council"
 alias "south-pole"="ssh root@139.59.144.120"
+alias "python3"="python3.7"
 # powerline
 powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
