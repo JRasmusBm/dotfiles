@@ -149,7 +149,7 @@ alias "south-pole"="ssh root@139.59.144.120"
 powerline-daemon -q
 POWERLINE_BASH_CONTINUATION=1
 POWERLINE_BASH_SELECT=1
-export TERM="screen-256color"
+export TERM=xterm-256color
 if [ -f /usr/local/lib/python2.7/dist-packages/powerline/bindings/bash/powerline.sh ]; then
       source /usr/local/lib/python2.7/dist-packages/powerline/bindings/bash/powerline.sh
     fi

@@ -1,8 +1,17 @@
 #!/bin/bash
 
-git clone git@gist.github.com:d67c5c3efa1e6dbe17216fac9fd4adc8.git temp
-cd temp
-chmod +x gistfile.sh
-./gistfile.sh
-cd ..
-rm -rf temp
+if [ ! $(command -v vim >/dev/null) ] && 
+   [ ! $(echo "$(vim --version | head -1 | cut -d ' ' -f 5) >= 8.0" | bc -l) ] &&
+   [ ! $(vim --version | grep -c '+python') ];
+then
+ echo "Installing Vim 8.0..."
+ git clone git@gist.github.com:d67c5c3efa1e6dbe17216fac9fd4adc8.git temp
+ cd temp
+ chmod +x gistfile.sh
+ ./gistfile.sh
+ cd ..
+ rm -rf temp
+else
+  echo "Vim 8.0 is already installed"
+fi
+

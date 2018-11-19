@@ -1,8 +1,10 @@
 " Setup {{{{{{
 let g:name="Rasmus Bergström"
+set background=dark
+set termguicolors
 syntax enable
 set nocompatible
-set shell=/bin/zsh
+set shell=/bin/bash
 set mouse=a
 set encoding=utf-8
 set noswapfile
@@ -109,10 +111,7 @@ let g:hardtime_maxcount = 2
 " }}}
 
 " Layout {{{
-set t_Co=256
 colorscheme jellybeans
-set termguicolors
-set background=dark
 set relativenumber
 set number
 set showcmd
