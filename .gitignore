@@ -17,6 +17,7 @@
 !.zshenv
 !.tmux.conf
 !.bash_profile
+!.install_dependencies
 !.vimrc
 !.gitignore
 !.config

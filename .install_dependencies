@@ -1,0 +1,6 @@
+git clone git@gist.github.com:d67c5c3efa1e6dbe17216fac9fd4adc8.git temp
+cd temp
+chmod +x gistfile.sh
+./gistfile.sh
+cd ..
+rm -rf temp
