@@ -119,6 +119,7 @@ alias "co"="git add --all && git commit"
 alias "st"="clear; git status"
 alias "vimrc"="vim ~/.vimrc"
 alias "bashrc"="vim ~/.bashrc"
+alias "vim"=$(which vim)
 alias "active"="cd ~/1_programming/active/"
 alias "studio"="/usr/local/android-studio/bin/studio.sh"
 alias "app"="cd ~/1_programming/active/Spendy/"
