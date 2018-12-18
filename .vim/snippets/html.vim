@@ -3,7 +3,7 @@ inoremap <buffer> ;tg <<++> />	<++>:call BackwardMarker(2)
 " Close Tag
 function! CloseTag()
   let save_pos = getpos(".")
-  execute "normal! T<ye/<\/<++>>" . 
+  execute "normal! T<yt>/<\/<++>>" . 
         \":call ForwardMarker(1)0"
   call setpos('.', save_pos)
 endfunction
