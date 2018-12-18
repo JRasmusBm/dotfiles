@@ -1,5 +1,6 @@
 "Function Definition
 inoremap <buffer> ;fd def <++>(<++>):<++><++><<:call BackwardMarker(3)
+inoremap <buffer> ;fa <++>, <++>:call BackwardMarker(2) 
 "Class Definition
 inoremap <buffer> ;cd class <++>:<++><++><<:call BackwardMarker(2)
 "Print
