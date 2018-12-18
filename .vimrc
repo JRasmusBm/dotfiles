@@ -30,6 +30,10 @@ if empty(glob('~/.vim/autoload/plug.vim'))
 endif
 
 call plug#begin('~/.local/share/nvim/plugged')
+Plug 'jceb/vim-orgmode'
+Plug 'google/vim-maktaba'
+Plug 'google/vim-codefmt'
+Plug 'google/vim-glaive'
 Plug 'mileszs/ack.vim'
 Plug 'AndrewRadev/splitjoin.vim'
 Plug 'Konfekt/FastFold'
@@ -37,7 +41,7 @@ Plug 'jrasmusbm/Latex-Text-Formatter'
 Plug 'tmhedberg/SimpylFold'
 if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
-  Plug 'zchee/deoplete-jedi'
+  " Plug 'zchee/deoplete-jedi'
   Plug 'HerringtonDarkholme/yats.vim'
   Plug 'mhartington/nvim-typescript', {'do': './install.sh'}
 else
@@ -77,7 +81,7 @@ Plug 'ivanov/vim-ipython'
 Plug 'pangloss/vim-javascript'
 Plug 'elzr/vim-json'
 Plug 'mxw/vim-jsx'
-Plug 'xuhdev/vim-latex-live-preview'
+Plug 'xuhdev/vim-latex-live-preview', { 'for': 'tex' }
 Plug 'JamshedVesuna/vim-markdown-preview'
 Plug 'sickill/vim-pasta'
 Plug 'prettier/vim-prettier', { 'do': 'npm install' }
@@ -94,6 +98,7 @@ Plug 'ambv/black'
 Plug 'Shougo/vimproc.vim'
 Plug 'VundleVim/Vundle.vim'
 call plug#end()
+call glaive#Install()
 " }}}
 
 " netrw {{{
@@ -254,8 +259,8 @@ au BufRead, BufNewFile *.j let comment=";"
 " }}}
 
 " Latex {{{
-let g:livepreview_previewer = 'mupdf'
-let g:livepreview_previewer = 'pdflatex'
+let g:livepreview_engine = 'pdflatex'
+let g:livepreview_cursorhold_recompile = 0
 let g:syntastic_tex_checkers = ["lacheck", "chktex"]
 " }}}
 
@@ -348,12 +353,14 @@ endfunction
 " }}}
 
 " File Types {{{
+autocmd FileType sql source ~/.vim/snippets/sql.vim
 autocmd FileType python source ~/.vim/snippets/python.vim
 autocmd FileType html,htmldjango,javascript,typescript source ~/.vim/snippets/html.vim
 autocmd FileType html,htmldjango,javascript,typescript,css source ~/.vim/snippets/css.vim
+autocmd FileType java source ~/.vim/snippets/java.vim
 autocmd FileType markdown source ~/.vim/snippets/markdown.vim
 autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
-autocmd FileType javascript,typescript source ~/.vim/snippets/javascript.vim
+autocmd FileType javascript,typescript,json source ~/.vim/snippets/javascript.vim
 autocmd FileType typescript source ~/.vim/snippets/typescript.vim
 autocmd FileType vim source ~/.vim/snippets/vim.vim
 autocmd FileType vue source ~/.vim/snippets/vue.vim
@@ -457,12 +464,20 @@ let vim_markdown_preview_hotkey='<C-p>'
 " Latex {{{
 autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
 autocmd Filetype plaintex,context,tex vnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
-autocmd Filetype plaintex,context,tex nnoremap <Leader>o <ESC>:LLPStartPreview<CR>
+autocmd Filetype plaintex,context,tex nnoremap  <ESC>:LLPStartPreview<CR>
 " }}}
 
 " Python {{{
 autocmd FileType python :nnoremap <buffer> <leader>p :Black<CR>
 autocmd FileType python nnoremap <buffer>  :w<cr> :exec "!python" shellescape(@%, 1)<cr>
+" }}}
+
+" Shell {{{
+autocmd FileType sh,zsh nnoremap <buffer> <leader>p :FormatCode<cr>
+" }}}
+
+" Java {{{
+autocmd FileType java nnoremap <buffer> <leader>p :FormatCode<cr>
 " }}}
 
 " C# {{{
