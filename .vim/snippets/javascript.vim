@@ -28,5 +28,9 @@ inoremap <buffer> ;of <++>: <++>,<++>:call BackwardMarker(3)
 inoremap <buffer> ;cu const {<++> } = <++>;<++>:call BackwardMarker(3) 
 inoremap <buffer> ;st JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
 inoremap <buffer> ;pr console.log(<++>);<++>:call BackwardMarker(2) 
-inoremap <buffer> ;od const <++> = {<++>}<++><<$:call BackwardMarker(3)
+inoremap <buffer> ;vd const <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> ;fd function(<++>) {<++>}<++><<$:call BackwardMarker(2)
+
+inoremap <buffer> ;ti describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> ;tc it("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
+
