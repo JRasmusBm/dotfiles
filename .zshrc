@@ -23,6 +23,7 @@ antigen bundle command-not-found
 # Other Bundles
 antigen bundle colored-man-pages
 antigen bundle chrissicool/zsh-256color
+antigen bundle andrewferrier/fzf-z
 
 # # Syntax highlighting bundle.
 antigen bundle zsh-users/zsh-syntax-highlighting
@@ -122,3 +123,4 @@ source ~/.promptline.sh
 
 stty -ixon
 
+source ~/.z.sh
