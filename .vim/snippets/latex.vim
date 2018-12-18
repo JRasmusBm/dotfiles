@@ -4,7 +4,7 @@ inoremap <buffer> ;nn o\item
 inoremap <buffer> ;bn o\item  
        
 inoremap <buffer> ;em \emph{<++>} <++>:call BackwardMarker(2)
-inoremap <buffer> ;bf \textbf{<++>} <++>:call BackwardMarker(2) 
+inoremap <buffer> ;bo \textbf{<++>} <++>:call BackwardMarker(2) 
       
 inoremap <buffer> ;h1 I<++>OO\section{<++>}\label{sec:<++>}:call BackwardMarker(2)
 inoremap <buffer> ;h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
