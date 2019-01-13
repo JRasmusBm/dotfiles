@@ -31,6 +31,7 @@ inoremap <buffer> ;pr console.log(<++>);<++>:call BackwardMarker(2)
 inoremap <buffer> ;vd const <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> ;fd function(<++>) {<++>}<++><<$:call BackwardMarker(2)
 
+inoremap <buffer> ;tf beforeEach(done => {<++>done();});<++>:call BackwardMarker(2)
 inoremap <buffer> ;ti describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
-inoremap <buffer> ;tc it("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> ;tc it("<++>", async done => {<++>done();}) <++><<$:call BackwardMarker(3)
 

@@ -10,7 +10,7 @@ inoremap <buffer> ;h1 I<++>OO\section{<++>}\label{sec:<++>}:call BackwardMar
 inoremap <buffer> ;h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
 inoremap <buffer> ;h3 I<++>OO\subsubsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
      
-inoremap <buffer> ;tg \begin{<++>}<++>\end{<++>}<++>:call BackwardMarker(4) 
+inoremap <buffer> ;ot \begin{<++>}<++>\end{<++>}<++>:call BackwardMarker(4) 
 inoremap <buffer> ;ct yi{:call ForwardMarker(2)":call BackwardMarker(1) 
 
 inoremap <buffer> ;t1 \begin{table}\centering\caption{\label{tab:<++>} <++>}

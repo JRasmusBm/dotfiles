@@ -10,7 +10,6 @@ inoremap <buffer> ;rf import * as React from "react";
  \}
  \export default <++>;:call BackwardMarker(4)
 inoremap <buffer> ;if interface <++> {<++>}<++>:call BackwardMarker(3)
-inoremap <buffer> ;tf <++>: <++>;<++>:call BackwardMarker(3)
 inoremap <buffer> ;md <++>: (<++>) => <++> = (<++>) => {
       \<++>return <++>; }
       \<++>:call BackwardMarker(7)
