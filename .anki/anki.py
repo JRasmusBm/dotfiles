@@ -11,6 +11,7 @@ questions = ((question, next(paragraphs)) for question in paragraphs)
 
 pyautogui.hotkey("alt", "tab")
 
+time.sleep(1)
 for front, back in questions:
     pyautogui.hotkey("esc")
     pyautogui.typewrite("f")
