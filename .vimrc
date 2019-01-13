@@ -56,6 +56,8 @@ Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
 Plug 'gregsexton/gitv'
 Plug 'vim-scripts/indentpython.vim'
+Plug 'vim-scripts/Align'
+Plug 'b4b4r07/vim-sqlfmt'
 Plug 'othree/javascript-libraries-syntax.vim'
 Plug 'tmhedberg/matchit'
 Plug 'edkolev/promptline.vim'
@@ -70,6 +72,7 @@ Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'rhysd/vim-clang-format'
 Plug 'tpope/vim-commentary'
+Plug 'tpope/vim-dadbod'
 Plug 'hail2u/vim-css3-syntax'
 Plug 'tpope/vim-endwise'
 Plug 'nvie/vim-flake8'
@@ -201,6 +204,11 @@ au BufRead,BufNewFile *.c,*.h match BadWhitespace /\s\+$/
 
 " Python {{{
 au BufRead,BufNewFile *.py,*.pyw match BadWhitespace /\s\+$/
+" }}}
+
+" Python {{{
+let g:sqlfmt_command="sqlfmt"
+let g:sqlfmt_auto=0
 " }}}
 
 " Git Commit {{{
@@ -354,6 +362,7 @@ endfunction
 
 " File Types {{{
 autocmd FileType sql source ~/.vim/snippets/sql.vim
+autocmd FileType bib source ~/.vim/snippets/bib.vim
 autocmd FileType python source ~/.vim/snippets/python.vim
 autocmd FileType html,htmldjango,javascript,typescript source ~/.vim/snippets/html.vim
 autocmd FileType html,htmldjango,javascript,typescript,css source ~/.vim/snippets/css.vim
@@ -422,8 +431,6 @@ vnoremap <leader>st  y:call VMATH_Analyse()<CR>
 
 " Buffer Navigation {{{
  nmap <leader>T :enew<cr>
- nmap <leader>l :bnext<CR>
- nmap <leader>h :bprevious<CR>
  nmap <leader>bd :bp! <BAR> bd #<CR>
  nmap <leader>bl :ls<CR>
  " }}}
@@ -445,6 +452,10 @@ nnoremap c<C-j> :bel sp new<cr>
 nnoremap c<C-k> :abo sp new<cr>
 nnoremap c<C-h> :lefta vsp new<cr>
 nnoremap c<C-l> :rightb vsp new<cr>
+nnoremap m<C-j> :bel sp %<cr>
+nnoremap m<C-k> :abo sp %<cr>
+nnoremap m<C-h> :lefta vsp %<cr>
+nnoremap m<C-l> :rightb vsp %<cr>
 nnoremap d<C-j> <C-w>j<C-w>c
 nnoremap d<C-k> <C-w>k<C-w>c
 nnoremap d<C-h> <C-w>h<C-w>c
@@ -462,14 +473,22 @@ let vim_markdown_preview_hotkey='<C-p>'
 " }}}
 
 " Latex {{{
-autocmd Filetype plaintex,context,tex nnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
-autocmd Filetype plaintex,context,tex vnoremap <Leader>p <ESC>:call FormatLatexPar(0)<CR>
-autocmd Filetype plaintex,context,tex nnoremap  <ESC>:LLPStartPreview<CR>
+autocmd Filetype plaintex,context,tex nnoremap <buffer> <Leader>p <ESC>:call FormatLatexPar(0)<CR>
+autocmd Filetype plaintex,context,tex vnoremap <buffer> <Leader>p <ESC>:call FormatLatexPar(0)<CR>
+autocmd Filetype plaintex,context,tex nnoremap <buffer>  <ESC>:LLPStartPreview<CR>
 " }}}
 
 " Python {{{
 autocmd FileType python :nnoremap <buffer> <leader>p :Black<CR>
 autocmd FileType python nnoremap <buffer>  :w<cr> :exec "!python" shellescape(@%, 1)<cr>
+" }}}
+function! CleanUpBibReference() 
+
+endfunction
+autocmd FileType bib nnoremap <buffer> <leader>p :call CleanUpBibReference()<cr>
+
+" sql {{{
+autocmd FileType sql nnoremap <buffer> <leader>p :SQLFmt<cr>
 " }}}
 
 " Shell {{{
