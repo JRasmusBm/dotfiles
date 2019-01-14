@@ -87,7 +87,7 @@ Plug 'mxw/vim-jsx'
 Plug 'xuhdev/vim-latex-live-preview', { 'for': 'tex' }
 Plug 'JamshedVesuna/vim-markdown-preview'
 Plug 'sickill/vim-pasta'
-Plug 'prettier/vim-prettier', { 'do': 'npm install' }
+Plug 'w0rp/ale'
 Plug 'tpope/vim-repeat'
 Plug 'zhimsel/vim-stay'
 Plug 'styled-components/vim-styled-components', { 'branch': 'main' }
@@ -188,6 +188,12 @@ set fo-=l
 " }}}
 
 " Language Specific {{{
+
+autocmd BufReadPre,FileReadPre * let b:ale_fixers = { 
+      \ "*": ["remove_trailing_lines"],
+      \ "javascript": ["prettier", "eslint"],
+      \ "typescript": ["prettier", "tslint", "eslint"],
+      \ }
 
 " clang {{{
 let g:clang_format#style_options = {
@@ -564,6 +570,7 @@ command! Delview call MyDeleteView()
 "}}}
 
 " Other Mappings {{{
+nnoremap <leader>p :ALEFix
 nnoremap <C-s> <C-a>
 nnoremap <leader>rc !!sh<CR>
 nnoremap K kJ
