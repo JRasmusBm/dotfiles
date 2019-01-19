@@ -84,7 +84,6 @@ Plug 'ivanov/vim-ipython'
 Plug 'pangloss/vim-javascript'
 Plug 'elzr/vim-json'
 Plug 'mxw/vim-jsx'
-Plug 'xuhdev/vim-latex-live-preview', { 'for': 'tex' }
 Plug 'JamshedVesuna/vim-markdown-preview'
 Plug 'sickill/vim-pasta'
 Plug 'w0rp/ale'
@@ -189,11 +188,9 @@ set fo-=l
 
 " Language Specific {{{
 
-autocmd BufReadPre,FileReadPre * let b:ale_fixers = { 
-      \ "*": ["remove_trailing_lines"],
-      \ "javascript": ["prettier", "eslint"],
-      \ "typescript": ["prettier", "tslint", "eslint"],
-      \ }
+" bib {{{
+autocmd FileType bib let b:ale_fixers = ["bibclean"]
+" }}}
 
 " clang {{{
 let g:clang_format#style_options = {
@@ -273,9 +270,6 @@ au BufRead, BufNewFile *.j let comment=";"
 " }}}
 
 " Latex {{{
-let g:livepreview_engine = 'pdflatex'
-let g:livepreview_cursorhold_recompile = 0
-let g:syntastic_tex_checkers = ["lacheck", "chktex"]
 " }}}
 
 " C# {{{
@@ -287,20 +281,23 @@ endif
 " }}}
 
 " Javascript {{{
-let g:syntastic_javascript_checkers = ["eslint"]
+autocmd FileType javascript let b:ale_fixers = ["prettier", "eslint"]
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 " }}}
 
 " Typescript {{{
-let g:syntastic_typescript_checkers = ["tsuquyomi", "tslint"]
-let g:tslint_configs = [ 'tslint-config-standard', '~/2_school/3_y/2_lp/wheretrip/client/tslint.json' ]
-let g:tsuquyomi_disable_quickfix = 1
+autocmd FileType typescript let b:ale_fixers = ["prettier", "tslint"]
+" }}}
+
+" Vue {{{
+autocmd FileType vue let b:ale_fixers = ["prettier"]
 " }}}
 
 " Markdown {{{
 let vim_markdown_preview_browser='Google Chrome'
 let vim_markdown_preview_github=1
 let vim_markdown_preview_toggle=1
+autocmd FileType markdown let b:ale_fixers = ["prettier"]
 " }}}
 
 " Python {{{
@@ -488,10 +485,7 @@ autocmd Filetype plaintex,context,tex nnoremap <buffer>  <ESC>:LLPStartPreview<
 autocmd FileType python :nnoremap <buffer> <leader>p :Black<CR>
 autocmd FileType python nnoremap <buffer>  :w<cr> :exec "!python" shellescape(@%, 1)<cr>
 " }}}
-function! CleanUpBibReference() 
 
-endfunction
-autocmd FileType bib nnoremap <buffer> <leader>p :call CleanUpBibReference()<cr>
 
 " sql {{{
 autocmd FileType sql nnoremap <buffer> <leader>p :SQLFmt<cr>
@@ -570,6 +564,21 @@ command! Delview call MyDeleteView()
 "}}}
 
 " Other Mappings {{{
+function! CloseFolds()
+  let save_pos = getpos(".")
+  execute "normal! ggVGzC"
+  call setpos('.', save_pos)
+endfunction
+function! OpenFolds()
+  let save_pos = getpos(".")
+  execute "normal! ggVGzO"
+  call setpos('.', save_pos)
+endfunction
+nnoremap <leader>p :ALEFix
+nnoremap ]p :ALENext
+nnoremap [p :ALEPrevious
+nnoremap ;zc :call CloseFolds()
+nnoremap ;zo :call OpenFolds()
 nnoremap <leader>p :ALEFix
 nnoremap <C-s> <C-a>
 nnoremap <leader>rc !!sh<CR>
