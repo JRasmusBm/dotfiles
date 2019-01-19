@@ -1,5 +1,5 @@
 " Setup {{{{{{
-let g:name="Rasmus Bergström"
+let g:name='Rasmus Bergström'
 set background=dark
 set termguicolors
 syntax enable
@@ -131,13 +131,13 @@ set laststatus=2
 
 " Vimade {{{
 let g:vimade = {
-  \ "normalid": '',
-  \ "basefg": '',
-  \ "basebg": '',
-  \ "fadelevel": 0.8,
-  \ "colbufsize": 30,
-  \ "rowbufsize": 30,
-  \ "checkinterval": 32,
+  \ 'normalid': '',
+  \ 'basefg': '',
+  \ 'basebg': '',
+  \ 'fadelevel': 0.8,
+  \ 'colbufsize': 30,
+  \ 'rowbufsize': 30,
+  \ 'checkinterval': 32,
   \ }
 " }}}
 
@@ -177,7 +177,7 @@ let airline#extensions#syntastic#stl_format_warn = '%W{[%w(#%fw)]}'
 " }}}
 
 " TmuxLine {{{
-let airline#extensions#tmuxline#snapshot_file = "~/.tmux-status.conf"
+let airline#extensions#tmuxline#snapshot_file = '~/.tmux-status.conf'
 " }}}
 
 " }}}
@@ -203,17 +203,17 @@ set fo-=l
 " Language Specific {{{
 
 " bib {{{
-autocmd FileType bib let b:ale_fixers = ["bibclean"]
+autocmd FileType bib let b:ale_fixers = ['bibclean']
 " }}}
 
 " clang {{{
 let g:clang_format#style_options = {
-            \ "BasedOnStyle": "Google",
-            \ "ColumnLimit": 76,
-            \ "AccessModifierOffset" : -4,
-            \ "AllowShortIfStatementsOnASingleLine" : "true",
-            \ "AlwaysBreakTemplateDeclarations" : "true",
-            \ "Standard" : "C++11" }
+            \ 'BasedOnStyle': 'Google',
+            \ 'ColumnLimit': 76,
+            \ 'AccessModifierOffset' : -4,
+            \ 'AllowShortIfStatementsOnASingleLine' : 'true',
+            \ 'AlwaysBreakTemplateDeclarations' : 'true',
+            \ 'Standard' : 'C++11' }
 autocmd FileType c,cpp,objc nnoremap <buffer><Leader>p :<C-u>ClangFormat<CR>
 autocmd FileType c,cpp,objc vnoremap <buffer><Leader>p :ClangFormat<CR>
 au BufRead,BufNewFile *.c,*.h match BadWhitespace /\s\+$/
@@ -224,7 +224,7 @@ au BufRead,BufNewFile *.py,*.pyw match BadWhitespace /\s\+$/
 " }}}
 
 " Python {{{
-let g:sqlfmt_command="sqlfmt"
+let g:sqlfmt_command='sqlfmt'
 let g:sqlfmt_auto=0
 " }}}
 
@@ -233,7 +233,7 @@ au FileType gitcommit set textwidth=72
 " }}}
 
 " NonVim Files {{{
-au BufRead *.pdf sil exe "!chr " . shellescape(expand("%:p")) | bd | let &ft=&ft | redraw!
+au BufRead *.pdf sil exe '!chr ' . shellescape(expand('%:p')) | bd | let &ft=&ft | redraw!
 "}}}
 
 " WebAssembly {{{
@@ -273,21 +273,21 @@ let g:syntastic_aggregate_errors = 1
 let g:syntastic_enable_highlighting=1
 let g:syntastic_enable_signs=1
 let g:syntastic_aggregate_errors = 1
-let g:syntastic_error_symbol = "\u2717"
-let g:syntastic_warning_symbol = "\u2717"
+let g:syntastic_error_symbol = '\u2717'
+let g:syntastic_warning_symbol = '\u2717'
 " }}}
 
 " FileTypes {{{
 
 " Jasmin {{{
-au BufRead, BufNewFile *.j let comment=";"
+au BufRead, BufNewFile *.j let comment=';'
 " }}}
 
 " Latex {{{
 " }}}
 
 " C# {{{
-let g:syntastic_cs_checkers = ["syntax", "semantic", "issues"]
+let g:syntastic_cs_checkers = ['syntax', 'semantic', 'issues']
 if has('nvim')
 else
   let g:OmniSharp_timeout = 1
@@ -295,23 +295,23 @@ endif
 " }}}
 
 " Javascript {{{
-autocmd FileType javascript let b:ale_fixers = ["prettier", "eslint"]
+autocmd FileType javascript let b:ale_fixers = ['prettier', 'eslint']
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 " }}}
 
 " Typescript {{{
-autocmd FileType typescript let b:ale_fixers = ["prettier", "tslint"]
+autocmd FileType typescript let b:ale_fixers = ['prettier', 'tslint']
 " }}}
 
 " Vue {{{
-autocmd FileType vue let b:ale_fixers = ["prettier"]
+autocmd FileType vue let b:ale_fixers = ['prettier']
 " }}}
 
 " Markdown {{{
 let vim_markdown_preview_browser='Google Chrome'
 let vim_markdown_preview_github=1
 let vim_markdown_preview_toggle=1
-autocmd FileType markdown let b:ale_fixers = ["prettier"]
+autocmd FileType markdown let b:ale_fixers = ['prettier']
 " }}}
 
 " Python {{{
@@ -335,7 +335,7 @@ EOF
 " Mappings {{{
 
 " Leader {{{
-let mapleader = ";"
+let mapleader = ';'
 nmap ö ;
 " }}}
 
@@ -347,32 +347,32 @@ nnoremap <Leader>es :Files ~/.vim/snippets/<CR>
 " Helper Functions {{{
 function! BackwardMarker(n)
   if a:n > 0
-    execute "normal! ?<++> "  . a:n . "n\"_d4l"
+    execute 'normal! ?<++> '  . a:n . 'n\"_d4l'
   else
-    execute "normal! ?<++>\"_d4l"
+    execute 'normal! ?<++>\"_d4l'
   endif
-  execute "startinsert"
+  execute 'startinsert'
 endfunction
 function! ForwardMarker(n)
   if a:n > 1
-    execute "normal! /<++> "  . (a:n - 1) . "n\"_d4l"
+    execute 'normal! /<++> '  . (a:n - 1) . 'n\"_d4l'
   else
-    execute "normal! /<++>\"_d4l"
+    execute 'normal! /<++>\"_d4l'
   endif
-  execute "startinsert"
+  execute 'startinsert'
 endfunction
 function! DeleteMarker(n)
   if a:n > 1
-    execute "normal! /<++> "  . (a:n - 1) . "n\"_d4l"
+    execute 'normal! /<++> '  . (a:n - 1) . 'n\"_d4l'
   else
-    execute "normal! /<++>\"_d4l"
+    execute 'normal! /<++>\"_d4l'
   endif
 endfunction
 function! DeleteMarkerRow(n)
   if a:n > 1
-    execute "normal! /<++> "  . (a:n - 1) . "n\"_dd"
+    execute 'normal! /<++> '  . (a:n - 1) . 'n\"_dd'
   else
-    execute "normal! /<++>\"_dd"
+    execute 'normal! /<++>\"_dd'
   endif
 endfunction
 " }}}
@@ -497,7 +497,7 @@ autocmd Filetype plaintex,context,tex nnoremap <buffer>  <ESC>:LLPStartPreview<
 
 " Python {{{
 autocmd FileType python :nnoremap <buffer> <leader>p :Black<CR>
-autocmd FileType python nnoremap <buffer>  :w<cr> :exec "!python" shellescape(@%, 1)<cr>
+autocmd FileType python nnoremap <buffer>  :w<cr> :exec '!python' shellescape(@%, 1)<cr>
 " }}}
 
 
@@ -536,26 +536,26 @@ vnoremap <Leader>k :m '<-2<CR>gv=gv
 
 " Extended Text Objects {{{
 
-let pairs =   { "<bar>" : "<bar>",
-              \  ":" : ":" ,
-              \  "." : "." ,
-              \  "$" : "$" ,
-              \  "," : "," ,
-              \  "/" : "/" ,
-              \  "<" : ">" ,
-              \  "\\" : "\\",
-              \  "*" : "*" ,
-              \  "_" : "_" ,}
+let pairs =   { '<bar>' : '<bar>',
+              \  ':' : ':' ,
+              \  '.' : '.' ,
+              \  '$' : '$' ,
+              \  ',' : ',' ,
+              \  '/' : '/' ,
+              \  '<' : '>' ,
+              \  '\\' : '\\',
+              \  '*' : '*' ,
+              \  '_' : '_' ,}
 
 for [key, value] in items(pairs)
-  exe "nnoremap di".value." T".key."dt".value
-  exe "nnoremap da".value." F".key."df".value
-  exe "nnoremap ci".value." T".key."ct".value
-  exe "nnoremap ca".value." F".key."cf".value
-  exe "nnoremap yi".value." T".key."yt".value
-  exe "nnoremap ya".value." F".key."yf".value
-  exe "nnoremap vi".value." T".key."vt".value
-  exe "nnoremap va".value." F".key."vf".value
+  exe 'nnoremap di'.value.' T'.key.'dt'.value
+  exe 'nnoremap da'.value.' F'.key.'df'.value
+  exe 'nnoremap ci'.value.' T'.key.'ct'.value
+  exe 'nnoremap ca'.value.' F'.key.'cf'.value
+  exe 'nnoremap yi'.value.' T'.key.'yt'.value
+  exe 'nnoremap ya'.value.' F'.key.'yf'.value
+  exe 'nnoremap vi'.value.' T'.key.'vt'.value
+  exe 'nnoremap va'.value.' F'.key.'vf'.value
 endfor
 " }}}
 
@@ -572,20 +572,20 @@ function! MyDeleteView()
     " view directory
     let path = &viewdir.'/'.path
     call delete(path)
-    echo "Deleted: ".path
+    echo 'Deleted: '.path
 endfunction
 command! Delview call MyDeleteView()
 "}}}
 
 " Other Mappings {{{
 function! CloseFolds()
-  let save_pos = getpos(".")
-  execute "normal! ggVGzC"
+  let save_pos = getpos('.')
+  execute 'normal! ggVGzC'
   call setpos('.', save_pos)
 endfunction
 function! OpenFolds()
-  let save_pos = getpos(".")
-  execute "normal! ggVGzO"
+  let save_pos = getpos('.')
+  execute 'normal! ggVGzO'
   call setpos('.', save_pos)
 endfunction
 nnoremap <leader>fi :EnMasse
@@ -629,5 +629,5 @@ let g:php_folding = 1
 " }}}
 
 " Resize splits {{{
-au VimResized * exe "normal! \<c-w>="
+au VimResized * exe 'normal! \<c-w>='
 " }}}
