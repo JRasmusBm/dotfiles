@@ -45,6 +45,7 @@ if has('nvim')
   Plug 'HerringtonDarkholme/yats.vim'
   Plug 'mhartington/nvim-typescript', {'do': './install.sh'}
 else
+  Plug 'leafgarland/typescript-vim'
   Plug 'OmniSharp/omnisharp-vim'
   Plug 'Shougo/deoplete.nvim'
   Plug 'roxma/nvim-yarp'
@@ -67,7 +68,6 @@ Plug 'vim-syntastic/syntastic'
 Plug 'Ron89/thesaurus_query.vim'
 Plug 'edkolev/tmuxline.vim'
 Plug 'Quramy/tsuquyomi'
-Plug 'leafgarland/typescript-vim'
 Plug 'vim-airline/vim-airline'
 Plug 'vim-airline/vim-airline-themes'
 Plug 'rhysd/vim-clang-format'
