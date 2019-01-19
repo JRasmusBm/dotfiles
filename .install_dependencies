@@ -1,61 +1,54 @@
 #!/bin/bash
-# vim:foldmethod=marker
 
-# Install Python 3.7 {{{
+install_python() {
+  sudo apt-get install -y build-essential
+  sudo apt-get install -y checkinstall
+  sudo apt-get install -y libreadline-gplv2-dev
+  sudo apt-get install -y libncursesw5-dev
+  sudo apt-get install -y libssl-dev
+  sudo apt-get install -y libsqlite3-dev
+  sudo apt-get install -y tk-dev
+  sudo apt-get install -y libgdbm-dev
+  sudo apt-get install -y libc6-dev
+  sudo apt-get install -y libbz2-dev
+  sudo apt-get install -y zlib1g-dev
+  sudo apt-get install -y openssl
+  sudo apt-get install -y libffi-dev
+  sudo apt-get install -y python3-dev
+  sudo apt-get install -y python3-setuptools
+  sudo apt-get install -y wget
 
-# if type python3.7 &> /dev/null;
-# then
-#   echo "Python 3.7 already installed"
-# else
-#   echo "Installing Python 3.7..."
-#   # Install requirements
-#   sudo apt-get install -y build-essential
-#   sudo apt-get install -y checkinstall
-#   sudo apt-get install -y libreadline-gplv2-dev
-#   sudo apt-get install -y libncursesw5-dev
-#   sudo apt-get install -y libssl-dev
-#   sudo apt-get install -y libsqlite3-dev
-#   sudo apt-get install -y tk-dev
-#   sudo apt-get install -y libgdbm-dev
-#   sudo apt-get install -y libc6-dev
-#   sudo apt-get install -y libbz2-dev
-#   sudo apt-get install -y zlib1g-dev
-#   sudo apt-get install -y openssl
-#   sudo apt-get install -y libffi-dev
-#   sudo apt-get install -y python3-dev
-#   sudo apt-get install -y python3-setuptools
-#   sudo apt-get install -y wget
+  mkdir /tmp/Python37
+  cd /tmp/Python37
 
-#   # # Prepare to build
-#   mkdir /tmp/Python37
-#   cd /tmp/Python37
+  wget https://www.python.org/ftp/python/3.7.0/Python-3.7.0.tar.xz
+  tar xvf Python-3.7.0.tar.xz
+  cd /tmp/Python37/Python-3.7.0
+  ./configure
+  sudo make altinstall
+  sudo update-alternatives --install /usr/bin/python /usr/local/bin/python3.7
+}
 
-#   # # Pull down Python 3.7, build, and install
-#   wget https://www.python.org/ftp/python/3.7.0/Python-3.7.0.tar.xz
-#   tar xvf Python-3.7.0.tar.xz
-#   cd /tmp/Python37/Python-3.7.0
-#   ./configure
-#   sudo make altinstall
-#   sudo update-alternatives  --install /usr/bin/python /usr/local/bin/python3.7
-#   sudo update-alternatives  --set python /usr/local/bin/python3.7
-# fi
-# }}}
+install_nvim() {
+  git clone git@github.com:neovim/neovim.git
+  cd neovim
+  make CMAKE_BUILD_TYPE=RelWithDebInfo
+  sudo make install
+  cd ..
+  rm -rf neovim
+}
 
-# Install VIM {{{
-VIMVERSION=$(vim --version | head -1 | cut -d ' ' -f 5)
-
-if (( ${VIMVERSION:0:1} == 8 )); 
-then
-  echo "Vim 8.0 is already installed"
-else
-  echo "Installing Vim 8.0..."
+install_vim() {
+  VIMVERSION=$(vim --version | head -1 | cut -d ' ' -f 5)
   git clone https://gist.github.com/d67c5c3efa1e6dbe17216fac9fd4adc8.git temp
   cd temp
   chmod +x gistfile.sh
   ./gistfile.sh
   cd ..
   rm -rf temp
-fi
+}
 
-# }}}
-
+install_dependencies_fresh() {
+  install_nvim
+  install_python
+}

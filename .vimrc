@@ -39,6 +39,7 @@ Plug 'AndrewRadev/splitjoin.vim'
 Plug 'Konfekt/FastFold'
 Plug 'jrasmusbm/Latex-Text-Formatter'
 Plug 'tmhedberg/SimpylFold'
+Plug 'Olical/vim-enmasse'
 if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
   " Plug 'zchee/deoplete-jedi'
@@ -51,6 +52,7 @@ else
   Plug 'roxma/nvim-yarp'
   Plug 'roxma/vim-hug-neovim-rpc'
 endif
+Plug 'TaDaa/vimade'
 Plug 'jiangmiao/auto-pairs'
 Plug 'easymotion/vim-easymotion'
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
@@ -126,6 +128,18 @@ set listchars=tab:>-
 set signcolumn=yes
 set ruler
 set laststatus=2
+
+" Vimade {{{
+let g:vimade = {
+  \ "normalid": '',
+  \ "basefg": '',
+  \ "basebg": '',
+  \ "fadelevel": 0.8,
+  \ "colbufsize": 30,
+  \ "rowbufsize": 30,
+  \ "checkinterval": 32,
+  \ }
+" }}}
 
 " Error Styling{{{
 highlight Error ctermfg=darkred ctermbg=NONE
@@ -574,6 +588,7 @@ function! OpenFolds()
   execute "normal! ggVGzO"
   call setpos('.', save_pos)
 endfunction
+nnoremap <leader>fi :EnMasse
 nnoremap <leader>p :ALEFix
 nnoremap ]p :ALENext
 nnoremap [p :ALEPrevious
