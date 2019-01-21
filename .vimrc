@@ -3,7 +3,9 @@ let g:name='Rasmus Bergström'
 set background=dark
 set termguicolors
 syntax enable
-set nocompatible
+if !has('nvim') 
+  set nocompatible
+endif
 set mouse=a
 set encoding=utf-8
 set noswapfile
@@ -159,7 +161,7 @@ highlight SyntasticErrorSign ctermfg=darkred
 highlight SyntasticWarningSign ctermfg=darkyellow
 " }}}
 " }}}
-
+"
 " General {{{
 set omnifunc=syntaxcomplete#Complete
 set completeopt=longest,menuone,preview
@@ -347,32 +349,32 @@ nnoremap <Leader>es :Files ~/.vim/snippets/<CR>
 " Helper Functions {{{
 function! BackwardMarker(n)
   if a:n > 0
-    execute 'normal! ?<++> '  . a:n . 'n\"_d4l'
+    execute 'normal! ?<++> '  . a:n . 'n"_d4l'
   else
-    execute 'normal! ?<++>\"_d4l'
+    execute 'normal! ?<++>"_d4l'
   endif
   execute 'startinsert'
 endfunction
 function! ForwardMarker(n)
   if a:n > 1
-    execute 'normal! /<++> '  . (a:n - 1) . 'n\"_d4l'
+    execute 'normal! /<++> '  . (a:n - 1) . 'n"_4x'
   else
-    execute 'normal! /<++>\"_d4l'
+    execute 'normal! /<++>"_4x'
   endif
   execute 'startinsert'
 endfunction
 function! DeleteMarker(n)
   if a:n > 1
-    execute 'normal! /<++> '  . (a:n - 1) . 'n\"_d4l'
+    execute 'normal! /<++> '  . (a:n - 1) . 'n"_d4l'
   else
-    execute 'normal! /<++>\"_d4l'
+    execute 'normal! /<++>"_d4l'
   endif
 endfunction
 function! DeleteMarkerRow(n)
   if a:n > 1
-    execute 'normal! /<++> '  . (a:n - 1) . 'n\"_dd'
+    execute 'normal! /<++> '  . (a:n - 1) . 'n"_dd'
   else
-    execute 'normal! /<++>\"_dd'
+    execute 'normal! /<++>"_dd'
   endif
 endfunction
 " }}}
@@ -629,5 +631,5 @@ let g:php_folding = 1
 " }}}
 
 " Resize splits {{{
-au VimResized * exe 'normal! \<c-w>='
+autocmd VimResized * exe 'normal! \<c-w>='
 " }}}
