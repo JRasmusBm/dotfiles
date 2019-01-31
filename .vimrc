@@ -66,9 +66,6 @@ Plug 'b4b4r07/vim-sqlfmt'
 Plug 'othree/javascript-libraries-syntax.vim'
 Plug 'tmhedberg/matchit'
 Plug 'edkolev/promptline.vim'
-Plug 'mtscout6/syntastic-local-eslint.vim'
-Plug 'alessioalex/syntastic-local-tslint.vim'
-Plug 'vim-syntastic/syntastic'
 Plug 'Ron89/thesaurus_query.vim'
 Plug 'edkolev/tmuxline.vim'
 Plug 'Quramy/tsuquyomi'
@@ -136,7 +133,7 @@ let g:vimade = {
   \ 'normalid': '',
   \ 'basefg': '',
   \ 'basebg': '',
-  \ 'fadelevel': 0.8,
+  \ 'fadelevel': 0.7,
   \ 'colbufsize': 30,
   \ 'rowbufsize': 30,
   \ 'checkinterval': 32,
@@ -144,30 +141,16 @@ let g:vimade = {
 " }}}
 
 " Error Styling{{{
-highlight Error ctermfg=darkred ctermbg=NONE
-highlight BadWhitespace ctermbg=darkred
+highlight Error guifg=red guibg=NONE ctermfg=red ctermbg=NONE
+highlight BadWhitespace guibg=darkred ctermbg=darkred
+highlight Search guifg=yellow ctermfg=yellow
 
 " Spelling {{{
-highlight SpellBad ctermfg=darkred ctermbg=NONE
-highlight SpellCap ctermfg=darkred ctermbg=NONE
-highlight SpellLocal ctermfg=darkred ctermbg=NONE
-highlight SpellRare ctermfg=darkred ctermbg=NONE
+highlight SpellBad ctermfg=red guifg=red guibg=NONE ctermbg=NONE
+highlight SpellCap ctermfg=red guifg=red guibg=NONE ctermbg=NONE
+highlight SpellLocal ctermfg=red guifg=red guibg=NONE ctermbg=NONE
+highlight SpellRare ctermfg=red guifg=red guibg=NONE ctermbg=NONE
 "}}}
-
-" Syntastic {{{
-highlight SyntasticError ctermfg=darkred
-highlight SyntasticWarning ctermfg=darkyellow
-highlight SyntasticErrorSign ctermfg=darkred
-highlight SyntasticWarningSign ctermfg=darkyellow
-" }}}
-" }}}
-"
-" General {{{
-set omnifunc=syntaxcomplete#Complete
-set completeopt=longest,menuone,preview
-set splitbelow
-set noshowmatch
-" }}}
 
 " Airline {{{
 let g:airline#extensions#tabline#enabled = 1
@@ -266,19 +249,6 @@ autocmd FileType markdown set softtabstop=4
 let g:deoplete#enable_at_startup = 1
 "}}}
 
-" Syntastic {{{
-let g:syntastic_always_populate_loc_list = 1
-let g:syntastic_auto_loc_list = 1
-let g:syntastic_check_on_open = 1
-let g:syntastic_check_on_wq = 0
-let g:syntastic_aggregate_errors = 1
-let g:syntastic_enable_highlighting=1
-let g:syntastic_enable_signs=1
-let g:syntastic_aggregate_errors = 1
-let g:syntastic_error_symbol = '\u2717'
-let g:syntastic_warning_symbol = '\u2717'
-" }}}
-
 " FileTypes {{{
 
 " Jasmin {{{
@@ -346,7 +316,7 @@ nmap ö ;
 " }}}
 
 " Snippets {{{
-highlight MyGroup ctermfg=yellow
+highlight MyGroup ctermfg=yellow guifg=yellow
 match MyGroup /<++>/
 nnoremap <Leader>es :Files ~/.vim/snippets/<CR>
 
@@ -596,6 +566,7 @@ function! OpenFolds()
 endfunction
 nnoremap <leader>fi :EnMasse
 nnoremap <leader>p :ALEFix
+nnoremap <leader>cp :ALELint
 nnoremap ]p :ALENext
 nnoremap [p :ALEPrevious
 nnoremap ;zc :call CloseFolds()
@@ -609,8 +580,6 @@ nnoremap <Leader>d :Ex<CR>
 nnoremap <Leader>bf :%!xxd<cr>
 nnoremap <Leader>ws :%s/ $//g<cr>:noh
 nnoremap <Leader>wl :v/\S/d<cr>:noh
-nnoremap <leader>cp :SyntasticCheck<cr>
-nnoremap <leader>pp :SyntasticToggleMode<cr>
 " }}}
 " }}}
 
