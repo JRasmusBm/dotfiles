@@ -296,6 +296,10 @@ else
 endif
 " }}}
 
+" XML {{{
+autocmd FileType xml let b:ale_fixers = ['prettier']
+" }}}
+
 " Javascript {{{
 autocmd FileType javascript let b:ale_fixers = ['prettier', 'eslint']
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
