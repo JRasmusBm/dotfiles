@@ -394,6 +394,7 @@ autocmd FileType markdown source ~/.vim/snippets/markdown.vim
 autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
 autocmd FileType javascript,typescript,json source ~/.vim/snippets/javascript.vim
 autocmd FileType typescript source ~/.vim/snippets/typescript.vim
+autocmd FileType bash source ~/.vim/snippets/bash.vim
 autocmd FileType vim source ~/.vim/snippets/vim.vim
 autocmd FileType vue source ~/.vim/snippets/vue.vim
 autocmd FileType vue source ~/.vim/snippets/javascript.vim

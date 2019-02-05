@@ -26,7 +26,9 @@ antigen bundle chrissicool/zsh-256color
 antigen bundle andrewferrier/fzf-z
 
 # # Syntax highlighting bundle.
+antigen bundle agkozak/zsh-z
 antigen bundle zsh-users/zsh-syntax-highlighting
+antigen bundle zsh-users/zsh-autosuggestions
 
 # diff-so-fancy
 antigen bundle zdharma/zsh-diff-so-fancy
@@ -82,7 +84,6 @@ zstyle ':completion:*:*:kill:*:processes' list-colors '=(#b) #([0-9]#)*=0=01;31'
 zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 
 # Plugins
-source ~/.zsh/zsh-autosuggestions/zsh-autosuggestions.zsh
 bindkey '^ ' autosuggest-accept
 
 # WebAssembly
@@ -123,5 +124,3 @@ test -r $d && eval "$(dircolors -b $d)"
 source ~/.promptline.sh
 
 stty -ixon
-
-source ~/.z.sh

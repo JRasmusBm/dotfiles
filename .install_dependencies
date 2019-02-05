@@ -30,12 +30,60 @@ install_python() {
 }
 
 install_nvim() {
+  sudo apt-get install -y build-essential
+  sudo apt-get install -y make
+  sudo apt-get install -y cmake
+  sudo apt-get install -y cmake-data
+  sudo apt-get install -y pkg-config
+  sudo apt-get install -y libtool-bin
+  sudo apt-get install -y automake
+  sudo apt-get install -y curl
   git clone git@github.com:neovim/neovim.git
   cd neovim
-  make CMAKE_BUILD_TYPE=RelWithDebInfo
+  sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
   sudo make install
   cd ..
-  rm -rf neovim
+  sudo rm -rf neovim
+  setup_neovim_vm
+  curl -fLo ~/.vim/autoload/plug.vim --create-dirs
+  \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
+}
+
+setup_neovim_vm() {
+  sudo apt-get install -y python-pip
+  sudo apt-get install -y python3-pip
+  sudo pip3 install virtualenv
+  sudo pip3 install virtualenvwrapper
+  sudo pip install virtualenv
+  sudo pip install virtualenvwrapper
+  source "/usr/local/bin/virtualenvwrapper.sh"
+  mkvirtualenv -p python3 neovim3
+  mkvirtualenv -p python2 neovim2
+  workon neovim2
+  pip install neovim
+  pip install yapf
+  pip install grip
+  pip install flake8
+  pip install black
+  deactivate
+  workon neovim3
+  pip install neovim
+  pip install yapf
+  pip install grip
+  pip install flake8
+  pip install black
+  deactivate
+}
+
+install_node() {
+  curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
+  sudo apt install -y nodejs
+  sudo npm cache clean -f
+  sudo npm install -g n
+  sudo n stable
+  sudo npm install npm@latest -g
+  sudo npm install neovim@latest -g
+  sudo npm install typescript@latest -g
 }
 
 install_vim() {
@@ -48,7 +96,107 @@ install_vim() {
   rm -rf temp
 }
 
-install_dependencies_fresh() {
-  install_nvim
+install_zsh() {
+  sudo apt-get update
+  sudo apt-get install -y zsh
+  sudo usermod -s $(which zsh) $(whoami)
+  mkdir .zsh
+  curl -L git.io/antigen > .zsh/antigen.zsh
+}
+
+install_tmux() {
+  sudo apt-get update
+  sudo apt-get install -y automake
+  sudo apt-get install -y build-essential
+  sudo apt-get install -y pkg-config
+  sudo apt-get install -y libevent-dev
+  sudo apt-get install -y libncurses5-dev
+  rm -fr /tmp/tmux
+  git clone https://github.com/tmux/tmux.git /tmp/tmux
+  cd /tmp/tmux
+  git checkout master
+  sh autogen.sh
+  ./configure && make
+  sudo make install
+  cd -
+  rm -rf /tmp/tmux
+}
+
+uninstall_unnecessary_stuff() {
+  sudo apt-get purge -y thunderbird
+  sudo apt-get purge -y rhythmbox
+  sudo apt-get purge -y ubuntu-web-launchers
+}
+
+install_latest_chrome() {
+  wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+  sudo dpkg -i google-chrome-stable_current_amd64.deb
+  rm google-chrome-stable_current_amd64.deb
+}
+
+install_latest_firefox() {
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6DCF7707EBC211F
+  sudo apt-add-repository "deb http://ppa.launchpad.net/ubuntu-mozilla-security/ppa/ubuntu bionic main"
+  sudo apt update
+  sudo apt install firefox
+}
+
+install_java() {
+  sudo apt-get install -y default-jdk
+}
+
+update_system() {
+  sudo apt-get -y update
+  sudo apt -y update
+  sudo apt-get -y upgrade
+  sudo apt -y upgrade
+  sudo apt autoremove
+  sudo apt-get autoremove
+}
+
+install_spotify() {
+  sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90
+  echo deb http://repository.spotify.com stable non-free | sudo tee /etc/apt/sources.list.d/spotify.list
+  sudo apt-get update
+  sudo apt-get install -y spotify-client
+}
+
+install_docker() {
+  sudo apt update
+  sudo apt install -y apt-transport-https
+  sudo apt install -y ca-certificates
+  sudo apt install -y curl
+  sudo apt install -y software-properties-common
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
+  sudo apt update
+  sudo apt install -y docker-ce
+  sudo usermod -aG docker ${USER}
+  sudo curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo chmod +x /usr/local/bin/docker-compose
+}
+
+install_dependencies_server() {
+  uninstall_unnecessary_stuff
   install_python
+  install_node
+  install_nvim
+  install_zsh
+  install_tmux
+  install_docker
+  update_system
+}
+
+install_dependencies_desktop() {
+  uninstall_unnecessary_stuff
+  install_latest_chrome
+  install_python
+  install_node
+  install_nvim
+  install_zsh
+  install_tmux
+  install_java
+  install_docker
+  install_spotify
+  update_system
 }

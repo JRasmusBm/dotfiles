@@ -1,6 +1,7 @@
 if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
   source "${VIRTUAL_ENV}/bin/activate"
 fi
+source ~/.install_dependencies
 # Aliases
 alias "python"="python3"
 alias "pip"="pip3"
