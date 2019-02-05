@@ -108,6 +108,7 @@ install_zsh() {
   sudo usermod -s $(which zsh) $(whoami)
   mkdir .zsh
   curl -L git.io/antigen > .zsh/antigen.zsh
+  sh -c "$(curl -fsSL https://raw.github.com/robbyrussell/oh-my-zsh/master/tools/install.sh)"
 }
 
 install_tmux() {
