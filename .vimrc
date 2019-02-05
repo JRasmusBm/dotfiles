@@ -18,6 +18,9 @@ set showmatch
 set ignorecase
 set smartcase
 set incsearch
+if exists('&inccommand')
+  set inccommand=split
+endif
 set timeoutlen=300 ttimeoutlen=0
 " }}}}}}
 

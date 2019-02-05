@@ -13,7 +13,6 @@ alias "st"="clear; git status"
 alias "south-pole"="ssh root@139.59.144.120"
 alias "spectest-interp"="~/wabt/bin/spectest-interp"
 alias "studio"="/usr/local/android-studio/bin/studio.sh"
-alias "translate"="python3 ~/1_programming/active/learning/scraping/wikipedia-translator.py"
 alias "update-mouse"="sudo modprobe -r psmouse && sudo modprobe psmouse"
 alias "vimrc"="vim ~/.vimrc"
 alias "wabt-unittests"="~/wabt/bin/wabt-unittests"
@@ -28,6 +27,12 @@ alias "wat-desugar"="~/wabt/bin/wat-desugar"
 alias "wat2wasm"="~/wabt/bin/wat2wasm"
 alias "zshrc"="vim ~/.zshrc"
 alias "zshenv"="vim ~/.zshenv"
+function translate() {
+  directory=$(pwd)
+  cd ~/.fun_scraping
+  pipenv run python wikipedia-translator.py "$1" "$2"
+  cd "$directory"
+}
 function anki() {
   directory=$(pwd)
   file="$directory"/"$1"
