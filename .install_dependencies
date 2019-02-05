@@ -1,5 +1,11 @@
 #!/bin/bash
 
+install_ruby() {
+  sudo apt update
+  sudo apt install -y ruby-full
+  sudo gem install vimgolf
+}
+
 install_python() {
   sudo apt-get install -y build-essential
   sudo apt-get install -y checkinstall
@@ -197,6 +203,7 @@ install_dependencies_desktop() {
   install_tmux
   install_java
   install_docker
+  install_ruby
   install_spotify
   update_system
 }

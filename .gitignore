@@ -2,6 +2,7 @@
 *
 # Decend into following subdirectories/files
 !.vim
+!.dircolors
 !.anki
 !.anki/*
 !.vim/colors
