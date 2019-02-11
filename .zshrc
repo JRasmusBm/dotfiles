@@ -87,7 +87,10 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 bindkey '^ ' autosuggest-accept
 
 # WebAssembly
-source ~/emsdk/emsdk_set_env.sh
+if [ -f ~/emsdk/emsdk_set_env.sh ]
+then
+  source ~/emsdk/emsdk_set_env.sh
+fi
 
 # Paths
 export ANDROID_HOME=$HOME/Android/Sdk
@@ -100,7 +103,14 @@ export PATH=$PATH:/home/rasmus/.local/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
 
 # Virtualenvs
-source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+
+if [ -f /usr/share/virtualenvwrapper/virtualenvwrapper.sh ]
+then 
+  source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
+else 
+  source /usr/local/bin/virtualenvwrapper.sh
+fi
+
 export WORKON_HOME=$HOME/.virtualenvs
 export PROJECT_HOME=$HOME/Envs
 

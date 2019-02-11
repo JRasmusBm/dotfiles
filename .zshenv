@@ -28,6 +28,7 @@ alias "wat-desugar"="~/wabt/bin/wat-desugar"
 alias "wat2wasm"="~/wabt/bin/wat2wasm"
 alias "zshrc"="vim ~/.zshrc"
 alias "zshenv"="vim ~/.zshenv"
+alias "instrc"="vim ~/.install_dependencies"
 function translate() {
   directory=$(pwd)
   cd ~/.fun_scraping
