@@ -279,7 +279,7 @@ let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 " }}}
 
 " Typescript {{{
-autocmd FileType typescript let b:ale_fixers = ['prettier', 'tslint']
+autocmd FileType typescript,typescript.tsx let b:ale_fixers = ['prettier', 'tslint']
 " }}}
 
 " Vue {{{
@@ -360,13 +360,13 @@ endfunction
 autocmd FileType sql source ~/.vim/snippets/sql.vim
 autocmd FileType bib source ~/.vim/snippets/bib.vim
 autocmd FileType python source ~/.vim/snippets/python.vim
-autocmd FileType html,htmldjango,javascript,typescript source ~/.vim/snippets/html.vim
-autocmd FileType html,htmldjango,javascript,typescript,css source ~/.vim/snippets/css.vim
+autocmd FileType html,htmldjango,javascript,typescript,typescript.tsx source ~/.vim/snippets/html.vim
+autocmd FileType html,htmldjango,javascript,typescript,typescript.tsx,css source ~/.vim/snippets/css.vim
 autocmd FileType java source ~/.vim/snippets/java.vim
 autocmd FileType markdown source ~/.vim/snippets/markdown.vim
 autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
-autocmd FileType javascript,typescript,json source ~/.vim/snippets/javascript.vim
-autocmd FileType typescript source ~/.vim/snippets/typescript.vim
+autocmd FileType javascript,typescript,typescript.tsx,json source ~/.vim/snippets/javascript.vim
+autocmd FileType typescript,typescript.tsx source ~/.vim/snippets/typescript.vim
 autocmd FileType bash source ~/.vim/snippets/bash.vim
 autocmd FileType vim source ~/.vim/snippets/vim.vim
 autocmd FileType vue source ~/.vim/snippets/vue.vim
