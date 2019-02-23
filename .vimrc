@@ -558,6 +558,9 @@ command! Delview call MyDeleteView()
 "}}}
 
 " Other Mappings {{{
+function! UpdateX()
+  let @x = @/[2:-3]
+endfunction
 function! CloseFolds()
   let save_pos = getpos('.')
   execute 'normal! ggVGzC'
@@ -584,6 +587,7 @@ nnoremap <Leader>d :Ex<CR>
 nnoremap <Leader>bf :%!xxd<cr>
 nnoremap <Leader>ws :%s/ $//g<cr>:noh
 nnoremap <Leader>wl :v/\S/d<cr>:noh
+nnoremap * *:call UpdateX()
 " }}}
 " }}}
 
