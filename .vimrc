@@ -588,6 +588,7 @@ nnoremap <Leader>bf :%!xxd<cr>
 nnoremap <Leader>ws :%s/ $//g<cr>:noh
 nnoremap <Leader>wl :v/\S/d<cr>:noh
 nnoremap * *:call UpdateX()
+nnoremap # #:call UpdateX()
 " }}}
 " }}}
 
