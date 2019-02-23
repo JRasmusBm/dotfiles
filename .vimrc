@@ -571,8 +571,8 @@ endfunction
 nnoremap <leader>fi :EnMasse
 nnoremap <leader>p :ALEFix
 nnoremap <leader>cp :ALELint
-nnoremap ]p :ALENext
-nnoremap [p :ALEPrevious
+nnoremap ]v :ALENext
+nnoremap [v :ALEPrevious
 nnoremap ;zc :call CloseFolds()
 nnoremap ;zo :call OpenFolds()
 nnoremap <leader>p :ALEFix
