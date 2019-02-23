@@ -13,4 +13,6 @@ inoremap <buffer> ;rf import * as React from "react";
 inoremap <buffer> ;if interface <++> {<++>}<++>:call BackwardMarker(3)
 inoremap <buffer> ;md <++>: (<++>) => <++> = (<++>) => {
       \<++>return <++>; }
-      \<++>:call BackwardMarker(7)
+      \<++>:call BackwardMarker(7)
+" Imports
+inoremap <buffer> ;ia <++>Oimport * as <++> from "<++>";:call BackwardMarker(2)

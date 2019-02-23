@@ -4,6 +4,7 @@ inoremap <buffer> ;sc <++>O`Oconst <++> = styled.<++>`	<++>:call BackwardMar
 inoremap <buffer> ;ia <++>Oimport * as <++> from "<++>";:call BackwardMarker(2)
 inoremap <buffer> ;ir <++>Oimport * as React from "react";:call ForwardMarker(1)
 inoremap <buffer> ;in <++>Oimport { <++> } from "<++>";:call BackwardMarker(2)
+inoremap <buffer> ;im <++>Oimport "<++>";:call BackwardMarker(2)
 
 inoremap <buffer> ;id <++>Oimport <++> from "<++>";:call BackwardMarker(2)
 
@@ -29,7 +30,9 @@ inoremap <buffer> ;cu const {<++> } = <++>;<++>:call BackwardMarker(3)
 inoremap <buffer> ;st JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
 inoremap <buffer> ;pr console.log(<++>);<++>:call BackwardMarker(2) 
 inoremap <buffer> ;vd const <++> = <++>:call BackwardMarker(2)
-inoremap <buffer> ;fd function(<++>) {<++>}<++><<$:call BackwardMarker(2)
+inoremap <buffer> ;fd function <++> (<++>) {<++>}<++><<$:call BackwardMarker(4)
+inoremap <buffer> ;ex export <++> <++>:call BackwardMarker(2)
+inoremap <buffer> ;rt return <++>;<++>:call BackwardMarker(2)
 
 inoremap <buffer> ;tf beforeEach(done => {<++>done();});<++>:call BackwardMarker(2)
 inoremap <buffer> ;ti describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
