@@ -113,10 +113,10 @@ let g:netrw_menu = 0
 let g:netrw_banner = 0
 " }}}
 
-" Hardtime {{{
-let g:hardtime_default_on = 1
-let g:hardtime_maxcount = 2
-"}}}
+"" Hardtime {{{
+"let g:hardtime_default_on = 1
+"let g:hardtime_maxcount = 2
+""}}}
 
 " }}}
 
