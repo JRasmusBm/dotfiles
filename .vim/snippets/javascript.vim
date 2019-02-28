@@ -38,3 +38,9 @@ inoremap <buffer> ;tf beforeEach(done => {<++>done();});<++>:call Backwar
 inoremap <buffer> ;ti describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
 inoremap <buffer> ;tc it("<++>", async done => {<++>done();}) <++><<$:call BackwardMarker(3)
 
+inoremap <buffer> ;jq $(<++>).<++>;<++>:call BackwardMarker(3)
+inoremap <buffer> ;jc $("<++>").on("click", () => {	<++>});<<o<++>:call BackwardMarker(3)
+
+let @p="ggdGc:e temp.htmlp:g/<%/norm gcl;p:sleep 2ggdG:bd!pggJ:g/<%/norm gcl"
+let @i="*'af{ax,;p]v"
+let @s="f\"lyiwOid=\"\"Button\"/onclick"
