@@ -278,6 +278,10 @@ autocmd FileType javascript let b:ale_fixers = ['prettier', 'eslint']
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 " }}}
 
+" Html {{{
+autocmd FileType html,ejs let b:ale_fixers = ['prettier']
+" }}}
+"
 " Typescript {{{
 autocmd FileType typescript,typescript.tsx let b:ale_fixers = ['prettier', 'tslint']
 " }}}
@@ -583,7 +587,8 @@ nnoremap <C-s> <C-a>
 nnoremap <leader>rc !!sh<CR>
 nnoremap K kJ
 nnoremap <Leader>ac :set invcursorline<cr>:set invcursorcolumn<cr>
-nnoremap <Leader>d :Ex<CR>
+nnoremap <Leader>d :Ex
+command! Dig h digraph-table
 nnoremap <Leader>bf :%!xxd<cr>
 nnoremap <Leader>ws :%s/ $//g<cr>:noh
 nnoremap <Leader>wl :v/\S/d<cr>:noh
