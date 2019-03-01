@@ -40,6 +40,8 @@ inoremap <buffer> ;tc it("<++>", async done => {<++>done();}) <++><<$:cal
 
 inoremap <buffer> ;jq $(<++>).<++>;<++>:call BackwardMarker(3)
 inoremap <buffer> ;jc $("<++>").on("click", () => {	<++>});<<o<++>:call BackwardMarker(3)
+inoremap <buffer> ;jl $(document).on("click", "<++>", () =>{	<++>});<<o<++>:call BackwardMarker(3)
+inoremap <buffer> ;ji import $ from "jquery";
 
 let @p="ggdGc:e temp.htmlp:g/<%/norm gcl;p:sleep 2ggdG:bd!pggJ:g/<%/norm gcl"
 let @i="*'af{ax,;p]v"
