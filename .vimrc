@@ -49,7 +49,7 @@ if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
   " Plug 'zchee/deoplete-jedi'
   Plug 'HerringtonDarkholme/yats.vim'
-  Plug 'mhartington/nvim-typescript', {'do': './install.sh'}
+  Plug 'mhartington/nvim-typescript', {'do': 'npm install && npm run build'}
 else
   Plug 'leafgarland/typescript-vim'
   Plug 'OmniSharp/omnisharp-vim'
@@ -169,6 +169,7 @@ let airline#extensions#tmuxline#snapshot_file = '~/.tmux-status.conf'
 " }}}
 
 " }}}
+"}}}
 
 " Formatting {{{
 
