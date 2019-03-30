@@ -43,3 +43,11 @@ function anki() {
   pipenv run python anki.py "$file" "$2"
   cd "$directory"
 }
+
+function tmux-start() {
+  directory=$(pwd)
+  cd ~/.anki
+  pipenv run python tmux.py "$1"
+  cd "$directory"
+}
+alias "ts"="tmux-start"
