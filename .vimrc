@@ -263,7 +263,7 @@ au BufRead, BufNewFile *.j let comment=';'
 " }}}
 
 " C# {{{
-let g:syntastic_cs_checkers = ['syntax', 'semantic', 'issues']
+autocmd FileType cs let b:ale_fixers = ['uncrustify']
 if has('nvim')
 else
   let g:OmniSharp_timeout = 1
