@@ -279,6 +279,11 @@ autocmd FileType javascript let b:ale_fixers = ['prettier', 'eslint']
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 " }}}
 
+" json {{{
+autocmd BufRead .babelrc set filetype=json
+autocmd FileType json let b:ale_fixers = ['prettier']
+" }}}
+
 " Html {{{
 autocmd FileType html,ejs let b:ale_fixers = ['prettier']
 " }}}
