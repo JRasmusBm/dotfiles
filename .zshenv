@@ -39,14 +39,14 @@ function anki() {
   directory=$(pwd)
   file="$directory"/"$1"
   echo File: "$file"
-  cd ~/.anki
+  cd ~/.pyautogui
   pipenv run python anki.py "$file" "$2"
   cd "$directory"
 }
 
 function tmux-start() {
   directory=$(pwd)
-  cd ~/.anki
+  cd ~/.pyautogui
   pipenv run python tmux.py "$1"
   cd "$directory"
 }

@@ -22,6 +22,13 @@ install_cs() {
   sudo rm packages-microsoft-prod.deb
 }
 
+install_pyautogui() {
+  git clone git@github.com:JRasmusBm/pyautogui.git .pyautogui
+  cd .pyautogui
+  pipenv install
+  cd ..
+}
+
 install_python() {
   sudo apt-get install -y build-essential
   sudo apt-get install -y checkinstall
@@ -224,5 +231,6 @@ install_dependencies_desktop() {
   install_docker
   install_ruby
   install_spotify
+  install_pyautogui
   update_system
 }
