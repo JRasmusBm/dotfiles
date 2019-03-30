@@ -4,7 +4,7 @@ inoremap <buffer> ;sc <++>O`Oconst <++> = styled.<++>`	<++>:call BackwardMar
 inoremap <buffer> ;ia <++>Oimport * as <++> from "<++>";:call BackwardMarker(2)
 inoremap <buffer> ;ir <++>Oimport * as React from "react";:call ForwardMarker(1)
 inoremap <buffer> ;in <++>Oimport { <++> } from "<++>";:call BackwardMarker(2)
-inoremap <buffer> ;im <++>Oimport "<++>";:call BackwardMarker(2)
+inoremap <buffer> ;im <++>Oimport "<++>";:call BackwardMarker(1)
 
 inoremap <buffer> ;id <++>Oimport <++> from "<++>";:call BackwardMarker(2)
 
@@ -31,12 +31,18 @@ inoremap <buffer> ;st JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
 inoremap <buffer> ;pr console.log(<++>);<++>:call BackwardMarker(2) 
 inoremap <buffer> ;vd const <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> ;fd function <++> (<++>) {<++>}<++><<$:call BackwardMarker(4)
+inoremap <buffer> ;hs const [<++>, set<++>] = useState(<++>);<++>:call BackwardMarker(4)
+inoremap <buffer> ;hr const [{<++>}, dispatch] = useReducer(reducer, {<++>});<++>:call BackwardMarker(3)
+inoremap <buffer> ;hf const <++> = useRef(<++>);<++>:call BackwardMarker(3)
+inoremap <buffer> ;he useEffect(() => {<++>}, [<++>]);<++>:call BackwardMarker(3)
+inoremap <buffer> ;hl useLayoutEffect(() => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> ;ex export <++> <++>:call BackwardMarker(2)
 inoremap <buffer> ;rt return <++>;<++>:call BackwardMarker(2)
 
-inoremap <buffer> ;tf beforeEach(done => {<++>done();});<++>:call BackwardMarker(2)
-inoremap <buffer> ;ti describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
-inoremap <buffer> ;tc it("<++>", async done => {<++>done();}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> ;db beforeEach(() => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> ;dt afterEach(() => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> ;ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> ;dc it("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
 
 inoremap <buffer> ;jq $(<++>).<++>;<++>:call BackwardMarker(3)
 inoremap <buffer> ;jc $("<++>").on("click", () => {	<++>});<<o<++>:call BackwardMarker(3)
