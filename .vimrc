@@ -14,6 +14,8 @@ set hidden
 set modelines=0
 set viewoptions=cursor,folds,slash,unix
 set hlsearch
+set shortmess=a
+set cmdheight=2
 set showmatch
 set ignorecase
 set smartcase
@@ -274,9 +276,18 @@ endif
 autocmd FileType xml let b:ale_fixers = ['prettier']
 " }}}
 
+" CSS {{{
+autocmd FileType css let b:ale_fixers = ['prettier']
+" }}}
+
 " Javascript {{{
 autocmd FileType javascript let b:ale_fixers = ['prettier', 'eslint']
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
+" }}}
+
+" haskell {{{
+autocmd FileType haskell setlocal foldmethod=marker
+autocmd FileType haskell let b:ale_fixers = ['brittany', 'hlint']
 " }}}
 
 " json {{{
@@ -382,6 +393,7 @@ autocmd FileType markdown source ~/.vim/snippets/markdown.vim
 autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
 autocmd FileType javascript,typescript,typescript.tsx,json source ~/.vim/snippets/javascript.vim
 autocmd FileType typescript,typescript.tsx source ~/.vim/snippets/typescript.vim
+autocmd FileType haskell source ~/.vim/snippets/haskell.vim
 autocmd FileType bash source ~/.vim/snippets/bash.vim
 autocmd FileType vim source ~/.vim/snippets/vim.vim
 autocmd FileType vue source ~/.vim/snippets/vue.vim
@@ -612,6 +624,7 @@ nnoremap ;zc :call CloseFolds()
 nnoremap ;zo :call OpenFolds()
 nnoremap <leader>p :ALEFix
 nnoremap <C-s> <C-a>
+nnoremap g<C-s> g<C-a>
 nnoremap <leader>rc !!sh<CR>
 nnoremap K kJ
 nnoremap <Leader>ac :set invcursorline<cr>:set invcursorcolumn<cr>

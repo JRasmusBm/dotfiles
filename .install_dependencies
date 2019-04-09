@@ -29,6 +29,10 @@ install_pyautogui() {
   cd ..
 }
 
+install_haskell() {
+  curl -sSL https://get.haskellstack.org/ | sh
+}
+
 install_python() {
   sudo apt-get install -y build-essential
   sudo apt-get install -y checkinstall
@@ -164,6 +168,14 @@ install_latest_chrome() {
   wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
   sudo dpkg -i google-chrome-stable_current_amd64.deb
   rm google-chrome-stable_current_amd64.deb
+}
+
+install_brave() {
+  curl -s https://brave-browser-apt-beta.s3.brave.com/brave-core-nightly.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-beta.gpg add -
+  source /etc/os-release
+  echo "deb [arch=amd64] https://brave-browser-apt-beta.s3.brave.com/ $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/brave-browser-beta-${UBUNTU_CODENAME}.list
+  sudo apt update
+  sudo apt install brave-browser-beta
 }
 
 install_latest_firefox() {
