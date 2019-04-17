@@ -265,7 +265,17 @@ autocmd FileType markdown set softtabstop=4
 let g:deoplete#enable_at_startup = 1
 "}}}
 
+let g:airline#extensions#ale#enabled = 1
+let g:ale_linters = {
+  \ 'rust': ['rls'], 
+  \ 'haskell': ['hlint', 'hdevtools', 'hfmt', 'stack-build'],
+  \}
+
 " FileTypes {{{
+
+" Toml {{{
+autocmd FileType cabal,toml let b:ale_fixers = ['prettier']
+" }}}
 
 " Jasmin {{{
 au BufRead, BufNewFile *.j let comment=';'
@@ -295,6 +305,9 @@ autocmd FileType javascript let b:ale_fixers = ['prettier', 'eslint']
 let g:jsx_ext_required = 0 " Allow JSX in normal JS files
 " }}}
 
+" Rust {{{
+autocmd FileType rust let b:ale_fixers = ['rustfmt']
+" }}}
 " haskell {{{
 autocmd FileType haskell setlocal foldmethod=marker
 autocmd FileType haskell let b:ale_fixers = ['brittany', 'hlint']
@@ -306,7 +319,7 @@ autocmd FileType json let b:ale_fixers = ['prettier']
 " }}}
 
 " Html {{{
-autocmd FileType html,ejs let b:ale_fixers = ['prettier']
+autocmd FileType html,jst let b:ale_fixers = ['prettier']
 " }}}
 "
 " Typescript {{{
@@ -396,15 +409,16 @@ endfunction
 autocmd FileType sql source ~/.vim/snippets/sql.vim
 autocmd FileType bib source ~/.vim/snippets/bib.vim
 autocmd FileType python source ~/.vim/snippets/python.vim
-autocmd FileType html,htmldjango,javascript,typescript,typescript.tsx source ~/.vim/snippets/html.vim
 autocmd FileType html,htmldjango,javascript,typescript,typescript.tsx,css source ~/.vim/snippets/css.vim
+autocmd FileType html,jst,htmldjango,javascript,typescript,typescript.tsx source ~/.vim/snippets/html.vim
+autocmd FileType javascript,typescript,typescript.tsx,json source ~/.vim/snippets/javascript.vim
+autocmd FileType typescript,typescript.tsx source ~/.vim/snippets/typescript.vim
 autocmd FileType java source ~/.vim/snippets/java.vim
 autocmd FileType markdown source ~/.vim/snippets/markdown.vim
 autocmd FileType plaintex,context,tex source ~/.vim/snippets/latex.vim
-autocmd FileType javascript,typescript,typescript.tsx,json source ~/.vim/snippets/javascript.vim
-autocmd FileType typescript,typescript.tsx source ~/.vim/snippets/typescript.vim
 autocmd FileType haskell source ~/.vim/snippets/haskell.vim
 autocmd FileType bash source ~/.vim/snippets/bash.vim
+autocmd FileType rust source ~/.vim/snippets/rust.vim
 autocmd FileType vim source ~/.vim/snippets/vim.vim
 autocmd FileType vue source ~/.vim/snippets/vue.vim
 autocmd FileType vue source ~/.vim/snippets/javascript.vim
