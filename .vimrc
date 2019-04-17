@@ -622,8 +622,6 @@ nnoremap [v :ALEPrevious
 nnoremap ;zc :call CloseFolds()
 nnoremap ;zo :call OpenFolds()
 nnoremap <leader>p :ALEFix
-nnoremap <C-s> <C-a>
-nnoremap g<C-s> g<C-a>
 nnoremap <leader>rc !!sh<CR>
 nnoremap K kJ
 nnoremap <Leader>ac :set invcursorline<cr>:set invcursorcolumn<cr>
