@@ -37,16 +37,6 @@ if empty(glob('~/.vim/autoload/plug.vim'))
 endif
 
 call plug#begin('~/.local/share/nvim/plugged')
-Plug 'jceb/vim-orgmode'
-Plug 'google/vim-maktaba'
-Plug 'google/vim-codefmt'
-Plug 'google/vim-glaive'
-Plug 'mileszs/ack.vim'
-Plug 'AndrewRadev/splitjoin.vim'
-Plug 'Konfekt/FastFold'
-Plug 'jrasmusbm/Latex-Text-Formatter'
-Plug 'tmhedberg/SimpylFold'
-Plug 'Olical/vim-enmasse'
 if has('nvim')
   Plug 'Shougo/deoplete.nvim', { 'do': ':UpdateRemotePlugins' }
   " Plug 'zchee/deoplete-jedi'
@@ -59,6 +49,17 @@ else
   Plug 'roxma/nvim-yarp'
   Plug 'roxma/vim-hug-neovim-rpc'
 endif
+Plug 'jceb/vim-orgmode'
+Plug 'google/vim-maktaba'
+Plug 'google/vim-codefmt'
+Plug 'google/vim-glaive'
+Plug 'mileszs/ack.vim'
+Plug 'AndrewRadev/splitjoin.vim'
+Plug 'Konfekt/FastFold'
+Plug 'eagletmt/ghcmod-vim'
+Plug 'jrasmusbm/Latex-Text-Formatter'
+Plug 'tmhedberg/SimpylFold'
+Plug 'Olical/vim-enmasse'
 Plug 'TaDaa/vimade'
 Plug 'jiangmiao/auto-pairs'
 Plug 'easymotion/vim-easymotion'
