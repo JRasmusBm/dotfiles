@@ -3,6 +3,8 @@ inoremap <buffer> ;tn :call ForwardMarker(1)<++> -> <++>:call BackwardMarker(
 inoremap <buffer> ;tc (<++>) => <++>:call BackwardMarker(2)
 inoremap <buffer> ;td data <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> ;ta type <++> = <++>:call BackwardMarker(2)
+inoremap <buffer> ;ex module <++> where<++>:call BackwardMarker(2) 
+inoremap <buffer> ;im import <++> :call BackwardMarker(1) 
 inoremap <buffer> ;fm 0yEo" <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> ;fg 0yEo" <++> 	<Bar> <++> = <++>:call BackwardMarker(3)
 inoremap <buffer> ;fi (\<++> -> <++>) <++> :call BackwardMarker(3)
