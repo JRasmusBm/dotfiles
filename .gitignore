@@ -4,6 +4,7 @@
 !.vim
 !.dircolors
 !.vim/colors
+!README.md
 !.vim/spell
 !.vim/snippets
 !.vim/snippets/*
