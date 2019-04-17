@@ -3,6 +3,7 @@
 # Decend into following subdirectories/files
 !.vim
 !.dircolors
+!.alacritty.yml
 !.vim/colors
 !.vim/spell
 !.vim/snippets

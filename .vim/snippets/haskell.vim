@@ -1,4 +1,5 @@
 inoremap <buffer> ;ft <++> :: <++> -> <++>:call BackwardMarker(3)
+inoremap <buffer> ;vt <++> :: <++> :call BackwardMarker(2)
 inoremap <buffer> ;tn :call ForwardMarker(1)<++> -> <++>:call BackwardMarker(2)
 inoremap <buffer> ;tc (<++>) => <++>:call BackwardMarker(2)
 inoremap <buffer> ;td data <++> = <++>:call BackwardMarker(2)
