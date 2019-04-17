@@ -582,31 +582,6 @@ vnoremap <Leader>j :m '>+1<CR>gv=gv
 vnoremap <Leader>k :m '<-2<CR>gv=gv
 " }}}
 
-" Extended Text Objects {{{
-
-let pairs =   { '<bar>' : '<bar>',
-              \  ':' : ':' ,
-              \  '.' : '.' ,
-              \  '$' : '$' ,
-              \  ',' : ',' ,
-              \  '/' : '/' ,
-              \  '<' : '>' ,
-              \  '\\' : '\\',
-              \  '*' : '*' ,
-              \  '_' : '_' ,}
-
-for [key, value] in items(pairs)
-  exe 'nnoremap di'.value.' T'.key.'dt'.value
-  exe 'nnoremap da'.value.' F'.key.'df'.value
-  exe 'nnoremap ci'.value.' T'.key.'ct'.value
-  exe 'nnoremap ca'.value.' F'.key.'cf'.value
-  exe 'nnoremap yi'.value.' T'.key.'yt'.value
-  exe 'nnoremap ya'.value.' F'.key.'yf'.value
-  exe 'nnoremap vi'.value.' T'.key.'vt'.value
-  exe 'nnoremap va'.value.' F'.key.'vf'.value
-endfor
-" }}}
-
 " Delete Views {{{
 function! MyDeleteView()
     let path = fnamemodify(bufname('%'),':p')
