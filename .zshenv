@@ -30,6 +30,7 @@ alias "wat2wasm"="~/wabt/bin/wat2wasm"
 alias "zshrc"="vim ~/.zshrc"
 alias "zshenv"="vim ~/.zshenv"
 alias "instrc"="vim ~/.install_dependencies"
+alias "l"="clear;ls"
 function translate() {
   directory=$(pwd)
   cd ~/.fun_scraping
