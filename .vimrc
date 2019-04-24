@@ -26,6 +26,7 @@ else
   call plug#begin('~/.local/share/nvim/plugged')
 endif
 call s:SourceConfigFilesIn('plugin_config')
+Plug 'Olical/vim-enmasse'
 call plug#end()
 
 call glaive#Install()
