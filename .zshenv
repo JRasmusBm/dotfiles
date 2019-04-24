@@ -32,7 +32,7 @@ alias "zrc"="vim ~/.zshrc"
 alias "arc"="vim ~/.alacritty.yml"
 alias "zenv"="vim ~/.zshenv"
 alias "irc"="vim ~/.install_dependencies"
-alias "l"="clear;ls"
+alias "l"="clear; ls"
 function translate() {
   directory=$(pwd)
   cd ~/.fun_scraping

@@ -1,0 +1,1 @@
+Plug 'sickill/vim-pasta'
