@@ -63,4 +63,3 @@ Plug 'tpope/vim-unimpaired'
 Plug 'vim-scripts/Align'
 Plug 'vim-scripts/indentpython.vim'
 Plug 'zhimsel/vim-stay'
-call glaive#Install()

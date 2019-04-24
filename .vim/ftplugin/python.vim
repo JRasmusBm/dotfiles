@@ -1,3 +1,5 @@
+let b:ale_fixers = ['black']
+
 match BadWhitespace /\s\+$/
 
 py << EOF
@@ -8,5 +10,7 @@ if 'VIRTUAL_ENV' in os.environ:
   activate_this = os.path.join(project_base_dir, 'bin/activate_this.py')
   execfile(activate_this, dict(__file__=activate_this))
 EOF
+
+nnoremap <C-p> :w<cr> :exec '!python' shellescape(@%, 1)<cr>
 
 source ~/.vim/snippets/python.vim

@@ -20,3 +20,5 @@ set formatoptions=qrn1jo
 set colorcolumn=+1
 set fo+=tc
 set fo-=l
+
+autocmd VimResized * exe 'normal! \<c-w>='
