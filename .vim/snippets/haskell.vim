@@ -2,7 +2,9 @@ inoremap <buffer> ;ft <++> :: <++> -> <++>:call BackwardMarker(3)
 inoremap <buffer> ;vt <++> :: <++> :call BackwardMarker(2)
 inoremap <buffer> ;tn :call ForwardMarker(1)<++> -> <++>:call BackwardMarker(2)
 inoremap <buffer> ;tc (<++>) => <++>:call BackwardMarker(2)
-inoremap <buffer> ;td data <++> = <++>:call BackwardMarker(2)
+inoremap <buffer> ;td data <++> = <++> deriving (<++>)<++>:call BackwardMarker(4)
+inoremap <buffer> ;cd class <++> where<++><++>:call BackwardMarker(3) 
+inoremap <buffer> ;is instance <++> where<++><++>:call BackwardMarker(3) 
 inoremap <buffer> ;ta type <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> ;ex module <++> where<++>:call BackwardMarker(2) 
 inoremap <buffer> ;im import <++> :call BackwardMarker(1) 
