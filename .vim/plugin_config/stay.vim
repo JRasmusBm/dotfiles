@@ -1,0 +1,1 @@
+Plug 'zhimsel/vim-stay'

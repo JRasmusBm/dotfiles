@@ -5,6 +5,12 @@
 !.dircolors
 !.alacritty.yml
 !.vim/colors
+!.vim/ftplugin/
+!.vim/ftplugin/*
+!.vim/other_config/
+!.vim/other_config/*
+!.vim/plugin_config/
+!.vim/plugin_config/*
 !.vim/spell
 !.vim/snippets
 !.vim/snippets/*
