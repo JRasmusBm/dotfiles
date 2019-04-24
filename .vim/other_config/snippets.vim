@@ -1,6 +1,5 @@
 highlight GoToMarker ctermfg=yellow guifg=yellow
 match GoToMarker /<++>/
-nnoremap <Leader>es :Files ~/.vim/snippets/<CR>
 
 " Helper Functions {{{
 function! BackwardMarker(n)
