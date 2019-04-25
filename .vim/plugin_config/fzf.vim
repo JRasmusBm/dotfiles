@@ -17,3 +17,8 @@ nnoremap <Leader>fcm :Commands<CR>
 nnoremap <Leader>fm :Maps<CR>
 nnoremap <Leader>fh :Helptags<CR>
 nnoremap <Leader>fp :Filetypes<CR>
+
+nnoremap <Leader>es :Files ~/.vim/snippets/<CR>
+nnoremap <Leader>ep :Files ~/.vim/plugin_config/<CR>
+nnoremap <Leader>ef :Files ~/.vim/ftplugin/<CR>
+nnoremap <Leader>eo :Files ~/.vim/other_config/<CR>
