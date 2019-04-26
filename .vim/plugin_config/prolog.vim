@@ -1,0 +1,1 @@
+Plug 'adimit/prolog.vim'
