@@ -1,0 +1,1 @@
+nnoremap <leader>fi :EnMasse
