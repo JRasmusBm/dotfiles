@@ -28,7 +28,7 @@ that contains all the installations I ever perform from the command line on my
 system, with specific functions for installing my desktop at its current state
 as well as installing my most normal settings on a remote server.
 
-## Inspiration
+# Inspiration
 
 - [Luke Smith's Dotfiles](https://github.com/LukeSmithxyz/voidrice)
 - [Chris Toomey's Dotfiles](https://github.com/christoomey/dotfiles)
