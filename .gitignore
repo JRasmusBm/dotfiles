@@ -5,6 +5,7 @@
 !.dircolors
 !.alacritty.yml
 !.vim/colors
+!README.md
 !.vim/ftplugin/
 !.vim/ftplugin/*
 !.vim/other_config/
