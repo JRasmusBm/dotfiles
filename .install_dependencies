@@ -144,6 +144,13 @@ install_zsh() {
   sudo apt-get install -y fonts-powerline
 }
 
+install_alacritty() {
+  sudo apt-get install -y fonts-hack-ttf
+  sudo add-apt-repository ppa:system76/pop
+  sudo apt-get update
+  sudo apt-get install alacritty
+}
+
 install_tmux() {
   sudo apt-get update
   sudo apt-get install -y automake
@@ -227,9 +234,9 @@ install_docker() {
 install_dependencies_server() {
   uninstall_unnecessary_stuff
   install_python
+  install_zsh
   install_node
   install_nvim
-  install_zsh
   install_tmux
   install_docker
   update_system
@@ -238,9 +245,10 @@ install_dependencies_server() {
 install_dependencies_desktop() {
   uninstall_unnecessary_stuff
   install_latest_chrome
+  install_zsh
+  install_alacritty
   install_python
   install_node
-  install_zsh
   install_nvim
   install_tmux
   install_java
