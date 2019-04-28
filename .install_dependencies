@@ -33,6 +33,10 @@ install_pyautogui() {
   cd ..
 }
 
+install_git_extras() {
+  sudo apt-get install -y git-extras
+}
+
 install_haskell() {
   curl -sSL https://get.haskellstack.org/ | sh
 }
@@ -244,7 +248,9 @@ install_dependencies_server() {
 
 install_dependencies_desktop() {
   uninstall_unnecessary_stuff
+  install_git_extras
   install_latest_chrome
+  install_brave
   install_zsh
   install_alacritty
   install_python
