@@ -22,3 +22,4 @@ inoremap <buffer> ;as <++>="<++>" <++>:call BackwardMarker(3)
 inoremap <buffer> ;aj <++>={<++>} <++>:call BackwardMarker(3)
 inoremap <buffer> ;hf <!DOCTYPE html><html>	<head>	<++></head><body>	<++></body></html>:call BackwardMarker(2)
 inoremap <buffer> ;tb <button <++> /><++>:call BackwardMarker(2)
+inoremap <buffer> ;ti <img src="<++>" <++> /><++>:call BackwardMarker(3)
