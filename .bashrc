@@ -110,9 +110,6 @@ export FZF_ALT_C_COMMAND="cd ~/; bfs -type d -nohidden | sed s/^\./~/"
 export VISUAL=vim
 export EDITOR="$VISUAL"
 # Aliases
-alias ll='ls -alF'
-alias la='ls -A'
-alias l='ls -CF'
 alias "chr"="google-chrome"
 alias "commit"="git add --all && git commit"
 alias "co"="git add --all && git commit"
