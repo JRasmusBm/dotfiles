@@ -1,4 +1,4 @@
-let b:ale_fixers = ['prettier', 'tslint']
+let b:ale_fixers = ['prettier', 'eslint', 'tslint']
 nnoremap <Leader>r <Plug>(TsuquyomiRenameSymbol)
 
 source ~/.vim/snippets/css.vim
