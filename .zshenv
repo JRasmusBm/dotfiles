@@ -33,20 +33,25 @@ alias "arc"="vim ~/.alacritty.yml"
 alias "brc"="vim ~/.bashrc"
 alias "zenv"="vim ~/.zshenv"
 alias "irc"="vim ~/.install_dependencies"
-alias "l"="clear; ls"
+alias "ta"="tmux-attach"
+
+function tmux-attach() {
+  tmux attach -t $1 
+}
+
 function translate() {
   directory=$(pwd)
-  cd ~/.fun_scraping
+  command cd ~/.fun_scraping
   pipenv run python wikipedia-translator.py "$1" "$2"
-  cd "$directory"
+  command cd "$directory"
 }
 function anki() {
   directory=$(pwd)
   file="$directory"/"$1"
   echo File: "$file"
-  cd ~/.pyautogui
+  command cd ~/.pyautogui
   pipenv run python anki.py "$file" "$2"
-  cd "$directory"
+  command cd "$directory"
 }
 
 function tmux-start() {
