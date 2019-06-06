@@ -16,7 +16,7 @@ inoremap <buffer> ;em *<++>* <++>:call BackwardMarker(2)
 inoremap <buffer> ;bo **<++>** <++>:call BackwardMarker(2)
 inoremap <buffer> ;st ~~<++>~~ <++>:call BackwardMarker(2)
 inoremap <buffer> ;ci `<++>` <++>:call BackwardMarker(2)
-inoremap <buffer> ;cb <++>OO```<++>```O<++>:call BackwardMarker(2)
+inoremap <buffer> ;cb ```<++><++>```<++>:call BackwardMarker(3)A
 inoremap <buffer> ;t1 \| <++> \|\|------\|\| <++> \|:call BackwardMarker(2)
 inoremap <buffer> ;t2 \| <++> \| <++> \|\|------\|------\|\| <++> \| <++> \|:call BackwardMarker(4)
 inoremap <buffer> ;t3 \| <++> \| <++> \| <++> \|\|------\|------\|------\|\| <++> \| <++> \| <++> \|:call BackwardMarker(6)
