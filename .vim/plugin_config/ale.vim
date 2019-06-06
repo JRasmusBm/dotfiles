@@ -10,6 +10,7 @@ let g:ale_linters = {
 let g:ale_fixers = {
 \   '*': ['remove_trailing_lines', 'trim_whitespace'],
 \ }
+let g:ale_python_black_options="--line-length 80"
 
 nnoremap <leader>p :ALEFix
 nnoremap <leader>cp :ALELint
