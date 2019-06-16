@@ -1,3 +1,5 @@
+inoremap <buffer> ;ssf * { box-sizing: border-box }S
+  \html, body {padding: 0;margin: 0; }
 inoremap <buffer> ;sr <++> {<++>}<++>:call BackwardMarker(3)
 inoremap <buffer> ;sa <++>: <++>;<++>:call BackwardMarker(3)
 
@@ -22,9 +24,12 @@ inoremap <buffer> ;sjs justify-self:<++>;<++>:call BackwardMarker(2)
 inoremap <buffer> ;sjc justify-content:<++>;<++>:call BackwardMarker(2) 
 
 inoremap <buffer> ;sai align-items:<++>;<++>:call BackwardMarker(2) 
+inoremap <buffer> ;sas align-self:<++>;<++>:call BackwardMarker(2) 
 
 inoremap <buffer> ;sbr border-radius:<++>;<++>:call BackwardMarker(2) 
 inoremap <buffer> ;sbo border:<++>;<++>:call BackwardMarker(2) 
+
+inoremap <buffer> ;spo position:<++>;<++>:call BackwardMarker(2)
 
 inoremap <buffer> ;sdb display: block;<++>:call BackwardMarker(1) 
 inoremap <buffer> ;sdf display: flex;<++>:call BackwardMarker(1) 
@@ -43,10 +48,11 @@ inoremap <buffer> ;sml margin-left:<++>;<++>:call BackwardMarker(2)
 inoremap <buffer> ;smb margin-bottom:<++>;<++>:call BackwardMarker(2) 
 
 inoremap <buffer> ;stc grid-template-columns: <++>;<++>:call BackwardMarker(2) 
-inoremap <buffer> ;str grid-template-columns: <++>;<++>:call BackwardMarker(2) 
+inoremap <buffer> ;str grid-template-rows: <++>;<++>:call BackwardMarker(2) 
 inoremap <buffer> ;sgr grid-row: <++>;<++> :call BackwardMarker(2) 
 inoremap <buffer> ;sgc grid-column: <++>;<++> :call BackwardMarker(2) 
-inoremap <buffer> ;sfd grid-auto-flow: dense;<++> :call BackwardMarker(1)
+inoremap <buffer> ;sgd grid-auto-flow: dense;<++> :call BackwardMarker(1)
 inoremap <buffer> ;sgg grid-gap: <++>;<++>:call BackwardMarker(2) 
+inoremap <buffer> ;sar grid-auto-rows: <++>;<++> :call BackwardMarker(2) 
 
 inoremap <buffer> ;soh overflow: hidden;<++> :call BackwardMarker(1)
