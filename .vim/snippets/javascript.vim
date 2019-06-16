@@ -31,18 +31,24 @@ inoremap <buffer> ;pp JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
 inoremap <buffer> ;pr console.log(<++>);<++>:call BackwardMarker(2) 
 inoremap <buffer> ;vd const <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> ;fd function <++> (<++>) {<++>}<++><<$:call BackwardMarker(4)
+inoremap <buffer> ;af const <++> = (<++>) => {<++>}<++><<$:call BackwardMarker(4)
+" Hooks
 inoremap <buffer> ;hs const [<++>, set<++>] = useState(<++>);<++>:call BackwardMarker(4)
 inoremap <buffer> ;hr const [{<++>}, dispatch] = useReducer(reducer, {<++>});<++>:call BackwardMarker(3)
 inoremap <buffer> ;hf const <++> = useRef(<++>);<++>:call BackwardMarker(3)
 inoremap <buffer> ;he useEffect(() => {<++>}, [<++>]);<++>:call BackwardMarker(3)
 inoremap <buffer> ;hl useLayoutEffect(() => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> ;hh const <++> = use<++>(<++>);<++>:call BackwardMarker(4) 
+" Export and Return
 inoremap <buffer> ;ex export <++> <++>:call BackwardMarker(2)
 inoremap <buffer> ;rt return <++>;<++>:call BackwardMarker(2)
-
+" Tests
 inoremap <buffer> ;db beforeEach(() => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> ;dt afterEach(() => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> ;ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
 inoremap <buffer> ;dc it("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> ;dr const { <++> } = render(<++>);<++>:call BackwardMarker(3)
+inoremap <buffer> ;de expect(<++>).<++>:call BackwardMarker(2)
 
 inoremap <buffer> ;jq $(<++>).<++>;<++>:call BackwardMarker(3)
 inoremap <buffer> ;jc $("<++>").on("click", () => {	<++>});<<o<++>:call BackwardMarker(3)
