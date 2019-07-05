@@ -62,9 +62,9 @@ install_python() {
   mkdir /tmp/Python37
   cd /tmp/Python37
 
-  wget https://www.python.org/ftp/python/3.7.0/Python-3.7.0.tar.xz
-  tar xvf Python-3.7.0.tar.xz
-  cd /tmp/Python37/Python-3.7.0
+  wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz
+  tar xvf Python-3.7.3.tar.xz
+  cd /tmp/Python37/Python-3.7.3
   ./configure
   sudo make altinstall
   sudo update-alternatives --install /usr/bin/python /usr/local/bin/python3.7
