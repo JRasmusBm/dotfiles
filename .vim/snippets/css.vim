@@ -41,7 +41,7 @@ inoremap <buffer> ;spr padding-right:<++>;<++>:call BackwardMarker(2)
 inoremap <buffer> ;spl padding-left:<++>;<++>:call BackwardMarker(2) 
 inoremap <buffer> ;spb padding-bottom:<++>;<++>:call BackwardMarker(2) 
 
-inoremap <buffer> ;smd margin:<++>;<++>:call BackwardMarker(2) 
+inoremap <buffer> ;smg margin:<++>;<++>:call BackwardMarker(2) 
 inoremap <buffer> ;smt margin-top:<++>;<++>:call BackwardMarker(2) 
 inoremap <buffer> ;smr margin-right:<++>;<++>:call BackwardMarker(2) 
 inoremap <buffer> ;sml margin-left:<++>;<++>:call BackwardMarker(2) 
@@ -56,3 +56,11 @@ inoremap <buffer> ;sgg grid-gap: <++>;<++>:call BackwardMarker(2)
 inoremap <buffer> ;sar grid-auto-rows: <++>;<++> :call BackwardMarker(2) 
 
 inoremap <buffer> ;soh overflow: hidden;<++> :call BackwardMarker(1)
+
+inoremap <buffer> ;smq @media (<++>) {<++>}<++>:call BackwardMarker(3) 
+
+inoremap <buffer> ;szi z-index:<++>;<++>:call BackwardMarker(2) 
+
+inoremap <buffer> ;scu cursor:<++>;<++>:call BackwardMarker(2)
+
+inoremap <buffer> ;sop opacity: <++>;<++> :call BackwardMarker(2) 
