@@ -3,7 +3,7 @@ inoremap <buffer> ;tt <<++> />	<++>:call BackwardMarker(2)
 " Close Tag
 function! CloseTag()
   let save_pos = getpos(".")
-  execute "normal! T<yt>f>i <++>/<\/<++>>" . 
+  execute "normal! T<yt>f>i <++>/<\/<++>>" .
         \":call ForwardMarker(1)0"
   call setpos('.', save_pos)
 endfunction
@@ -19,7 +19,13 @@ inoremap <buffer> ;to <<++>>	<++></<++>><<o<++>:call BackwardMarker(4)
 " String Tag Argument
 inoremap <buffer> ;as <++>="<++>" <++>:call BackwardMarker(3)
 " JSX Tag Argument
+"Arguments
 inoremap <buffer> ;aj <++>={<++>} <++>:call BackwardMarker(3)
-inoremap <buffer> ;hf <!DOCTYPE html><html>	<head>	<++></head><body>	<++></body></html>:call BackwardMarker(2)
-inoremap <buffer> ;tb <button <++> /><++>:call BackwardMarker(2)
+" File Generation
+inoremap <buffer> ;tf <!DOCTYPE html><html>	<head>	<++></head><body>	<++></body></html>:call BackwardMarker(2)
+" Semantic Elements
+inoremap <buffer> ;tb <button <++>><++></button><++>:call BackwardMarker(3)
+inoremap <buffer> ;tp <p><++></p><++>:call BackwardMarker(2)
 inoremap <buffer> ;ti <img src="<++>" <++> /><++>:call BackwardMarker(3)
+inoremap <buffer> ;tfs <fieldset><legend><++></legend><++></fieldset><++>:call BackwardMarker(3)
+inoremap <buffer> ;tfl <legend><++></legend><++>:call BackwardMarker(2)
