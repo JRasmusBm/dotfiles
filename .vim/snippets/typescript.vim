@@ -24,3 +24,5 @@ inoremap <buffer> ;dc it("<++>", async (): Promise<void> => {<++>}) <++><<$
 " React Hooks
 inoremap <buffer> ;he useEffect((): void => {<++>}, [<++>]);<++>:call BackwardMarker(3)
 inoremap <buffer> ;hl useLayoutEffect((): void => {<++>});<++>:call BackwardMarker(2)
+" React Component
+inoremap <buffer> ;rc interface Props {<++>}const <++>: React.FC<Props> = (<++>) => {<++>}<++>:call BackwardMarker(5)
