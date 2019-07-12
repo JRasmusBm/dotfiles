@@ -34,12 +34,12 @@ Plug 'w0rp/ale'
 nnoremap <leader>a? :ALEDocumentation
 nnoremap <leader>ah :ALEHover
 nnoremap <leader>al :ALELint
-nnoremap <leader>af :ALESymbolSearch
+nnoremap <leader>as :ALESymbolSearch<Space>
+nnoremap <leader>af :ALEFix
 nnoremap <leader>ad :ALEGoToDefinition
 nnoremap <leader>at :ALEGoToTypeDefinition
 
 
-nnoremap <leader>p :ALEFix
 
 nnoremap ]v :ALENext
 nnoremap [v :ALEPrevious
