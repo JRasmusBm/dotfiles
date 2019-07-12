@@ -16,7 +16,7 @@ endfunction
 
 nnoremap ;zc :call CloseFolds()
 nnoremap ;zo :call OpenFolds()
-nnoremap zuz <Plug>(FastFoldUpdate)
+nnoremap ;zu <Plug>(FastFoldUpdate)
 
 let g:fastfold_savehook = 0
 let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
