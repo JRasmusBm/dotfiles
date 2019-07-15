@@ -1,5 +1,5 @@
-highlight GoToMarker ctermfg=yellow guifg=yellow
-match GoToMarker /<++>/
+highlight SnippetMarker ctermfg=yellow guifg=yellow
+match SnippetMarker /<++>/
 
 " Helper Functions {{{
 function! BackwardMarker(n)
