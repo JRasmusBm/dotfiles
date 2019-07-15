@@ -1,1 +1,1 @@
-inoremap <buffer> ;fd <++>() {<++>}<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>fd <++>() {<++>}<++>:call BackwardMarker(3)

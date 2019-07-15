@@ -1,78 +1,78 @@
-inoremap <buffer> ;bl \begin{itemize}\item <++>\end{itemize}<++>:call BackwardMarker(2)
-inoremap <buffer> ;nl \begin{enumerate}\item <++>\end{enumerate}<++>:call BackwardMarker(2)
-inoremap <buffer> ;nn o\item  
-inoremap <buffer> ;bn o\item  
+inoremap <buffer> <leader>bl \begin{itemize}\item <++>\end{itemize}<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>nl \begin{enumerate}\item <++>\end{enumerate}<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>nn o\item  
+inoremap <buffer> <leader>bn o\item  
        
-inoremap <buffer> ;em \emph{<++>} <++>:call BackwardMarker(2)
-inoremap <buffer> ;bo \textbf{<++>} <++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>em \emph{<++>} <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>bo \textbf{<++>} <++>:call BackwardMarker(2) 
       
-inoremap <buffer> ;h1 I<++>OO\section{<++>}\label{sec:<++>}:call BackwardMarker(2)
-inoremap <buffer> ;h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
-inoremap <buffer> ;h3 I<++>OO\subsubsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
+inoremap <buffer> <leader>h1 I<++>OO\section{<++>}\label{sec:<++>}:call BackwardMarker(2)
+inoremap <buffer> <leader>h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
+inoremap <buffer> <leader>h3 I<++>OO\subsubsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
      
-inoremap <buffer> ;to \begin{<++>}<++>\end{<++>}<++>:call BackwardMarker(4) 
-inoremap <buffer> ;tc yi{:call ForwardMarker(2)":call BackwardMarker(1) 
+inoremap <buffer> <leader>to \begin{<++>}<++>\end{<++>}<++>:call BackwardMarker(4) 
+inoremap <buffer> <leader>tc yi{:call ForwardMarker(2)":call BackwardMarker(1) 
 
-inoremap <buffer> ;t1 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+inoremap <buffer> <leader>t1 \begin{table}\centering\caption{\label{tab:<++>} <++>}
       \\vspace{1em}\begin{tabular}{\| c \|} 
       \<++>\end{tabular}\end{table}
       \<++>:call BackwardMarker(4)
-inoremap <buffer> ;t2 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+inoremap <buffer> <leader>t2 \begin{table}\centering\caption{\label{tab:<++>} <++>}
       \\vspace{1em}\begin{tabular}{\| c \| c \|} 
       \<++> & <++>\end{tabular}
       \\end{table}
       \<++>:call BackwardMarker(5)
-inoremap <buffer> ;t3 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+inoremap <buffer> <leader>t3 \begin{table}\centering\caption{\label{tab:<++>} <++>}
       \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \|} 
       \<++> & <++> & <++>\end{tabular}
       \\end{table}
       \<++>:call BackwardMarker(6)
-inoremap <buffer> ;t4 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+inoremap <buffer> <leader>t4 \begin{table}\centering\caption{\label{tab:<++>} <++>}
       \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \| c \|} 
       \<++> & <++> & <++> & <++>\end{tabular}
       \\end{table}
       \<++>:call BackwardMarker(7)
-inoremap <buffer> ;t5 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+inoremap <buffer> <leader>t5 \begin{table}\centering\caption{\label{tab:<++>} <++>}
       \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \| c \| c \|} 
       \<++> & <++> & <++> & <++> & <++>\end{tabular}
       \\end{table}
       \<++>:call BackwardMarker(8)
-inoremap <buffer> ;t6 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+inoremap <buffer> <leader>t6 \begin{table}\centering\caption{\label{tab:<++>} <++>}
       \\vspace{1em}
       \\begin{tabular}{\| c \| c \| c \| c \| c \| c \|} 
       \<++> & <++> & <++> & <++> & <++> & <++>\end{tabular}
       \\end{table}
       \<++>:call BackwardMarker(9)
-inoremap <buffer> ;qu I<++>OO\end{quote}O\begin{quote} 
+inoremap <buffer> <leader>qu I<++>OO\end{quote}O\begin{quote} 
    
-inoremap <buffer> ;sl I<++>OO\end{thebibliography}O\begin{thebibliography}{<++>}<++>:call BackwardMarker(2)
-inoremap <buffer> ;si O<++>OO\bibitem{<++>}<++>:call BackwardMarker(2)
-inoremap <buffer> ;so ~\cite{<++>} <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>sl I<++>OO\end{thebibliography}O\begin{thebibliography}{<++>}<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>si O<++>OO\bibitem{<++>}<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>so ~\cite{<++>} <++>:call BackwardMarker(2)
     
-inoremap <buffer> ;ci \mintinline{<++>}{<++>} <++>:call BackwardMarker(3)
-inoremap <buffer> ;cb \begin{figure}[H]\centering\begin{minted}{<++>}<++>\end{minted}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(5)
+inoremap <buffer> <leader>ci \mintinline{<++>}{<++>} <++>:call BackwardMarker(3)
+inoremap <buffer> <leader>cb \begin{figure}[H]\centering\begin{minted}{<++>}<++>\end{minted}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(5)
   
-inoremap <buffer> ;im \begin{figure}[H]\centering\includegraphics[width=\textwidth]{<++>}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(4)
-inoremap <buffer> ;in \usepackage{<++>} <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>im \begin{figure}[H]\centering\includegraphics[width=\textwidth]{<++>}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(4)
+inoremap <buffer> <leader>in \usepackage{<++>} <++>:call BackwardMarker(2)
  
-inoremap <buffer> ;rf ~\ref{<++>} <++>:call BackwardMarker(2)
-inoremap <buffer> ;lb \label{<++>:<++>} <++>:call BackwardMarker(3)
+inoremap <buffer> <leader>rf ~\ref{<++>} <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>lb \label{<++>:<++>} <++>:call BackwardMarker(3)
 
-inoremap <buffer> ;ei $<++>$ <++>:call BackwardMarker(2) 
-inoremap <buffer> ;eq \begin{equation}\label{eq:<++>}	<++>\end{equation}
+inoremap <buffer> <leader>ei $<++>$ <++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>eq \begin{equation}\label{eq:<++>}	<++>\end{equation}
       \<++>:call BackwardMarker(3) 
-inoremap <buffer> ;eb \begin{align*}\label{eq:<++>}	<++>
+inoremap <buffer> <leader>eb \begin{align*}\label{eq:<++>}	<++>
       \\addtocounter{equation}{1}\tag{\theequation}\end{align*}
       \<++>:call BackwardMarker(3) 
-inoremap <buffer> ;ce \begin{equation}\label{eq:<++>}\ch{<++> -> <++>}
+inoremap <buffer> <leader>ce \begin{equation}\label{eq:<++>}\ch{<++> -> <++>}
       \\end{equation}<++>:call BackwardMarker(4)
-inoremap <buffer> ;ch \ch{<++>} <++>:call BackwardMarker(2) 
-inoremap <buffer> ;ox \ox{<++>,<++>} <++>:call BackwardMarker(3) 
-inoremap <buffer> ;me <++> = <++>:call BackwardMarker(2)
-inoremap <buffer> ;ao <++> + <++>:call BackwardMarker(2) 
-inoremap <buffer> ;su <++> - <++>:call BackwardMarker(2) 
-inoremap <buffer> ;mo <++> * <++>:call BackwardMarker(2) 
-inoremap <buffer> ;do \frac{<++>}{<++>} <++>:call BackwardMarker(3) 
+inoremap <buffer> <leader>ch \ch{<++>} <++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>ox \ox{<++>,<++>} <++>:call BackwardMarker(3) 
+inoremap <buffer> <leader>me <++> = <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>ao <++> + <++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>su <++> - <++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>mo <++> * <++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>do \frac{<++>}{<++>} <++>:call BackwardMarker(3) 

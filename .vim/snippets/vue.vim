@@ -1,1 +1,1 @@
-inoremap <buffer> ;dp <++>: {type: Object as PropType<<++>>,required: true,},:call BackwardMarker(2)
+inoremap <buffer> <leader>dp <++>: {type: Object as PropType<<++>>,required: true,},:call BackwardMarker(2)
