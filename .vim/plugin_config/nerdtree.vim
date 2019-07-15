@@ -1,6 +1,7 @@
 let g:NERDTreeShowHidden=1
 let g:NERDTreeShowLineNumbers=1
 
-Plug 'scrooloose/nerdtree'
+" Plug 'scrooloose/nerdtree'
 
-nnoremap <Leader>d :NERDTreeToggle<CR>
+" nnoremap <Leader>df :NERDTreeFind<CR>
+" nnoremap <Leader>d :NERDTreeToggle<CR>
