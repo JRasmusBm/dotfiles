@@ -26,4 +26,3 @@ autocmd VimResized * exe 'normal! \<c-w>='
 " Set the mouse as a bar in insert mode, as a block in normal mode.
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
-
