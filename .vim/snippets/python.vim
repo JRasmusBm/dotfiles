@@ -13,3 +13,4 @@ inoremap <buffer> ;in from <++> import <++>:call BackwardMarker(2)
 inoremap <buffer> ;im import <++> <++>:call BackwardMarker(2)
 " With
 inoremap <buffer> ;wi with <++>:<++><++><<:call BackwardMarker(2)
+inoremap <buffer> ;si if <++>:<++><++><<:call BackwardMarker(2)

@@ -1,5 +1,4 @@
-nnoremap <buffer> ;cd :TSDoc
-inoremap <buffer> ;rf import * as React from "react";
+inoremap <buffer> <leader>rf import * as React from "react";
  \import styled from "styled-components";
  \interface Props {<++> }o}
  \interface State {<++> }o}
@@ -10,19 +9,19 @@ inoremap <buffer> ;rf import * as React from "react";
  \}
  \}
  \export default <++>;:call BackwardMarker(4)
-inoremap <buffer> ;if interface <++> {<++>}<++>:call BackwardMarker(3)
-inoremap <buffer> ;md <++>: (<++>) => <++> = (<++>) => {
+inoremap <buffer> <leader>if interface <++> {<++>}<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>md <++>: (<++>) => <++> = (<++>) => {
       \<++>return <++>; }
       \<++>:call BackwardMarker(7)
 " Imports
-inoremap <buffer> ;ia <++>Oimport * as <++> from "<++>";:call BackwardMarker(2)
+inoremap <buffer> <leader>ia <++>Oimport * as <++> from "<++>";:call BackwardMarker(2)
 " Tests
-inoremap <buffer> ;db beforeEach((): void => {<++>});<++>:call BackwardMarker(2)
-inoremap <buffer> ;dt afterEach((): void => {<++>});<++>:call BackwardMarker(2)
-inoremap <buffer> ;ds describe("<++>", (): void => {<++>}) <++><<$:call BackwardMarker(3)
-inoremap <buffer> ;dc it("<++>", async (): Promise<void> => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>db beforeEach((): void => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>dt afterEach((): void => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>ds describe("<++>", (): void => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>dc it("<++>", async (): Promise<void> => {<++>}) <++><<$:call BackwardMarker(3)
 " React Hooks
-inoremap <buffer> ;he useEffect((): void => {<++>}, [<++>]);<++>:call BackwardMarker(3)
-inoremap <buffer> ;hl useLayoutEffect((): void => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>he useEffect((): void => {<++>}, [<++>]);<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>hl useLayoutEffect((): void => {<++>});<++>:call BackwardMarker(2)
 " React Component
-inoremap <buffer> ;rc interface Props {<++>}const <++>: React.FC<Props> = (<++>) => {<++>}<++>:call BackwardMarker(5)
+inoremap <buffer> <leader>rc interface Props {<++>}const <++>: React.FC<Props> = (<++>) => {<++>}<++>:call BackwardMarker(5)

@@ -1,8 +1,8 @@
-inoremap <buffer> ;pk package <++>;<++>:call BackwardMarker(2) 
-inoremap <buffer> ;id import <++>;<++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>pk package <++>;<++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>id import <++>;<++>:call BackwardMarker(2) 
 
-inoremap <buffer> ;cd public class <++> {<++>}<<A<++>:call BackwardMarker(3)
-inoremap <buffer> ;hb /**<++>/<++>:call BackwardMarker(2) 
-inoremap <buffer> ;hp @param <++><++>:call BackwardMarker(2)
+inoremap <buffer> <leader>cd public class <++> {<++>}<<A<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>hb /**<++>/<++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>hp @param <++><++>:call BackwardMarker(2)
 
-inoremap <buffer> ;fd <++> <++>(<++>) {<++>}<++>:call BackwardMarker(5)
+inoremap <buffer> <leader>fd <++> <++>(<++>) {<++>}<++>:call BackwardMarker(5)
