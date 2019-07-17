@@ -2,12 +2,13 @@
 " really spoke to me so I decided that imitation is the greatest form of
 " flattery.
 
-if !has('nvim')
+if !has("nvim")
   set nocompatible
 endif
 
 " Need to set the leader before defining any leader mappings
-let mapleader = ';'
+let mapleader=";"
+let maplocalleader="\<Space>"
 " In case I am using Scandinavian Keyboard (Breaks most cases anyways)
 nmap ö ;
 
@@ -21,14 +22,12 @@ function! s:SourceConfigFilesIn(directory)
 endfunction
 
 if !has('nvim')
-  call plug#begin('~/.vim/bundle')
+  call plug#begin("~/.vim/bundle")
 else
-  call plug#begin('~/.local/share/nvim/plugged')
+  call plug#begin("~/.local/share/nvim/plugged")
 endif
-call s:SourceConfigFilesIn('plugin_config')
+call s:SourceConfigFilesIn("plugin_config")
 Plug 'Olical/vim-enmasse'
 call plug#end()
 
-call glaive#Install()
-
-call s:SourceConfigFilesIn('other_config')
+call s:SourceConfigFilesIn("other_config")
