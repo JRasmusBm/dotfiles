@@ -8,7 +8,11 @@ function! BackwardMarker(n)
   else
     execute 'normal! ?<++>"_d4l'
   endif
-  execute 'startinsert'
+  if IsLastColumn()
+    execute 'startinsert!'
+  else
+    execute 'startinsert'
+  endif
 endfunction
 function! ForwardMarker(n)
   if a:n > 1
@@ -16,8 +20,12 @@ function! ForwardMarker(n)
   else
     execute 'normal! /<++>"_4x'
   endif
-  execute 'startinsert'
-endfunction
+  if IsLastColumn()
+    execute 'startinsert!'
+  else
+    execute 'startinsert'
+  endif
+endfunction 
 function! DeleteAllMarkers()
   let save_pos = getpos('.')
   execute '%s/<++>//g'
@@ -39,6 +47,13 @@ function! DeleteMarkerRow(n)
 endfunction
 " }}}
 
+function! IsLastColumn() abort
+  let cur_pos = getpos('.')
+  normal! $
+  let last_col = col('.')
+  call setpos('.', cur_pos)
+  return last_col == cur_pos[2]
+endfunction
 
 inoremap <leader><leader> <++>
 inoremap <leader>dd :call DeleteMarkerRow(1)
