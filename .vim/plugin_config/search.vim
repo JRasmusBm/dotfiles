@@ -1,2 +1,2 @@
-Plug 'mileszs/ack.vim'
 Plug 'Wincent/loupe'
+Plug 'mileszs/ack.vim'
