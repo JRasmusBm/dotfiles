@@ -4,28 +4,32 @@ match SnippetMarker /<++>/
 " Helper Functions {{{
 function! BackwardMarker(n)
   if a:n > 0
-    execute 'normal! ?<++> '  . a:n . 'n"_d4l'
+    execute 'normal! ?<++> '  . a:n . 'n"'
   else
-    execute 'normal! ?<++>"_d4l'
+    execute 'normal! ?<++>"'
   endif
-  if IsLastColumn()
+  if ColumnFromRight() == 4
+    normal "_4x
     execute 'startinsert!'
   else
+    normal "_4x
     execute 'startinsert'
   endif
 endfunction
 function! ForwardMarker(n)
   if a:n > 1
-    execute 'normal! /<++> '  . (a:n - 1) . 'n"_4x'
+    execute 'normal! /<++> '  . (a:n - 1) . 'n"'
   else
-    execute 'normal! /<++>"_4x'
+    execute 'normal! /<++>"'
   endif
-  if IsLastColumn()
+  if ColumnFromRight() == 4
+    normal "_4x
     execute 'startinsert!'
   else
+    normal "_4x
     execute 'startinsert'
   endif
-endfunction 
+endfunction
 function! DeleteAllMarkers()
   let save_pos = getpos('.')
   execute '%s/<++>//g'
@@ -33,9 +37,9 @@ function! DeleteAllMarkers()
 endfunction
 function! DeleteMarker(n)
   if a:n > 1
-    execute 'normal! /<++> '  . (a:n - 1) . 'n"_d4l'
+    execute 'normal! /<++> '  . (a:n - 1) . 'n"'
   else
-    execute 'normal! /<++>"_d4l'
+    execute 'normal! /<++>"'
   endif
 endfunction
 function! DeleteMarkerRow(n)
@@ -47,12 +51,12 @@ function! DeleteMarkerRow(n)
 endfunction
 " }}}
 
-function! IsLastColumn() abort
+function! ColumnFromRight() abort
   let cur_pos = getpos('.')
   normal! $
   let last_col = col('.')
   call setpos('.', cur_pos)
-  return last_col == cur_pos[2]
+  return last_col + 1 - cur_pos[2]
 endfunction
 
 inoremap <leader><leader> <++>
