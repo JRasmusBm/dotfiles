@@ -1,3 +1,3 @@
-inoremap ;fd <++>(<++>).<++>:call BackwardMarker(3)
-inoremap ;rd <++>(<++>) :-	<++>.:call BackwardMarker(3)
-inoremap ;rn $i,<++>:call BackwardMarker(1)
+inoremap <leader>fd <++>(<++>).<++>:call BackwardMarker(3)
+inoremap <leader>rd <++>(<++>) :-	<++>.:call BackwardMarker(3)
+inoremap <leader>rn $i,<++>:call BackwardMarker(1)

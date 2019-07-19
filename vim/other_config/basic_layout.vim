@@ -16,10 +16,7 @@ set softtabstop=2
 set expandtab
 set wrap
 set textwidth=79
-set formatoptions=qrn1jo
 set colorcolumn=+1
-set fo+=tc
-set fo-=l
 
 autocmd VimResized * exe 'normal! \<c-w>='
 
@@ -27,3 +24,4 @@ autocmd VimResized * exe 'normal! \<c-w>='
 let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
 
+nnoremap <silent><Leader>ww :syntax sync fromstart<CR>

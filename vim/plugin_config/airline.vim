@@ -3,7 +3,7 @@ Plug 'vim-airline/vim-airline-themes'
 Plug 'edkolev/promptline.vim'
 Plug 'edkolev/tmuxline.vim'
 
-let g:airline#extensions#tabline#enabled = 1
+" let g:airline#extensions#tabline#enabled = 1 " List buffers on top
 let g:airline_exclude_previous=0
 let g:airline_theme="jellybeans"
 
