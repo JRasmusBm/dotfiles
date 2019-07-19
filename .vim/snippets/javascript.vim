@@ -52,11 +52,13 @@ inoremap <buffer> <leader>rt return <++>;<++>:call BackwardMarker(2)
 " Tests
 inoremap <buffer> <leader>db beforeEach(() => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>dt afterEach(() => {<++>});<++>:call BackwardMarker(2)
+" Testing
 inoremap <buffer> <leader>ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
 inoremap <buffer> <leader>dc it("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
 inoremap <buffer> <leader>dr const { <++> } = render(<++>);<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>de expect(<++>).<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>dw await wait(() => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>df fireEvent.<++>(<++>);:call BackwardMarker(2)
 
 inoremap <buffer> <leader>jq $(<++>).<++>;<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>jc $("<++>").on("click", () => {	<++>});<<o<++>:call BackwardMarker(3)
