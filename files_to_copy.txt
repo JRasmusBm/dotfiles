@@ -1,2 +1,3 @@
 vim/vimrc,.vimrc
 terminal/alacritty.yml,.alacritty.yml
+vim/init.vim,.config/nvim/init.vim
