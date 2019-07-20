@@ -6,7 +6,7 @@ from file_writer import write_config, read_config
 def backup(dir_path, overwrite=False):
     backup_dir = Path(dir_path).expanduser().resolve()
     backup_log = backup_dir / "backup_log.csv"
-    log_files = []
+    log_files = read_config(backup_log) if backup_log.exists() else []
     for file in read_config("./files.csv"):
         original_path = Path.home() / file.target
         backup_path = backup_dir / file.target

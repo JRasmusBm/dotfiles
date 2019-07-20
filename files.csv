@@ -3,3 +3,4 @@ False,vim/vimrc,.vimrc
 False,terminal/alacritty.yml,.alacritty.yml
 False,vim/init.vim,.config/nvim/init.vim
 True,vim,.vim
+False,git/gitconfig,.gitconfig

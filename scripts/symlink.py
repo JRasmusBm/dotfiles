@@ -11,7 +11,7 @@ def symlink(backup_folder="~/.backup_dotfiles"):
         symlink_path = Path.home() / file.target
         if not symlink_path.is_symlink():
             symlink_path.symlink_to(
-                original_path, target_is_directory=exec(file.is_dir)
+                original_path, target_is_directory=file.is_dir
             )
 
 

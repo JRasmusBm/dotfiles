@@ -31,6 +31,10 @@ Overwrite [Y/n]?
                 if choice not in ["Y", "y"]:
                     log_files.append(file)
                     continue
+            if file.is_dir:
+                original_path.rmdir()
+            else:
+                original_path.unlink()
             move(backup_path, original_path)
     write_config(log_file, log_files)
 

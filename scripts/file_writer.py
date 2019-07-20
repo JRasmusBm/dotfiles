@@ -8,7 +8,7 @@ def read_config(path):
     with open(resolved) as f:
         files = [
             FileInfo(
-                is_dir=is_dir,
+                is_dir=exec(is_dir),
                 source=Path(source).resolve(),
                 target=Path(target),
             )
@@ -25,7 +25,9 @@ def write_config(path, files):
         writer = csv.writer(f)
         writer.writerow(["is_dir", "source", "target"])
         for file in files:
-            writer.writerow([file.is_dir, file.source, file.target])
+            writer.writerow(
+                ["True" if file.is_dir else "False", file.source, file.target]
+            )
 
 
 if __name__ == "__main__":
