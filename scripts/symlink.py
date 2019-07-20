@@ -6,12 +6,12 @@ from file_writer import read_config
 
 def symlink(backup_folder="~/.backup_dotfiles"):
     backup(backup_folder)
-    for file in read_config("./files.csv"):
-        original_path = file.source
-        symlink_path = Path.home() / file.target
+    for the_file in read_config("./files.csv"):
+        original_path = the_file.source
+        symlink_path = Path.home() / the_file.target
         if not symlink_path.is_symlink():
             symlink_path.symlink_to(
-                original_path, target_is_directory=file.is_dir
+                original_path, target_is_directory=the_file.is_dir
             )
 
 

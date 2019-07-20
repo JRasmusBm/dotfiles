@@ -9,9 +9,9 @@ def restore(dir_path):
     log_file = backup_dir / "backup_log.csv"
     log_files = []
 
-    for file in read_config("./files.csv"):
-        original_path = Path.home() / file.target
-        backup_path = backup_dir / file.target
+    for the_file in read_config("./files.csv"):
+        original_path = Path.home() / the_file.target
+        backup_path = backup_dir / the_file.target
         print(backup_path)
         if backup_path.exists():
             if not original_path.is_symlink() and original_path.exists():
@@ -29,12 +29,9 @@ Overwrite [Y/n]?
             """
                 )
                 if choice not in ["Y", "y"]:
-                    log_files.append(file)
+                    log_files.append(the_file)
                     continue
-            if file.is_dir:
-                original_path.rmdir()
-            else:
-                original_path.unlink()
+            original_path.unlink()
             move(backup_path, original_path)
     write_config(log_file, log_files)
 
