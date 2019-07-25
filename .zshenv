@@ -34,6 +34,7 @@ alias "brc"="vim ~/.bashrc"
 alias "zenv"="vim ~/.zshenv"
 alias "irc"="vim ~/.install_dependencies"
 alias "ta"="tmux-attach"
+alias "t"="tmux"
 
 function tmux-attach() {
   tmux attach -t $1 

@@ -54,7 +54,7 @@ inoremap <buffer> <leader>db beforeEach(() => {<++>});<++>:call BackwardMar
 inoremap <buffer> <leader>dt afterEach(() => {<++>});<++>:call BackwardMarker(2)
 " Testing
 inoremap <buffer> <leader>ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
-inoremap <buffer> <leader>dc it("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>dc test("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
 inoremap <buffer> <leader>dr const { <++> } = render(<++>);<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>de expect(<++>).<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>dw await wait(() => {<++>});<++>:call BackwardMarker(2)
