@@ -54,12 +54,26 @@ inoremap <buffer> <leader>db beforeEach(() => {<++>});<++>:call BackwardMar
 inoremap <buffer> <leader>dt afterEach(() => {<++>});<++>:call BackwardMarker(2)
 " Testing
 inoremap <buffer> <leader>ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
-inoremap <buffer> <leader>dc it("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>dc test("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
 inoremap <buffer> <leader>dr const { <++> } = render(<++>);<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>de expect(<++>).<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>dw await wait(() => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>df fireEvent.<++>(<++>);:call BackwardMarker(2)
-
+" switch statements
+inoremap <buffer> <leader>css switch (<++>) {
+      \case <++>:
+      \	<++>
+      \break;
+      \<++>
+      \}
+      \<++><<
+      \:call BackwardMarker(4)
+inoremap <buffer> <leader>csc case <++>:
+      \	<++>
+      \break;<<o
+      \<++><<
+      \:call BackwardMarker(2)
+"jquery
 inoremap <buffer> <leader>jq $(<++>).<++>;<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>jc $("<++>").on("click", () => {	<++>});<<o<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>jl $(document).on("click", "<++>", () =>{	<++>});<<o<++>:call BackwardMarker(3)
