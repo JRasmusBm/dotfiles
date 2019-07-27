@@ -19,7 +19,7 @@ inoremap <buffer> <leader>ia <++>Oimport * as <++> from "<++>";:call BackwardM
 inoremap <buffer> <leader>db beforeEach((): void => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>dt afterEach((): void => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>ds describe("<++>", (): void => {<++>}) <++><<$:call BackwardMarker(3)
-inoremap <buffer> <leader>dc it("<++>", async (): Promise<void> => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>dc test("<++>", async (): Promise<void> => {<++>}) <++><<$:call BackwardMarker(3)
 " React Hooks
 inoremap <buffer> <leader>he useEffect((): void => {<++>}, [<++>]);<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>hl useLayoutEffect((): void => {<++>});<++>:call BackwardMarker(2)
