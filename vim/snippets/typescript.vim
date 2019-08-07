@@ -20,6 +20,7 @@ inoremap <buffer> <leader>db beforeEach((): void => {<++>});<++>:call Backw
 inoremap <buffer> <leader>dt afterEach((): void => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>ds describe("<++>", (): void => {<++>}) <++><<$:call BackwardMarker(3)
 inoremap <buffer> <leader>dc test("<++>", async (): Promise<void> => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>dr let result: ReturnType<typeof render>;
 " React Hooks
 inoremap <buffer> <leader>he useEffect((): void => {<++>}, [<++>]);<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>hl useLayoutEffect((): void => {<++>});<++>:call BackwardMarker(2)
