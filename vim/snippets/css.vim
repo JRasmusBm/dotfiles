@@ -32,6 +32,7 @@ inoremap <buffer> <leader>sbo border:<++>;<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>spo position:<++>;<++>:call BackwardMarker(2)
 
 inoremap <buffer> <leader>sdb display: block;<++>:call BackwardMarker(1) 
+inoremap <buffer> <leader>sdd display: <++>;<++>:call BackwardMarker(2) 
 inoremap <buffer> <leader>sdf display: flex;<++>:call BackwardMarker(1) 
 inoremap <buffer> <leader>sdg display: grid;<++>:call BackwardMarker(1) 
 
