@@ -59,7 +59,11 @@ inoremap <buffer> <leader>dr const { <++> } = render(<++>);<++>:call BackwardM
 inoremap <buffer> <leader>de expect(<++>).<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>dw await wait(() => {<++>});<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>df fireEvent.<++>(<++>);:call BackwardMarker(2)
-" switch statements
+" Graphql
+inoremap <buffer> <leader>qt const <++> = gql`
+      \<++>
+      \`<++>:call BackwardMarker(3)
+"switch statements
 inoremap <buffer> <leader>css switch (<++>) {
       \case <++>:
       \	<++>
