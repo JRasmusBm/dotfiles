@@ -7,7 +7,7 @@ inoremap <buffer> <leader>h2 I<++>OO## $a
 inoremap <buffer> <leader>h3 I<++>OO### $a
 inoremap <buffer> <leader>h4 I<++>OO#### $a
 inoremap <buffer> <leader>h5 I<++>OO##### $a
-inoremap <buffer> <leader>fh <++>O> Date: :put =strftime(\"%Y-%m-%d\")kJA  o> Instructor: 
+inoremap <buffer> <leader>fh <++>O> Date: :put =strftime(\"%Y-%m-%d\")kJA  o> Instructor:
 inoremap <buffer> <leader>li [<++>](<++>) <++>:call BackwardMarker(3)
 inoremap <buffer> <leader>lr [<++>][<++>] <++>:call BackwardMarker(3)
 inoremap <buffer> <leader>im ![<++>](<++>) <++>:call BackwardMarker(3)
@@ -23,5 +23,5 @@ inoremap <buffer> <leader>t3 \| <++> \| <++> \| <++> \|\|------\|------\|------
 inoremap <buffer> <leader>t4 \| <++> \| <++> \| <++> \| <++> \|\|------\|------\|------\|------\|\| <++> \| <++> \| <++> \| <++> \|:call BackwardMarker(8)
 inoremap <buffer> <leader>t5 \| <++> \| <++> \| <++> \| <++> \| <++> \|\|------\|------\|------\|------\|------\|\| <++> \| <++> \| <++> \| <++> \| <++> \|:call BackwardMarker(10)
 inoremap <leader>t6 \| <++> \| <++> \| <++> \| <++> \| <++> \| <++> \|\|------\|------\|------\|------\|------\|------\|\| <++> \| <++> \| <++> \| <++> \| <++> \| <++> \|:call BackwardMarker(12)
-
-inoremap <buffer> <leader>qu I<++>OO> 
+inoremap <buffer> <leader>fp ---path: "<++>"date: ":put =strftime(\"%Y-%m-%d\")kJxA"title: "<++>"summary: "<++>"---<++>:call BackwardMarker(4)
+inoremap <buffer> <leader>qu I<++>OO>
