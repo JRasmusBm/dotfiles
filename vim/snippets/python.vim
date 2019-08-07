@@ -11,9 +11,14 @@ inoremap <buffer> ;oi __<++>__ <++> :call BackwardMarker(2)
 inoremap <buffer> ;om def __<++>__(self, <++>):<++><++><<$:call BackwardMarker(4)
 inoremap <buffer> ;in from <++> import <++>:call BackwardMarker(2)
 inoremap <buffer> ;im import <++> <++>:call BackwardMarker(2)
-" With
-inoremap <buffer> ;wi with <++>:<++><++><<:call BackwardMarker(2)
-inoremap <buffer> ;si if <++>:<++><++><<:call BackwardMarker(2)
+" Control Statements{{{
+" With{{{
+inoremap <buffer> ;cwi with <++>:<++><++><<:call BackwardMarker(2)
+"}}}
+" If {{{
+inoremap <buffer> ;cif if <++>:<++><++><<:call BackwardMarker(2)
+" }}}
+"}}}
 " Testing
 inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call BackwardMarker(2)
 inoremap <buffer> <leader>dc async def test_<++>(<++>):<++><++><<:call BackwardMarker(3)
