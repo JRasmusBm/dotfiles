@@ -18,3 +18,4 @@ inoremap <buffer> ;si if <++>:<++><++><<:call BackwardMarker(2)
 inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call BackwardMarker(2)
 inoremap <buffer> <leader>dc async def test_<++>(<++>):<++><++><<:call BackwardMarker(3)
 inoremap <buffer> <leader>db @pytest.fixtureasync def <++>():<++><++><<:call BackwardMarker(2)
+inoremap <buffer> <leader>de assert <++><++>:call BackwardMarker(2)
