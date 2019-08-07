@@ -1,7 +1,7 @@
 let g:ale_completion_enabled = 1
 
-let g:ale_close_preview_on_insert = 1
-let g:ale_cursor_detail = 1
+" let g:ale_close_preview_on_insert = 1
+" let g:ale_cursor_detail = 1
 
 " Python
 let g:ale_python_auto_pipenv = 1
