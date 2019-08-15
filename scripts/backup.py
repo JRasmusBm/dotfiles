@@ -10,7 +10,7 @@ def backup(dir_path, overwrite=False):
     for the_file in read_config("./files.csv"):
         original_path = Path.home() / the_file.target
         backup_path = backup_dir / the_file.target
-        if not (backup_path).exists():
+        if not (backup_path).exists() and original_path.exists():
             dir_part = Path(*backup_path.parts[:-1])
             dir_part.mkdir(parents=True, exist_ok=True)
             move(original_path, backup_path)
