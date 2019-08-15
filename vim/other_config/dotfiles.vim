@@ -5,3 +5,4 @@
 :command! Zenv e ~/.zshenv
 :command! Arc e ~/.alacritty.yml
 :command! Irc e ~/.install_dependencies
+:command! Grc e ~/.gitconfig
