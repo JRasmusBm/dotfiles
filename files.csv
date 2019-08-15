@@ -11,3 +11,4 @@ False,shell/bashrc,.bashrc
 False,shell/dircolors,.dircolors
 False,shell/zshenv,.zshenv
 False,shell/zshrc,.zshrc
+True,bin,.bin
