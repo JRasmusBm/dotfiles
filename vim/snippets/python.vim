@@ -35,6 +35,7 @@ inoremap <buffer> <leader>db @pytest.fixture
   \async def <++>() -> AsyncGenerator:
   \<++><++><<:call BackwardMarker(2)
 inoremap <buffer> <leader>de assert <++><++>:call BackwardMarker(2)
+" Test File {{{
 inoremap <buffer> <leader>df """<++>"""
   \from typing import AsyncGenerator
   \import pytest
@@ -44,4 +45,13 @@ inoremap <buffer> <leader>df """<++>"""
   \async def test_<++>(self,<++>) -> None:
   \"""<++>"""
   \<++>:call BackwardMarker(10)
+"}}}
+" Conftest File{{{
+inoremap <buffer> <leader>dh """<++>"""
+  \from typing import AsyncGenerator
+  \import pytest
+  \@pytest.fixtureasync def <++>() -> AsyncGenerator:
+  \"""<++>"""<++>
+  \:call BackwardMarker(4)
+"}}}
 "}}}
