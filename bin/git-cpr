@@ -4,7 +4,7 @@
 # Run this from a branch which has an upstream remote branch, and an associated
 # pull request.
 #
-# The script will merge the branch into master, push master (which will
+# The script will merge the branch into base, push base (which will
 # automatically close the pull request), and delete both the local and remote
 # branches.
 
@@ -21,11 +21,12 @@ class ClosesPullRequests
     confirm_upstream_tracking_branch
     ensure_working_dir_and_index_clean
     fetch_origin
+    find_base
     ensure_feature_branch_in_sync
-    ensure_master_in_sync
-    checkout_master
+    ensure_base_in_sync
+    checkout_base
     merge_local_banch
-    push_master
+    push_base
     delete_remote_branch
     delete_local_branch
   end
@@ -88,6 +89,13 @@ class ClosesPullRequests
     end
   end
 
+  def find_base
+    puts "Figuring out the base of the pull request..."
+    command = "hub pr list -h $(git rev-parse --abbrev-ref HEAD) --format %B | xargs echo"
+    gc = GitCall.new(command, :query, "master")
+    @base = run_or_print(gc)
+  end
+
   def ensure_working_dir_and_index_clean
     puts "Ensuring that index and working directory are clean..."
     index_clean_cmd = "git diff --cached --exit-code"
@@ -99,9 +107,10 @@ class ClosesPullRequests
     end
   end
 
-  def checkout_master
-    puts "Checking out master..."
-    gc = GitCall.new("git checkout master", :command, true)
+  def checkout_base
+    puts "Checking out #{@base}..."
+    command = `git checkout #{@base}`
+    gc = GitCall.new(command, :command, true)
     run_or_print(gc)
   end
 
@@ -111,8 +120,8 @@ class ClosesPullRequests
     run_or_print(gc)
   end
 
-  def ensure_master_in_sync
-    ensure_branch_in_sync_with_upstream("master", "master")
+  def ensure_base_in_sync
+    ensure_branch_in_sync_with_upstream(@base, @base)
   end
 
   def ensure_feature_branch_in_sync
@@ -129,7 +138,7 @@ class ClosesPullRequests
   end
 
   def merge_local_banch
-    puts "Merging branch into master..."
+    puts "Merging branch into #{@base}..."
     merge_cmd = "git merge --ff-only #{@current_branch}"
     gc = GitCall.new(merge_cmd, :command, true)
     unless run_or_print(gc)
@@ -138,9 +147,9 @@ class ClosesPullRequests
     end
   end
 
-  def push_master
-    puts "Pushing updated master branch..."
-    gc = GitCall.new("git push origin master", :command, true)
+  def push_base
+    puts "Pushing updated #{@base} branch..."
+    gc = GitCall.new(`git push origin #{@base}`, :command, true)
     run_or_print(gc)
   end
 
