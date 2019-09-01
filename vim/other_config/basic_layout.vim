@@ -18,7 +18,7 @@ set wrap
 set textwidth=79
 set colorcolumn=+1
 
-autocmd VimResized * exe 'normal! \<c-w>='
+autocmd VimResized * :wincmd =
 
 " Set the mouse as a bar in insert mode, as a block in normal mode.
 let &t_SI = "\e[6 q"
