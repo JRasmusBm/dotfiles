@@ -6,3 +6,4 @@
 :command! Arc e ~/.alacritty.yml
 :command! Irc e ~/.install_dependencies
 :command! Grc e ~/.gitconfig
+:command! Trc e ~/.tmux.conf
