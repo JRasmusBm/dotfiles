@@ -9,13 +9,14 @@ function! BackwardMarker(n)
     execute 'normal! ?<++>"'
   endif
   if ColumnFromRight() == 4
-    normal "_4x
+    normal "_dgn
     execute 'startinsert!'
   else
-    normal "_4x
+    normal "_dgn
     execute 'startinsert'
   endif
 endfunction
+
 function! ForwardMarker(n)
   if a:n > 1
     execute 'normal! /<++> '  . (a:n - 1) . 'n"'
@@ -23,18 +24,20 @@ function! ForwardMarker(n)
     execute 'normal! /<++>"'
   endif
   if ColumnFromRight() == 4
-    normal "_4x
+    normal "_dgn
     execute 'startinsert!'
   else
-    normal "_4x
+    normal "_dgn
     execute 'startinsert'
   endif
 endfunction
+
 function! DeleteAllMarkers()
   let save_pos = getpos('.')
   execute '%s/<++>//g'
   call setpos('.', save_pos)
 endfunction
+
 function! DeleteMarker(n)
   if a:n > 1
     execute 'normal! /<++> '  . (a:n - 1) . 'n"'
@@ -42,6 +45,7 @@ function! DeleteMarker(n)
     execute 'normal! /<++>"'
   endif
 endfunction
+
 function! DeleteMarkerRow(n)
   if a:n > 1
     execute 'normal! /<++> '  . (a:n - 1) . 'n"_dd'
@@ -85,3 +89,4 @@ nnoremap 3<Leader>g :call ForwardMarker(3)
 nnoremap 4<Leader>g :call ForwardMarker(4)
 nnoremap 5<Leader>g :call ForwardMarker(5)
 nnoremap 6<Leader>g :call ForwardMarker(6)
+inoremap <leader>cp :call ForwardMarker(1).:call ForwardMarker(1)
