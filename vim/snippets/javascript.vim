@@ -1,12 +1,16 @@
 " Styled component
-" Imports
+" Imports {{{
 inoremap <buffer> <leader>ia <++>Oimport <++> from "<++>";:call BackwardMarker(2)
 inoremap <buffer> <leader>ir <++>Oimport React from "react";:call ForwardMarker(1)
 inoremap <buffer> <leader>in <++>Oimport { <++> } from "<++>";:call BackwardMarker(2)
 inoremap <buffer> <leader>im <++>Oimport "<++>";:call BackwardMarker(1)
 
 inoremap <buffer> <leader>id <++>Oimport <++> from "<++>";:call BackwardMarker(2)
-
+" Component {{{
+inoremap <buffer> <leader>ic import <++> from "components/<++>";<++>
+  \:call BackwardMarker(3)
+" }}}
+" }}}
 " Exports
 inoremap <buffer> <leader>en <++>O}O	<++>Oexport {:call ForwardMarker(1)
 inoremap <buffer> <leader>ed <++>Oexport default <++> ;:call BackwardMarker(1)
@@ -30,7 +34,7 @@ inoremap <buffer> <leader>cu const {<++> } = <++>;<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>pp JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>pr console.log(<++>);<++>:call BackwardMarker(2)
 " Variables
-inoremap <buffer> <leader>vv const <++> = <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>vc const <++> = <++>:call BackwardMarker(2)
 inoremap <buffer> <leader>vd const { <++> } = <++>:call BackwardMarker(2)
 inoremap <buffer> <leader>vo const <++> = {<++>}:call BackwardMarker(2)
 "Functions
@@ -59,11 +63,14 @@ inoremap <buffer> <leader>dc test("<++>", async () => {<++>}) <++><<$:call 
 inoremap <buffer> <leader>dr const { <++> } = render(<++>);<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>de expect(<++>).<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>dw await wait(() => {<++>});<++>:call BackwardMarker(2)
-inoremap <buffer> <leader>df fireEvent.<++>(<++>);:call BackwardMarker(2)
-" Graphql
+inoremap <buffer> <leader>dfe fireEvent.<++>(<++>);:call BackwardMarker(2)
+" GraphQL {{{
+" Tag {{{
 inoremap <buffer> <leader>qt const <++> = gql`
       \<++>
       \`<++>:call BackwardMarker(3)
+" }}}
+" }}}
 " Control Statements{{{
 " if statements {{{
 inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(2)
