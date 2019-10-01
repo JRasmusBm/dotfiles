@@ -36,6 +36,7 @@ nnoremap <leader>ah :ALEHover
 nnoremap <leader>al :ALELint
 nnoremap <leader>as :ALESymbolSearch<Space>
 nnoremap <leader>af :ALEFix
+nnoremap <leader>ap :ALEDetail
 nnoremap <leader>ad :ALEGoToDefinition
 nnoremap <leader>at :ALEGoToTypeDefinition
 
