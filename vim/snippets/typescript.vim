@@ -37,16 +37,16 @@ inoremap <buffer> <leader>ia <++>Oimport * as <++> from "<++>";:call BackwardM
 " File {{{
 inoremap <buffer> <leader>df import React from "react";
             \import { render } from "__testutils__/testing-library";
-            \import Component from "..";
+            \import <++> from "..";
             \describe("<++>", () => {
                 \describe("<++>", () => {
                     \let result: ReturnType<typeof render>;
                     \beforeEach((): void => {
-                        \result = render(<Component <++>/><++>);
+                        \result = render(<<++>/><++>);
                     \});
                     \test("<++>", async (): Promise<void> => {<++>})
                 \})
-            \}):call BackwardMarker(6)
+            \}):call BackwardMarker(7)
 " }}}
 " Before Each {{{
 inoremap <buffer> <leader>db beforeEach((): void => {<++>});<++>:call BackwardMarker(2)
