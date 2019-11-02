@@ -76,3 +76,9 @@ inoremap <buffer> <leader>ao <++> + <++>:call BackwardMarker(2)
 inoremap <buffer> <leader>su <++> - <++>:call BackwardMarker(2) 
 inoremap <buffer> <leader>mo <++> * <++>:call BackwardMarker(2) 
 inoremap <buffer> <leader>do \frac{<++>}{<++>} <++>:call BackwardMarker(3) 
+" Import {{{
+" File {{{
+inoremap <buffer> <leader>if \input{<++>}
+            \<++>:call BackwardMarker(2)
+" }}}
+" }}}
