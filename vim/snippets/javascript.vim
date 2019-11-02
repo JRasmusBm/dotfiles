@@ -14,10 +14,13 @@ inoremap <buffer> <leader>ic import <++> from "components/<++>";<++>
 " Exports
 inoremap <buffer> <leader>en <++>O}O	<++>Oexport {:call ForwardMarker(1)
 inoremap <buffer> <leader>ed <++>Oexport default <++> ;:call BackwardMarker(1)
-" React Component
+" React
+" Styled Component {{{
 inoremap <buffer> <leader>rs const <++> = styled.<++>`<++>`<++>:call BackwardMarker(4)
-inoremap <buffer> <leader>rc <++>O}O	<++>O
-      \class <++> extends React.Component {:call BackwardMarker(1)
+" }}}
+" Component {{{
+inoremap <buffer> <leader>rc const <++> = () => {<++>}<++>:call BackwardMarker(3)
+" }}}
 inoremap <buffer> <leader>rr <++>O}O	<++>O
       \render() {:call ForwardMarker(2)
 inoremap <buffer> <leader>rf import * as React from "react";
@@ -34,9 +37,18 @@ inoremap <buffer> <leader>cu const {<++> } = <++>;<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>pp JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>pr console.log(<++>);<++>:call BackwardMarker(2)
 " Variables
+" Let {{{
+inoremap <buffer> <leader>vl let <++> = <++>:call BackwardMarker(2)
+" }}}
+" Const {{{
 inoremap <buffer> <leader>vc const <++> = <++>:call BackwardMarker(2)
+" }}}
+" Destructure {{{
 inoremap <buffer> <leader>vd const { <++> } = <++>:call BackwardMarker(2)
+" }}}
+" Object {{{
 inoremap <buffer> <leader>vo const <++> = {<++>}:call BackwardMarker(2)
+" }}}
 "Functions
 inoremap <buffer> <leader>fd function <++> (<++>) {<++>}<++><<$:call BackwardMarker(4)
 inoremap <buffer> <leader>fi (<++>) => <++> <++>:call BackwardMarker(3)
