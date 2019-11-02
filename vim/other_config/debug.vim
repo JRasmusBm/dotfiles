@@ -1,1 +1,1 @@
-nnoremap <Leader>ac :set invcursorline<cr>:set invcursorcolumn<cr>
+nnoremap <Leader>sr :set invcursorline<cr>:set invcursorcolumn<cr>
