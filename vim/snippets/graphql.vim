@@ -16,3 +16,7 @@ inoremap <buffer> <leader>qv $<++>: <++>!
 inoremap <buffer> <leader>qf <++> {	<++>}
       \<++>:call BackwardMarker(3)
 " }}}
+" Typename {{{
+inoremap <buffer> <leader>qn __typename: "<++>Type",
+      \<++>:call BackwardMarker(2)
+" }}}
