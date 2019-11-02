@@ -1,6 +1,6 @@
 " Import {{{
 " Module {{{
-inoremap <buffer> <leader>im import "<++>"
+inoremap <buffer> <leader>im import ("<++>")
       \<++>:call BackwardMarker(2)
 " }}}
 " }}}
@@ -15,6 +15,11 @@ inoremap <buffer> <leader>fd func <++>() {
   \<++>:call BackwardMarker(3)
 "}}}
 " Testing {{{
+" Expect {{{
+inoremap <buffer> <leader>de if <++> {
+      \t.Errorf(<++>)
+      \}:call BackwardMarker(2)
+" }}}
 " File {{{
 inoremap <buffer> <leader>df package <++>
       \import ("testing")
@@ -30,6 +35,10 @@ inoremap <buffer> <leader>dc func Test<++>(t *testing.T) {<++>}
 inoremap <buffer> <leader>pr fmt.Printf(<++>)
   \<++>:call BackwardMarker(2)
 " }}}
+" }}}
+" Control Statements {{{
+inoremap <buffer> <leader>ci if <++> {<++>}
+  \:call BackwardMarker(2)
 " }}}
 " Types {{{
 inoremap <buffer> <leader>ti type <++> interface {
