@@ -14,7 +14,6 @@ source /home/rasmus/.zsh/antigen.zsh
  antigen use oh-my-zsh
 
 # # Bundles from the default repo (robbyrussell's oh-my-zsh).
-antigen bundle git
 antigen bundle heroku
 antigen bundle pip
 antigen bundle lein
@@ -135,5 +134,7 @@ d="$HOME/.dircolors"
 test -r $d && eval "$(dircolors -b $d)"
 # Promptline
 source ~/.promptline.sh
+# Complete g like git
+compdef g=git
 
 stty -ixon
