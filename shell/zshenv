@@ -2,6 +2,13 @@ if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
   source "${VIRTUAL_ENV}/bin/activate"
 fi
 source ~/.install_dependencies
+function g() {
+  if [[ $# > 0 ]]; then
+    git $@
+  else
+    git status
+  fi
+}
 # Aliases
 alias "python"="python3"
 alias "pip"="pip3"
@@ -11,7 +18,7 @@ alias "chr"="google-chrome"
 alias "br"="brave-browser"
 alias "co"="git add --all && git commit"
 alias "pgAdmin4"="workon pgadmin4 ; python3.7 ~/.virtualenvs/pgadmin4/lib/python3.7/site-packages/pgadmin4/pgAdmin4.py"
-alias "st"="clear; git status"
+alias "st"="g st"
 alias "south-pole"="ssh root@139.59.144.120"
 alias "spectest-interp"="~/wabt/bin/spectest-interp"
 alias "studio"="/usr/local/android-studio/bin/studio.sh"
@@ -34,6 +41,9 @@ alias "arc"="vim ~/.alacritty.yml"
 alias "brc"="vim ~/.bashrc"
 alias "zenv"="vim ~/.zshenv"
 alias "irc"="vim ~/.install_dependencies"
+alias "gl"="g l"
+
+
 
 alias ta='tmux attach -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
 
