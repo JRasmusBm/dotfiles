@@ -1,3 +1,9 @@
+" Script {{{
+" File {{{
+inoremap <buffer> <leader>sf #!/bin/sh
+  \set -e
+" }}}
+" }}}
 " Function {{{
 " Definition {{{
 inoremap <buffer> <leader>fd <++>() {<++>}
