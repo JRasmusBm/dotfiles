@@ -13,6 +13,11 @@
   ch = checkout
   ci = "!hub ci-status"
   co = commit
+  cp = cherry-pick
+  cpa = cherry-pick --abort
+  cpc = cherry-pick --continue
+  cpi = cherry-pick -i
+  cps = cherry-pick --skip
   del-rest = "!git ls-files -o --directory | rm -rf"
   ff = merge --ff-only
   l = !git --no-pager log --oneline --decorate --graph --all -20
@@ -27,6 +32,7 @@
   rbi = rebase -i
   rbs = rebase --skip
   rh = reset --hard
+  ro = "!git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)" 
   rs = reset --soft
   s = log --oneline --decorate --graph --all
   sl = log --oneline --decorate -20
