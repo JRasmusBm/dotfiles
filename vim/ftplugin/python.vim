@@ -1,4 +1,4 @@
-let b:ale_fixers = ['black']
+let b:ale_fixers = ['black', 'isort']
 
 match BadWhitespace /\s\+$/
 
