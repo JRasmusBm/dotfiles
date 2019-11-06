@@ -1,3 +1,5 @@
+map <F3> :echo "hi<" . synIDattr(synID(line("."),col("."),1),"name") . '> trans<' . synIDattr(synID(line("."),col("."),0),"name") . "> lo<" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"name") . ">" . " FG:" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"fg#") . " BG:" . synIDattr(synIDtrans(synID(line("."),col("."),1)),"bg#")<CR>
+
 " Error Styling{{{
 highlight Error guifg=red guibg=NONE ctermfg=red ctermbg=NONE
 highlight BadWhitespace guibg=darkred ctermbg=darkred
