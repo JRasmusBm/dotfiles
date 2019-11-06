@@ -7,7 +7,7 @@
   aa = add --all
   ap = add --patch
   apply-gitignore = "!git ls-files -ci --exclude-standard -z | xargs -0 git rm --cached"
-  b = branch
+  b =  "!git --no-pager branch"
   bd = branch -D
   ca = commit --amend
   ch = checkout
