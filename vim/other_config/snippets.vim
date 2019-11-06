@@ -1,6 +1,3 @@
-highlight SnippetMarker ctermfg=yellow guifg=yellow
-match SnippetMarker /<++>/
-
 " Helper Functions {{{
 function! BackwardMarker(n)
   if a:n > 0
