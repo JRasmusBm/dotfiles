@@ -46,6 +46,8 @@
   oldNormal = red bold
   newNormal = green bold
   newHighlight = green bold 22
+[commit]
+  template = ~/.gitmessage
 [color "diff"]
   meta = yellow
   frag = magenta bold
