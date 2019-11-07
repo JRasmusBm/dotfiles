@@ -30,6 +30,7 @@
   rba = rebase --abort
   rbc = rebase --continue
   rbi = rebase -i
+  rbo = "!git rb origin/$(git rev-parse --abbrev-ref HEAD)" 
   rbs = rebase --skip
   rh = reset --hard
   ro = "!git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)" 
