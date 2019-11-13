@@ -2,6 +2,7 @@ is_dir,source,target
 False,vim/vimrc,.vimrc
 False,terminal/alacritty.yml,.alacritty.yml
 False,vim/init.vim,.config/nvim/init.vim
+False,terminal/base16-shell,.config/base16-shell
 True,vim/spell,.config/nvim/spell
 True,vim,.vim
 False,git/gitconfig,.gitconfig

@@ -1,7 +1,7 @@
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
 
-nnoremap <Leader>ff :GFiles<CR>
+nnoremap <Leader>ff :GFiles?<CR>
 nnoremap <Leader>fg :Files .<CR>
 nnoremap <Leader>fb :Buffers<CR>
 nnoremap <Leader>fl :Lines<CR>
