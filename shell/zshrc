@@ -35,6 +35,12 @@ antigen bundle zdharma/zsh-diff-so-fancy
 # # Tell Antigen that you're done.
 antigen apply
 
+# Base16 Shell
+BASE16_SHELL="$HOME/.config/base16-shell/"
+[ -n "$PS1" ] && \
+    [ -s "$BASE16_SHELL/profile_helper.sh" ] && \
+        eval "$("$BASE16_SHELL/profile_helper.sh")"
+
 # Vim mode
 bindkey -v
 autoload -U edit-command-line
@@ -138,3 +144,19 @@ source ~/.promptline.sh
 compdef g=git
 
 stty -ixon
+
+function () {
+  emulate -L zsh
+
+  if [[ -s "$BASE16_CONFIG" ]]; then
+    local SCHEME=$(head -1 "$BASE16_CONFIG")
+    local BACKGROUND=$(sed -n -e '2 p' "$BASE16_CONFIG")
+    if [ "$BACKGROUND" != 'dark' -a "$BACKGROUND" != 'light' ]; then
+      echo "warning: unknown background type in $BASE16_CONFIG"
+    fi
+    color "$SCHEME"
+  else
+    # Default.
+    color default-dark
+  fi
+}

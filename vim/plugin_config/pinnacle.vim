@@ -1,0 +1,1 @@
+Plug 'wincent/pinnacle'
