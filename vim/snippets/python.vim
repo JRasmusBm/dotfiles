@@ -102,3 +102,25 @@ inoremap <buffer> <leader>dh """<++>"""
   \:call BackwardMarker(4)
 "}}}
 "}}}
+" Model {{{
+" File {{{
+inoremap <buffer> <leader>mf """<++>"""
+  \from sqlalchemy import Column, Integer
+  \from src.model.db_engine import db_engine
+  \class <++>Model(db_engine.base):
+  \"""<++>"""
+  \__tablename__ = "<++>"
+  \id = Column(Integer, primary_key=True)
+  \<++>:call BackwardMarker(5)
+" }}}
+" Column {{{
+inoremap <buffer> <leader>mc <++> = Column(<++>)
+  \<++>:call BackwardMarker(3)
+" }}}
+" Primary Key {{{
+inoremap <buffer> <leader>mp __table_args__ = (
+      \PrimaryKeyConstraint("<++>", "<++>", name="<++>"),
+      \)
+      \<++>:call BackwardMarker(4)
+" }}}
+" }}}
