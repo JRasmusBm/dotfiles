@@ -41,7 +41,7 @@ install_haskell() {
   curl -sSL https://get.haskellstack.org/ | sh
 }
 
-install_python() {
+install_python_37() {
   sudo apt-get install -y build-essential
   sudo apt-get install -y checkinstall
   sudo apt-get install -y libreadline-gplv2-dev
@@ -62,21 +62,20 @@ install_python() {
   mkdir /tmp/Python37
   cd /tmp/Python37
 
-  wget https://www.python.org/ftp/python/3.7.3/Python-3.7.3.tar.xz
-  tar xvf Python-3.7.3.tar.xz
-  cd /tmp/Python37/Python-3.7.3
+  wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
+  tar zxvf Python-3.7.5.tar.tgz
+  cd /tmp/Python37/Python-3.7.5
   ./configure
   sudo make altinstall
   sudo update-alternatives --install /usr/bin/python /usr/local/bin/python3.7
-  sudo apt-get install -y python-pip
-  sudo apt-get install -y python3-pip
-  sudo pip3 install virtualenv
-  sudo pip3 install virtualenvwrapper
-  sudo pip install virtualenv
-  sudo pip install virtualenvwrapper
-  source "/usr/local/bin/virtualenvwrapper.sh"
-  pip3 install pipenv
 }
+
+install_virtualenvwrapper() {
+  python3.7 -m pip install virtualenvwrapper
+  source "/usr/local/bin/virtualenvwrapper.sh"
+}
+
+
 
 install_nvim() {
   sudo apt-get install -y build-essential
