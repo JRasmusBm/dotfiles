@@ -22,6 +22,7 @@
   ff = merge --ff-only
   l = !git --no-pager log --oneline --decorate --graph --all -20
   mup = !git checkout master && git fetch origin && echo && git sl master..origin/master && echo && git pull --quiet && git checkout -
+  no = remote add origin
   pd = push -d origin 
   pf = push -f
   pu = push
