@@ -17,10 +17,14 @@ inoremap <buffer> <leader>om def __<++>__(self, <++>):<++><++><<$:call Backwa
 inoremap <buffer> <leader>in from <++> import <++>:call BackwardMarker(2)
 inoremap <buffer> <leader>im import <++> <++>:call BackwardMarker(2)
 " GraphQL {{{
+" ResolveInfo {{{
+inoremap <buffer> <leader>qri from graphql.execution.base import ResolveInfo
+  \<++>:call BackwardMarker(1)
+" }}}
 " resolver{{{
-inoremap <buffer> <leader>qr @staticmethod
-  \async def resolve_<++>(_parent: Dict, _info: ResolveInfo<++>):
-  \<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>qr ?classn:nohwyw2i	@staticmethod
+  \async def resolve_<++>(_parent: """, _info: ResolveInfo<++>) -> <++>:
+  \<++>:call BackwardMarker(4)
 " }}}
 " mutation{{{
 inoremap <buffer> <leader>qm """<++>"""
