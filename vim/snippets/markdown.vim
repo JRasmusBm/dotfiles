@@ -8,14 +8,14 @@ inoremap <buffer> <leader>h3 I<++>OO### $a
 inoremap <buffer> <leader>h4 I<++>OO#### $a
 inoremap <buffer> <leader>h5 I<++>OO##### $a
 inoremap <buffer> <leader>fh <++>O> Date: :put =strftime(\"%Y-%m-%d\")kJA  o> Instructor:
-inoremap <buffer> <leader>li [<++>](<++>) <++>:call BackwardMarker(3)
-inoremap <buffer> <leader>lr [<++>][<++>] <++>:call BackwardMarker(3)
-inoremap <buffer> <leader>im ![<++>](<++>) <++>:call BackwardMarker(3)
+inoremap <buffer> <leader>li [<++>](<++>)<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>lr [<++>][<++>]<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>im ![<++>](<++>)<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>rr [<++>]: <++>:call BackwardMarker(2)
-inoremap <buffer> <leader>em *<++>* <++>:call BackwardMarker(2)
-inoremap <buffer> <leader>bo **<++>** <++>:call BackwardMarker(2)
-inoremap <buffer> <leader>st ~~<++>~~ <++>:call BackwardMarker(2)
-inoremap <buffer> <leader>ci `<++>` <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>em *<++>*<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>bo **<++>**<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>st ~~<++>~~<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>ci `<++>`<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>cb ```<++><++>```<++>:call BackwardMarker(3)A
 inoremap <buffer> <leader>t1 \| <++> \|\|------\|\| <++> \|:call BackwardMarker(2)
 inoremap <buffer> <leader>t2 \| <++> \| <++> \|\|------\|------\|\| <++> \| <++> \|:call BackwardMarker(4)
