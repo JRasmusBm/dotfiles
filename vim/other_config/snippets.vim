@@ -1,10 +1,5 @@
 " Helper Functions {{{
-function! BackwardMarker(n)
-  if a:n > 0
-    execute 'normal! ?<++> '  . a:n . 'n"'
-  else
-    execute 'normal! ?<++>"'
-  endif
+function! ChangeMarker() abort
   if ColumnFromRight() == 4
     normal "_dgn
     execute 'startinsert!'
@@ -14,19 +9,22 @@ function! BackwardMarker(n)
   endif
 endfunction
 
+function! BackwardMarker(n)
+  if a:n > 0
+    execute 'normal! ?<++> '  . a:n . 'n"'
+  else
+    execute 'normal! ?<++>"'
+  endif
+  call ChangeMarker()
+endfunction
+
 function! ForwardMarker(n)
   if a:n > 1
     execute 'normal! /<++> '  . (a:n - 1) . 'n"'
   else
     execute 'normal! /<++>"'
   endif
-  if ColumnFromRight() == 4
-    normal "_dgn
-    execute 'startinsert!'
-  else
-    normal "_dgn
-    execute 'startinsert'
-  endif
+  call ChangeMarker()
 endfunction
 
 function! DeleteAllMarkers()
@@ -37,10 +35,11 @@ endfunction
 
 function! DeleteMarker(n)
   if a:n > 1
-    execute 'normal! /<++> '  . (a:n - 1) . 'n"'
+    execute 'normal! /<++> '  . (a:n - 1) . 'n'
   else
-    execute 'normal! /<++>"'
+    execute 'normal! /<++>'
   endif
+  normal "_dgn
 endfunction
 
 function! DeleteMarkerRow(n)
@@ -74,12 +73,12 @@ nnoremap 3<Leader>G :call BackwardMarker(3)
 nnoremap 4<Leader>G :call BackwardMarker(4)
 nnoremap 5<Leader>G :call BackwardMarker(5)
 nnoremap 6<Leader>G :call BackwardMarker(6)
-inoremap <leader>g :call ForwardMarker(1)
-inoremap 2<leader>g :call ForwardMarker(2)
-inoremap 3<leader>g :call ForwardMarker(3)
-inoremap 4<leader>g :call ForwardMarker(4)
-inoremap 5<leader>g :call ForwardMarker(5)
-inoremap 6<leader>g :call ForwardMarker(6)
+inoremap <leader>g :call ForwardMarker(1)
+inoremap 2<leader>g :call ForwardMarker(2)
+inoremap 3<leader>g :call ForwardMarker(3)
+inoremap 4<leader>g :call ForwardMarker(4)
+inoremap 5<leader>g :call ForwardMarker(5)
+inoremap 6<leader>g :call ForwardMarker(6)
 nnoremap <Leader>g :call ForwardMarker(1)
 nnoremap 2<Leader>g :call ForwardMarker(2)
 nnoremap 3<Leader>g :call ForwardMarker(3)
