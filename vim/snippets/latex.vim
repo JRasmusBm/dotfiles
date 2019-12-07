@@ -3,8 +3,8 @@ inoremap <buffer> <leader>nl \begin{enumerate}\item <++>\end{enumerate}<++>
 inoremap <buffer> <leader>nn o\item  
 inoremap <buffer> <leader>bn o\item  
        
-inoremap <buffer> <leader>em \emph{<++>} <++>:call BackwardMarker(2)
-inoremap <buffer> <leader>bo \textbf{<++>} <++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>em \emph{<++>}<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>bo \textbf{<++>}<++>:call BackwardMarker(2) 
       
 inoremap <buffer> <leader>h1 I<++>OO\section{<++>}\label{sec:<++>}:call BackwardMarker(2)
 inoremap <buffer> <leader>h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
