@@ -1,4 +1,9 @@
 Plug 'davidhalter/jedi-vim'
+Plug 'szymonmaszke/vimpyter'
+
+autocmd Filetype ipynb nmap <silent><Leader>jb :VimpyterInsertPythonBlock<CR>
+autocmd Filetype ipynb nmap <silent><Leader>js :VimpyterStartJupyter<CR>
+autocmd Filetype ipynb nmap <silent><Leader>jn :VimpyterStartNteract<CR>
 
 let g:jedi#goto_command = "<leader>ad"
 let g:jedi#goto_assignments_command = "<leader>aa"
