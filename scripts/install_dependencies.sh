@@ -157,6 +157,8 @@ install_alacritty() {
 install_tmux() {
   sudo apt-get update
   sudo apt-get install -y automake
+  sudo apt-get install -y byacc
+  sudo apt-get install -y autoconf
   sudo apt-get install -y build-essential
   sudo apt-get install -y pkg-config
   sudo apt-get install -y libevent-dev
