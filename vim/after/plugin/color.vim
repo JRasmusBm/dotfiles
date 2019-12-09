@@ -39,8 +39,8 @@ function! FoldHighlights() abort
 endfunction
 
 function! ErrorHighlights() abort
-  highlight Error guifg=red guibg=NONE ctermfg=red ctermbg=NONE
-  highlight BadWhitespace guibg=darkred ctermbg=darkred
+  highlight Error guifg=red guibg=NONE
+  highlight BadWhitespace guibg=darkred
 endfunction
 
 function! SearchHighlights() abort
@@ -48,10 +48,10 @@ function! SearchHighlights() abort
 endfunction
 
 function! SpellingHighlights() abort
-  highlight SpellBad ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
-  highlight SpellCap ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
-  highlight SpellLocal ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
-  highlight SpellRare ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
+  highlight SpellBad guifg=teal guibg=NONE 
+  highlight SpellCap guifg=teal guibg=NONE 
+  highlight SpellLocal guifg=teal guibg=NONE 
+  highlight SpellRare guifg=teal guibg=NONE 
 endfunction
 
 function! CocHighlights() abort
