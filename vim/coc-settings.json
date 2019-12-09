@@ -1,4 +1,7 @@
 {
   "suggest.autoTrigger": "always",
-  "suggest.noselect": false
+  "suggest.noselect": false,
+  "python.formatting.provider": "black",
+  "python.formatting.blackArgs": ["--line-length", "80"],
+  "diagnostic.errorSign": "✗"
 }
