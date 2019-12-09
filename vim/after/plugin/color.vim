@@ -27,7 +27,31 @@ function s:CheckColorScheme()
 
   execute 'highlight Comment ' . pinnacle#italicize('Comment')
   call CocHighlights()
+  call ErrorHighlights()
+  call SpellingHighlights()
+  call SearchHighlights()
+  call FoldHighlights()
+endfunction
 
+function! FoldHighlights() abort
+  highlight Folded guibg=NONE guifg=darkyellow
+  highlight FoldColumn guibg=darkgrey guifg=white
+endfunction
+
+function! ErrorHighlights() abort
+  highlight Error guifg=red guibg=NONE ctermfg=red ctermbg=NONE
+  highlight BadWhitespace guibg=darkred ctermbg=darkred
+endfunction
+
+function! SearchHighlights() abort
+  highlight Search guifg=yellow guibg=NONE
+endfunction
+
+function! SpellingHighlights() abort
+  highlight SpellBad ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
+  highlight SpellCap ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
+  highlight SpellLocal ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
+  highlight SpellRare ctermfg=blue guifg=blue guibg=NONE ctermbg=NONE
 endfunction
 
 function! CocHighlights() abort
