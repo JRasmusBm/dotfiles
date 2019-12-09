@@ -47,6 +47,11 @@ function! SearchHighlights() abort
   highlight Search guifg=yellow guibg=NONE
 endfunction
 
+function! HighlightMarker() abort
+  highlight SnippetMarker guifg=yellow guibg=NONE
+  match SnippetMarker /<++>/
+endfunction
+
 function! SpellingHighlights() abort
   highlight SpellBad guifg=teal guibg=NONE 
   highlight SpellCap guifg=teal guibg=NONE 
