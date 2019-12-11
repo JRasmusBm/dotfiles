@@ -11,6 +11,7 @@ nmap <silent> ]v <Plug>(coc-diagnostic-next)
 inoremap <silent><expr> <c-space> coc#refresh()
 
 nnoremap <leader>af :call CocAction("format")
+vnoremap <leader>af :call CocAction("formatSelected")
 
 let g:coc_global_extensions=[
   \"coc-prettier",
