@@ -42,22 +42,27 @@ install_haskell() {
 }
 
 install_python_37() {
+
   sudo apt-get install -y build-essential
+  sudo apt-get install -y bzip2 
   sudo apt-get install -y checkinstall
-  sudo apt-get install -y libreadline-gplv2-dev
-  sudo apt-get install -y libncursesw5-dev
-  sudo apt-get install -y libssl-dev
-  sudo apt-get install -y libsqlite3-dev
-  sudo apt-get install -y tk-dev
-  sudo apt-get install -y libgdbm-dev
+  sudo apt-get install -y libbz2-dev 
   sudo apt-get install -y libc6-dev
-  sudo apt-get install -y libbz2-dev
-  sudo apt-get install -y zlib1g-dev
-  sudo apt-get install -y openssl
   sudo apt-get install -y libffi-dev
-  sudo apt-get install -y python3-dev
-  sudo apt-get install -y python3-setuptools
+  sudo apt-get install -y libgdbm-compat-dev 
+  sudo apt-get install -y libgdbm-dev 
+  sudo apt-get install -y liblzma-dev 
+  sudo apt-get install -y libncursesw5-dev 
+  sudo apt-get install -y libreadline-dev 
+  sudo apt-get install -y libreadline-gplv2-dev
+  sudo apt-get install -y libsqlite3-dev 
+  sudo apt-get install -y libssl-dev 
+  sudo apt-get install -y openssl 
+  sudo apt-get install -y sqlite3 
+  sudo apt-get install -y tk-dev
+  sudo apt-get install -y uuid-dev
   sudo apt-get install -y wget
+  sudo apt-get install -y zlib1g-dev
 
   mkdir /tmp/Python37
   cd /tmp/Python37
