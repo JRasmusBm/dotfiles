@@ -1,5 +1,5 @@
-inoremap <buffer> <leader>bl - 	<++>s<++><<:call BackwardMarker(1)
-inoremap <buffer> <leader>nl 1.	<++>s<++><<:call BackwardMarker(1)
+inoremap <buffer> <leader>bl - 	<++>s<++><<:call BackwardMarker(2)
+inoremap <buffer> <leader>nl 1.	<++>s<++><<:call BackwardMarker(2)
 inoremap <buffer> <leader>nn ?^ *[0-9]:nohyy0}PWc$
 inoremap <buffer> <leader>bn ?^ *- :nohyy0}PWc$
 inoremap <buffer> <leader>h1 I<++>OO# $a
