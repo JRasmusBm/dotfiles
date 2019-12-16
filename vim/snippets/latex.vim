@@ -9,6 +9,11 @@ inoremap <buffer> <leader>bo \textbf{<++>}<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>h1 I<++>OO\section{<++>}\label{sec:<++>}:call BackwardMarker(2)
 inoremap <buffer> <leader>h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
 inoremap <buffer> <leader>h3 I<++>OO\subsubsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
+" Header {{{
+" Label {{{
+inoremap <buffer> <leader>hl yi{:call ForwardMarker(1)"gui{F\i:s/ /-/gkJ:call ForwardMarker(1)
+" }}}
+" }}}
      
 inoremap <buffer> <leader>to \begin{<++>}<++>\end{<++>}<++>:call BackwardMarker(4) 
 inoremap <buffer> <leader>tc yi{:call ForwardMarker(2)":call BackwardMarker(1) 
