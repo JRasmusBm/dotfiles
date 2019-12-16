@@ -22,5 +22,6 @@ let g:coc_global_extensions=[
   \"coc-python",
   \"coc-highlight",
   \"coc-texlab",
-  \"coc-tsserver"
+  \"coc-tsserver",
+  \"coc-rls"
   \]
