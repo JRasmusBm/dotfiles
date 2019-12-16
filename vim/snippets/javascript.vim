@@ -85,9 +85,9 @@ inoremap <buffer> <leader>qt const <++> = gql`
 " }}}
 " Control Statements{{{
 " if statements {{{
-inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(2)
-inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(1)
-inoremap <buffer> ;cei elif (<++>){<++>}<++><<:call BackwardMarker(2)
+inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
+inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
+inoremap <buffer> ;cei elif (<++>){<++>}<++><<:call BackwardMarker(3)
 " }}}
 " switch statements{{{
 inoremap <buffer> <leader>css switch (<++>) {
@@ -97,12 +97,12 @@ inoremap <buffer> <leader>css switch (<++>) {
       \<++>
       \}
       \<++><<
-      \:call BackwardMarker(4)
+      \:call BackwardMarker(5)
 inoremap <buffer> <leader>csc case <++>:
       \	<++>
       \break;<<o
       \<++><<
-      \:call BackwardMarker(2)
+      \:call BackwardMarker(3)
 "}}}
 "}}}
 "jquery
