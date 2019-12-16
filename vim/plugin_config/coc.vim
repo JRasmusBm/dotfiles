@@ -23,5 +23,6 @@ let g:coc_global_extensions=[
   \"coc-highlight",
   \"coc-texlab",
   \"coc-tsserver",
+  \"coc-eslint",
   \"coc-rls"
   \]
