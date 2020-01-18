@@ -1,0 +1,19 @@
+[[verbs]]
+execution = ":line_down"
+key = "alt-j"
+
+[[verbs]]
+execution = ":line_up"
+key = "alt-k"
+
+[[verbs]]
+execution = ":parent"
+key = "alt-h"
+
+[[verbs]]
+execution = ":select_first"
+key = "alt-g"
+
+[[verbs]]
+execution = ":back"
+key = "alt-o"
