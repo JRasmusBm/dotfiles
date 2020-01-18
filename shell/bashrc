@@ -174,3 +174,5 @@ export PATH
 
 source ~/.promptline.sh
 source ~/.z.sh
+
+source /home/rasmus/.config/broot/launcher/bash/br
