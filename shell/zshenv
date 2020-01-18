@@ -42,11 +42,13 @@ alias "brc"="vim ~/.bashrc"
 alias "zenv"="vim ~/.zshenv"
 alias "irc"="vim ~/.install_dependencies"
 alias "gl"="g l"
+alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
 
 
 alias ta='tmux attach -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
 alias tk='tmux kill-session -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
+alias tka='tmux kill-server'
 
 function translate() {
   directory=$(pwd)
