@@ -97,6 +97,7 @@ export PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
 export PATH=$PATH:/home/rasmus/.local/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
 export GOPATH="${HOME}/go"
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
 
 # Virtualenvs
 
@@ -227,3 +228,5 @@ export SPROMPT="zsh: correct %F{red}'%R'%f to %F{red}'%r'%f [%B%Uy%u%bes, %B%Un%
 
 DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 
+
+source /home/rasmus/.config/broot/launcher/bash/br
