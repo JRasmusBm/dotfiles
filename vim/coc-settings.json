@@ -1,8 +1,8 @@
 {
-  "suggest.autoTrigger": "always",
-  "suggest.noselect": false,
-  "python.formatting.provider": "black",
-  "python.formatting.blackArgs": ["--line-length", "80"],
   "diagnostic.errorSign": "✗",
-  "rust.all_features": true
+  "python.formatting.blackArgs": ["--line-length", "80"],
+  "python.formatting.provider": "black",
+  "rust.all_features": true,
+  "suggest.autoTrigger": "always",
+  "suggest.noselect": false
 }
