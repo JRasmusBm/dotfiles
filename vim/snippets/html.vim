@@ -24,7 +24,7 @@ inoremap <buffer> <leader>aj <++>={<++>} <++>:call BackwardMarker(3)
 " File Generation
 inoremap <buffer> <leader>tf <!DOCTYPE html><html>	<head>	<++></head><body>	<++></body></html>:call BackwardMarker(2)
 " Semantic Elements
-inoremap <buffer> <leader>tb <button <++>><++></button><++>:call BackwardMarker(3)
+inoremap <buffer> <leader>tb <button type="<++>" <++>><++></button><++>:call BackwardMarker(4)
 inoremap <buffer> <leader>tp <p><++></p><++>:call BackwardMarker(2)
 inoremap <buffer> <leader>ti <img src="<++>" <++> /><++>:call BackwardMarker(3)
 inoremap <buffer> <leader>tfi <label>
