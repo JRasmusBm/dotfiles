@@ -44,7 +44,20 @@ alias "irc"="vim ~/.install_dependencies"
 alias "gl"="g l"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
+function dcu() {
+  docker-compose down --remove-orphans 
+  docker-compose up --remove-orphans --build $@
+}
 
+function dcud() {
+  docker-compose -f docker-compose-dev.yml down --remove-orphans 
+  docker-compose -f docker-compose-dev.yml up --build $@
+}
+
+function dcuc() {
+  docker-compose -f docker-compose-check.yml down --remove-orphans
+  docker-compose -f docker-compose-check.yml up --build $@
+}
 
 alias ta='tmux attach -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
 alias tk='tmux kill-session -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
