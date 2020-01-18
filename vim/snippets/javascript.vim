@@ -86,6 +86,7 @@ inoremap <buffer> <leader>qt const <++> = gql`
 " Control Statements{{{
 " if statements {{{
 inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
+inoremap <buffer> ;cf for (<++>) {<++>}<++><<:call BackwardMarker(3)
 inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
 inoremap <buffer> ;cei elif (<++>){<++>}<++><<:call BackwardMarker(3)
 " }}}
@@ -105,6 +106,12 @@ inoremap <buffer> <leader>csc case <++>:
       \:call BackwardMarker(3)
 "}}}
 "}}}
+" Class {{{
+" Definition {{{
+inoremap <buffer> <leader>cd class <++> {<++>}<++>:call BackwardMarker(3)
+" }}}
+" }}}
+
 "jquery
 inoremap <buffer> <leader>jq $(<++>).<++>;<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>jc $("<++>").on("click", () => {	<++>});<<o<++>:call BackwardMarker(3)
