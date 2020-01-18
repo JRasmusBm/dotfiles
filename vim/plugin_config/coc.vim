@@ -1,5 +1,6 @@
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
+nmap <leader>aa :CocRestart
 nmap <leader>ad <Plug>(coc-definition)
 nmap <leader>at <Plug>(coc-type-definition)
 nmap <leader>ai <Plug>(coc-implementation)
@@ -26,3 +27,7 @@ let g:coc_global_extensions=[
   \"coc-eslint",
   \"coc-rls"
   \]
+
+let g:jedi#auto_initialization=0
+
+autocmd FileType python let b:coc_root_patterns = ['.git', '.env']
