@@ -17,3 +17,7 @@ key = "alt-g"
 [[verbs]]
 execution = ":back"
 key = "alt-o"
+
+[[verbs]]
+execution = ":refresh"
+key = "ctrl-r"
