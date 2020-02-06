@@ -7,3 +7,4 @@
 :command! Irc e ~/.install_dependencies
 :command! Grc e ~/.gitconfig
 :command! Trc e ~/.tmux.conf
+:command! Vsc e ~/.config/nvim/coc-settings.json
