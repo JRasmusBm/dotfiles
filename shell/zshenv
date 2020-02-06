@@ -44,18 +44,30 @@ alias "irc"="vim ~/.install_dependencies"
 alias "gl"="g l"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
-function dcu() {
+function dcd () {
   docker-compose down --remove-orphans 
+}
+
+function dcu() {
+  dcd
   docker-compose up --remove-orphans --build $@
 }
 
-function dcud() {
+function dcdd() {
   docker-compose -f docker-compose-dev.yml down --remove-orphans 
+}
+
+function dcud() {
+  dcdd
   docker-compose -f docker-compose-dev.yml up --build $@
 }
 
-function dcuc() {
+function dcdc() {
   docker-compose -f docker-compose-check.yml down --remove-orphans
+}
+
+function dcuc() {
+  dcdc
   docker-compose -f docker-compose-check.yml up --build $@
 }
 
