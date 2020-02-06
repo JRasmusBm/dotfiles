@@ -48,9 +48,28 @@ inoremap <buffer> <leader>ci if <++> {
 " }}}
 " Describe {{{
 " Expect {{{
-inoremap <buffer> <leader>de if !<++> {
-    \panic!()
-    \}
-    \<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>de assert<++>(<++>);
+    \<++>:call BackwardMarker(3)
 " }}}
+" Case {{{
+inoremap <buffer> <leader>dc #[test]
+    \fn <++>() {
+    \<++>
+    \}
+    \<++>:call BackwardMarker(3)
+" }}}
+" Suite {{{
+inoremap <buffer> <leader>ds #[cfg(test)]
+    \mod test {
+    \use super::*;
+    \#[test]
+    \fn <++>() {
+    \<++>
+    \}
+    \<++>
+    \}:call BackwardMarker(3)
+" }}}
+" }}}
+" Export {{{
+inoremap <buffer> <leader>ex pub 
 " }}}
