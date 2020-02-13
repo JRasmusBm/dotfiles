@@ -46,3 +46,11 @@ inoremap <buffer> <leader>ta tmux attach -t <++>
   \<++>:call BackwardMarker(2)
 " }}}
 " }}}
+" Handle {{{
+" C {{{
+inoremap <buffer> <leader>hc trap_ctrlc() { <++>
+  \exit 2
+  \}
+  \trap "trap_ctrlc" 2:call BackwardMarker(1)
+" }}}
+" }}}
