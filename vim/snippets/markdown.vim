@@ -25,3 +25,19 @@ inoremap <buffer> <leader>t5 \| <++> \| <++> \| <++> \| <++> \| <++> \|\|------
 inoremap <leader>t6 \| <++> \| <++> \| <++> \| <++> \| <++> \| <++> \|\|------\|------\|------\|------\|------\|------\|\| <++> \| <++> \| <++> \| <++> \| <++> \| <++> \|:call BackwardMarker(12)
 inoremap <buffer> <leader>fp ---path: "<++>"date: ":put =strftime(\"%Y-%m-%d\")kJxA"title: "<++>"summary: "<++>"---<++>:call BackwardMarker(4)
 inoremap <buffer> <leader>qu I<++>OO>
+
+" fc {{{
+inoremap <buffer> <leader>cv ---
+    \Duration: <++>
+    \Customer: <++>
+    \Project: <++>
+    \Industry: <++>
+    \---
+    \# Kundbeskrivning
+    \<++>
+    \# Projektbeskrivning
+    \<++>
+    \# Roller
+    \## <++>
+    \<++>:call BackwardMarker(8)
+" }}}
