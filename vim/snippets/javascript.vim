@@ -86,7 +86,6 @@ inoremap <buffer> <leader>qt const <++> = gql`
 " Control Statements{{{
 " if statements {{{
 inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
-inoremap <buffer> ;cf for (<++>) {<++>}<++><<:call BackwardMarker(3)
 inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
 inoremap <buffer> ;cei elif (<++>){<++>}<++><<:call BackwardMarker(3)
 " }}}
@@ -105,6 +104,18 @@ inoremap <buffer> <leader>csc case <++>:
       \<++><<
       \:call BackwardMarker(3)
 "}}}
+" For each {{{
+inoremap <buffer> <leader>cfe for(let <++> of <++>) {
+  \<++>
+  \}
+  \<++>:call BackwardMarker(4)
+" }}}
+" For {{{
+inoremap <buffer> <leader>cfo for(let i = 0; i < <++>; i++) {
+  \<++>
+  \}
+  \<++>:call BackwardMarker(3)
+" }}}
 "}}}
 " Class {{{
 " Definition {{{
