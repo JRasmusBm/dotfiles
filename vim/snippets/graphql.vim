@@ -12,6 +12,10 @@ inoremap <buffer> <leader>qm mutation <++> {	<++>}
 inoremap <buffer> <leader>qv $<++>: <++>!
       \<++>:call BackwardMarker(3)
 " }}}
+" Argument {{{
+inoremap <buffer> <leader>qa <++>: $<++>
+      \<++>:call BackwardMarker(3)
+" }}}
 " Field {{{
 inoremap <buffer> <leader>qf <++> {	<++>}
       \<++>:call BackwardMarker(3)
