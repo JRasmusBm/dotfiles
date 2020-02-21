@@ -1,3 +1,3 @@
 source ~/.vim/snippets/bib.vim
 
-nnoremap <buffer> ;af gg:%! bibcleanzz
+nnoremap <buffer> ;af gg:%! bibclean -no-check-valueszz
