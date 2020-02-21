@@ -5,6 +5,3 @@ inoremap <buffer> <leader>mi [mypy-<++>]
   \<++>:call BackwardMarker(2)
 " }}}
 " }}}
-
-
-

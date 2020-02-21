@@ -1,32 +1,58 @@
-"Function Definition
+" Function {{{
+" Definition {{{
 inoremap <buffer> <leader>fd def <++>(<++>):<++><++><<:call BackwardMarker(4)
+"}}}
+" Argument {{{
 inoremap <buffer> <leader>fa <++>, <++>:call BackwardMarker(2)
+"}}}
+" Inline {{{
 inoremap <buffer> <leader>fi lambda <++>: <++>:call BackwardMarker(2)
+"}}}
+"}}}
+
 " Variable {{{
 " Definition {{{
 inoremap <buffer> <leader>vd <++> = <++><++>:call BackwardMarker(3)
 " }}}
 " }}}
-"Class Definition
+
+" Class {{{
 inoremap <buffer> <leader>cd class <++>:<++><++><<:call BackwardMarker(3)
-"Print
+"}}}
+
+" Print {{{
 inoremap <buffer> <leader>pr print(<++>)<++>:call BackwardMarker(2)
-"Dunder Declaration
+"}}}
+
+" Object {{{
+" Identifier {{{
 inoremap <buffer> <leader>oi __<++>__ <++> :call BackwardMarker(2)
+"}}}
+" Method {{{
 inoremap <buffer> <leader>om def __<++>__(self, <++>):<++><++><<$:call BackwardMarker(4)
+"}}}
+"}}}
+
+" Import {{{
+" Named {{{
 inoremap <buffer> <leader>in from <++> import <++>:call BackwardMarker(2)
+"}}}
+" Module {{{
 inoremap <buffer> <leader>im import <++> <++>:call BackwardMarker(2)
+"}}}
+"}}}
+
 " GraphQL {{{
 " ResolveInfo {{{
 inoremap <buffer> <leader>qri from graphql.execution.base import ResolveInfo
   \<++>:call BackwardMarker(1)
 " }}}
-" resolver{{{
+" Resolver {{{
 inoremap <buffer> <leader>qr ?classn:nohwyw2i	@staticmethod
   \async def resolve_<++>(_parent: """, _info: ResolveInfo<++>) -> <++>:
   \<++>:call BackwardMarker(4)
 " }}}
-" mutation{{{
+" Mutation {{{
 inoremap <buffer> <leader>qm """<++>"""
   \import graphene
   \from graphql.execution.base import ResolveInfo
@@ -43,6 +69,7 @@ inoremap <buffer> <leader>qm """<++>"""
   \<++>:call BackwardMarker(10)
 " }}}
 " }}}
+
 " Arguments{{{
 " Named {{{
 inoremap <buffer> <leader>an <++>=<++>,<++>:call BackwardMarker(3)
@@ -51,6 +78,7 @@ inoremap <buffer> <leader>an <++>=<++>,<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>at <++>: <++>,<++>:call BackwardMarker(3)
 " }}}
 "}}}
+
 " Control Statements{{{
 " With{{{
 inoremap <buffer> <leader>cwi with <++>:<++><++><<:call BackwardMarker(3)
@@ -68,6 +96,7 @@ inoremap <buffer> <leader>ct try:
   \<++><<:call BackwardMarker(3)
 " }}}
 "}}}
+
 " Testing{{{
 " Suite {{{
 inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call BackwardMarker(2)
@@ -106,6 +135,7 @@ inoremap <buffer> <leader>dh """<++>"""
   \:call BackwardMarker(4)
 "}}}
 "}}}
+
 " Model {{{
 " File {{{
 inoremap <buffer> <leader>mf """<++>"""
