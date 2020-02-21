@@ -1,6 +1,9 @@
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 
-nmap <leader>aa :CocRestart
+nmap <leader>a<C-R> :CocRestart
+nmap <leader>aa :CocAction
+vmap <leader>aa :CocAction
+nmap <leader>ag :CocAction("generate")
 nmap <leader>ad <Plug>(coc-definition)
 nmap <leader>at <Plug>(coc-type-definition)
 nmap <leader>ai <Plug>(coc-implementation)
