@@ -74,6 +74,7 @@ function dcuc() {
 alias ta='tmux attach -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
 alias tk='tmux kill-session -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
 alias tka='tmux kill-server'
+alias tks='tmux kill-session'
 
 function translate() {
   directory=$(pwd)
