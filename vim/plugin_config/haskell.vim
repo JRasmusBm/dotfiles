@@ -1,1 +1,0 @@
-Plug 'eagletmt/ghcmod-vim'

@@ -1,7 +1,3 @@
-Plug 'Konfekt/FastFold'
-" Python
-Plug 'tmhedberg/SimpylFold'
-
 nnoremap zuz <Plug>(FastFoldUpdate)
 set foldmethod=syntax
 

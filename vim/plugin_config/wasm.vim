@@ -1,1 +1,0 @@
-Plug 'rhysd/vim-wasm'

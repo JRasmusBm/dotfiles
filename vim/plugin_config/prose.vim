@@ -1,5 +1,3 @@
-Plug 'Ron89/thesaurus_query.vim'
-
 let g:tq_map_keys=0
 
 inoremap <leader>cs b:ThesaurusQueryReplaceCurrentWord<CR>

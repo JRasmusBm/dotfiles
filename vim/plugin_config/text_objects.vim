@@ -1,7 +1,0 @@
-Plug 'jceb/vim-textobj-uri'
-Plug 'kana/vim-textobj-entire'
-Plug 'kana/vim-textobj-indent'
-Plug 'kana/vim-textobj-line'
-Plug 'kana/vim-textobj-user'
-Plug 'lucapette/vim-textobj-underscore'
-Plug 'thinca/vim-textobj-between'

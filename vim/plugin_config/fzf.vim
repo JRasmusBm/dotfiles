@@ -1,6 +1,3 @@
-Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
-Plug 'junegunn/fzf.vim'
-
 nnoremap <Leader>ff :GFiles<CR>
 nnoremap <Leader>fs :GFiles?<CR>
 nnoremap <Leader>fg :Files .<CR>

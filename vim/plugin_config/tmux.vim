@@ -1,6 +1,3 @@
-Plug 'christoomey/vim-tmux-navigator'
-Plug 'christoomey/vim-tmux-runner'
-
 nmap <localleader>tc :VtrSendCommandToRunner<Space>
 nmap <localleader>to :VtrOpenRunner
 nmap <localleader>tk :VtrKillRunner
