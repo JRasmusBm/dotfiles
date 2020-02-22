@@ -1,5 +1,3 @@
-Plug 'neoclide/coc.nvim', {'branch': 'release'}
-
 nmap <leader>a<C-R> :CocRestart
 nmap <leader>aa :CocAction
 vmap <leader>aa :CocAction

@@ -21,15 +21,5 @@ function! s:SourceConfigFilesIn(directory)
   endfor
 endfunction
 
-if !has('nvim')
-  let g:plugin_path="~/.vim/bundle"
-else
-  let g:plugin_path="~/.local/share/nvim/plugged"
-endif
-
-call plug#begin(g:plugin_path)
 call s:SourceConfigFilesIn("plugin_config")
-Plug 'Olical/vim-enmasse'
-call plug#end()
-
 call s:SourceConfigFilesIn("other_config")

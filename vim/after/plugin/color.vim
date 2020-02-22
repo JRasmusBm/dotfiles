@@ -4,6 +4,10 @@ function s:CheckColorScheme()
   endif
 
   let s:config_file = expand('~/.current-theme')
+  if has("nvim")
+    let s:plugin_path="~/.local/share/nvim/site/pack/"
+  else
+  endif
 
   if filereadable(s:config_file)
     let s:config = readfile(s:config_file, '', 2)
@@ -14,7 +18,7 @@ function s:CheckColorScheme()
       echoerr 'Bad background ' . s:config[1] . ' in ' . s:config_file
     endif
 
-    let s:base_16_vim_config=expand(g:plugin_path . '/base16-vim/colors/base16-' . s:config[0] . '.vim')
+    let s:base_16_vim_config=expand(s:plugin_path . 'base16/start/base16-vim/colors/base16-' . s:config[0] . '.vim')
     if filereadable(s:base_16_vim_config)
       execute 'color base16-' . s:config[0]
     else

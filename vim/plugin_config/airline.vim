@@ -1,7 +1,3 @@
-Plug 'vim-airline/vim-airline'
-Plug 'vim-airline/vim-airline-themes'
-Plug 'edkolev/promptline.vim'
-
 let g:airline_exclude_previous=0
 let g:airline_theme="jellybeans"
 
