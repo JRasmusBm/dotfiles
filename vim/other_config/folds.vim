@@ -9,7 +9,7 @@ function! FoldSelection(...) abort
     let &operatorfunc = matchstr(expand('<sfile>'), '[^. ]*$')
     return 'g@'
   endif
-  let [lnum1, lnum2] = GetLines(a:0, a:1) 
+  let [lnum1, lnum2] = GetLines(a:0, a:1)
   call append(lnum2, "\"  {{{")
   call append(lnum2+1, "\"}}}")
   execute  lnum1 . "," . lnum2 . "m" . (lnum2+1)
