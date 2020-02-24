@@ -1,7 +1,6 @@
 let g:name='Rasmus Bergström'
 set background=dark
 set termguicolors
-syntax enable
 set mouse=a
 set encoding=utf-8
 set noswapfile
