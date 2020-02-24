@@ -95,6 +95,18 @@ inoremap <buffer> <leader>ct try:
   \<++>
   \<++><<:call BackwardMarker(3)
 " }}}
+" For {{{
+" Each {{{
+inoremap <buffer> <leader>fe for <++> in <++>:
+      \<++>
+      \<++><<:call BackwardMarker(4)
+" }}}
+" }}}
+" Index {{{
+inoremap <buffer> <leader>fo for <++> in range(<++>):
+      \<++>
+      \<++><<:call BackwardMarker(4)
+" }}}
 "}}}
 
 " Testing{{{
