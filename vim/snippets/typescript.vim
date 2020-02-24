@@ -34,8 +34,8 @@ inoremap <buffer> <leader>ia <++>Oimport * as <++> from "<++>";:call BackwardM
 " }}}
 " }}}
 " Tests {{{
-" File {{{
-inoremap <buffer> <leader>df import React from "react";
+" React File {{{
+inoremap <buffer> <leader>dr import React from "react";
             \import { render } from "__testutils__/testing-library";
             \import <++> from "..";
             \describe("<++>", () => {
