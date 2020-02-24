@@ -124,10 +124,10 @@ inoremap <buffer> <leader>hm const <++> = useMemo((<++>) => {<++>}, [<++>]);<
 
 " Test {{{
 " Before Each {{{
-inoremap <buffer> <leader>db beforeEach(() => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>db beforeEach(async () => {<++>});<++>:call BackwardMarker(2)
 "}}}
 " Tear Down {{{
-inoremap <buffer> <leader>dt afterEach(() => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>dt afterEach(async () => {<++>});<++>:call BackwardMarker(2)
 "}}}
 " Suite {{{
 inoremap <buffer> <leader>ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
