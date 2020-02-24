@@ -49,16 +49,13 @@ inoremap <buffer> <leader>dr import React from "react";
             \}):call BackwardMarker(7)
 " }}}
 " Before Each {{{
-inoremap <buffer> <leader>db beforeEach((): void => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>db beforeEach(async (): Promise<void> => {<++>});<++>:call BackwardMarker(2)
 " }}}
 " Tear Down {{{
-inoremap <buffer> <leader>dt afterEach((): void => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>dt afterEach(async (): Promise<void> => {<++>});<++>:call BackwardMarker(2)
 " }}}
 " Case {{{
 inoremap <buffer> <leader>dc test("<++>", async (): Promise<void> => {<++>}) <++><<$:call BackwardMarker(3)
-" }}}
-" Render {{{
-inoremap <buffer> <leader>dr let result: ReturnType<typeof render>;
 " }}}
 " }}}
 " Hooks {{{
