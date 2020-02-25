@@ -98,6 +98,7 @@ export PATH=$PATH:/home/rasmus/.local/bin
 export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
 export GOPATH="${HOME}/go"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 # Virtualenvs
 
