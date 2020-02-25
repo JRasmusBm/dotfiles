@@ -36,7 +36,7 @@ inoremap <buffer> <leader>pr print(<++>)<++>:call BackwardMarker(2)
 
 " Object {{{
 " Identifier {{{
-inoremap <buffer> <leader>oi __<++>__ <++> :call BackwardMarker(2)
+inoremap <buffer> <leader>oi __<++>__<++>:call BackwardMarker(2)
 "}}}
 " Method {{{
 inoremap <buffer> <leader>om def __<++>__(self, <++>):<++><++><<$:call BackwardMarker(4)
