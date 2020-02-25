@@ -1,3 +1,13 @@
+" Python {{{
+" File {{{
+inoremap <buffer> <leader>pf """
+      \<++>
+      \"""
+      \<++>
+      \if __name__ == "__main__":
+      \pass:call BackwardMarker(2)
+" }}}
+" }}}
 " Function {{{
 " Definition {{{
 inoremap <buffer> <leader>fd def <++>(<++>):<++><++><<:call BackwardMarker(4)
