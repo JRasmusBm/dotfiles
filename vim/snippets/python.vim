@@ -94,9 +94,18 @@ inoremap <buffer> <leader>at <++>: <++>,<++>:call BackwardMarker(3)
 inoremap <buffer> <leader>cwi with <++>:<++><++><<:call BackwardMarker(3)
 "}}}
 " If {{{
+" Statement {{{
 inoremap <buffer> <leader>ci if <++>:<++><++><<:call BackwardMarker(3)
+"}}}
+" Else {{{
 inoremap <buffer> <leader>ce else:<++><++><<:call BackwardMarker(2)
+"}}}
+" Elif {{{
 inoremap <buffer> <leader>cei elif <++>:<++><++><<:call BackwardMarker(3)
+"}}}
+" Ternary {{{
+inoremap <buffer> <leader>ct <++> if <++> else <++>:call BackwardMarker(3)
+" }}}
 " }}}
 " Try {{{
 inoremap <buffer> <leader>ct try:
@@ -107,15 +116,18 @@ inoremap <buffer> <leader>ct try:
 " }}}
 " For {{{
 " Each {{{
-inoremap <buffer> <leader>fe for <++> in <++>:
+inoremap <buffer> <leader>cfe for <++> in <++>:
       \<++>
       \<++><<:call BackwardMarker(4)
 " }}}
 " }}}
 " Index {{{
-inoremap <buffer> <leader>fo for <++> in range(<++>):
+inoremap <buffer> <leader>cfo for <++> in range(<++>):
       \<++>
       \<++><<:call BackwardMarker(4)
+" }}}
+" Index {{{
+inoremap <buffer> <leader>cfi for <++> in <++>:call BackwardMarker(2)
 " }}}
 "}}}
 
