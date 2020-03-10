@@ -41,7 +41,7 @@ inoremap <buffer> <leader>fl <++>O> Date: :put =strftime(\"%Y-%m-%d\")kJA  o
 " Post {{{
 inoremap <buffer> <leader>fp ---path: "<++>"date: ":put =strftime(\"%Y-%m-%d\")kJxA"title: "<++>"summary: "<++>"---<++>:call BackwardMarker(4)
 "}}}
-" CG {{{
+" CV {{{
 inoremap <buffer> <leader>cv ---
     \Duration: <++>
     \Customer: <++>
