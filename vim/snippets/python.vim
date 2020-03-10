@@ -2,12 +2,15 @@
 " File {{{
 inoremap <buffer> <leader>pf """
       \<++>
-      \"""
+      \"""
+      \import logging
+      \logger = logging.getLogger(__name__)
       \<++>
       \if __name__ == "__main__":
       \pass:call BackwardMarker(2)
 " }}}
 " }}}
+
 " Function {{{
 " Definition {{{
 inoremap <buffer> <leader>fd def <++>(<++>):<++><++><<:call BackwardMarker(4)
@@ -30,8 +33,22 @@ inoremap <buffer> <leader>vd <++> = <++><++>:call BackwardMarker(3)
 inoremap <buffer> <leader>cd class <++>:<++><++><<:call BackwardMarker(3)
 "}}}
 
+" Logging {{{
+" Info {{{
+inoremap <buffer> <leader>li logger.info(<++>)<++>:call BackwardMarker(2)
+"}}}
+" Warning {{{
+inoremap <buffer> <leader>lw logger.warning(<++>)<++>:call BackwardMarker(2)
+"}}}
+" Error {{{
+inoremap <buffer> <leader>le logger.error(<++>)<++>:call BackwardMarker(2)
+"}}}
+" Debug {{{
+inoremap <buffer> <leader>ld logger.debug(<++>)<++>:call BackwardMarker(2)
+"}}}
 " Print {{{
 inoremap <buffer> <leader>pr print(<++>)<++>:call BackwardMarker(2)
+"}}}
 "}}}
 
 " Object {{{
