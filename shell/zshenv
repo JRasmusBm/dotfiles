@@ -1,6 +1,3 @@
-if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
-  source "${VIRTUAL_ENV}/bin/activate"
-fi
 source ~/.install_dependencies
 function g() {
   if [[ $# > 0 ]]; then
@@ -10,8 +7,6 @@ function g() {
   fi
 }
 # Aliases
-alias "python"="python3"
-alias "pip"="pip3"
 alias "bashrc"="vim ~/.bashrc"
 alias "mkdir"="mkdir -pv"
 alias "chr"="google-chrome"
@@ -310,3 +305,7 @@ color() {
 }
 
 alias sc='color $(ls "$BASE16_DIR" | sed s/base16-//g | sed s/.sh//g | fzf --reverse)'
+
+if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
+  source "${VIRTUAL_ENV}/bin/activate"
+fi
