@@ -1,5 +1,5 @@
 " Image {{{
-inoremap <buffer> <leader>im FROM <++>:<++>
+inoremap <buffer> <leader>df FROM <++>:<++>
   \<++>:call BackwardMarker(3)
 " }}}
 " COPY {{{
