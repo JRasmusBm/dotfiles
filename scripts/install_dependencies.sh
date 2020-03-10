@@ -82,7 +82,11 @@ install_virtualenvwrapper() {
   source "/usr/local/bin/virtualenvwrapper.sh"
 }
 
-
+install_clipboard_manager() {
+  sudo add-apt-repository -y ppa:hluk/copyq
+  sudo apt update
+  sudo apt install -y copyq
+}
 
 install_nvim() {
   sudo apt-get install -y build-essential
@@ -245,6 +249,7 @@ install_docker() {
 
 install_dependencies_server() {
   uninstall_unnecessary_stuff
+  update_system
   install_python
   install_zsh
   install_node
@@ -256,6 +261,8 @@ install_dependencies_server() {
 
 install_dependencies_desktop() {
   uninstall_unnecessary_stuff
+  update_system
+  install_clipboard_manager
   install_git_extras
   install_latest_chrome
   install_brave
