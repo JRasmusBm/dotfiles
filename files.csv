@@ -1,6 +1,6 @@
 is_dir,source,target
 False,vim/vimrc,.vimrc
-False,terminal/alacritty.yml,.alacritty.yml
+False,terminal/alacritty.yml,.config/alacritty/alacritty.yml
 False,vim/init.vim,.config/nvim/init.vim
 False,vim/coc-settings.json,.config/nvim/coc-settings.json
 False,terminal/base16-shell,.config/base16-shell
