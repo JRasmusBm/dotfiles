@@ -73,7 +73,6 @@ install_python_37() {
   cd /tmp/Python37/Python-3.7.5
   ./configure --enable-shared
   sudo make altinstall
-  sudo update-alternatives --install /usr/bin/python /usr/local/bin/python3.7
   cd $current
 }
 
@@ -159,10 +158,16 @@ install_zsh() {
 }
 
 install_alacritty() {
-  sudo apt-get install -y fonts-hack-ttf
-  sudo add-apt-repository ppa:system76/pop
-  sudo apt-get update
-  sudo apt-get install alacritty
+  TEMP_DEB="$(mktemp)"
+  wget -O $TEMP_DEB https://github.com/alacritty/alacritty/releases/download/v0.4.1/Alacritty-v0.4.1-ubuntu_18_04_amd64.deb 
+  sudo dpkg -i $TEMP_DEB
+  rm -f $TEMP_DEB
+  sudo update-alternatives --install "$(which x-terminal-emulator)" x-terminal-emulator "$(which alacritty)" 50
+  sudo update-alternatives --set x-terminal-emulator $(which alacritty)
+}
+
+uninstall_alacritty() {
+  sudo dpkg --remove alacritty
 }
 
 install_tmux() {
