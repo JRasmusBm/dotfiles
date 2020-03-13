@@ -1,4 +1,3 @@
-# This is Git's per-user configuration file.
 [user]
   name = jrasmusbm
   username = jrasmusbm
@@ -23,21 +22,18 @@
   l = !git --no-pager log --oneline --decorate --graph --all -20
   mup = !git checkout master && git fetch origin && echo && git sl master..origin/master && echo && git pull --quiet && git checkout -
   no = remote add origin
-  pd = push -d origin 
+  pd = push -d origin
   pf = push -f
   pu = push
-  # Push and create origin version with same name
   pup = "!git push -u origin $(git rev-parse --abbrev-ref HEAD)"
   rb = rebase
   rba = rebase --abort
   rbc = rebase --continue
   rbi = rebase -i
-  # Rebase onto origin version on this branch
-  rbo = "!git rb origin/$(git rev-parse --abbrev-ref HEAD)" 
+  rbo = "!git rb origin/$(git rev-parse --abbrev-ref HEAD)"
   rbs = rebase --skip
   rh = reset --hard
-  # Reset hard to origin version of this branch
-  ro = "!git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)" 
+  ro = "!git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)"
   rs = reset --soft
   s = log --oneline --decorate --graph --all
   sl = log --oneline --decorate -20
