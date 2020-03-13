@@ -20,6 +20,7 @@
   del-rest = "!git ls-files -o --directory | rm -rf"
   ff = merge --ff-only
   l = !git --no-pager log --oneline --decorate --graph --all -20
+  li = !gh issue list
   mup = !git checkout master && git fetch origin && echo && git sl master..origin/master && echo && git pull --quiet && git checkout -
   no = remote add origin
   pd = push -d origin
