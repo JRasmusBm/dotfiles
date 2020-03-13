@@ -23,7 +23,7 @@ apt-get install -y \
 
 . ./shell/install_python.sh
 
-install_python
+install_python_37
 install_pipenv
 
 pipenv install

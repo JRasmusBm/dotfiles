@@ -68,12 +68,13 @@ install_python_37() {
   mkdir /tmp/Python37
   pushd /tmp/Python37
 
-  wget https://www.python.org/ftp/python/3.7.5/Python-3.7.5.tgz
-  tar zxvf Python-3.7.5.tgz
-  cd /tmp/Python37/Python-3.7.5
+  wget https://www.python.org/ftp/python/3.7.7/Python-3.7.7.tgz
+  tar zxvf Python-3.7.7.tgz
+  cd /tmp/Python37/Python-3.7.7
   ./configure --enable-shared
   sudo make altinstall
   cd $current
+  rm -rf /tmp/Python37
 }
 
 install_virtualenvwrapper() {
@@ -255,7 +256,7 @@ install_docker() {
 install_dependencies_server() {
   uninstall_unnecessary_stuff
   update_system
-  install_python
+  install_python_37
   install_zsh
   install_node
   install_nvim
@@ -273,7 +274,7 @@ install_dependencies_desktop() {
   install_brave
   install_zsh
   install_alacritty
-  install_python
+  install_python_37
   install_node
   install_nvim
   install_tmux
