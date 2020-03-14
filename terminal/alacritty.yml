@@ -15,7 +15,7 @@ font:
   normal:
     family: Monospace
     style: Regular
-  size: 10
+  size: 9.4
 
 # Change on the fly as needed
 background_opacity: 1.0
