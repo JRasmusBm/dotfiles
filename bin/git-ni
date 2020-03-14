@@ -3,10 +3,11 @@ import subprocess
 
 temp_file = subprocess.run(["mktemp"], capture_output=True).stdout.strip()
 subprocess.run(["touch", temp_file])
-subprocess.run(["vim", temp_file])
+subprocess.run(["nvim", "-c", "set filetype=gitcommit", temp_file])
 with open(temp_file) as f:
     raw_issue = f.read().strip()
 subprocess.run(["rm", "-f", "temp_file"])
+
 title = raw_issue.split("\n")[0].strip()
 body = "\n".join(raw_issue.split("\n")[1:]).strip()
-subprocess.run(["gh", "issue", "create", "-t", title, "-b",body])
+subprocess.run(["gh", "issue", "create", "-t", title, "-b", body])
