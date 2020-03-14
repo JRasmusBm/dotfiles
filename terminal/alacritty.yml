@@ -18,9 +18,9 @@ font:
 # Change on the fly as needed
 background_opacity: 1.0
 
-# Always handy, I have a clipboard manager
+# I use tmux copy-mode
 selection:
-  save_to_clipboard: true
+  save_to_clipboard: false
 
 mouse:
   # I barely use the mouse
