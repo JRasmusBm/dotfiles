@@ -7,6 +7,8 @@ function g() {
   fi
 }
 # Aliases
+alias "ac"="source ./venv/bin/activate"
+alias "da"="deactivate"
 alias "bashrc"="vim ~/.bashrc"
 alias "mkdir"="mkdir -pv"
 alias "chr"="google-chrome"
