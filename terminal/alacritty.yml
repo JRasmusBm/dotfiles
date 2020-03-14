@@ -9,8 +9,6 @@ scrolling:
   # I always like large history
   history: 100000
 
-# Small screens
-tabspaces: 2
 font:
   normal:
     family: Monospace
