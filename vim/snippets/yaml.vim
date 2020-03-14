@@ -22,6 +22,10 @@ inoremap <buffer> <leader>sn :call append('$', "networks:")
 " }}}
 
 " Field {{{
+" Section {{{
+inoremap <buffer> <leader>fs <++>:
+      \<++>:call BackwardMarker(2)
+" }}}
 " List {{{
 inoremap <buffer> <leader>fl <++>:
       \- <++>

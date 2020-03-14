@@ -1,4 +1,4 @@
-source ~/.vim/snippets/docker-compose.vim
+source ~/.vim/snippets/yaml.vim
 
 function! RunFile() abort
   w
