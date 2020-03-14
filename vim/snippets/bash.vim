@@ -54,3 +54,7 @@ inoremap <buffer> <leader>hc trap_ctrlc() { <++>
   \trap "trap_ctrlc" 2:call BackwardMarker(1)
 " }}}
 " }}}
+" Alias {{{
+inoremap <buffer> <leader>as alias "<++>"="<++>"
+      \<++>:call BackwardMarker(3)
+" }}}
