@@ -112,22 +112,28 @@ install_nvim() {
 }
 
 setup_neovim_vm() {
-  mkvirtualenv -p python3 neovim3
-  mkvirtualenv -p python2 neovim2
-  workon neovim2
-  pip install neovim
-  pip install yapf
-  pip install grip
-  pip install flake8
-  pip install black
-  deactivate
-  workon neovim3
-  pip install neovim
-  pip install yapf
-  pip install grip
-  pip install flake8
-  pip install black
-  deactivate
+  if command -v python2
+  then
+    mkvirtualenv -p python2 neovim2
+    workon neovim2
+    pip install neovim
+    pip install yapf
+    pip install grip
+    pip install flake8
+    pip install black
+    deactivate
+  fi
+  if command -v python2
+  then
+    mkvirtualenv -p python3 neovim3
+    workon neovim3
+    pip install neovim
+    pip install yapf
+    pip install grip
+    pip install flake8
+    pip install black
+    deactivate
+  fi
 }
 
 install_node() {
