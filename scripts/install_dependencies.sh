@@ -91,23 +91,24 @@ install_clipboard_manager() {
 }
 
 install_nvim() {
-  sudo apt-get install -y build-essential
-  sudo apt-get install -y make
-  sudo apt-get install -y cmake
-  sudo apt-get install -y cmake-data
-  sudo apt-get install -y pkg-config
-  sudo apt-get install -y libtool-bin
-  sudo apt-get install -y automake
-  sudo apt-get install -y curl
-  git clone git@github.com:neovim/neovim.git
-  cd neovim
+  current=$(pwd)
+  sudo apt-get install -y \
+    build-essential \
+    make \
+    cmake \
+    cmake-data \
+    pkg-config \
+    libtool-bin \
+    automake \
+    curl
+  TEMP_FOLDER="$(mktemp)"
+  git clone git@github.com:neovim/neovim.git $TEMP_FOLDER
+  cd $TEMP_FOLDER
   sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
   sudo make install
-  cd ..
-  sudo rm -rf neovim
+  cd $current
+  sudo rm -rf $TEMP_FOLDER
   setup_neovim_vm
-  curl -fLo ~/.vim/autoload/plug.vim --create-dirs
-  \ https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim
 }
 
 setup_neovim_vm() {
