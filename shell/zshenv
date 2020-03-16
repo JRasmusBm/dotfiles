@@ -40,6 +40,14 @@ alias "irc"="vim ~/.install_dependencies"
 alias "gl"="g l"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
+swapfile() {
+  sudo fallocate -l 1G "$1"
+  sudo chmod 600 "$1"
+  sudo mkswap "$1"
+  sudo swapon "$1"
+  echo "$1" swap swap defaults 0 0 | sudo tee -a /etc/fstab
+}
+
 function dcd () {
   docker-compose down --remove-orphans 
 }
