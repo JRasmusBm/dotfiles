@@ -2,7 +2,7 @@ setopt histignorealldups sharehistory
 
 # Antigen
 
-source /home/rasmus/.zsh/antigen.zsh
+source $HOME/.zsh/antigen.zsh
 
 # Load the oh-my-zsh's library.
  antigen use oh-my-zsh
@@ -105,7 +105,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 if [ -f /usr/share/virtualenvwrapper/virtualenvwrapper.sh ]
 then 
   source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
-else 
+elif [ -f /usr/local/bin/virtualenvwrapper.sh ]
+then
   source /usr/local/bin/virtualenvwrapper.sh
 fi
 
@@ -230,4 +231,4 @@ export SPROMPT="zsh: correct %F{red}'%R'%f to %F{red}'%r'%f [%B%Uy%u%bes, %B%Un%
 DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 
 
-source /home/rasmus/.config/broot/launcher/bash/br
+[ -f $HOME/.config/broot/launcher/bash/br ] && source $HOME/.config/broot/launcher/bash/br
