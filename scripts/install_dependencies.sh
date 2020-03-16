@@ -54,7 +54,6 @@ install_python_37() {
     liblzma-dev  \
     libncursesw5-dev  \
     libreadline-dev  \
-    libreadline-gplv2-dev \
     libsqlite3-dev  \
     libssl-dev  \
     openssl  \
@@ -62,6 +61,9 @@ install_python_37() {
     tk-dev \
     uuid-dev \
     wget \
+    gcc \
+    cmake \
+    make \
     zlib1g-dev
 
   current=$(pwd)
@@ -74,7 +76,7 @@ install_python_37() {
   ./configure --enable-shared
   sudo make altinstall
   cd $current
-  rm -rf /tmp/Python37
+  sudo rm -rf /tmp/Python37
 }
 
 install_virtualenvwrapper() {
