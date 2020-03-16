@@ -1,4 +1,3 @@
-source ~/.install_dependencies
 function g() {
   if [[ $# > 0 ]]; then
     git $@
