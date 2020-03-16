@@ -139,8 +139,9 @@ setup_neovim_vm() {
 }
 
 install_node() {
-  curl -sL https://deb.nodesource.com/setup_10.x | sudo bash -
-  sudo apt install -y nodejs
+  sudo apt-get install -y software-properties-common
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  sudo apt-get install -y nodejs
   sudo npm cache clean -f
   sudo npm install -g n
   sudo n stable
