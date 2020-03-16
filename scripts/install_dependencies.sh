@@ -100,14 +100,16 @@ install_nvim() {
     pkg-config \
     libtool-bin \
     automake \
-    curl
-  TEMP_FOLDER="$(mktemp)"
-  git clone git@github.com:neovim/neovim.git $TEMP_FOLDER
-  cd $TEMP_FOLDER
+    curl \
+    gettext \
+    zip
+  rm -rf /tmp/nvim
+  git clone git@github.com:neovim/neovim.git /tmp/nvim
+  cd /tmp/nvim
   sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
   sudo make install
   cd $current
-  sudo rm -rf $TEMP_FOLDER
+  sudo rm -rf /tmp/nvim
   setup_neovim_vm
 }
 
