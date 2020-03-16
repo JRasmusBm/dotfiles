@@ -175,23 +175,24 @@ uninstall_alacritty() {
 }
 
 install_tmux() {
-  sudo apt-get update
-  sudo apt-get install -y automake
-  sudo apt-get install -y byacc
-  sudo apt-get install -y autoconf
-  sudo apt-get install -y build-essential
-  sudo apt-get install -y pkg-config
-  sudo apt-get install -y libevent-dev
-  sudo apt-get install -y libncurses5-dev
-  rm -fr /tmp/tmux
+  sudo apt-get install -y \
+    automake \
+    byacc \
+    autoconf \
+    build-essential \
+    pkg-config \
+    libevent-dev \
+    libncurses5-dev
+  current = $(pwd)
+  sudo rm -rf /tmp/tmux
   git clone https://github.com/tmux/tmux.git /tmp/tmux
   cd /tmp/tmux
   git checkout master
   sh autogen.sh
   ./configure && make
   sudo make install
-  cd -
-  rm -rf /tmp/tmux
+  cd $current
+  sudo rm -rf /tmp/tmux
 }
 
 uninstall_unnecessary_stuff() {
