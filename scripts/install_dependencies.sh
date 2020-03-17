@@ -113,6 +113,11 @@ install_nvim() {
   setup_neovim_vm
 }
 
+install_fzf() {
+  git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
+  ~/.fzf/install
+}
+
 setup_neovim_vm() {
   if command -v python2
   then
