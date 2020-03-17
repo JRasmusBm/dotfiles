@@ -113,6 +113,21 @@ install_nvim() {
   setup_neovim_vm
 }
 
+install_fonts() {
+  git clone https://github.com/powerline/fonts.git --depth=1
+  current = $(pwd)
+  cd fonts
+  ./install.sh
+  cd ..
+  rm -rf fonts
+  mkdir -p ~/.config/fontconfig
+  cd ~/.config/fontconfig
+  wget https://github.com/powerline/fonts/blob/master/fontconfig/50-enable-terminess-powerline.conf
+  fc-cache -vf
+  fc-cache -vf ~/.local/share/fonts/
+  cd $current
+}
+
 install_fzf() {
   git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
   ~/.fzf/install --all

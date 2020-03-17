@@ -11,9 +11,36 @@ scrolling:
 
 font:
   normal:
-    family: Monospace
+    # family: "Anonymous Pro for Powerline"
+    # family: "Arimo for Powerline"
+    # family: "Cousine for Powerline"
+    # family: "DejaVu Sans Mono for Powerline"
+    # family: "Droid Sans Mono Dotted for Powerline"
+    # family: "Droid Sans Mono Slashed for Powerline"
+    # family: "Droid Sans Mono for Powerline"
+    # family: "Fira Mono for Powerline"
+    # family: "Go Mono for Powerline"
+    # family: "Inconsolata for Powerline"
+    # family: "Inconsolata-dz for Powerline"
+    # family: "Inconsolata-g for Powerline"
+    # family: "Liberation Mono for Powerline"
+    # family: "Meslo LG S for Powerline"
+    # family: "Noto Mono for Powerline"
+    # family: "NovaMono for Powerline"
+    # family: "PowerlineSymbols"
+    # family: "ProFont for Powerline"
+    # family: "Roboto Mono Light for Powerline"
+    # family: "Roboto Mono Medium for Powerline"
+    # family: "Roboto Mono Thin for Powerline"
+    # family: "Roboto Mono for Powerline"
+    # family: "Source Code Pro for Powerline"
+    # family: "Space Mono for Powerline"
+    # family: "Symbol Neu for Powerline"
+    # family: "Tinos for Powerline"
+    family: "Ubuntu Mono derivative Powerline"
+    # family: "monofur for Powerline"
     style: Regular
-  size: 9.4
+  size: 9.0
 
 # Change on the fly as needed
 background_opacity: 1.0
