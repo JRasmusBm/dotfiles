@@ -79,7 +79,7 @@
 	url = git@github.com:jparise/vim-graphql.git
   ignore = dirty
 [submodule "vim/pack/hardtime/vim-hardtime"]
-	path = vim/pack/hardtime/vim-hardtime
+	path = vim/pack/hardtime/start/vim-hardtime
 	url = git@github.com:takac/vim-hardtime.git
   ignore = dirty
 [submodule "vim/pack/haskell/start/ghcmod-vim"]
