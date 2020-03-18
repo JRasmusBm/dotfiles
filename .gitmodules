@@ -18,10 +18,6 @@
 	path = vim/pack/airline/start/vim-airline-themes
 	url = git@github.com:vim-airline/vim-airline-themes.git
   ignore = dirty
-[submodule "vim/pack/promptline/promptline.vim"]
-	path = vim/pack/promptline/promptline.vim
-	url = git@github.com:edkolev/promptline.vim.git
-  ignore = dirty
 [submodule "vim/pack/base16/start/base16-vim"]
 	path = vim/pack/base16/start/base16-vim
 	url = git@github.com:chriskempson/base16-vim.git
