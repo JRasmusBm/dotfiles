@@ -29,6 +29,31 @@ inoremap <buffer> <leader>ed <++>Oexport default <++> ;:call BackwardMarker(1)
 "}}}
 "}}}
 
+" ServiceWorker {{{
+" File {{{
+inoremap <buffer> <leader>sf "use strict";
+      \const version = <++>;
+      \self.addEventListener("install", onInstall);
+      \self.addEventListener("activate", onActivate);
+      \main().catch(console.error);
+      \/* ***************************** */
+      \async function main() {
+      \console.log(`Service Worker (${version}) starting...`);
+      \}
+      \async function onInstall(event) {
+      \console.log(`Service Worker (${version}) installed...`);
+      \self.skipWaiting();
+      \}
+      \function onActivate(event) {
+      \event.waitUntil(handleActivation());
+      \}
+      \async function handleActivation() {
+      \await clients.claim();
+      \console.log(`Service Worker (${version}) activated...`);
+      \}:call BackwardMarker(1)
+" }}}
+" }}}
+
 " React {{{
 " Styled {{{
 inoremap <buffer> <leader>rs const <++> = styled.<++>`<++>`<++>:call BackwardMarker(4)
@@ -171,7 +196,7 @@ inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
 inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
 "}}}
 " Elif {{{
-inoremap <buffer> ;cei elif (<++>){<++>}<++><<:call BackwardMarker(3)
+inoremap <buffer> ;cei else if (<++>){<++>}<++><<:call BackwardMarker(3)
 "}}}
 " Switch {{{
 " Statement {{{

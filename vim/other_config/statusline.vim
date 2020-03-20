@@ -19,17 +19,114 @@ let mode_map = {
       \ '' : 'V-BLOCK',
       \ }
 
-if has("statusline")
-  set statusline+=%*
-  set statusline=%1*
-  set statusline+=\ %{get(mode_map,mode())}
-  set statusline+=\ 
-  set statusline+=%7*
-  set statusline+=\ %f
-  set statusline+=%=
-  set statusline+=\ %y
-  set statusline+=\ 
-  set statusline+=\ %l,
-  set statusline+=\ %c
-  set statusline+=\ 
-endif
+function! PinnacleActive()
+  try
+    call pinnacle#highlight({})
+    return 1
+  catch /E117/
+    " Pinnacle probably isn't loaded
+    return 0
+  endtry
+endfunction
+
+let s:status_highlight='ModeMsg'
+function! UpdateHighlight() abort
+  if !PinnacleActive()
+    return
+  endif
+
+  " Update StatusLine to use italics (used for filetype).
+  let l:highlight=pinnacle#italicize('StatusLine')
+  execute 'highlight User1 ' . l:highlight
+
+  " Update MatchParen to use italics (used for blurred statuslines).
+  let l:highlight=pinnacle#italicize('MatchParen')
+  execute 'highlight User2 ' . l:highlight
+
+  " StatusLine + bold (used for file names).
+  let l:fg=pinnacle#extract_fg("Keyword")
+  " let l:highlight=pinnacle#embolden('StatusLine')
+  execute 'highlight User3 ' . pinnacle#highlight({'fg': l:fg})
+
+  " Inverted Error styling, for left-hand side "Powerline" triangle.
+  let l:fg=pinnacle#extract_fg("Constant")
+  let l:bg=pinnacle#extract_bg('StatusLine')
+  execute 'highlight User4 ' . pinnacle#highlight({'bg': l:bg, 'fg': l:fg})
+
+  " And opposite for the buffer number area.
+  execute 'highlight User7 ' .
+        \ pinnacle#highlight({
+        \   'bg': l:fg,
+        \   'fg': pinnacle#extract_fg('Normal'),
+        \   'term': 'bold'
+        \ })
+
+  " Right-hand side section.
+  let l:bg=pinnacle#extract_fg('Cursor')
+  let l:fg=pinnacle#extract_fg('User3')
+  execute 'highlight User5 ' .
+        \ pinnacle#highlight({
+        \   'bg': l:fg,
+        \   'fg': l:bg,
+        \   'term': 'bold'
+        \ })
+
+  " Right-hand side section + italic (used for %).
+  execute 'highlight User6 ' .
+        \ pinnacle#highlight({
+        \   'bg': l:fg,
+        \   'fg': l:bg,
+        \   'term': 'bold,italic'
+        \ })
+
+  highlight clear StatusLineNC
+  highlight! link StatusLineNC User1
+endfunction
+
+function! FocusStatusline() abort
+  if has("statusline")
+    setlocal statusline=%5*
+    setlocal statusline+=\ %{get(mode_map,mode())}
+    setlocal statusline+=\ 
+    setlocal statusline+=%3*
+    setlocal statusline+=
+    setlocal statusline+=%8*
+    setlocal statusline+=\ %f
+    setlocal statusline+=%=
+    setlocal statusline+=\ %y\ 
+    setlocal statusline+=%3*
+    setlocal statusline+=
+    setlocal statusline+=%5*
+    setlocal statusline+=\ %l,
+    setlocal statusline+=\ %c
+    setlocal statusline+=\ 
+  endif
+endfunction
+
+function! BlurStatusLine() abort
+  if has("statusline")
+    setlocal statusline=%8*
+    setlocal statusline+=\ %{get(mode_map,mode())}
+    setlocal statusline+=\ 
+    setlocal statusline+=\ 
+    setlocal statusline+=\ %f
+    setlocal statusline+=%=
+    setlocal statusline+=\ %y\ 
+    setlocal statusline+=\ 
+    setlocal statusline+=\ %l,
+    setlocal statusline+=\ %c
+    setlocal statusline+=\ 
+  endif
+endfunction
+
+augroup StatusLine
+  autocmd!
+  if exists('##TextChangedI')
+    autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,TextChanged,TextChangedI,WinEnter * call FocusStatusline()
+    autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,TextChanged,TextChangedI,WinEnter * call UpdateHighlight()
+  else
+    autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,WinEnter * call FocusStatusline()
+    autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,WinEnter * call UpdateHighlight()
+  endif
+  autocmd FocusLost,WinLeave * call BlurStatusLine()
+augroup END

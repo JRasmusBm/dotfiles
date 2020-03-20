@@ -76,6 +76,7 @@ if v:progname !=# 'vi'
     augroup UpdateColorScheme
       autocmd!
       autocmd FocusGained * call s:CheckColorScheme()
+      autocmd FocusGained * call UpdateHighlight()
     augroup END
   endif
 

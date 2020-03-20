@@ -39,6 +39,7 @@
   s = log --oneline --decorate --graph --all
   sl = log --oneline --decorate -20
   st = status
+  td = tag -d
   wip = !git add --all && git commit -m "WIP"
 [color]
   ui = true
