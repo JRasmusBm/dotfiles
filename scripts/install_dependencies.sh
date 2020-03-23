@@ -68,7 +68,7 @@ install_python_37() {
 
   current=$(pwd)
   mkdir /tmp/Python37
-  pushd /tmp/Python37
+  cd /tmp/Python37
 
   wget https://www.python.org/ftp/python/3.7.7/Python-3.7.7.tgz
   tar zxvf Python-3.7.7.tgz
@@ -259,8 +259,8 @@ update_system() {
   sudo apt -y update
   sudo apt-get -y upgrade
   sudo apt -y upgrade
-  sudo apt autoremove
-  sudo apt-get autoremove
+  sudo apt autoremove -y
+  sudo apt-get autoremove -y
 }
 
 install_spotify() {
