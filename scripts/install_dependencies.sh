@@ -66,6 +66,7 @@ install_python_37() {
     make \
     zlib1g-dev
 
+  export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
   current=$(pwd)
   sudo rm -rf /tmp/Python37
   mkdir /tmp/Python37
