@@ -82,6 +82,8 @@ install_python_37() {
 }
 
 install_virtualenvwrapper() {
+  export WORKON_HOME=$HOME/.virtualenvs
+  export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
   python3.7 -m pip install --user virtualenvwrapper
   source "/usr/local/bin/virtualenvwrapper.sh"
 }
