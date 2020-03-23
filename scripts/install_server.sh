@@ -6,6 +6,7 @@ set -e
 
 update_system
 install_python_37
+install_virtualenvwrapper
 python3.7 ./scripts/symlink.py
 install_node
 install_zsh
