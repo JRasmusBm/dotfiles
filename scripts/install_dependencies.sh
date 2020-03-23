@@ -67,6 +67,7 @@ install_python_37() {
     zlib1g-dev
 
   current=$(pwd)
+  sudo rm -rf /tmp/Python37
   mkdir /tmp/Python37
   cd /tmp/Python37
 
