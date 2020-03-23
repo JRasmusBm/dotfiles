@@ -214,7 +214,7 @@ install_tmux() {
     pkg-config \
     libevent-dev \
     libncurses5-dev
-  current = $(pwd)
+  current=$(pwd)
   sudo rm -rf /tmp/tmux
   git clone https://github.com/tmux/tmux.git /tmp/tmux
   cd /tmp/tmux
