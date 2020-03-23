@@ -82,7 +82,7 @@ install_python_37() {
 }
 
 install_virtualenvwrapper() {
-  sudo -E python3.7 -m pip install virtualenvwrapper
+  python3.7 -m pip install --user virtualenvwrapper
   source "/usr/local/bin/virtualenvwrapper.sh"
 }
 
