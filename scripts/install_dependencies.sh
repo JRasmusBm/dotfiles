@@ -184,7 +184,6 @@ install_vim() {
 install_zsh() {
   sudo apt-get update
   sudo apt-get install -y zsh
-  chsh -s $(which zsh)
   mkdir ~/.zsh
   curl -L git.io/antigen > ~/.zsh/antigen.zsh
   sudo apt-get install -y fonts-powerline
