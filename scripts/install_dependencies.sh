@@ -3,7 +3,7 @@
 install_ruby() {
   sudo apt update
   sudo apt install -y ruby-full
-  sudo gem install vimgolf
+  sudo gem install -y vimgolf
 }
 
 install_rust() {
@@ -42,7 +42,7 @@ install_haskell() {
 }
 
 install_python_37() {
-  sudo apt-get install -y \
+  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
     build-essential \
     bzip2  \
     checkinstall \
@@ -185,10 +185,11 @@ install_vim() {
 
 install_zsh() {
   sudo apt-get update
-  sudo apt-get install -y zsh
+  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
+    zsh \
+    fonts-powerline
   mkdir ~/.zsh
   curl -L git.io/antigen > ~/.zsh/antigen.zsh
-  sudo apt-get install -y fonts-powerline
 }
 
 install_alacritty() {
@@ -205,7 +206,7 @@ uninstall_alacritty() {
 }
 
 install_tmux() {
-  sudo apt-get install -y \
+  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
     automake \
     byacc \
     autoconf \
@@ -242,14 +243,14 @@ install_brave() {
   source /etc/os-release
   echo "deb [arch=amd64] https://brave-browser-apt-beta.s3.brave.com/ $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/brave-browser-beta-${UBUNTU_CODENAME}.list
   sudo apt update
-  sudo apt install brave-browser-beta
+  sudo apt install -y brave-browser-beta
 }
 
 install_latest_firefox() {
   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6DCF7707EBC211F
   sudo apt-add-repository "deb http://ppa.launchpad.net/ubuntu-mozilla-security/ppa/ubuntu bionic main"
   sudo apt update
-  sudo apt install firefox
+  sudo apt install -y firefox
 }
 
 install_java() {
