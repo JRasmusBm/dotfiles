@@ -69,7 +69,7 @@ install_python_37() {
   export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
   current=$(pwd)
   sudo rm -rf /tmp/Python37
-  mkdir /tmp/Python37
+  mkdir -p /tmp/Python37
   cd /tmp/Python37
 
   wget https://www.python.org/ftp/python/3.7.7/Python-3.7.7.tgz
@@ -188,7 +188,7 @@ install_zsh() {
   sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
     zsh \
     fonts-powerline
-  mkdir ~/.zsh
+  mkdir -p ~/.zsh
   curl -L git.io/antigen > ~/.zsh/antigen.zsh
 }
 
