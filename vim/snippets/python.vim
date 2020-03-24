@@ -34,6 +34,8 @@ inoremap <buffer> <leader>cd class <++>:<++><++><<:call BackwardMarker(3)
 "}}}
 
 " Logging {{{
+" Format {{{
+inoremap <buffer> <leader>lf pformat(<++>)<++>:call BackwardMarker()
 " Info {{{
 inoremap <buffer> <leader>li logger.info(<++>)<++>:call BackwardMarker(2)
 "}}}
@@ -41,13 +43,14 @@ inoremap <buffer> <leader>li logger.info(<++>)<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>lw logger.warning(<++>)<++>:call BackwardMarker(2)
 "}}}
 " Error {{{
+"}}}
 inoremap <buffer> <leader>le logger.error(<++>)<++>:call BackwardMarker(2)
 "}}}
 " Debug {{{
 inoremap <buffer> <leader>ld logger.debug(<++>)<++>:call BackwardMarker(2)
 "}}}
 " Print {{{
-inoremap <buffer> <leader>pr print(<++>)<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>ll print(<++>)<++>:call BackwardMarker(2)
 "}}}
 "}}}
 

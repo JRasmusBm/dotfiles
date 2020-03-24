@@ -60,11 +60,11 @@ inoremap <buffer> <leader>of <++>: <++>,<++>:call BackwardMarker(3)
 "}}}
 
 " Logging {{{
-" Prettify {{{
-inoremap <buffer> <leader>pp JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
+" Format {{{
+inoremap <buffer> <leader>lf JSON.stringify(<++>, null, 2)<++>:call BackwardMarker(2)
 "}}}
 " Print {{{
-inoremap <buffer> <leader>pr console.log(<++>);<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>ll console.log(<++>);<++>:call BackwardMarker(2)
 "}}}
 " Error {{{
 inoremap <buffer> <leader>le console.error(<++>);
