@@ -101,6 +101,8 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 # Virtualenvs
+export WORKON_HOME=$HOME/.virtualenvs
+export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
 
 if [ -f /usr/share/virtualenvwrapper/virtualenvwrapper.sh ]
 then 
