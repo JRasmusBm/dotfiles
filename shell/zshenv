@@ -82,7 +82,7 @@ alias tks='tmux kill-session'
 alias ssh="ssh -R 127.0.0.1:2222:127.0.0.1:22"
 
 function scpb(){
-    scp -P2222 "$1" rasmus@127.0.0.1:"$2"
+    scp -r -P2222 "$1" rasmus@127.0.0.1:"$2"
 }
 
 function translate() {
