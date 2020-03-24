@@ -2,7 +2,7 @@
 
 set -e
 
-. ./scripts/install_dependencies.sh
+source ./scripts/install_dependencies.sh
 
 update_system
 install_python_37
