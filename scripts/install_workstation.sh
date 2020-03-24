@@ -5,6 +5,8 @@ set -e
 source ./scripts/install_dependencies.sh
 
 update_system
+uninstall_unnecessary_stuff
+install_sshd
 install_blas
 install_python_37
 install_virtualenvwrapper
@@ -16,3 +18,4 @@ install_nvim
 update_system
 
 chsh -s $(which zsh)
+

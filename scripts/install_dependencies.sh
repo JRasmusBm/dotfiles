@@ -88,6 +88,15 @@ install_virtualenvwrapper() {
   source "/usr/local/bin/virtualenvwrapper.sh"
 }
 
+function install_sshd() {
+  sudo apt install -y openssh-server
+}
+
+install_blas() {
+  sudo apt-get -y install libblas-dev liblapack-dev
+}
+
+
 install_clipboard_manager() {
   sudo add-apt-repository -y ppa:hluk/copyq
   sudo apt update
