@@ -29,12 +29,11 @@ function s:CheckColorScheme()
   endif
 
   execute 'highlight Comment ' . pinnacle#italicize('Comment')
-  call CocHighlights()
   call ErrorHighlights()
   call SpellingHighlights()
   call SearchHighlights()
   call FoldHighlights()
-  AirlineRefresh
+  call CocHighlights()
 endfunction
 
 function! FoldHighlights() abort
