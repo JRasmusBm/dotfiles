@@ -1,5 +1,6 @@
 {
   "diagnostic.errorSign": "✗",
+  "diagnostic.warningSign": "⚠",
   "python.formatting.blackArgs": ["--line-length", "80"],
   "python.formatting.provider": "black",
   "python.analysis.downloadChannel": "beta",
