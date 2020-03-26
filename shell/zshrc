@@ -1,4 +1,5 @@
 setopt histignorealldups sharehistory
+setopt rm_star_silent
 
 # Antigen
 
