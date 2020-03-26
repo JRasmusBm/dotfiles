@@ -93,6 +93,13 @@ function! FocusStatusline() abort
     setlocal statusline+=%8*
     setlocal statusline+=\ %f
     setlocal statusline+=%=
+    setlocal statusline+=%#CocWarningSign#
+    setlocal statusline+=%{CoCWarnings()}
+    setlocal statusline+=%8*
+    setlocal statusline+=\ 
+    setlocal statusline+=%#CocErrorSign#
+    setlocal statusline+=%{CoCErrors()}
+    setlocal statusline+=%8*
     setlocal statusline+=\ %y\ 
     setlocal statusline+=%3*
     setlocal statusline+=
@@ -111,12 +118,33 @@ function! BlurStatusLine() abort
     setlocal statusline+=\ 
     setlocal statusline+=\ %f
     setlocal statusline+=%=
+    setlocal statusline+=%{CoCWarnings()}
+    setlocal statusline+=%8*
+    setlocal statusline+=\ 
+    setlocal statusline+=%{CoCErrors()}
+    setlocal statusline+=%8*
     setlocal statusline+=\ %y\ 
     setlocal statusline+=\ 
     setlocal statusline+=\ %l,
     setlocal statusline+=\ %c
     setlocal statusline+=\ 
   endif
+endfunction
+
+function! CoCWarnings() abort
+  let info = get(b:, 'coc_diagnostic_info', {})
+  if get(info, 'warning', 0)
+    return '⚠ ' . info['warning']
+  endif
+  return ""
+endfunction
+
+function! CoCErrors() abort
+  let info = get(b:, 'coc_diagnostic_info', {})
+  if get(info, 'error', 0)
+    return '✗ ' . info['error']
+  endif
+  return ""
 endfunction
 
 augroup StatusLine
