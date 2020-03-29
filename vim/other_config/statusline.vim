@@ -29,20 +29,19 @@ function! PinnacleActive()
   endtry
 endfunction
 
+let g:last_mode = 'NORMAL'
 function! SetModeColors(mode) abort
   if !PinnacleActive()
     return ""
   endif
-
-  let l:mode_text=get(g:mode_map, a:mode)
-  let l:bg = pinnacle#extract_fg('Cursor')
   let l:fg = pinnacle#extract_fg("Keyword")
-  " echom l:mode_text
-  " if l:mode_text == "VISUAL"
-  "   let l:fg=pinnacle#extract_fg("Constant")
-  " elseif l:mode_text == "INSERT"
-  "   let l:fg=pinnacle#extract_fg("Identifier")
-  " endif
+  let l:mode_text=get(g:mode_map, a:mode)
+  if l:mode_text == 'VISUAL'
+    let l:fg = pinnacle#extract_fg("Constant")
+  elseif l:mode_text == 'INSERT'
+    let l:fg = pinnacle#extract_fg("Identifier")
+  endif
+  let l:bg = pinnacle#extract_fg('Cursor')
   execute 'highlight User2 ' . pinnacle#highlight({'fg': l:fg, 'bg': l:bg})
   execute 'highlight User3 ' .
         \ pinnacle#highlight({
@@ -50,6 +49,10 @@ function! SetModeColors(mode) abort
         \   'fg': l:bg,
         \   'term': 'bold'
         \ })
+  if l:mode_text != g:last_mode
+    let g:last_mode = l:mode_text
+    redrawstatus!
+  endif
   return ""
 endfunction
 
@@ -122,8 +125,10 @@ augroup StatusLine
   autocmd!
   if exists('##TextChangedI')
     autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,TextChanged,TextChangedI,WinEnter * call FocusStatusline()
+    autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,TextChanged,TextChangedI,WinEnter * call SetModeColors(mode())
   else
     autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,WinEnter * call FocusStatusline()
+    autocmd FocusGained,BufWinEnter,BufWritePost,FileWritePost,WinEnter * call SetModeColors(mode())
   endif
   autocmd FocusLost,WinLeave * call BlurStatusLine()
 augroup END
