@@ -27,10 +27,18 @@ inoremap <buffer> <leader>fi lambda <++>: <++>:call BackwardMarker(2)
 " Definition {{{
 inoremap <buffer> <leader>vd <++> = <++><++>:call BackwardMarker(3)
 " }}}
+" Attribute {{{
+inoremap <buffer> <leader>va self.<++> = <++><++>:call BackwardMarker(3)
+"}}}
 " }}}
 
 " Class {{{
+" Definition {{{
 inoremap <buffer> <leader>cd class <++>:<++><++><<:call BackwardMarker(3)
+"}}}
+" Attribute {{{
+inoremap <buffer> <leader>ca self.
+"}}}
 "}}}
 
 " Logging {{{
