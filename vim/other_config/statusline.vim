@@ -36,7 +36,7 @@ function! SetModeColors(mode) abort
   endif
   let l:fg = pinnacle#extract_fg("Keyword")
   let l:mode_text=get(g:mode_map, a:mode)
-  if l:mode_text == 'VISUAL'
+  if l:mode_text == 'VISUAL' || l:mode_text == 'V-LINE' || l:mode_text == 'V-BLOCK'
     let l:fg = pinnacle#extract_fg("Constant")
   elseif l:mode_text == 'INSERT'
     let l:fg = pinnacle#extract_fg("Identifier")
