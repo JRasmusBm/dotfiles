@@ -1,5 +1,0 @@
-"xte 'mousedown 2'"
-F1
-"xte 'mouseup 2'"
-F1 + Release
-"xte 'keydown Caps_Lock'"

@@ -1,4 +1,5 @@
 is_dir,source,target
+False,spotify/config.toml,.config/ncspot/config.toml
 False,vim/vimrc,.vimrc
 False,terminal/alacritty.yml,.config/alacritty/alacritty.yml
 False,vim/init.vim,.config/nvim/init.vim
@@ -9,7 +10,6 @@ True,vim,.vim
 False,git/gitconfig,.gitconfig
 False,git/gitmessage,.gitmessage
 False,tmux/tmux.conf,.tmux.conf
-False,remap-keys/xbindkeysrc,.xbindkeysrc
 False,shell/bashrc,.bashrc
 False,shell/dircolors,.dircolors
 False,shell/zshenv,.zshenv

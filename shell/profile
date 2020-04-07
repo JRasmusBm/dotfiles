@@ -7,7 +7,6 @@
 # the default umask is set in /etc/profile; for setting the umask
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
-xbindkeys
 unset XMODIFIERS
 unset GTK_IM_MODULES
 unset QT_IM_MODULES
