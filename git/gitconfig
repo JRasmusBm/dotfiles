@@ -35,6 +35,7 @@
   rbs = rebase --skip
   rh = reset --hard
   ro = "!git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)"
+  rof = "!git fetch && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)"
   rs = reset --soft
   s = log --oneline --decorate --graph --all
   sl = log --oneline --decorate -20
