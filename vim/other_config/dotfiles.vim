@@ -9,5 +9,5 @@
 :command! Trc e ~/.tmux.conf
 :command! Vsc e ~/.config/nvim/coc-settings.json
 
-nnoremap <leader>r :e ~/2_school/5_y/thesis/report/src/pre-study-rasmus-bergstrom.tex
+nnoremap <leader>r :e ~/2_school/5_y/thesis/report/src/thesis-rasmus-bergstrom.tex
 nnoremap <leader>b :e ~/2_school/5_y/thesis/report/src/sources.bib
