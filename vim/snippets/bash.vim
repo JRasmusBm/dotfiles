@@ -1,3 +1,19 @@
+" Control Statement {{{
+" For {{{
+inoremap <buffer> <leader>cfo for i in {0..<++>}
+    \do
+    \<++>
+    \done
+    \<++>:call BackwardMarker(3)
+" }}}
+" For Each {{{
+inoremap <buffer> <leader>cfe for <++> in <++>
+    \do
+    \<++>
+    \done
+    \<++>:call BackwardMarker(4)
+" }}}
+" }}}
 " Script {{{
 " File {{{
 inoremap <buffer> <leader>sf #!/bin/sh
