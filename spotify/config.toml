@@ -2,5 +2,5 @@ volume=80
 
 [keybindings]
 "x" = "play"
-"Ctrl+u" = "move up 5"
-"Ctrl+d" = "move down 5"
+"Ctrl+u" = "move up 3"
+"Ctrl+d" = "move down 3"
