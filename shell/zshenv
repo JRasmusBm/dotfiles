@@ -40,6 +40,12 @@ alias "irc"="vim ~/.install_dependencies"
 alias "gl"="g l"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
+rm_swapfile() {
+  sudo swapoff -v "$1"
+  sudo sed -i "\%$1%d" /etc/fstab 
+  sudo rm "$1"
+}
+
 swapfile() {
   sudo fallocate -l 1G "$1"
   sudo chmod 600 "$1"
