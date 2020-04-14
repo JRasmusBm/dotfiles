@@ -50,49 +50,82 @@ inoremap <buffer> <leader>tc yi{:call ForwardMarker(2)":call BackwardMarker(
 
 " Table {{{
 " 1 Column {{{
-inoremap <buffer> <leader>t1 \begin{table}\centering\caption{\label{tab:<++>} <++>}
-      \\vspace{1em}\begin{tabular}{\| c \|} 
-      \<++>\end{tabular}\end{table}
-      \<++>:call BackwardMarker(4)
-" }}}
-" 2 Columns {{{
-inoremap <buffer> <leader>t2 \begin{table}\centering\caption{\label{tab:<++>} <++>}
-      \\vspace{1em}\begin{tabular}{\| c \| c \|} 
-      \<++> & <++>\end{tabular}
-      \\end{table}
-      \<++>:call BackwardMarker(5)
-" }}}
-" 3 Columns {{{
-inoremap <buffer> <leader>t3 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+inoremap <buffer> <leader>t1 \begin{table}
+      \\centering
+      \\caption{\label{tab:<++>} <++>}
       \\vspace{1em}
-      \\begin{tabular}{\| c \| c \| c \|} 
-      \<++> & <++> & <++>\end{tabular}
+      \\begin{tabular}{ l } 
+      \<++> \\ \toprule
+      \<++> \\
+      \<++> \\ \bottomrule
+      \\end{tabular}
       \\end{table}
       \<++>:call BackwardMarker(6)
 " }}}
-" 4 Columns {{{
-inoremap <buffer> <leader>t4 \begin{table}\centering\caption{\label{tab:<++>} <++>}
+" 2 Columns {{{
+inoremap <buffer> <leader>t2 \begin{table}
+      \\centering
+      \\caption{\label{tab:<++>} <++>}
       \\vspace{1em}
-      \\begin{tabular}{\| c \| c \| c \| c \|} 
-      \<++> & <++> & <++> & <++>\end{tabular}
-      \\end{table}
-      \<++>:call BackwardMarker(7)
-" }}}
-" 5 Columns {{{
-inoremap <buffer> <leader>t5 \begin{table}\centering\caption{\label{tab:<++>} <++>}
-      \\vspace{1em}
-      \\begin{tabular}{\| c \| c \| c \| c \| c \|} 
-      \<++> & <++> & <++> & <++> & <++>\end{tabular}
-      \\end{table}
-      \<++>:call BackwardMarker(8)
-" }}}
-" " 6 Columns {{{
-inoremap <buffer> <leader>t6 \begin{table}\centering\caption{\label{tab:<++>} <++>}
-      \\vspace{1em}
-      \\begin{tabular}{\| c \| c \| c \| c \| c \| c \|} 
-      \<++> & <++> & <++> & <++> & <++> & <++>\end{tabular}
+      \\begin{tabular}{ l  l } 
+      \<++> & <++> \\ \toprule
+      \<++> & <++> \\
+      \<++> & <++> \\ \bottomrule
+      \\end{tabular}
       \\end{table}
       \<++>:call BackwardMarker(9)
+" }}}
+" 3 Columns {{{
+inoremap <buffer> <leader>t3 \begin{table}
+      \\centering
+      \\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
+      \\begin{tabular}{ l  l  l } 
+      \<++> & <++> & <++> \\ \toprule
+      \<++> & <++> & <++> \\
+      \<++> & <++> & <++> \\ \bottomrule
+      \\end{tabular}
+      \\end{table}
+      \<++>:call BackwardMarker(12)
+" }}}
+" 4 Columns {{{
+inoremap <buffer> <leader>t4 \begin{table}
+      \\centering
+      \\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
+      \\begin{tabular}{ l  l  l  l } 
+      \<++> & <++> & <++> & <++> \\ \toprule
+      \<++> & <++> & <++> & <++> \\
+      \<++> & <++> & <++> & <++> \\ \bottomrule
+      \\end{tabular}
+      \\end{table}
+      \<++>:call BackwardMarker(15)
+" }}}
+" 5 Columns {{{
+inoremap <buffer> <leader>t5 \begin{table}
+      \\centering
+      \\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
+      \\begin{tabular}{ l  l  l  l  l } 
+      \<++> & <++> & <++> & <++> & <++> \\ \toprule
+      \<++> & <++> & <++> & <++> & <++> \\
+      \<++> & <++> & <++> & <++> & <++> \\ \bottomrule
+      \\end{tabular}
+      \\end{table}
+      \<++>:call BackwardMarker(18)
+" }}}
+" " 6 Columns {{{
+inoremap <buffer> <leader>t6 \begin{table}
+      \\centering
+      \\caption{\label{tab:<++>} <++>}
+      \\vspace{1em}
+      \\begin{tabular}{ l  l  l  l  l  l } 
+      \<++> & <++> & <++> & <++> & <++> & <++> \\ \toprule
+      \<++> & <++> & <++> & <++> & <++> & <++> \\
+      \<++> & <++> & <++> & <++> & <++> & <++> \\ \bottomrule
+      \\end{tabular}
+      \\end{table}
+      \<++>:call BackwardMarker(21)
 " }}}
 " }}}
 
@@ -104,8 +137,8 @@ inoremap <buffer> <leader>qu I<++>OO\end{quote}O\begin{quote}
 " File {{{
 inoremap <buffer> <leader>bb \printbibliography{}
 " }}}
-" List {{{
-inoremap <buffer> <leader>bl I<++>OO\end{thebibliography}O\begin{thebibliography}{<++>}<++>:call BackwardMarker(2)
+" Manual {{{
+inoremap <buffer> <leader>bm I<++>OO\end{thebibliography}O\begin{thebibliography}{<++>}<++>:call BackwardMarker(2)
 " }}}
 " Item {{{
 inoremap <buffer> <leader>bi O<++>OO\bibitem{<++>}<++>:call BackwardMarker(2)
@@ -120,12 +153,24 @@ inoremap <buffer> <leader>bc ~\cite{<++>} <++>:call BackwardMarker(2)
 inoremap <buffer> <leader>ci \mintinline{<++>}{<++>} <++>:call BackwardMarker(3)
 " }}}
 " Block {{{
-inoremap <buffer> <leader>cb \begin{figure}[H]\centering\begin{minted}{<++>}<++>\end{minted}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(5)
+inoremap <buffer> <leader>cb \begin{figure}
+      \\centering
+      \\begin{minted}{<++>}
+      \<++>
+      \\end{minted}
+      \\caption{\label{fig:<++>} <++>}
+      \\end{figure}
+      \<++>:call BackwardMarker(5)
 " }}}
 " }}}
   
 " Image {{{
-inoremap <buffer> <leader>im \begin{figure}[H]\centering\includegraphics[width=\textwidth]{<++>}\caption{\label{fig:<++>} <++>}\end{figure}<++>:call BackwardMarker(4)
+inoremap <buffer> <leader>im \begin{figure}
+      \\centering
+      \\includegraphics[width=\textwidth]{<++>}
+      \\caption{\label{fig:<++>} <++>}
+      \\end{figure}
+      \<++>:call BackwardMarker(4)
 " }}}
 
 " Import {{{
