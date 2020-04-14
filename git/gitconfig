@@ -4,6 +4,7 @@
   email = JRasmusBm@gmail.com
 [core]
   pager = "diff-so-fancy" | less -RFX
+  whitespace = blank-at-eol,tab-in-indent
   excludesfile = "~/.gitignore_global"
 [diff]
   context = 4
