@@ -78,3 +78,5 @@
   ff = only
 [pull]
   ff = only
+[push]
+  followTags = true
