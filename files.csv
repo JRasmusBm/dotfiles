@@ -9,6 +9,7 @@ True,vim/spell,.config/nvim/spell
 True,vim,.vim
 False,git/gitconfig,.gitconfig
 False,git/gitmessage,.gitmessage
+False,git/gitignore_global,.gitignore_global
 False,tmux/tmux.conf,.tmux.conf
 False,shell/bashrc,.bashrc
 False,shell/dircolors,.dircolors

@@ -2,6 +2,8 @@
   name = jrasmusbm
   username = jrasmusbm
   email = JRasmusBm@gmail.com
+[core]
+  excludesfile = "~/.gitignore_global"
 [alias]
   aa = add --all
   ap = add --patch
