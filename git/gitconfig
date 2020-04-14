@@ -3,7 +3,10 @@
   username = jrasmusbm
   email = JRasmusBm@gmail.com
 [core]
+  pager = "diff-so-fancy" | less -RFX
   excludesfile = "~/.gitignore_global"
+[diff]
+  context = 4
 [alias]
   aa = add --all
   ap = add --patch
