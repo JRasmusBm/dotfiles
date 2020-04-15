@@ -179,8 +179,13 @@ inoremap <buffer> <leader>in \usepackage{<++>} <++>:call BackwardMarker(2)
 " }}}
 " }}}
  
-" Refs {{{
-inoremap <buffer> <leader>rf ~\ref{<++>} <++>:call BackwardMarker(2)
+" References {{{
+" Single {{{
+inoremap <buffer> <leader>rf ~\ref{<++>}<++>:call BackwardMarker(2)
+"}}}
+" Range {{{
+inoremap <buffer> <leader>rr ~\ref{<++>}~--~\ref{<++>}<++>:call BackwardMarker(3)
+"}}}
 " }}}
 
 " Label {{{
