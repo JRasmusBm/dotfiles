@@ -2,4 +2,4 @@
 
 issue=$()
 number=$(gh issue list | fzf --reverse | grep -o -E "([0-9])+")
-gh issue view $number
+gh issue view -w $number
