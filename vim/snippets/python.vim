@@ -32,6 +32,30 @@ inoremap <buffer> <leader>va self.<++> = <++><++>:call BackwardMarker(3)
 "}}}
 " }}}
 
+" Plot {{{
+" Block {{{
+inoremap <buffer> <leader>pb plt.figure(<++>)
+            \title_string = "<++>"
+            \subtitle_string = "<++>"
+            \plt.suptitle(title_string, fontsize=16)
+            \plt.title(subtitle_string, fontsize=12)
+            \plt.ylabel("<++>")
+            \plt.xlabel("<++>")
+            \<++>
+            \plt.legend()
+            \plt.savefig(<++>)
+            \plt.close():call BackwardMarker(7)
+" }}}
+" Object {{{
+inoremap <buffer> <leader>po plt.<++>(
+            \<++>,
+            \label=<++>,
+            \color=<++>,
+            \)
+            \<++>:call BackwardMarker(5)
+" }}}
+" }}}
+"
 " Class {{{
 " Definition {{{
 inoremap <buffer> <leader>cd class <++>:<++><++><<:call BackwardMarker(3)
@@ -46,6 +70,12 @@ inoremap <buffer> <leader>ca self.
 inoremap <buffer> <leader>lf pformat(<++>)<++>:call BackwardMarker()
 " Info {{{
 inoremap <buffer> <leader>li logger.info(<++>)<++>:call BackwardMarker(2)
+"}}}
+" Timestamps {{{
+inoremap <buffer> <leader>lt logger.debug(f"Start <++>...")
+      \start = time()
+      \end = time()
+      \logger.debug(f"Done <++>. {end - start} s"):call BackwardMarker(2)
 "}}}
 " Warning {{{
 inoremap <buffer> <leader>lw logger.warning(<++>)<++>:call BackwardMarker(2)
