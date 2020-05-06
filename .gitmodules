@@ -207,3 +207,6 @@
 	path = vim/pack/wasm/start/vim-wasm
 	url = git@github.com:rhysd/vim-wasm.git
   ignore = dirty
+[submodule "tmux/plugins/tpm"]
+	path = tmux/plugins/tpm
+	url = https://github.com/tmux-plugins/tpm
