@@ -210,3 +210,6 @@
 [submodule "tmux/plugins/tpm"]
 	path = tmux/plugins/tpm
 	url = https://github.com/tmux-plugins/tpm
+[submodule "tmux/plugins/tmux-safekill"]
+	path = tmux/plugins/tmux-safekill
+	url = git@github.com:jlipps/tmux-safekill.git
