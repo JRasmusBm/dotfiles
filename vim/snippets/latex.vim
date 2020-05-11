@@ -35,7 +35,7 @@ inoremap <buffer> <leader>h2 I<++>OO\subsection{<++>}\label{sec:<++>}:call B
 inoremap <buffer> <leader>h3 I<++>OO\subsubsection{<++>}\label{sec:<++>}:call BackwardMarker(2)
 " }}}
 " Label {{{
-inoremap <buffer> <leader>hl yi{:call ForwardMarker(1)"gui{F\i:s/ /-/gkJ:call ForwardMarker(1)
+inoremap <buffer> <leader>hl yi{:call ForwardMarker(1)"gui{F\i:s/ /-/gekJx:call ForwardMarker(1)
 " }}}
 " }}}
      
