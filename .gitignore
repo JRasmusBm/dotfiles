@@ -1,8 +1,9 @@
+!.tmux
 *.pyc
 .mypy_cache
 .netrwhist
 .nvimlog
 __pycache__
 neovim
-vim/view
 vim/bundle
+vim/view
