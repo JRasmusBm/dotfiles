@@ -99,6 +99,9 @@ inoremap <buffer> <leader>oi __<++>__<++>:call BackwardMarker(2)
 " Method {{{
 inoremap <buffer> <leader>om def __<++>__(self, <++>):<++><++><<$:call BackwardMarker(4)
 "}}}
+" Field {{{
+inoremap <buffer> <leader>of <++>: <++>,<++>:call BackwardMarker(3)
+"}}}
 "}}}
 
 " Import {{{
@@ -197,7 +200,7 @@ inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call BackwardMarker(2
 inoremap <buffer> <leader>dc async def test_<++>(self, <++>) -> None:
       \"""<++>"""
       \<++>
-      \<++><<:call BackwardMarker(4)
+      \<++><<:call BackwardMarker(5)
 " }}}
 " Before Each {{{
 inoremap <buffer> <leader>db @pytest.fixture
