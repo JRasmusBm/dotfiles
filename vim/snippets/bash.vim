@@ -13,6 +13,18 @@ inoremap <buffer> <leader>cfe for <++> in <++>
     \done
     \<++>:call BackwardMarker(4)
 " }}}
+" If {{{
+inoremap <buffer> <leader>ci if <++>; then
+    \<++>
+    \fi
+    \<++>:call BackwardMarker(3)
+" }}}
+" Else {{{
+inoremap <buffer> <leader>cie 
+    \<++>
+    \fi
+    \<++>:call BackwardMarker(2)
+" }}}
 " }}}
 " Script {{{
 " File {{{
