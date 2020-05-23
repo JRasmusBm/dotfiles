@@ -34,9 +34,9 @@ install_pyautogui() {
 }
 
 install_git_extras() {
-  wget https://github.com/cli/cli/releases/download/v0.7.0/gh_0.7.0_linux_amd64.deb
-  sudo dpkg -i gh_0.7.0_linux_amd64.deb
-  rm gh_0.7.0_linux_amd64.deb
+  wget https://github.com/cli/cli/releases/download/v0.8.0/gh_0.8.0_linux_amd64.deb
+  sudo dpkg -i gh_0.8.0_linux_amd64.deb
+  rm gh_0.8.0_linux_amd64.deb
   sudo apt-get install -y git-extras
 }
 
