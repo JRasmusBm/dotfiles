@@ -216,3 +216,6 @@
 [submodule "vim/pack/tpope/start/vim-rhubarb"]
 	path = vim/pack/tpope/start/vim-rhubarb
 	url = git@github.com:tpope/vim-rhubarb.git
+[submodule "vim/pack/tpope/start/fugitive-gitlab.vim"]
+	path = vim/pack/tpope/start/fugitive-gitlab.vim
+	url = git@github.com:shumphrey/fugitive-gitlab.vim.git
