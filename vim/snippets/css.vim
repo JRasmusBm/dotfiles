@@ -182,9 +182,14 @@ inoremap <buffer> <leader>scu cursor:<++>;<++>:call BackwardMarker(2)
 inoremap <buffer> <leader>sop opacity: <++>;<++> :call BackwardMarker(2) 
 "}}}
 
+" Box Shadow {{{
+inoremap <buffer> <leader>sbs box-shadow: <++>;
+      \<++>:call BackwardMarker(2)
+" }}}
+
 " Margin {{{
 " Default{{{
-inoremap <buffer> <leader>smg margin:<++>;<++>:call BackwardMarker(2) 
+inoremap <buffer> <leader>smg margin:;<++>:call BackwardMarker(2) 
 "}}}
 " Top{{{
 inoremap <buffer> <leader>smt margin-top:<++>;<++>:call BackwardMarker(2) 
