@@ -213,3 +213,6 @@
 [submodule "tmux/plugins/tmux-safekill"]
 	path = tmux/plugins/tmux-safekill
 	url = git@github.com:jlipps/tmux-safekill.git
+[submodule "vim/pack/tpope/start/vim-rhubarb"]
+	path = vim/pack/tpope/start/vim-rhubarb
+	url = git@github.com:tpope/vim-rhubarb.git
