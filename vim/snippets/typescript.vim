@@ -1,19 +1,20 @@
 " React {{{
 " File {{{
-inoremap <buffer> <leader>rf import * as React from "react";
- \import styled from "styled-components";
- \interface Props {<++> }o}
- \interface State {<++> }o}
- \const View = styled.div``;
- \class <++> extends React.Component<Props, State> {
- \render() {
- \return <View />;o
- \}
- \}
- \export default <++>;:call BackwardMarker(4)
+inoremap <buffer> <leader>rf import React from "react";
+  \interface Props {
+  \<++>}
+  \const <++>: React.FC<Props> = (<++>) => {
+  \<++>
+  \}
+  \export default <++>;:call BackwardMarker(5)
 "}}}
 " Component {{{
-inoremap <buffer> <leader>rc interface Props {<++>}const <++>: React.FC<Props> = (<++>) => {<++>}<++>:call BackwardMarker(5)
+inoremap <buffer> <leader>rc interface Props {
+      \<++>}
+      \const <++>: React.FC<Props> = (<++>) => {
+      \<++>
+      \}
+      \<++>:call BackwardMarker(5)
 " }}}
 " }}}
 " Method {{{
