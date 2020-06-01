@@ -246,6 +246,22 @@ inoremap <buffer> <leader>if \input{<++>}
 inoremap <buffer> <leader>co \textcolor{<++>}{<++>}<++>:call BackwardMarker(3)
 " }}}
 
+" Latex {{{
+" File {{{
+inoremap <buffer> <leader>lf \documentclass{article}
+      \\usepackage[utf8]{inputenc}
+      \\title{<++>}
+      \\date{\today}
+      \\author{<++>~\thanks{<++>}}
+      \\begin{document}
+      \\maketitle{}
+      \\newpage{}
+      \<++>
+      \\end{document}:call BackwardMarker(4)
+" }}}
+" }}}
+
 " TODO {{{
 inoremap <buffer> <leader>td \textcolor{purple}{TODO}: <++>:call BackwardMarker(1)
 " }}}
+
