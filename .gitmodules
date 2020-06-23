@@ -219,3 +219,6 @@
 [submodule "vim/pack/tpope/start/fugitive-gitlab.vim"]
 	path = vim/pack/tpope/start/fugitive-gitlab.vim
 	url = git@github.com:shumphrey/fugitive-gitlab.vim.git
+[submodule "vim/pack/indentwise/start/vim-indentwise"]
+	path = vim/pack/indentwise/start/vim-indentwise
+	url = git@github.com:jeetsukumaran/vim-indentwise.git
