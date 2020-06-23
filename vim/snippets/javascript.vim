@@ -1,19 +1,22 @@
 " Import {{{
 " Default {{{
-inoremap <buffer> <leader>id <++>Oimport <++> from "<++>";:call BackwardMarker(2)
+inoremap <buffer> <leader>id import <++> from "<++>";
+      \<++>:call BackwardMarker(2)
 "}}}
 " React {{{
-inoremap <buffer> <leader>ir <++>Oimport React from "react";:call ForwardMarker(1)
+inoremap <buffer> <leader>ir import React from "react";
 "}}}
 " Named {{{
-inoremap <buffer> <leader>in <++>Oimport { <++> } from "<++>";:call BackwardMarker(2)
+inoremap <buffer> <leader>in import { <++> } from "<++>";
+      \<++>:call BackwardMarker(2)
 "}}}
 " Module {{{
-inoremap <buffer> <leader>im <++>Oimport "<++>";:call BackwardMarker(1)
+inoremap <buffer> <leader>im import "<++>";
+      \<++>:call BackwardMarker(2)
 "}}}
 " Component {{{
 inoremap <buffer> <leader>ic import <++> from "components/<++>";<++>
-  \:call BackwardMarker(3)
+  \:call BackwardMarker(2)
 "}}}
 "}}}
 
