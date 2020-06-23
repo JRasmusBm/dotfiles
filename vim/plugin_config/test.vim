@@ -10,7 +10,6 @@ let test#enabled_runners = [
       \"javascript#jest",
       \]
 let test#javascript#reactscripts#options = "--coverage --watchAll=false"
-let test#javascript#jest#options = "--runInBand"
 nmap <silent> <localleader>dn :TestNearest<CR>
 nmap <silent> <localleader>df :TestFile<CR>
 nmap <silent> <localleader>ds :TestSuite<CR>
