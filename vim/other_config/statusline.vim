@@ -49,13 +49,15 @@ function! SetModeColors(mode) abort
         \   'fg': l:bg,
         \   'term': 'bold'
         \ })
+  let l:fg = pinnacle#extract_fg("Identifier")
+  let l:bg = pinnacle#extract_fg('Cursor')
+  execute 'highlight User4 ' . pinnacle#highlight({'fg': l:fg, 'bg': l:bg})
   if l:mode_text != g:last_mode
     let g:last_mode = l:mode_text
     redrawstatus!
   endif
   return ""
 endfunction
-
 
 function! FocusStatusline() abort
   if has("statusline")
@@ -67,6 +69,9 @@ function! FocusStatusline() abort
     setlocal statusline+=
     setlocal statusline+=%1*
     setlocal statusline+=\ %f
+    setlocal statusline+=%4*
+    setlocal statusline+=\ %m
+    setlocal statusline+=%1*
     setlocal statusline+=%=
     setlocal statusline+=%#CocWarningSign#
     setlocal statusline+=%{CoCWarnings()}
@@ -93,6 +98,7 @@ function! BlurStatusLine() abort
     setlocal statusline+=\ 
     setlocal statusline+=\ 
     setlocal statusline+=\ %f
+    setlocal statusline+=\ %m
     setlocal statusline+=%=
     setlocal statusline+=%{CoCWarnings()}
     setlocal statusline+=\ 
