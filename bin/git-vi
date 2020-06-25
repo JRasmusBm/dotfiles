@@ -1,5 +1,10 @@
 #!/bin/sh
 
-issue=$()
-number=$(gh issue list | fzf --reverse | grep -o -E "^([0-9])+")
+if [ $# -eq 0 ]
+  then
+  number=$(gh issue list | fzf --reverse | grep -o -E "^([0-9])+")
+  else
+  number=$1 
+fi
+
 gh issue view $number
