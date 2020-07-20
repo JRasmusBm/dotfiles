@@ -1,7 +1,7 @@
 " Most of this file is a direct copy of @ChrisToomey's vimrc. His organization
 " really spoke to me so I decided that imitation is the greatest form of
 " flattery.
-
+set exrc
 if !has("nvim")
   set nocompatible
 endif
@@ -24,3 +24,4 @@ endfunction
 
 call s:SourceConfigFilesIn("plugin_config")
 call s:SourceConfigFilesIn("other_config")
+set secure

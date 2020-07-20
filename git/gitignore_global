@@ -1,3 +1,5 @@
 .nvimlog
 .tmux
 temp*
+.vimrc
+.nvimrc
