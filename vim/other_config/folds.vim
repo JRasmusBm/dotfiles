@@ -1,4 +1,4 @@
-autocmd BufRead *.test.* set foldlevel=1
+autocmd BufRead *.test.* setlocal foldlevel=1
 
 function! GetLines(...) abort
   return [line("'["), line("']")]
