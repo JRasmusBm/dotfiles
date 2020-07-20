@@ -9,7 +9,10 @@ inoremap <buffer> <leader>bm :call BackwardMarker(<++>)<++>:call BackwardMark
 
 " Folds {{{
 " New {{{
-inoremap <buffer> <leader>fo " <++> {{{S<++>" }}}:call BackwardMarker(2) 
+inoremap <buffer> <leader>fo " <++> {{{
+      \S<++>
+      \" }}}
+      \S<++>:call BackwardMarker(3) 
 "}}}
 " Selection {{{
 nnoremap <buffer> <expr> zf FoldSelection()
