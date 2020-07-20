@@ -6,6 +6,10 @@ inoremap <buffer> <leader>id import <++> from "<++>";
 " React {{{
 inoremap <buffer> <leader>ir import React from "react";
 "}}}
+" All {{{
+inoremap <buffer> <leader>ia import * as <++> from "<++>";
+      \<++>:call BackwardMarker(3)
+"}}}
 " Named {{{
 inoremap <buffer> <leader>in import { <++> } from "<++>";
       \<++>:call BackwardMarker(2)
@@ -57,6 +61,25 @@ inoremap <buffer> <leader>sf "use strict";
 " }}}
 " }}}
 
+" Witchcraft {{{
+" File {{{
+inoremap <buffer> <leader>wf // @include "./utils/addAttributes.js"
+      \S
+      \(function <++>() {
+      \setInterval(() => {
+      \<++>
+      \}, 1000)
+      \})():call BackwardMarker(2)
+" }}}
+" Button {{{
+inoremap <buffer> <leader>wb addAttributes({
+     \query: "<++>",
+     \  attributes: { role: "button" },
+     \});
+     \<++>:call BackwardMarker(2)
+" }}}
+" }}}
+
 " React {{{
 " Styled {{{
 inoremap <buffer> <leader>rs const <++> = styled.<++>`<++>`<++>:call BackwardMarker(4)
@@ -69,15 +92,11 @@ inoremap <buffer> <leader>rr <++>O}O	<++>O
       \render() {:call ForwardMarker(2)
 "}}}
 " File {{{
-inoremap <buffer> <leader>rf import * as React from "react";
- \import styled from "styled-components";
- \const View = styled.div``;
- \class <++> extends React.Component {
- \render() {
- \return <View />;
- \}
- \}
- \export default <++>;:call BackwardMarker(2)
+inoremap <buffer> <leader>rf import React from "react";
+      \const <++> = () => {
+      \return <++>;
+      \}
+      \export default <++>;:call BackwardMarker(3)
 "}}}
 "}}}
 
@@ -102,6 +121,10 @@ inoremap <buffer> <leader>le console.error(<++>);
 inoremap <buffer> <leader>li console.info(<++>);
       \<++>:call BackwardMarker(2)
 " }}}
+" Mock {{{
+inoremap <buffer> <leader>lm console.<++> = jest.fn();
+      \console.<++>.mockClear();:call BackwardMarker(2)
+" }}}
 "}}}
 
 " Variable {{{
@@ -120,11 +143,21 @@ inoremap <buffer> <leader>vo const <++> = {<++>}:call BackwardMarker(2)
 "}}}
 
 " Function {{{
+" Reducer {{{
+inoremap <buffer> <leader>fr const reducer = (state, action) => {
+      \switch (action.type) {
+      \case <++>:
+      \return {...state, <++>}
+      \default:
+      \return state
+      \}
+      \}:call BackwardMarker(2)
+" }}}
 " Definition {{{
 inoremap <buffer> <leader>fd function <++> (<++>) {<++>}<++><<$:call BackwardMarker(4)
 "}}}
 " Inline {{{
-inoremap <buffer> <leader>fi (<++>) => <++> <++>:call BackwardMarker(3)
+inoremap <buffer> <leader>fi (<++>) => <++>:call BackwardMarker(2)
 "}}}
 " Arrow {{{
 inoremap <buffer> <leader>fa const <++> = (<++>) => {<++>}<++><<$:call BackwardMarker(4)
@@ -133,6 +166,19 @@ inoremap <buffer> <leader>fa const <++> = (<++>) => {<++>}<++><<$:call Back
 inoremap <buffer> <leader>rt return <++>;<++>:call BackwardMarker(2)
 "}}}
 "}}}
+
+" Set {{{
+" Timeout {{{
+inoremap <buffer> <leader>st setTimeout(() => {
+      \<++>
+      \}, <++>):call BackwardMarker(2)
+" }}}
+" Interval {{{
+inoremap <buffer> <leader>si setInterval(() => {
+      \<++>
+      \}, <++>):call BackwardMarker(2)
+" }}}
+" }}}
 
 " Hooks {{{
 " Specify {{{
