@@ -1,4 +1,6 @@
 autocmd BufRead *.test.* setlocal foldlevel=1
+nnoremap <leader>zs :setlocal foldmethod=syntax
+nnoremap <leader>zm :setlocal foldmethod=marker
 
 function! GetLines(...) abort
   return [line("'["), line("']")]
