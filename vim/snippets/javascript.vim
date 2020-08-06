@@ -87,10 +87,6 @@ inoremap <buffer> <leader>rs const <++> = styled.<++>`<++>`<++>:call Backwa
 " Component {{{
 inoremap <buffer> <leader>rc const <++> = () => {<++>}<++>:call BackwardMarker(3)
 "}}}
-" Render {{{
-inoremap <buffer> <leader>rr <++>O}O	<++>O
-      \render() {:call ForwardMarker(2)
-"}}}
 " File {{{
 inoremap <buffer> <leader>rf import React from "react";
       \const <++> = () => {
@@ -99,6 +95,29 @@ inoremap <buffer> <leader>rf import React from "react";
       \export default <++>;:call BackwardMarker(3)
 "}}}
 "}}}
+
+" Reducer {{{
+" Reducer {{{
+inoremap <buffer> <leader>rr const reducer = (state, action) => {
+      \switch (action.type) {
+      \case <++>:
+      \return produce(state, draftState => {
+      \<++>
+      \})
+      \<++>
+      \default:
+      \return state
+      \}
+      \}:call BackwardMarker(3)
+" }}}
+" Action {{{
+inoremap <buffer> <leader>ra case <++>:
+      \return produce(state, draftState => {
+      \<++>
+      \})
+      \<++>:call BackwardMarker(3)
+" }}}
+" }}}
 
 " Object {{{
 " Field {{{
@@ -143,16 +162,6 @@ inoremap <buffer> <leader>vo const <++> = {<++>}:call BackwardMarker(2)
 "}}}
 
 " Function {{{
-" Reducer {{{
-inoremap <buffer> <leader>fr const reducer = (state, action) => {
-      \switch (action.type) {
-      \case <++>:
-      \return {...state, <++>}
-      \default:
-      \return state
-      \}
-      \}:call BackwardMarker(2)
-" }}}
 " Definition {{{
 inoremap <buffer> <leader>fd function <++> (<++>) {<++>}<++><<$:call BackwardMarker(4)
 "}}}
@@ -215,8 +224,19 @@ inoremap <buffer> <leader>dt afterEach(async () => {<++>});<++>:call Backwa
 inoremap <buffer> <leader>ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
 "}}}
 " Case {{{
-inoremap <buffer> <leader>dc test("<++>", async () => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>dc test("- <++>", async () => {
+      \// Given
+      \S
+      \// When
+      \S
+      \// Then
+      \Sthrow "Not implemented!";
+      \});
+      \<++>:call BackwardMarker(2)
 "}}}
+" RegExp {{{
+inoremap <buffer> <leader>dx expect.stringMatching(/<++>/):call BackwardMarker(1)
+" }}}
 " Render {{{
 inoremap <buffer> <leader>dr const { <++> } = render(<++>);<++>:call BackwardMarker(3)
 "}}}
@@ -231,16 +251,26 @@ inoremap <buffer> <leader>dfe fireEvent.<++>(<++>);:call BackwardMarker(2)
 "}}}
 "}}}
 
-" GraphQL Tag {{{
+" GraphQL {{{
+" Tag {{{
 inoremap <buffer> <leader>qt const <++> = gql`
       \<++>
       \`<++>:call BackwardMarker(3)
+"}}}
+" Resolver {{{
+inoremap <buffer> <leader>qr const <++> = async (_parent, _args, _context) => {
+      \return <++>
+      \}:call BackwardMarker(2)
+" }}}
 "}}}
 
 " Control Statement {{{
 " If {{{
 inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
 "}}}
+" Ternary {{{
+inoremap <buffer> <leader>ct <++> ? <++> : <++>:call BackwardMarker(3)
+" }}}
 " Else {{{
 inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
 "}}}
