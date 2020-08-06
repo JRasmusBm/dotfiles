@@ -94,6 +94,11 @@ function countdown(){
      sleep 0.1
    done
 }
+
+function with_env() {
+  env $(cat .env | grep -v ^\# | xargs) "$@"
+}
+
 function stopwatch(){
   date1=`date +%s`; 
    while true; do 
