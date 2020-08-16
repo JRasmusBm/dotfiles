@@ -5,6 +5,7 @@ False,terminal/alacritty.yml,.config/alacritty/alacritty.yml
 False,vim/init.vim,.config/nvim/init.vim
 False,vim/coc-settings.json,.config/nvim/coc-settings.json
 False,terminal/base16-shell,.config/base16-shell
+False,vscode/settings.json,.config/Code/User/settings.json
 True,vim/spell,.config/nvim/spell
 True,vim,.vim
 False,git/gitconfig,.gitconfig
