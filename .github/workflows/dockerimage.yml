@@ -3,12 +3,10 @@ name: Docker Image CI
 on: [push]
 
 jobs:
-
   build:
-
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v1
-    - name: Run the install tests
-      run: cd install && docker-compose up --build
+      - uses: actions/checkout@v1
+      - name: Run the install tests
+        run: cd scripts && docker-compose build && docker-compose run install_all

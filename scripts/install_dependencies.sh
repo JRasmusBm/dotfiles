@@ -1,5 +1,105 @@
 #!/bin/bash
 
+update_system() {
+  sudo apt-get -y update
+  sudo apt -y update
+  sudo apt-get -y upgrade
+  sudo apt -y upgrade
+  sudo apt autoremove -y
+  sudo apt-get autoremove -y
+}
+
+install_python_37() {
+  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
+    build-essential \
+    bzip2  \
+    checkinstall \
+    libbz2-dev  \
+    libc6-dev \
+    libffi-dev \
+    libgdbm-compat-dev  \
+    libgdbm-dev  \
+    liblzma-dev  \
+    libncursesw5-dev  \
+    libreadline-dev  \
+    libsqlite3-dev  \
+    libssl-dev  \
+    openssl  \
+    sqlite3  \
+    tk-dev \
+    uuid-dev \
+    wget \
+    gcc \
+    cmake \
+    make \
+    zlib1g-dev
+
+  export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
+  current=$(pwd)
+  sudo rm -rf /tmp/Python37
+  mkdir -p /tmp/Python37
+  cd /tmp/Python37
+
+  wget https://www.python.org/ftp/python/3.7.8/Python-3.7.8.tgz
+  tar zxvf Python-3.7.8.tgz
+  cd /tmp/Python37/Python-3.7.8
+  ./configure --enable-shared
+  sudo make altinstall
+  cd $current
+  sudo rm -rf /tmp/Python37
+}
+
+install_python_38() {
+  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
+    build-essential \
+    bzip2  \
+    checkinstall \
+    libbz2-dev  \
+    libc6-dev \
+    libffi-dev \
+    libgdbm-compat-dev  \
+    libgdbm-dev  \
+    liblzma-dev  \
+    libncursesw5-dev  \
+    libreadline-dev  \
+    libsqlite3-dev  \
+    libssl-dev  \
+    openssl  \
+    sqlite3  \
+    tk-dev \
+    uuid-dev \
+    wget \
+    gcc \
+    cmake \
+    make \
+    zlib1g-dev
+
+  export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
+  current=$(pwd)
+  sudo rm -rf /tmp/Python37
+  mkdir -p /tmp/Python37
+  cd /tmp/Python37
+
+  wget https://www.python.org/ftp/python/3.8.5/Python-3.8.5.tgz
+  tar zxvf Python-3.8.5.tgz
+  cd /tmp/Python37/Python-3.8.5
+  ./configure --enable-shared
+  sudo make altinstall
+  cd $current
+  sudo rm -rf /tmp/Python37
+}
+
+# --- Everything above this line is tested ---
+
+install_brave() {
+  sudo apt install -y curl
+  curl -s https://brave-browser-apt-beta.s3.brave.com/brave-core-nightly.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-beta.gpg add -
+  source /etc/os-release
+  echo "deb [arch=amd64] https://brave-browser-apt-beta.s3.brave.com/ $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/brave-browser-beta-${UBUNTU_CODENAME}.list
+  sudo apt update
+  sudo apt install -y brave-browser-beta
+}
+
 install_ruby() {
   sudo apt update
   sudo apt install -y ruby-full
@@ -44,46 +144,6 @@ install_haskell() {
   curl -sSL https://get.haskellstack.org/ | sh
 }
 
-install_python_37() {
-  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
-    build-essential \
-    bzip2  \
-    checkinstall \
-    libbz2-dev  \
-    libc6-dev \
-    libffi-dev \
-    libgdbm-compat-dev  \
-    libgdbm-dev  \
-    liblzma-dev  \
-    libncursesw5-dev  \
-    libreadline-dev  \
-    libsqlite3-dev  \
-    libssl-dev  \
-    openssl  \
-    sqlite3  \
-    tk-dev \
-    uuid-dev \
-    wget \
-    gcc \
-    cmake \
-    make \
-    zlib1g-dev
-
-  export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
-  current=$(pwd)
-  sudo rm -rf /tmp/Python37
-  mkdir -p /tmp/Python37
-  cd /tmp/Python37
-
-  wget https://www.python.org/ftp/python/3.7.7/Python-3.7.7.tgz
-  tar zxvf Python-3.7.7.tgz
-  cd /tmp/Python37/Python-3.7.7
-  ./configure --enable-shared
-  sudo make altinstall
-  cd $current
-  sudo rm -rf /tmp/Python37
-}
-
 install_virtualenvwrapper() {
   export WORKON_HOME=$HOME/.virtualenvs
   export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
@@ -98,7 +158,6 @@ function install_sshd() {
 install_blas() {
   sudo apt-get -y install libblas-dev liblapack-dev
 }
-
 
 install_clipboard_manager() {
   sudo add-apt-repository -y ppa:hluk/copyq
@@ -252,14 +311,6 @@ install_latest_chrome() {
   rm google-chrome-stable_current_amd64.deb
 }
 
-install_brave() {
-  curl -s https://brave-browser-apt-beta.s3.brave.com/brave-core-nightly.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-beta.gpg add -
-  source /etc/os-release
-  echo "deb [arch=amd64] https://brave-browser-apt-beta.s3.brave.com/ $UBUNTU_CODENAME main" | sudo tee /etc/apt/sources.list.d/brave-browser-beta-${UBUNTU_CODENAME}.list
-  sudo apt update
-  sudo apt install -y brave-browser-beta
-}
-
 install_latest_firefox() {
   sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6DCF7707EBC211F
   sudo apt-add-repository "deb http://ppa.launchpad.net/ubuntu-mozilla-security/ppa/ubuntu bionic main"
@@ -271,38 +322,37 @@ install_java() {
   sudo apt-get install -y default-jdk
 }
 
-update_system() {
-  sudo apt-get -y update
-  sudo apt -y update
-  sudo apt-get -y upgrade
-  sudo apt -y upgrade
-  sudo apt autoremove -y
-  sudo apt-get autoremove -y
-}
-
 install_spotify_cli() {
   sudo apt install -y \
+    libncursesw5-dev \
+    libdbus-1-dev \
     libpulse-dev \
     libssl-dev \
     libxcb1-dev \
     libxcb-render0-dev \
     libxcb-shape0-dev \
     libxcb-xfixes0-dev
+
   cargo install ncspot
 }
 
 install_docker() {
-  sudo apt update
-  sudo apt install -y apt-transport-https
-  sudo apt install -y ca-certificates
-  sudo apt install -y curl
-  sudo apt install -y software-properties-common
+  sudo apt-get remove docker docker-engine docker.io containerd runc
+  sudo apt-get install -y \
+    apt-transport-https \
+    ca-certificates \
+    curl \
+    gnupg-agent \
+    software-properties-common
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-  sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu bionic stable"
-  sudo apt update
-  sudo apt install -y docker-ce
+  sudo add-apt-repository \
+   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+   $(lsb_release -cs) \
+   stable"
+  sudo apt-get update
+  sudo apt-get install -y docker-ce docker-ce-cli containerd.io
   sudo usermod -aG docker ${USER}
-  sudo curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
 }
 

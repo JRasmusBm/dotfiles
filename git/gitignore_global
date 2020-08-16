@@ -1,4 +1,6 @@
 .nvimlog
+.vim/
+venv/
 .tmux
 temp*
 !template*

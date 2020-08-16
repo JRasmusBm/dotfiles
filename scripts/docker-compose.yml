@@ -1,0 +1,11 @@
+version: "3"
+
+services:
+
+  install_all:
+    container_name: install-test-workstation
+    build: .
+    image: install-test
+    command:
+        sh -c "python3.7 -m pip install -r requirements-dev.txt && pytest"
+
