@@ -12,10 +12,10 @@ function! FoldSelection(...) abort
     return 'g@'
   endif
   let [lnum1, lnum2] = GetLines(a:0, a:1)
-  call append(lnum2, "\"  {{{")
-  call append(lnum2+1, "\"}}}")
+  call append(lnum2, substitute(&cms, "%s", " {{{", ""))
+  call append(lnum2+1, substitute(&cms, "%s", "}}}", ""))
   execute  lnum1 . "," . lnum2 . "m" . (lnum2+1)
   call cursor(lnum1, 3)
   norm zo
-  startinsert
+  startinsert 
 endfunction
