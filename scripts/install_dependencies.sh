@@ -104,8 +104,6 @@ install_node() {
   sudo npm install prettier@latest -g
 }
 
-# --- Everything above this line is tested ---
-
 install_brave() {
   sudo apt install -y curl
   curl -s https://brave-browser-apt-beta.s3.brave.com/brave-core-nightly.asc | sudo apt-key --keyring /etc/apt/trusted.gpg.d/brave-browser-beta.gpg add -
@@ -114,6 +112,8 @@ install_brave() {
   sudo apt update
   sudo apt install -y brave-browser-beta
 }
+
+# --- Everything above this line is tested ---
 
 install_ruby() {
   sudo apt update
