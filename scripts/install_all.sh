@@ -13,6 +13,7 @@ install_all() {
   install_python_37
   install_python_38
   install_node
+  install_git_extras
   update_system
 }
 

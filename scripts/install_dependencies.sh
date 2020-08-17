@@ -113,6 +113,14 @@ install_brave() {
   sudo apt install -y brave-browser-beta
 }
 
+install_git_extras() {
+  TEMP_DEB="$(mktemp)"
+  wget -o $TEMP_DEB https://github.com/cli/cli/releases/download/v0.11.1/gh_0.11.1_linux_amd64.deb
+  sudo dpkg -i $TEMP_DEB
+  rm -f $TEMP_DEB
+  sudo apt-get install -y git-extras
+}
+
 # --- Everything above this line is tested ---
 
 install_ruby() {
@@ -146,13 +154,6 @@ install_pyautogui() {
   cd .pyautogui
   pipenv install
   cd ..
-}
-
-install_git_extras() {
-  wget https://github.com/cli/cli/releases/download/v0.11.1/gh_0.11.1_linux_amd64.deb
-  sudo dpkg -i gh_0.11.1_linux_amd64.deb
-  rm gh_0.11.1_linux_amd64.deb
-  sudo apt-get install -y git-extras
 }
 
 install_haskell() {
