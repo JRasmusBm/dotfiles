@@ -89,6 +89,21 @@ install_python_38() {
   sudo rm -rf /tmp/Python37
 }
 
+install_node() {
+  sudo apt-get install -y \
+    software-properties-common \
+    curl
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
+  sudo apt-get install -y nodejs
+  sudo npm cache clean -f
+  sudo npm install -g n
+  sudo n stable
+  sudo npm install npm@latest -g
+  sudo npm install neovim@latest -g
+  sudo npm install typescript@latest -g
+  sudo npm install prettier@latest -g
+}
+
 # --- Everything above this line is tested ---
 
 install_brave() {
@@ -231,19 +246,6 @@ setup_neovim_vm() {
     pip install black
     deactivate
   fi
-}
-
-install_node() {
-  sudo apt-get install -y software-properties-common
-  curl -sL https://deb.nodesource.com/setup_12.x | sudo -E bash -
-  sudo apt-get install -y nodejs
-  sudo npm cache clean -f
-  sudo npm install -g n
-  sudo n stable
-  sudo npm install npm@latest -g
-  sudo npm install neovim@latest -g
-  sudo npm install typescript@latest -g
-  sudo npm install prettier@latest -g
 }
 
 install_vim() {

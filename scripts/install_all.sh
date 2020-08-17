@@ -12,6 +12,8 @@ install_all() {
   update_system
   install_python_37
   install_python_38
+  install_node
+  update_system
 }
 
 install_all

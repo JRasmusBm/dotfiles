@@ -23,6 +23,6 @@ COPY ./install_workstation.sh .
 
 RUN bash ./install_all.sh
 
-ENV PATH=/bin:usr/bin:/usr/local/bin:/home/docker/.local/bin
+ENV PATH=/bin:/usr/bin:/usr/local/bin:/home/docker/.local/bin
 COPY ./requirements-dev.txt .
 COPY tests .
