@@ -49,6 +49,38 @@ install_python_37() {
   sudo rm -rf /tmp/Python37
 }
 
+install_virtualenvwrapper() {
+  export WORKON_HOME=$HOME/.virtualenvs
+  export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
+  python3.7 -m pip install --user virtualenv
+  python3.7 -m pip install --user virtualenvwrapper
+  if test -f /usr/local/bin/virtualenvwrapper.sh; then
+    source "/usr/local/bin/virtualenvwrapper.sh"
+  else
+    source "$HOME/.local/bin/virtualenvwrapper.sh"
+  fi
+}
+
+install_ruby() {
+  sudo apt update
+  ruby_version=2.7.1
+  wget https://cache.ruby-lang.org/pub/ruby/2.7/ruby-$ruby_version.tar.gz
+  tar zxvf ruby-$ruby_version.tar.gz
+  cd ruby-$ruby_version
+  ./configure
+  make
+  sudo make install
+  cd ..
+  rm -rf ruby-$ruby_version
+  rm -rf ruby-$ruby_version.tar.gz
+  install_ruby_extras
+}
+
+install_ruby_extras() {
+ sudo gem install vimgolf
+ sudo gem install neovim
+}
+
 install_python_38() {
   sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
     build-essential \
@@ -121,13 +153,58 @@ install_git_extras() {
   sudo apt-get install -y git-extras
 }
 
-# --- Everything above this line is tested ---
-
-install_ruby() {
-  sudo apt update
-  sudo apt install -y ruby-full
-  sudo gem install -y vimgolf
+install_nvim() {
+  current=$(pwd)
+  sudo apt-get install -y \
+    build-essential \
+    make \
+    cmake \
+    cmake-data \
+    pkg-config \
+    libtool-bin \
+    automake \
+    curl \
+    gettext \
+    zip
+  rm -rf /tmp/nvim
+  git clone git@github.com:neovim/neovim.git /tmp/nvim
+  cd /tmp/nvim
+  sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
+  sudo make install
+  cd $current
+  sudo rm -rf /tmp/nvim
+  setup_neovim_vm
 }
+
+setup_neovim_vm() {
+  if command -v python2
+  then
+    mkvirtualenv -p $(which python2) neovim2
+    workon neovim2
+    pip install pynvim
+    pip install yapf
+    pip install grip
+    pip install notedown
+    pip install flake8
+    pip install black
+    deactivate
+  fi
+  if command -v python3
+  then
+    mkvirtualenv -p $(which python3) neovim3
+    workon neovim3
+    pip install pynvim
+    pip install notedown
+    pip install yapf
+    pip install grip
+    pip install flake8
+    pip install black
+    deactivate
+  fi
+}
+
+
+# --- Everything above this line is tested ---
 
 install_rust() {
   curl https://sh.rustup.rs -sSf | sh
@@ -160,13 +237,6 @@ install_haskell() {
   curl -sSL https://get.haskellstack.org/ | sh
 }
 
-install_virtualenvwrapper() {
-  export WORKON_HOME=$HOME/.virtualenvs
-  export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
-  python3.7 -m pip install --user virtualenvwrapper
-  source "/usr/local/bin/virtualenvwrapper.sh"
-}
-
 function install_sshd() {
   sudo apt install -y openssh-server
 }
@@ -179,29 +249,6 @@ install_clipboard_manager() {
   sudo add-apt-repository -y ppa:hluk/copyq
   sudo apt update
   sudo apt install -y copyq
-}
-
-install_nvim() {
-  current=$(pwd)
-  sudo apt-get install -y \
-    build-essential \
-    make \
-    cmake \
-    cmake-data \
-    pkg-config \
-    libtool-bin \
-    automake \
-    curl \
-    gettext \
-    zip
-  rm -rf /tmp/nvim
-  git clone git@github.com:neovim/neovim.git /tmp/nvim
-  cd /tmp/nvim
-  sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
-  sudo make install
-  cd $current
-  sudo rm -rf /tmp/nvim
-  setup_neovim_vm
 }
 
 install_fonts() {
@@ -222,31 +269,6 @@ install_fonts() {
 install_fzf() {
   git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
   ~/.fzf/install --all
-}
-
-setup_neovim_vm() {
-  if command -v python2
-  then
-    mkvirtualenv -p python2 neovim2
-    workon neovim2
-    pip install neovim
-    pip install yapf
-    pip install grip
-    pip install flake8
-    pip install black
-    deactivate
-  fi
-  if command -v python2
-  then
-    mkvirtualenv -p python3 neovim3
-    workon neovim3
-    pip install neovim
-    pip install yapf
-    pip install grip
-    pip install flake8
-    pip install black
-    deactivate
-  fi
 }
 
 install_vim() {

@@ -16,13 +16,17 @@ RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
 
 USER docker
 
-COPY ./install_dependencies.sh .
-COPY ./install_server.sh .
-COPY ./install_all.sh .
-COPY ./install_workstation.sh .
+COPY ./vim/vimrc /root/.vimrc
+COPY ./vim /root/.vim
+COPY ./vim/init.vim /root/nvim/init.vim
+
+COPY ./scripts/install_dependencies.sh .
+COPY ./scripts/install_server.sh .
+COPY ./scripts/install_all.sh .
+COPY ./scripts/install_workstation.sh .
 
 RUN bash ./install_all.sh
 
-ENV PATH=/bin:/usr/bin:/usr/local/bin:/home/docker/.local/bin
-COPY ./requirements-dev.txt .
-COPY tests .
+ENV PATH=/bin:/usr/bin:/usr/local/bin:/home/docker/.local/bin:$HOME/.local/bin
+COPY ./scripts/requirements-dev.txt .
+COPY ./scripts/tests .
