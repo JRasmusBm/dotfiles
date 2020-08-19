@@ -203,6 +203,10 @@ setup_neovim_vm() {
   fi
 }
 
+load_nvim_plugins() {
+  git submodule init
+  git submodule update --recursive
+}
 
 # --- Everything above this line is tested ---
 
