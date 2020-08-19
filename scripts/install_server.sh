@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 source ./scripts/install_dependencies.sh
 
 update_system

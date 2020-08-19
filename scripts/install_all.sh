@@ -1,7 +1,5 @@
 #!/bin/bash
 
-set -e
-
 if test -f ./scripts/install_dependencies.sh; then
   source ./scripts/install_dependencies.sh
 else
