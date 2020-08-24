@@ -4,7 +4,7 @@ env:
 window:
   # Don't show title bars and frame
   decorations: none
-  startup_mode: Fullscreen
+  startup_mode: Maximized
 
 scrolling:
   # I always like large history
