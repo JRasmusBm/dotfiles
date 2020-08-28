@@ -1,0 +1,9 @@
+#!/bin/bash
+
+selected_branch=$(git branch --all | fzf --reverse)
+
+if [ ${selected_branch:0:9}=remotes ]; then
+  git checkout ${selected_branch#*/*/} || git checkout -t $selected_branch
+else
+  git checkout $selected_branch
+fi
