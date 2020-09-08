@@ -1,5 +1,5 @@
 autocmd BufRead, BufNewFile *.j set filetype=jasmin
-autocmd BufRead .babelrc,.stylelintrc,.prettierrc set filetype=json
+autocmd BufRead .eslintrc,.babelrc,.stylelintrc,.prettierrc set filetype=json
 autocmd BufRead *.pl set filetype=prolog
 autocmd BufRead .pylintrc,.coveragerc set filetype=dosini
 autocmd BufRead .tmux,.env* set filetype=sh
