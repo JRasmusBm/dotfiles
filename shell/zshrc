@@ -59,7 +59,9 @@ export SAVEHIST=$HISTSIZE
 
 # Use modern completion system
 autoload -Uz compinit
+# Complete g like git
 compinit
+compdef g=git
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
@@ -143,8 +145,6 @@ export EDITOR="$VISUAL"
 
 d="$HOME/.dircolors"
 test -r $d && eval "$(dircolors -b $d)"
-# Complete g like git
-compdef g=git
 
 stty -ixon
 
