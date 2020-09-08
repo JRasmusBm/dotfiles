@@ -3,6 +3,11 @@ inoremap <buffer> <leader>qu query <++> {	<++>}
       \:call BackwardMarker(2)
 
 " }}}
+" Type {{{
+inoremap <buffer> <leader>qt type <++> {	<++>}
+      \:call BackwardMarker(2)
+
+" }}}
 " Mutation {{{
 inoremap <buffer> <leader>qm mutation <++> {	<++>}
       \:call BackwardMarker(2)
