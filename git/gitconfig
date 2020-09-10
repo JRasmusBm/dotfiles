@@ -33,7 +33,7 @@
   no = remote add origin
   pd = push -d origin
   pf = push -f
-  pu = push
+  p = push
   pup = "!git push -u origin $(git rev-parse --abbrev-ref HEAD)"
   rb = rebase
   rba = rebase --abort
