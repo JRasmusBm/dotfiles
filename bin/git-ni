@@ -1,4 +1,4 @@
-#!/usr/bin/python3.7
+#!/usr/bin/python3.8
 import subprocess
 
 temp_file = subprocess.run(["mktemp"], capture_output=True).stdout.strip()
