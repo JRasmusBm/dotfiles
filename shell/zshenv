@@ -38,6 +38,7 @@ alias "brc"="vim ~/.bashrc"
 alias "zenv"="vim ~/.zshenv"
 alias "irc"="vim ~/.install_dependencies"
 alias "gl"="g l"
+alias "gf"="g f"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
 rm_swapfile() {
