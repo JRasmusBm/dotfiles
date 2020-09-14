@@ -103,3 +103,15 @@ inoremap <buffer> <leader>tnn <li><++></li>
   \<++>:call BackwardMarker(2)
 "}}}
 "}}}
+
+" Import {{{
+" StyleSheet {{{
+inoremap <buffer> <leader>tis <link rel="stylesheet" href="<++>.css">
+      \<++>:call BackwardMarker(2)
+
+" }}}
+" }}}
+
+" Viewport {{{
+inoremap <buffer> <leader>tvp <meta name="viewport" content="width=device-width, initial-scale=1" />
+" }}}
