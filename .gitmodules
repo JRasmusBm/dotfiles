@@ -222,3 +222,6 @@
 [submodule "vim/pack/indentwise/start/vim-indentwise"]
 	path = vim/pack/indentwise/start/vim-indentwise
 	url = git@github.com:jeetsukumaran/vim-indentwise.git
+[submodule "vim/pack/wincent/start/corpus"]
+	path = vim/pack/wincent/start/corpus
+	url = git@github.com:wincent/corpus.git
