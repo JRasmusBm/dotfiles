@@ -231,3 +231,7 @@
 	path = vim/pack/wincent/start/corpus
 	url = git@github.com:wincent/corpus.git
   ignore = dirty
+[submodule "witchcraft"]
+	path = witchcraft
+	url = git@github.com:JRasmusBm/witchcraft.git
+  ignore = dirty
