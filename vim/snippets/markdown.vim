@@ -34,12 +34,26 @@ inoremap <buffer> <leader>h5 I<++>OO##### $a
 "}}}
 "}}}
 
-" File {{{
+" Frontmatter {{{
 " Lecture {{{
 inoremap <buffer> <leader>fl <++>O> Date: :put =strftime(\"%Y-%m-%d\")kJA  o> Instructor:
 "}}}
 " Post {{{
 inoremap <buffer> <leader>fp ---path: "<++>"date: ":put =strftime(\"%Y-%m-%d\")kJxA"title: "<++>"summary: "<++>"---<++>:call BackwardMarker(4)
+"}}}
+" Date {{{
+inoremap <buffer> <leader>fd :put =strftime(\"%Y-%m-%d\")C"""Idate: A
+" }}}
+" Attendees {{{
+inoremap <buffer> <leader>fa oattendees: "<++>":call BackwardMarker(1)
+" }}}
+" Note {{{
+inoremap <buffer> <leader>fn ---
+            \title: "<++>"
+            \tags: "<++>"
+            \---
+            \<++>:call BackwardMarker(3)
+            
 "}}}
 " CV {{{
 inoremap <buffer> <leader>cv ---

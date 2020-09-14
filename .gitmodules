@@ -210,18 +210,24 @@
 [submodule "tmux/plugins/tpm"]
 	path = tmux/plugins/tpm
 	url = https://github.com/tmux-plugins/tpm
+  ignore = dirty
 [submodule "tmux/plugins/tmux-safekill"]
 	path = tmux/plugins/tmux-safekill
 	url = git@github.com:jlipps/tmux-safekill.git
+  ignore = dirty
 [submodule "vim/pack/tpope/start/vim-rhubarb"]
 	path = vim/pack/tpope/start/vim-rhubarb
 	url = git@github.com:tpope/vim-rhubarb.git
+  ignore = dirty
 [submodule "vim/pack/tpope/start/fugitive-gitlab.vim"]
 	path = vim/pack/tpope/start/fugitive-gitlab.vim
 	url = git@github.com:shumphrey/fugitive-gitlab.vim.git
+  ignore = dirty
 [submodule "vim/pack/indentwise/start/vim-indentwise"]
 	path = vim/pack/indentwise/start/vim-indentwise
 	url = git@github.com:jeetsukumaran/vim-indentwise.git
+  ignore = dirty
 [submodule "vim/pack/wincent/start/corpus"]
 	path = vim/pack/wincent/start/corpus
 	url = git@github.com:wincent/corpus.git
+  ignore = dirty

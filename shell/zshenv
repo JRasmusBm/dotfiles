@@ -257,6 +257,13 @@ function b {
     eval "$d"
 }
 
+function notes() {
+  for note in $@
+  do
+    mv "$note" ~/projects/notes
+  done
+}
+
 export BASE16_DIR=~/.config/base16-shell/scripts
 export BASE16_CONFIG="$HOME/.current-theme"
 color() {
