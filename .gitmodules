@@ -235,3 +235,6 @@
 	path = witchcraft
 	url = git@github.com:JRasmusBm/witchcraft.git
   ignore = dirty
+[submodule "vim/pack/color/start/nvim-colorizer.lua"]
+	path = vim/pack/color/start/nvim-colorizer.lua
+	url = git@github.com:norcalli/nvim-colorizer.lua.git
