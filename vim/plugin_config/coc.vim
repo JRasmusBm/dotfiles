@@ -22,7 +22,6 @@ let g:coc_global_extensions=[
   \"coc-html",
   \"coc-yaml",
   \"coc-python",
-  \"coc-highlight",
   \"coc-texlab",
   \"coc-tsserver",
   \"coc-eslint",
