@@ -1,3 +1,5 @@
+packadd! vim-test
+
 let test#python#project_root = "./tests"
 let test#strategy = "vtr"
 

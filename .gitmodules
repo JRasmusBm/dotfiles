@@ -160,10 +160,6 @@
 	path = vim/pack/bundle/opt/vim-textobj-entire
 	url = git@github.com:kana/vim-textobj-entire.git
   ignore = dirty
-[submodule "vim-textobj-indent"]
-	path = vim/pack/bundle/opt/vim-textobj-indent
-	url = git@github.com:kana/vim-textobj-indent.git
-  ignore = dirty
 [submodule "vim-textobj-line"]
 	path = vim/pack/bundle/opt/vim-textobj-line
 	url = git@github.com:kana/vim-textobj-line.git
@@ -212,17 +208,9 @@
 	path = tmux/plugins/tmux-safekill
 	url = git@github.com:jlipps/tmux-safekill.git
   ignore = dirty
-[submodule "vim-rhubarb"]
-	path = vim/pack/bundle/opt/vim-rhubarb
-	url = git@github.com:tpope/vim-rhubarb.git
-  ignore = dirty
 [submodule "fugitive-gitlab.vim"]
 	path = vim/pack/bundle/opt/fugitive-gitlab.vim
 	url = git@github.com:shumphrey/fugitive-gitlab.vim.git
-  ignore = dirty
-[submodule "vim-indentwise"]
-	path = vim/pack/bundle/opt/vim-indentwise
-	url = git@github.com:jeetsukumaran/vim-indentwise.git
   ignore = dirty
 [submodule "witchcraft"]
 	path = witchcraft

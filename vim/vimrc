@@ -22,63 +22,6 @@ function! s:SourceConfigFilesIn(directory)
   endfor
 endfunction
 
-packadd! ack.vim
-packadd! auto-pairs
-packadd! base16-vim
-packadd! coc.nvim
-packadd! FastFold
-packadd! fugitive-gitlab.vim
-packadd! fzf
-packadd! fzf.vim
-packadd! ghcmod-vim
-packadd! Latex-Text-Formatter
-packadd! loupe
-packadd! matchit
-packadd! nvim-colorizer.lua
-packadd! pinnacle
-packadd! prolog.vim
-packadd! SimpylFold
-packadd! terminus
-packadd! thesaurus_query.vim
-packadd! tsuquyomi
-packadd! vcs-jump
-packadd! vim-commentary
-packadd! vim-css3-syntax
-packadd! vim-endwise
-packadd! vim-enmasse
-packadd! vim-eunuch
-packadd! vim-fugitive
-packadd! vim-gitgutter
-packadd! vim-graphql
-packadd! vim-hardtime
-packadd! vim-indentwise
-packadd! vim-json
-packadd! vim-jsx
-packadd! vim-peculiar
-packadd! vim-polyglot
-packadd! vimpyter
-packadd! vim-repeat
-packadd! vim-rhubarb
-packadd! vim-sort-motion
-packadd! vim-stay
-packadd! vim-styled-components
-packadd! vim-surround
-packadd! vim-test
-packadd! vim-textobj-between
-packadd! vim-textobj-entire
-packadd! vim-textobj-indent
-packadd! vim-textobj-line
-packadd! vim-textobj-underscore
-packadd! vim-textobj-uri
-packadd! vim-textobj-user
-packadd! vim-tmux-navigator
-packadd! vim-tmux-runner
-packadd! vim-tslint-config
-packadd! vim-unimpaired
-packadd! vim-vmath
-packadd! vim-wasm
-
-
 call s:SourceConfigFilesIn("plugin_config")
 call s:SourceConfigFilesIn("other_config")
 set secure

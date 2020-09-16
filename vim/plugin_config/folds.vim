@@ -1,3 +1,6 @@
+packadd! FastFold
+packadd! SimpylFold
+
 nnoremap zuz <Plug>(FastFoldUpdate)
 set foldmethod=syntax
 

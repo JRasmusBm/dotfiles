@@ -1,3 +1,6 @@
+packadd! vim-tmux-navigator
+packadd! vim-tmux-runner
+
 nmap <localleader>tc :VtrSendCommandToRunner<Space>
 nmap <localleader>ta :VtrAttach<Space>
 nmap <localleader>to :VtrOpenRunner

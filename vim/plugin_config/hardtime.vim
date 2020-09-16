@@ -1,3 +1,5 @@
+packadd! vim-hardtime
+
 let g:hardtime_default_on = 1
 let g:hardtime_maxcount = 1
 let g:hardtime_timeout = 500
