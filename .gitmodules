@@ -224,10 +224,6 @@
 	path = vim/pack/bundle/opt/vim-indentwise
 	url = git@github.com:jeetsukumaran/vim-indentwise.git
   ignore = dirty
-[submodule "corpus"]
-	path = vim/pack/bundle/opt/corpus
-	url = git@github.com:wincent/corpus.git
-  ignore = dirty
 [submodule "witchcraft"]
 	path = witchcraft
 	url = git@github.com:JRasmusBm/witchcraft.git

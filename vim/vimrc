@@ -26,7 +26,6 @@ packadd! ack.vim
 packadd! auto-pairs
 packadd! base16-vim
 packadd! coc.nvim
-packadd! corpus
 packadd! FastFold
 packadd! fugitive-gitlab.vim
 packadd! fzf
