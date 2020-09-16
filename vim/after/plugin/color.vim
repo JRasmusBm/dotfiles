@@ -17,7 +17,7 @@ function s:CheckColorScheme()
     else
       echoerr 'Bad background ' . s:config[1] . ' in ' . s:config_file
     endif
-    let s:base_16_vim_config=expand(s:plugin_path . 'base16/start/base16-vim/colors/base16-' . s:config[0] . '.vim')
+    let s:base_16_vim_config=expand(s:plugin_path . 'bundle/opt/base16-vim/colors/base16-' . s:config[0] . '.vim')
     if filereadable(s:base_16_vim_config)
       execute 'color base16-' . s:config[0]
     else
