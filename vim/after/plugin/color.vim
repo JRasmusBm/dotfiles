@@ -1,39 +1,8 @@
-function s:CheckColorScheme()
-  if !has('termguicolors')
-    let g:base16colorspace=256
-  endif
+color base16-ia-dark
 
-  let s:config_file = expand('~/.current-theme')
-  if has("nvim")
-    let s:plugin_path="~/.local/share/nvim/site/pack/"
-  else
-  endif
-
-  if filereadable(s:config_file)
-    let s:config = readfile(s:config_file, '', 2)
-
-    if s:config[1] =~# '^dark\|light$'
-      execute 'set background=' . s:config[1]
-    else
-      echoerr 'Bad background ' . s:config[1] . ' in ' . s:config_file
-    endif
-    let s:base_16_vim_config=expand(s:plugin_path . 'bundle/opt/base16-vim/colors/base16-' . s:config[0] . '.vim')
-    if filereadable(s:base_16_vim_config)
-      execute 'color base16-' . s:config[0]
-    else
-      echoerr 'Bad scheme ' . s:config[0] . ' in ' . s:config_file
-    endif
-  else " default
-    set background=dark
-    color base16-default-dark
-  endif
-
-  execute 'highlight Comment ' . pinnacle#italicize('Comment')
-  call ErrorHighlights()
-  call SpellingHighlights()
-  call SearchHighlights()
-  call FoldHighlights()
-  call CocHighlights()
+function! RespectAlacrittyColorscheme() abort
+  highlight! Normal ctermbg=NONE guibg=NONE
+  highlight! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
 endfunction
 
 function! FoldHighlights() abort
@@ -70,13 +39,20 @@ function! CocHighlights() abort
   highlight CocUnderline gui=undercurl term=undercurl
 endfunction
 
-if v:progname !=# 'vi'
-  if has('autocmd')
-    augroup UpdateColorScheme
-      autocmd!
-      autocmd FocusGained * call s:CheckColorScheme()
-    augroup END
-  endif
+function! ColorCodeHighlights() abort
+  lua require'colorizer'.setup()
+endfunction
 
-  call s:CheckColorScheme()
-endif
+
+function! CommentHighlights() abort
+  execute 'highlight Comment ' . pinnacle#italicize('Comment')
+endfunction
+
+call RespectAlacrittyColorscheme()
+call FoldHighlights()
+call ErrorHighlights()
+call SearchHighlights()
+call HighlightMarker()
+call SpellingHighlights()
+call CocHighlights()
+call ColorCodeHighlights()

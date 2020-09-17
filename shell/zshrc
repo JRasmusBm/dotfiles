@@ -224,27 +224,9 @@ function () {
   fi
 }
 
-function () {
-  emulate -L zsh
-
-  if [[ -s "$BASE16_CONFIG" ]]; then
-    local SCHEME=$(head -1 "$BASE16_CONFIG")
-    local BACKGROUND=$(sed -n -e '2 p' "$BASE16_CONFIG")
-    if [ "$BACKGROUND" != 'dark' -a "$BACKGROUND" != 'light' ]; then
-      echo "warning: unknown background type in $BASE16_CONFIG"
-    fi
-    color "$SCHEME"
-  else
-    # Default.
-    color default-dark
-  fi
-}
-add-zsh-hook precmd vcs_info
-
 export RPROMPT=$RPROMPT_BASE
 export SPROMPT="zsh: correct %F{red}'%R'%f to %F{red}'%r'%f [%B%Uy%u%bes, %B%Un%u%bo, %B%Ue%u%bdit, %B%Ua%u%bbort]? "
 
 DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
-
 
 [ -f $HOME/.config/broot/launcher/bash/br ] && source $HOME/.config/broot/launcher/bash/br

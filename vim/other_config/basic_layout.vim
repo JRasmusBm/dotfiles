@@ -1,4 +1,3 @@
-colorscheme jellybeans
 filetype plugin indent on
 set relativenumber
 set number
@@ -26,3 +25,6 @@ let &t_SI = "\e[6 q"
 let &t_EI = "\e[2 q"
 
 nnoremap <silent><Leader>ww :syntax sync fromstart<CR>
+
+highlight! Normal ctermbg=NONE guibg=NONE
+highlight! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
