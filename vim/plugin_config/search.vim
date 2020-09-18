@@ -5,7 +5,7 @@ packadd! ack.vim
 
 let g:LoupeCaseSettingsAlways=1
 let g:fzf_layout = { "window": {"width": 0.8, "height": 0.8 } }
-let $FZF_DEFAULT_OPTS="--reverse"
+let $FZF_DEFAULT_OPTS="--reverse --preview 'bat --style=numbers --color=always --line-range :500 {}'"
 
 nnoremap <localleader>ff :Ack<Space>
 

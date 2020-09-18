@@ -210,6 +210,12 @@ load_nvim_plugins() {
 
 # --- Everything above this line is tested ---
 
+install_bat() {
+  sudo apt-get install bat
+  mkdir -p ~/.local/bin
+  ln -s /usr/bin/batcat ~/.local/bin/bat
+}
+
 install_brave_stable() {
     sudo apt install -y apt-transport-https curl
 
