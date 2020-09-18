@@ -77,9 +77,11 @@
 [submodule "Latex-Text-Formatter"]
   path = vim/pack/bundle/opt/Latex-Text-Formatter
   url = git@github.com:jrasmusbm/Latex-Text-Formatter.git
+  ignore = dirty
 [submodule "vim-peculiar"]
   path = vim/pack/bundle/opt/vim-peculiar
   url = git@github.com:jrasmusbm/vim-peculiar.git
+  ignore = dirty
 [submodule "pinnacle"]
   path = vim/pack/bundle/opt/pinnacle
   url = git@github.com:wincent/pinnacle.git
@@ -267,4 +269,8 @@
 [submodule "nvim-web-devicons"]
   path = vim/pack/bundle/opt/nvim-web-devicons
   url = git@github.com:kyazdani42/nvim-web-devicons.git
+  ignore = dirty
+[submodule "nvim-lspconfig"]
+  path = vim/pack/bundle/opt/nvim-lspconfig
+  url = git@github.com:neovim/nvim-lspconfig.git
   ignore = dirty
