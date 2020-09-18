@@ -6,10 +6,6 @@
   path = vim/pack/bundle/opt/vim-commentary
   url = git@github.com:tpope/vim-commentary.git
   ignore = dirty
-[submodule "coc.nvim"]
-  path = vim/pack/bundle/opt/coc.nvim
-  url = git@github.com:neoclide/coc.nvim.git
-  ignore = dirty
 [submodule "base16-vim"]
   path = vim/pack/bundle/opt/base16-vim
   url = git@github.com:chriskempson/base16-vim.git
