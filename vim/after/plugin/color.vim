@@ -1,3 +1,6 @@
+let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
+let &t_8b = "\<Esc>[40;2;%lu;%lu;%lum"
+
 color base16-ia-dark
 
 function! CustomMarkers() abort
@@ -45,16 +48,11 @@ function! SpellingHighlights() abort
   highlight SpellRare guifg=teal guibg=NONE 
 endfunction
 
-function! CocHighlights() abort
-  highlight CocErrorHighlight guibg=NONE gui=undercurl term=undercurl
-  highlight CocErrorSign guifg=red guibg=NONE 
-  highlight CocWarningHighlight guibg=NONE gui=undercurl term=undercurl
-  highlight CocWarningSign guifg=yellow guibg=NONE 
-  highlight CocInfoHighlight guibg=NONE gui=undercurl term=undercurl
-  highlight CocInfoSign guifg=white guibg=NONE 
-  highlight CocHintHighlight guibg=NONE gui=undercurl term=undercurl
-  highlight CocHintSign guifg=white guibg=NONE 
-  highlight CocUnderline gui=undercurl term=undercurl
+function! LspHighlights() abort
+  highlight LspDiagnosticsError guifg=red guibg=NONE
+  highlight LspDiagnosticsWarning guifg=yellow guibg=NONE
+  highlight LspDiagnosticsInformation guifg=yellow guibg=NONE
+  highlight LspDiagnosticsHint guifg=yellow guibg=NONE
 endfunction
 
 function! ColorCodeHighlights() abort
@@ -71,7 +69,7 @@ call FoldHighlights()
 call ErrorHighlights()
 call SearchHighlights()
 call SpellingHighlights()
-call CocHighlights()
+call LspHighlights()
 call ColorCodeHighlights()
 call CustomMarkers()
 call RulerHighlights()
