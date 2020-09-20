@@ -19,6 +19,15 @@ nnoremap <buffer> <expr> zf FoldSelection()
 "}}}
 "}}}
 
+" Control {{{
+" If {{{
+inoremap <buffer> <leader>ci if <++>
+      \<++>
+      \endif:call BackwardMarker(2)
+"}}}
+" }}}
+
+
 " Snippet {{{
 inoremap <buffer> <leader>sn inoremap <buffer> <lt>leader><++> <++>:call BackwardMarker(2)
 "}}}
