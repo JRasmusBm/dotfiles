@@ -1,21 +1,18 @@
 packadd! coc.nvim
 
-nmap <leader>a<C-R> :CocRestart
-nmap <leader>aa :CocAction
-vmap <leader>aa :CocAction
-nmap <leader>ag :CocAction("generate")
-nmap <leader>ad <Plug>(coc-definition)
-nmap <leader>at <Plug>(coc-type-definition)
-nmap <leader>ai <Plug>(coc-implementation)
-nmap <leader>ar <Plug>(coc-references)
-nmap <leader>ah :call CocAction("doHover")
-nmap <silent> [v <Plug>(coc-diagnostic-prev)
-nmap <silent> ]v <Plug>(coc-diagnostic-next)
+nnoremap <leader>a :CocAction
+nnoremap  <Plug>(coc-definition)
+nnoremap gt <Plug>(coc-type-definition)
+nnoremap gD <Plug>(coc-implementation)
+nnoremap gr <Plug>(coc-references)
+nnoremap K :call CocAction("doHover")
+nnoremap <silent> [v <Plug>(coc-diagnostic-prev)
+nnoremap <silent> ]v <Plug>(coc-diagnostic-next)
 
 inoremap <silent><expr> <c-space> coc#refresh()
 
-nnoremap <leader>af :call CocAction("format")
-vnoremap <leader>af :call CocAction("formatSelected")
+nnoremap Q :call CocAction("format")
+vnoremap Q :call CocAction("formatSelected")
 
 let g:coc_global_extensions=[
   \"coc-prettier",
@@ -31,5 +28,3 @@ let g:coc_global_extensions=[
   \]
 
 let g:jedi#auto_initialization=0
-
-autocmd FileType python let b:coc_root_patterns = ['.git', '.env']
