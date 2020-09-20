@@ -184,10 +184,6 @@
 	path = vim/pack/bundle/opt/vim-tmux-runner
 	url = git@github.com:christoomey/vim-tmux-runner.git
   ignore = dirty
-[submodule "tsuquyomi"]
-	path = vim/pack/bundle/opt/tsuquyomi
-	url = git@github.com:Quramy/tsuquyomi.git
-  ignore = dirty
 [submodule "vim-tslint-config"]
 	path = vim/pack/bundle/opt/vim-tslint-config
 	url = git@github.com:heavenshell/vim-tslint-config.git
