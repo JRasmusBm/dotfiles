@@ -216,5 +216,6 @@
 	path = terminal/base16-alacritty
 	url = git@github.com:aaron-williamson/base16-alacritty.git
 [submodule "nvim-colorizer.lua"]
+  ignore = dirty
 	path = vim/pack/bundle/opt/nvim-colorizer.lua
 	url = git@github.com:JRasmusBm/nvim-colorizer.lua.git
