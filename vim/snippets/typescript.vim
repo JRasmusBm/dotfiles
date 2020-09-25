@@ -56,7 +56,10 @@ inoremap <buffer> <leader>db beforeEach(async (): Promise<void> => {<++>});<
 inoremap <buffer> <leader>dt afterEach(async (): Promise<void> => {<++>});<++>:call BackwardMarker(2)
 " }}}
 " Case {{{
-inoremap <buffer> <leader>dc test("<++>", async (): Promise<void> => {<++>}) <++><<$:call BackwardMarker(3)
+inoremap <buffer> <leader>dc test("<++>", async (): Promise<void> => {
+      \Sthrow "Not implemented!";
+      \})
+      \<++><<$:call BackwardMarker(2)
 " }}}
 " }}}
 " Hooks {{{
