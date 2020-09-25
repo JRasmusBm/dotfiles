@@ -56,7 +56,7 @@ inoremap <buffer> <leader>fn ---
             
 "}}}
 " CV {{{
-inoremap <buffer> <leader>cv ---
+inoremap <buffer> <leader>fc ---
     \Duration: <++>
     \Customer: <++>
     \Project: <++>
