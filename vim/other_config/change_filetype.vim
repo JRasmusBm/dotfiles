@@ -6,3 +6,4 @@ autocmd BufRead .tmux,.env* set filetype=sh
 autocmd BufRead *.tsx set filetype=typescript.tsx
 autocmd BufRead *.jsx set filetype=javascript.jsx
 autocmd BufRead .sequelizerc set filetype=javascript
+autocmd BufRead *.graphql set filetype=graphql

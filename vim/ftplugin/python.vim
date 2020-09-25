@@ -13,3 +13,5 @@ endfunction
 nnoremap <buffer> <leader>c :call RunFile()
 
 source ~/.vim/snippets/python.vim
+
+call jrasmusbm#coc#setup_maps()
