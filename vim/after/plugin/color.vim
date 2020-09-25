@@ -32,10 +32,14 @@ function! SpellingHighlights() abort
 endfunction
 
 function! CocHighlights() abort
-  highlight CocErrorHighlight guifg=red guibg=NONE gui=undercurl term=undercurl
+  highlight CocErrorHighlight guibg=NONE gui=undercurl term=undercurl
   highlight CocErrorSign guifg=red guibg=NONE 
-  highlight CocWarningHighlight guifg=yellow guibg=NONE gui=undercurl term=undercurl
+  highlight CocWarningHighlight guibg=NONE gui=undercurl term=undercurl
   highlight CocWarningSign guifg=yellow guibg=NONE 
+  highlight CocInfoHighlight guibg=NONE gui=undercurl term=undercurl
+  highlight CocInfoSign guifg=white guibg=NONE 
+  highlight CocHintHighlight guibg=NONE gui=undercurl term=undercurl
+  highlight CocHintSign guifg=white guibg=NONE 
   highlight CocUnderline gui=undercurl term=undercurl
 endfunction
 
