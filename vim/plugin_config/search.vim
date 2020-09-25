@@ -28,6 +28,7 @@ nnoremap <Leader>fe :Filetypes<CR>
 
 
 nnoremap <Leader>ea :Files ~/.vim/after/<CR>
+nnoremap <Leader>el :Files ~/.vim/autoload/<CR>
 nnoremap <Leader>es :Files ~/.vim/snippets/<CR>
 nnoremap <Leader>ep :Files ~/.vim/plugin_config/<CR>
 nnoremap <Leader>ef :Files ~/.vim/ftplugin/<CR>
