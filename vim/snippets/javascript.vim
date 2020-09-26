@@ -223,6 +223,17 @@ inoremap <buffer> <leader>dt afterEach(async () => {<++>});<++>:call Backwa
 " Suite {{{
 inoremap <buffer> <leader>ds describe("<++>", () => {<++>}) <++><<$:call BackwardMarker(3)
 "}}}
+" Patch {{{
+inoremap <buffer> <leader>dp jest.mock("<++>", () => {
+      \const actualModule = jest.requireActual("<++>");
+      \<++>
+      \return {
+      \  ...actualModule,
+      \  <++>
+      \}
+      \});
+      \<++>:call BackwardMarker(5)
+"}}}
 " Case {{{
 inoremap <buffer> <leader>dc test("- <++>", async () => {
       \// Given
