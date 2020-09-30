@@ -1,3 +1,5 @@
+let s:plugins={}
+
 function! jrasmusbm#plugin#lazy(config) abort
   let l:id=a:config.pack . '::' . a:config.plugin
   let s:plugins[l:id]=a:config
