@@ -47,7 +47,7 @@ inoremap <buffer> <leader>tf #!/bin/bash
   \exit
   \fi
   \tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
-  \<++>:call BackwardMarker(5)
+  \tmux attach -t <++>:call BackwardMarker(5)
 " }}}
 " Session {{{
 inoremap <buffer> <leader>ts tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
