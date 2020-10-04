@@ -67,3 +67,9 @@ inoremap <buffer> <leader>he useEffect((): void => {<++>}, [<++>]);<++>:call B
 inoremap <buffer> <leader>hl useLayoutEffect((): void => {<++>});<++>:call BackwardMarker(2)
 " React Component
 " }}}
+" Logging {{{
+" Mock {{{
+inoremap <buffer> <leader>lm console.<++> = jest.fn();
+      \;(console.<++> as jest.Mock).mockClear();:call BackwardMarker(2)
+" }}}
+" }}}
