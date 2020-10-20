@@ -270,16 +270,16 @@ inoremap <buffer> <leader>qr const <++> = async (_parent, _args, _context) => {
 
 " Control Statement {{{
 " If {{{
-inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
+inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
 "}}}
 " Ternary {{{
 inoremap <buffer> <leader>ct <++> ? <++> : <++>:call BackwardMarker(3)
 " }}}
 " Else {{{
-inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
+inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
 "}}}
 " Elif {{{
-inoremap <buffer> ;cei else if (<++>){<++>}<++><<:call BackwardMarker(3)
+inoremap <buffer> ;cei else if (<++>){<++>}<++><<:call BackwardMarker(3)
 "}}}
 " Switch {{{
 " Statement {{{
@@ -288,7 +288,7 @@ inoremap <buffer> <leader>css switch (<++>) {
       \	<++>
       \break;
       \<++>
-      \}
+      \}
       \<++><<
       \:call BackwardMarker(5)
 "}}}
@@ -304,13 +304,13 @@ inoremap <buffer> <leader>csc case <++>:
 " Each {{{
 inoremap <buffer> <leader>cfe for(let <++> of <++>) {
   \<++>
-  \}
+  \}
   \<++>:call BackwardMarker(4)
 "}}}
 " Index {{{
 inoremap <buffer> <leader>cfo for(let i = 0; i < <++>; i++) {
   \<++>
-  \}
+  \}
   \<++>:call BackwardMarker(3)
 "}}}
 "}}}
