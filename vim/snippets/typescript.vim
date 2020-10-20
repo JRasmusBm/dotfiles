@@ -73,3 +73,9 @@ inoremap <buffer> <leader>lm console.<++> = jest.fn();
       \;(console.<++> as jest.Mock).mockClear();:call BackwardMarker(2)
 " }}}
 " }}}
+" Argument {{{
+" Typed {{{
+inoremap <buffer> <leader>at <++>: <++>,
+      \<++>:call BackwardMarker(3)
+" }}}
+" }}}
