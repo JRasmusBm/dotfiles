@@ -17,7 +17,7 @@ font:
   normal:
     family: "Ubuntu Mono derivative Powerline"
     style: Regular
-  size: 14.0
+  size: 15.0
   glyph_offset:
     x: 0
     y: -1
