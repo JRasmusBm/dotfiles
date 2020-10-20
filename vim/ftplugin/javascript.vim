@@ -6,3 +6,4 @@ source ~/.vim/snippets/graphql.vim
 source ~/.vim/snippets/javascript.vim
 
 call jrasmusbm#coc#setup_maps()
+command! Lint cex system("npm run check:lint -- --format=unix") <Bar> copen
