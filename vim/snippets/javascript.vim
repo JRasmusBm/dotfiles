@@ -140,6 +140,13 @@ inoremap <buffer> <leader>le console.error(<++>);
 inoremap <buffer> <leader>li console.info(<++>);
       \<++>:call BackwardMarker(2)
 " }}}
+" Breakpoint {{{
+inoremap <buffer> <leader>lb console.log({
+      \file: "%",
+      \line: =line("."),
+      \<++>
+      \});:call BackwardMarker(1)
+" }}}
 " Mock {{{
 inoremap <buffer> <leader>lm console.<++> = jest.fn();
       \console.<++>.mockClear();:call BackwardMarker(2)
