@@ -49,6 +49,13 @@ install_python_37() {
   sudo rm -rf /tmp/Python37
 }
 
+install_python_39() {
+  sudo add-apt-repository -y ppa:deadsnakes/ppa
+  sudo apt update 
+  sudo apt install -y python3.9
+}
+
+
 install_virtualenvwrapper() {
   export WORKON_HOME=$HOME/.virtualenvs
   export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
@@ -147,7 +154,7 @@ install_brave() {
 
 install_git_extras() {
   TEMP_DEB="$(mktemp)"
-  wget -O "$TEMP_DEB" "https://github.com/cli/cli/releases/download/v1.2.0/gh_1.2.0_linux_amd64.deb"
+  wget -O "$TEMP_DEB" "https://github.com/cli/cli/releases/download/v1.2.1/gh_1.2.1_linux_amd64.deb"
   sudo dpkg -i "$TEMP_DEB"
   rm -f "$TEMP_DEB"
   sudo apt-get install -y git-extras
@@ -399,7 +406,7 @@ install_docker() {
   sudo apt-get update
   sudo apt-get install -y docker-ce docker-ce-cli containerd.io
   sudo usermod -aG docker ${USER}
-  sudo curl -L "https://github.com/docker/compose/releases/download/1.26.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  sudo curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
   sudo chmod +x /usr/local/bin/docker-compose
 }
 
