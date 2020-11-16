@@ -86,3 +86,5 @@
   followTags = true
 [rebase]
   autostash = true
+[includeIf "gitdir:~/projects/career/netlight/"]
+  path = ~/projects/career/netlight/.gitconfig
