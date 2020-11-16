@@ -5,7 +5,6 @@
   "diagnostic.hintSign": "☼",
   "coc.preferences.useQuickfixForLocations": true,
   "javascript.suggest.completeFunctionCalls": false,
-  "python.formatting.blackArgs": ["--line-length", "80"],
   "python.formatting.provider": "black",
   "python.analysis.downloadChannel": "beta",
   "python.jediPath": "~/.virtualenvs/neovim3/lib/python3.7/site-packages",
@@ -13,5 +12,12 @@
   "python.jediEnabled": false,
   "rust.all_features": true,
   "suggest.autoTrigger": "always",
+  "languageserver": {
+    "terraform": {
+      "command": "terraform-lsp",
+      "filetypes": ["terraform"],
+      "initializationOptions": {}
+    }
+  },
   "suggest.noselect": false
 }
