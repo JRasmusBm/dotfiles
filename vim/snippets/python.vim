@@ -120,7 +120,7 @@ inoremap <buffer> <leader>qri from graphql.execution.base import ResolveInfo
 " }}}
 " Resolver {{{
 inoremap <buffer> <leader>qr ?classn:nohwyw2i	@staticmethod
-  \async def resolve_<++>(_parent: """, _info: ResolveInfo<++>) -> <++>:
+  \def resolve_<++>(_parent: """, _info: ResolveInfo<++>) -> <++>:
   \<++>:call BackwardMarker(4)
 " }}}
 " Mutation {{{
@@ -135,7 +135,7 @@ inoremap <buffer> <leader>qm """<++>"""
   \ok = graphene.Boolean()<<o
   \<++>
   \@staticmethod
-  \async def mutate(_parent: "<++>", _info: ResolveInfo) -> "<++>":
+  \def mutate(_parent: "<++>", _info: ResolveInfo) -> "<++>":
   \"""<++>"""
   \<++>:call BackwardMarker(10)
 " }}}
@@ -197,37 +197,33 @@ inoremap <buffer> <leader>cfi for <++> in <++>:call BackwardMarker(2)
 inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call BackwardMarker(2)
 " }}}
 " Case {{{
-inoremap <buffer> <leader>dc async def test_<++>(self, <++>) -> None:
-      \"""<++>"""
-      \<++>
-      \<++><<:call BackwardMarker(5)
+inoremap <buffer> <leader>dc def test_<++>(self, <++>) -> None:
+      \raise Exception("Not Implemented!")
+      \<++><<:call BackwardMarker(3)
 " }}}
 " Before Each {{{
 inoremap <buffer> <leader>db @pytest.fixture
-  \async def <++>() -> AsyncGenerator:
-  \<++><++><<:call BackwardMarker(2)
+  \def <++>() -> <++>:
+  \<++><++><<:call BackwardMarker(3)
 " }}}
 " Expect {{{
 inoremap <buffer> <leader>de assert <++><++>:call BackwardMarker(2)
 " }}}
 " Test File {{{
 inoremap <buffer> <leader>df """<++>"""
-  \from typing import AsyncGenerator
   \import pytest
-  \@pytest.fixtureasync def <++>() -> AsyncGenerator:
+  \@pytest.fixturedef <++>() -> <++>:
   \"""<++>"""<++>
   \class Test<++>:<<A"""<++>"""
-  \async def test_<++>(self,<++>) -> None:
-  \"""<++>"""
-  \<++>:call BackwardMarker(10)
+  \def test_<++>(self,<++>) -> None:
+  \raise Exception("Not Implemented!"):call BackwardMarker(9)
 "}}}
 " Conftest File{{{
 inoremap <buffer> <leader>dh """<++>"""
-  \from typing import AsyncGenerator
   \import pytest
-  \@pytest.fixtureasync def <++>() -> AsyncGenerator:
+  \@pytest.fixturedef <++>() -> <++>:
   \"""<++>"""<++>
-  \:call BackwardMarker(4)
+  \:call BackwardMarker(5)
 "}}}
 "}}}
 
