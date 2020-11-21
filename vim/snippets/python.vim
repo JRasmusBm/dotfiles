@@ -90,6 +90,13 @@ inoremap <buffer> <leader>ld logger.debug(<++>)<++>:call BackwardMarker(2)
 " Print {{{
 inoremap <buffer> <leader>ll print(<++>)<++>:call BackwardMarker(2)
 "}}}
+" Breakpoint {{{
+inoremap <buffer> <leader>lb print(dict(
+      \file = "%",
+      \line = =line("."),
+      \<++>
+      \));:call BackwardMarker(1)
+" )}}
 "}}}
 
 " Object {{{
@@ -204,7 +211,7 @@ inoremap <buffer> <leader>dc def test_<++>(self, <++>) -> None:
 " Before Each {{{
 inoremap <buffer> <leader>db @pytest.fixture
   \def <++>() -> <++>:
-  \<++><++><<:call BackwardMarker(3)
+  \<++><++><<:call BackwardMarker(4)
 " }}}
 " Expect {{{
 inoremap <buffer> <leader>de assert <++><++>:call BackwardMarker(2)
