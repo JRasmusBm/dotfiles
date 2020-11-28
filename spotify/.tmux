@@ -2,15 +2,21 @@
 
 set -e
 
-if tmux has-session -t=spotify 2> /dev/null; then
-  tmux attach -t spotify
-  exit
+previous_dir=$(pwd)
+cd /home/jrasmusbm/dotfiles/spotify
+
+if ! tmux has-session -t=spotify 2> /dev/null; then
+  tmux new-session -d -s spotify -n client -x $(tput cols) -y $(tput lines)
+  tmux send-keys -t client "alacritty -e env TERM=screen-256color ~/.cargo/bin/ncspot" Enter
+
+  tmux new-window -n config
+  tmux send-keys -t config "vim ./config.toml" Enter
 fi
 
-tmux new-session -d -s spotify -n client -x $(tput cols) -y $(tput lines)
-tmux send-keys -t client "alacritty -e env TERM=screen-256color ~/.cargo/bin/ncspot" Enter
+if [ "$INITIATED_EXTERNALLY" = 'true' ]; then
+  :
+else
+  tmux attach -t spotify
+fi
 
-tmux new-window -n config
-tmux send-keys -t config "vim ./config.toml" Enter
-
-tmux attach -t spotify:client
+cd "$previous_dir"

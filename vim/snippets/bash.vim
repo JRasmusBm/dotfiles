@@ -42,12 +42,18 @@ inoremap <buffer> <leader>fd <++>() {<++>}
 " File {{{
 inoremap <buffer> <leader>tf #!/bin/bash
   \set -e
-  \if tmux has-session -t=<++> 2> /dev/null; then
-  \tmux attach -t <++>
-  \exit
-  \fi
+  \previous_dir=$(pwd)
+  \cd =expand("%:p:h")
+  \if ! tmux has-session -t=<++> 2> /dev/null; then
   \tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
-  \tmux attach -t <++>:call BackwardMarker(5)
+  \<++>
+  \fi
+  \if [ "$INITIATED_EXTERNALLY" = 'true' ]; then
+  \:
+  \else
+  \tmux attach -t <++>
+  \fi
+  \cd "$previous_dir":call BackwardMarker(5)
 " }}}
 " Session {{{
 inoremap <buffer> <leader>ts tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
@@ -68,6 +74,9 @@ inoremap <buffer> <leader>tv tmux split-window -t <++> -h
 " Horizontal {{{
 inoremap <buffer> <leader>th tmux split-window -t <++>
   \<++>:call BackwardMarker(2)
+" }}}
+" Import {{{
+inoremap <buffer> <leader>ti INITIATED_EXTERNALLY=true source<space>
 " }}}
 " Attach {{{
 inoremap <buffer> <leader>ta tmux attach -t <++>
