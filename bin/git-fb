@@ -1,9 +1,17 @@
 #!/bin/bash
 
-selected_branch=$(git branch --all | fzf --reverse)
+selected_branch_ref=$(git branch --all --format='%(refname)' | fzf --reverse)
+selected_branch_ref_prefix=${selected_branch_ref#*/}
+selected_branch_source=${selected_branch_ref_prefix%%/*}
 
-if [ ${selected_branch:0:9}=remotes ]; then
-  git checkout ${selected_branch#*/*/} || git checkout -t $selected_branch
+if [ $selected_branch_source = 'remotes' ]; then
+  echo $selected_branch_source
+  branch_with_remote=${selected_branch_ref#refs/remotes/}
+  branch_without_remote=${branch_with_remote#*/}
+  echo "git checkout "$branch_without_remote" || git checkout -t $branch_with_remote"
+  git checkout $branch_without_remote || git checkout -t $branch_with_remote
 else
-  git checkout $selected_branch
+  branch_name=${selected_branch_ref#refs/heads/}
+  echo git checkout $branch_name
+  git checkout $branch_name
 fi

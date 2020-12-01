@@ -1,0 +1,11 @@
+#!/bin/bash
+
+if [ -z "$1" ]; then # g bd
+  selected_branch_ref=$(git branch --format='%(refname) '| fzf --reverse)
+  selected_branch=${selected_branch_ref#*/*/}
+else # g bd <branch>
+  selected_branch="$1"
+fi
+
+echo "git branch -d $selected_branch"
+git branch -d $selected_branch
