@@ -7,5 +7,5 @@ else # g bd <branch>
   selected_branch="$1"
 fi
 
-echo "git branch -d $selected_branch"
-git branch -d $selected_branch
+echo "git branch -D $selected_branch"
+git branch -D $selected_branch
