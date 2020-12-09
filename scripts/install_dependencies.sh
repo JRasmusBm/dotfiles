@@ -154,7 +154,7 @@ install_brave() {
 
 install_git_extras() {
   TEMP_DEB="$(mktemp)"
-  wget -O "$TEMP_DEB" "https://github.com/cli/cli/releases/download/v1.2.1/gh_1.2.1_linux_amd64.deb"
+  wget -O "$TEMP_DEB" "https://github.com/cli/cli/releases/download/v1.3.1/gh_1.3.1_linux_amd64.deb"
   sudo dpkg -i "$TEMP_DEB"
   rm -f "$TEMP_DEB"
   sudo apt-get install -y git-extras
