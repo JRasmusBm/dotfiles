@@ -42,6 +42,7 @@ inoremap <buffer> <leader>fd <++>() {<++>}
 " File {{{
 inoremap <buffer> <leader>tf #!/bin/bash
   \set -e
+  \source ~/.zshenv
   \previous_dir=$(pwd)
   \cd =expand("%:p:h")
   \if ! tmux has-session -t=<++> 2> /dev/null; then
@@ -76,7 +77,7 @@ inoremap <buffer> <leader>th tmux split-window -t <++>
   \<++>:call BackwardMarker(2)
 " }}}
 " Import {{{
-inoremap <buffer> <leader>ti INITIATED_EXTERNALLY=true source<space>
+inoremap <buffer> <leader>ti INITIATED_EXTERNALLY=true source_tmux_script<space>
 " }}}
 " Attach {{{
 inoremap <buffer> <leader>ta tmux attach -t <++>
