@@ -1,0 +1,14 @@
+#!/bin/python3
+
+from subprocess import run
+
+raw_output = run(
+    ["git", "log", "--pretty=format:%d", "--abbrev-commit", "--skip", "1"],
+    capture_output=True,
+).stdout
+
+output = raw_output.decode("utf-8").strip()
+
+branch_names = [name.strip() for name in output.split("\n") if name]
+
+print(branch_names[0])
