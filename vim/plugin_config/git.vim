@@ -43,6 +43,11 @@ command! DPrevious call PreviousChanges()
 
 nnoremap <localleader>cd :Gvdiffsplit! <Space>
 
-let diffopt="filler,context:3,iwhiteall,internal"
+set diffopt=""
+set diffopt+=filler
+set diffopt+=context:3
+set diffopt+=iwhiteall
+set diffopt+=internal
+set diffopt+=hiddenoff
 
 let g:fugitive_gitlab_domains = ['https://gitlab.xarepo.com']

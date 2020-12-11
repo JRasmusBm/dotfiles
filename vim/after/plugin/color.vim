@@ -19,6 +19,13 @@ function! SearchHighlights() abort
   highlight Search guifg=yellow guibg=NONE
 endfunction
 
+function! DiffHighlights() abort
+  highlight DiffAdd guifg=None guibg=#003300
+  highlight DiffChange guifg=None guibg=#002020
+  highlight DiffText guifg=None guibg=#353500
+  highlight DiffDelete guifg=None guibg=#500000
+endfunction
+
 function! HighlightMarker() abort
   highlight SnippetMarker guifg=yellow guibg=NONE
   match SnippetMarker /<++>/
@@ -53,6 +60,7 @@ function! CommentHighlights() abort
 endfunction
 
 call RespectAlacrittyColorscheme()
+call DiffHighlights()
 call FoldHighlights()
 call ErrorHighlights()
 call SearchHighlights()
