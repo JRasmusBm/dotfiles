@@ -1,6 +1,7 @@
 .nvimlog
 .vim/
 venv/
+.vimspector.json
 .tmux
 temp*
 !template*

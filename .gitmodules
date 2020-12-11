@@ -219,3 +219,7 @@
   ignore = dirty
 	path = vim/pack/bundle/opt/nvim-colorizer.lua
 	url = git@github.com:JRasmusBm/nvim-colorizer.lua.git
+[submodule "vimspector"]
+  ignore = dirty
+	path = vim/pack/bundle/opt/vimspector
+	url = git@github.com:puremourning/vimspector.git
