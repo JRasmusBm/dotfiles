@@ -5,6 +5,7 @@ let g:coc_global_extensions=[
   \"coc-python",
   \"coc-json",
   \"coc-html",
+  \"coc-vetur",
   \"coc-yaml",
   \"coc-python",
   \"coc-texlab",
