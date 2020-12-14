@@ -106,9 +106,13 @@ inoremap <buffer> <leader>tnn <li><++></li>
 
 " Import {{{
 " StyleSheet {{{
-inoremap <buffer> <leader>tis <link rel="stylesheet" href="<++>.css">
+inoremap <buffer> <leader>tis <link rel="stylesheet" href="<++>.css" />
       \<++>:call BackwardMarker(2)
 
+" }}}
+" JavaScript {{{
+inoremap <buffer> <leader>tij <script src="<++>.js"></script>
+      \<++>:call BackwardMarker(2)
 " }}}
 " }}}
 
