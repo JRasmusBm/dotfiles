@@ -46,15 +46,19 @@ inoremap <buffer> <leader>tf #!/bin/bash
   \previous_dir=$(pwd)
   \cd =expand("%:p:h")
   \if ! tmux has-session -t=<++> 2> /dev/null; then
-  \tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
-  \<++>
+  \tmux new-session -d -s <++> -n run -x $(tput cols) -y $(tput lines)
+  \tmux new-window -n vim
+  \tmux send-keys -t vim "vim -c GFiles" Enter
+  \tmux new-window -n cli
+  \tmux send-keys -t cli "g l" Enter
+  \tmux send-keys -t cli "g" Enter
   \fi
   \if [ "$INITIATED_EXTERNALLY" = 'true' ]; then
   \:
   \else
-  \tmux attach -t <++>
+  \tmux attach -t <++>:vim
   \fi
-  \cd "$previous_dir":call BackwardMarker(5)
+  \cd "$previous_dir":call BackwardMarker(3)
 " }}}
 " Session {{{
 inoremap <buffer> <leader>ts tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
