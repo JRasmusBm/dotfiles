@@ -6,4 +6,5 @@ source ~/.vim/snippets/graphql.vim
 source ~/.vim/snippets/javascript.vim
 
 call jrasmusbm#coc#setup_maps()
+nmap <buffer> Q :CocCommand eslint.executeAutofix
 command! Lint cex system("npm run check:lint -- --format=unix") <Bar> copen
