@@ -96,6 +96,14 @@ inoremap <buffer> <leader>rf import React from "react";
 "}}}
 "}}}
 
+" Router {{{
+" Endpoint {{{
+inoremap <buffer> <leader>re router.get("<++>", (req, res) => {
+      \<++>
+      \}):call BackwardMarker(2)
+" }}}
+" }}}
+
 " Reducer {{{
 " Reducer {{{
 inoremap <buffer> <leader>rr const reducer = (state, action) => {
@@ -255,7 +263,7 @@ inoremap <buffer> <leader>dr const { <++> } = render(<++>);<++>:call BackwardM
 inoremap <buffer> <leader>de expect(<++>).<++>:call BackwardMarker(2)
 "}}}
 " Wait {{{
-inoremap <buffer> <leader>dw await wait(() => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>dw await waitFor(() => {<++>});<++>:call BackwardMarker(2)
 "}}}
 " Fire Event {{{
 inoremap <buffer> <leader>dfe fireEvent.<++>(<++>);:call BackwardMarker(2)
@@ -281,6 +289,13 @@ inoremap <buffer> ;ci if (<++>) {<++>}<++><<:call BackwardMarker(3)
 "}}}
 " Ternary {{{
 inoremap <buffer> <leader>ct <++> ? <++> : <++>:call BackwardMarker(3)
+" }}}
+" Try / Catch {{{
+inoremap <buffer> <leader>cts try {
+      \<++>
+      \} catch (error) {
+      \<++>
+      \}:call BackwardMarker(2)
 " }}}
 " Else {{{
 inoremap <buffer> ;ce else {<++>}<++><<:call BackwardMarker(2)
@@ -341,3 +356,9 @@ inoremap <buffer> <leader>jl $(document).on("click", "<++>", () =>{	<++>});<<
 inoremap <buffer> <leader>ji import $ from "jquery";
 "}}}
 "}}}
+
+" Arguments {{{
+" Named {{{
+inoremap <buffer> <leader>an <++>=<++>,<++>:call BackwardMarker(3)
+" }}}
+" }}}
