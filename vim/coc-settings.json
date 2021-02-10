@@ -3,6 +3,13 @@
   "diagnostic.warningSign": "⚠",
   "diagnostic.infoSign": "i",
   "diagnostic.hintSign": "☼",
+  "eslint.filetypes": [
+    "javascript",
+    "javascriptreact",
+    "typescript",
+    "typescriptreact",
+    "vue"
+  ],
   "coc.preferences.useQuickfixForLocations": true,
   "javascript.suggest.completeFunctionCalls": false,
   "python.formatting.provider": "black",
