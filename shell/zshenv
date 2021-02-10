@@ -153,30 +153,38 @@ function armageddon() {
     docker rmi -f $(docker images -qa)
 }
 
+function default_tmux_session() {
+    local SESSION_NAME=$(basename "${$(pwd)//[.:]/_}")
+    env SSH_AUTH_SOCK=$SOCK_SYMLINK tmux new -A -s "$SESSION_NAME"
+}
+
 function source_tmux_script() {
-  # Check for .tmux file (poor man's Tmuxinator).
   tmux_script_path="$1"
-  if [ -x "$tmux_script_path" ]; then
-    # Prompt the first time we see a given .tmux file before running it.
-    local DIGEST="$(openssl sha256 "$tmux_script_path")"
-    if ! grep -q "$DIGEST" ~/..tmux.digests 2> /dev/null; then
-      cat "$tmux_script_path"
-      echo 'Trust (and run) this .tmux file? (t = trust, otherwise = skip) '
-      read REPLY > /dev/null
-      if [[ $REPLY =~ ^[Tt]$ ]]; then
-        echo "$DIGEST" >> ~/..tmux.digests
-        source "$tmux_script_path"
-        return
-      fi
-    else
-      source "$tmux_script_path"
-      return
-    fi
+
+  if [ ! -x "$tmux_script_path" ]; then
+    default_tmux_session
+    return
   fi
+
+  local DIGEST="$(openssl sha256 "$tmux_script_path")"
+  if grep -q "$DIGEST" ~/..tmux.digests 2> /dev/null; then
+    INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source $tmux_script_path
+    return
+  fi
+
+  cat "$tmux_script_path"
+  echo 'Trust (and run) this .tmux file? (t = trust, otherwise = skip) '
+  read REPLY > /dev/null
+  if [[ $REPLY =~ ^[Tt]$ ]]; then
+    echo "$DIGEST" >> ~/..tmux.digests
+    return
+  fi
+
+  default_tmux_session
 }
 
 function tmux() {
-  if command -v emulate &> /dev/null
+  if command -v emulate &> /dev/null;
   then
     emulate -L zsh
   fi
@@ -191,17 +199,14 @@ function tmux() {
   # If provided with args, pass them through.
   if [[ -n "$@" ]]; then
     env SSH_AUTH_SOCK=$SOCK_SYMLINK tmux "$@"
-    return
+  else
+    INITIATED_EXTERNALLY=false source_tmux_script "$(pwd)/.tmux"
   fi
-
-  INITIATED_EXTERNALLY=false source_tmux_script ./.tmux
-
-  # Attach to existing session, or create one, based on current directory.
-  local SESSION_NAME=$(basename "${$(pwd)//[.:]/_}")
-  env SSH_AUTH_SOCK=$SOCK_SYMLINK tmux new -A -s "$SESSION_NAME"
 }
 
-alias "t"="tmux"
+function t() {
+  tmux "$@"
+}
 
 function b {
     f=$(mktemp)
