@@ -209,22 +209,22 @@ inoremap <buffer> <leader>si setInterval(() => {
 inoremap <buffer> <leader>hh const <++> = use<++>(<++>);<++>:call BackwardMarker(4)
 "}}}
 " State {{{
-inoremap <buffer> <leader>hs const [<++>, set<++>] = useState(<++>);<++>:call BackwardMarker(4)
+inoremap <buffer> <leader>hs const [<++>, set<++>] = React.useState(<++>);<++>:call BackwardMarker(4)
 "}}}
 " Reducer {{{
-inoremap <buffer> <leader>hr const [{<++>}, dispatch] = useReducer(reducer, {<++>});<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>hr const [{<++>}, dispatch] = React.useReducer(reducer, {<++>});<++>:call BackwardMarker(3)
 "}}}
 " Effect {{{
-inoremap <buffer> <leader>he useEffect(() => {<++>}, [<++>]);<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>he React.useEffect(() => {<++>}, [<++>]);<++>:call BackwardMarker(3)
 "}}}
 " Layout {{{
-inoremap <buffer> <leader>hl useLayoutEffect(() => {<++>}, [<++>]);<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>hl React.useLayoutEffect(() => {<++>}, [<++>]);<++>:call BackwardMarker(3)
 "}}}
 " Callback {{{
-inoremap <buffer> <leader>hc const <++> = useCallback((<++>) => {<++>}, [<++>]);<++>:call BackwardMarker(5)
+inoremap <buffer> <leader>hc const <++> = React.useCallback((<++>) => {<++>}, [<++>]);<++>:call BackwardMarker(5)
 "}}}
 " Memo {{{
-inoremap <buffer> <leader>hm const <++> = useMemo((<++>) => {<++>}, [<++>]);<++>:call BackwardMarker(5)
+inoremap <buffer> <leader>hm const <++> = React.useMemo((<++>) => {<++>}, [<++>]);<++>:call BackwardMarker(5)
 "}}}
 "}}}
 
