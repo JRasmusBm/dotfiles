@@ -112,10 +112,6 @@
 	path = vim/pack/bundle/opt/loupe
 	url = git@github.com:Wincent/loupe.git
   ignore = dirty
-[submodule "ack.vim"]
-	path = vim/pack/bundle/opt/ack.vim
-	url = git@github.com:mileszs/ack.vim.git
-  ignore = dirty
 [submodule "vim-sort-motion"]
 	path = vim/pack/bundle/opt/vim-sort-motion
 	url = git@github.com:christoomey/vim-sort-motion.git
@@ -223,3 +219,6 @@
   ignore = dirty
 	path = vim/pack/bundle/opt/vimspector
 	url = git@github.com:puremourning/vimspector.git
+[submodule "vim-ripgrep"]
+	path = vim/pack/bundle/opt/vim-ripgrep
+	url = git@github.com:jremmen/vim-ripgrep.git
