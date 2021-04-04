@@ -219,6 +219,3 @@
   ignore = dirty
 	path = vim/pack/bundle/opt/vimspector
 	url = git@github.com:puremourning/vimspector.git
-[submodule "vim-ripgrep"]
-	path = vim/pack/bundle/opt/vim-ripgrep
-	url = git@github.com:jremmen/vim-ripgrep.git
