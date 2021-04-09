@@ -50,10 +50,12 @@ inoremap <buffer> <leader>fa oattendees: "<++>":call BackwardMarker(1)
 " Note {{{
 inoremap <buffer> <leader>fn ---
             \title: "<++>"
-            \tags: "<++>"
             \---
-            \<++>:call BackwardMarker(3)
-            
+            \# <++>
+            \## Tags
+            \- <++>0C
+            \## <++>
+            \<++>:call BackwardMarker(5)
 "}}}
 " CV {{{
 inoremap <buffer> <leader>fc ---
