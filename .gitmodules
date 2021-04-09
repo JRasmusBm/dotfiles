@@ -219,3 +219,6 @@
   ignore = dirty
 	path = vim/pack/bundle/opt/vimspector
 	url = git@github.com:puremourning/vimspector.git
+[submodule "shell/autosrc"]
+	path = shell/autosrc
+	url = git@github.com:seanyeh/autosrc.git

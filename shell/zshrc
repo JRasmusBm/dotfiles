@@ -1,6 +1,9 @@
 setopt histignorealldups sharehistory
 setopt rm_star_silent
 
+# Autosource https://github.com/seanyeh/autosrc
+source $HOME/.autosrc.zsh
+
 # Antigen
 
 source $HOME/.zsh/antigen.zsh

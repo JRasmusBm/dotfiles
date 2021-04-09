@@ -19,6 +19,6 @@ False,shell/zshrc,.zshrc
 False,shell/profile,.profile
 True,bin,.bin
 True,vim/pack,.local/share/nvim/site/pack
-True,vim/pack/fzf/start/fzf,.fzf
 False,shell/broot.toml,.config/broot/conf.toml
 True,tmux/plugins,tmux/plugins
+False,shell/autosrc/autosrc.zsh,.autosrc.zsh
