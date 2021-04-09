@@ -64,21 +64,21 @@ function dcu() {
 }
 
 function dcdd() {
-  docker-compose -f docker-compose-dev.yml down --remove-orphans 
+  docker-compose -f docker-compose-dev.y*ml down --remove-orphans 
 }
 
 function dcud() {
   dcdd
-  docker-compose -f docker-compose-dev.yml up --build $@
+  docker-compose -f docker-compose-dev.y*ml up --build $@
 }
 
 function dcdc() {
-  docker-compose -f docker-compose-check.yml down --remove-orphans
+  docker-compose -f docker-compose-check.y*ml down --remove-orphans
 }
 
 function dcuc() {
   dcdc
-  docker-compose -f docker-compose-check.yml up --build $@
+  docker-compose -f docker-compose-check.y*ml up --build $@
 }
 
 alias ta='tmux attach -t $(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^$(tmux display-message -p "#S")\$\" | fzf --reverse | xargs echo)'
