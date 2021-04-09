@@ -1,11 +1,10 @@
 packadd! fzf
 packadd! fzf.vim
 packadd! loupe
-packadd! vim-ripgrep
 
 let g:LoupeCaseSettingsAlways=1
 let g:fzf_layout = { "window": {"width": 0.8, "height": 0.8 } }
-let $FZF_DEFAULT_OPTS="--reverse --preview 'bat --style=numbers --color=always --line-range :500 {}'"
+let $FZF_DEFAULT_OPTS="--reverse"
 
 nnoremap <localleader>ff :Rg<Space>
 

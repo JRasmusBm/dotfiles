@@ -183,6 +183,13 @@ install_nvim() {
   setup_neovim_vm
 }
 
+install_ripgrep() {
+  TEMP_DEB="$(mktemp)"
+  curl -L -o $TEMP_DEB https://github.com/BurntSushi/ripgrep/releases/download/12.1.1/ripgrep_12.1.1_amd64.deb
+  sudo dpkg -i $TEMP_DEB
+  rm $TEMP_DEB
+}
+
 setup_neovim_vm() {
   if command -v python2
   then
