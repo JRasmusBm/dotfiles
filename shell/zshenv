@@ -38,6 +38,7 @@ alias "irc"="vim ~/.install_dependencies"
 alias "gl"="g l"
 alias "gf"="g f"
 alias "gp"="g p"
+alias "q"="exit"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
 rm_swapfile() {
