@@ -14,4 +14,6 @@ let g:coc_global_extensions=[
   \"coc-rls"
   \]
 
+autocmd FileType python let b:coc_root_patterns = ['.git', '.env']
+
 let g:jedi#auto_initialization=0
