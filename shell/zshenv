@@ -96,8 +96,12 @@ function countdown(){
    done
 }
 
+function source_env() {
+  export $(grep -v '^#' "$1" | xargs -d '\n')
+}
+
 function with_env() {
-  env $(cat .env | grep -v ^\# | xargs) "$@"
+  env $(grep -v '^#' .env | xargs -d '\n') "$@"
 }
 
 function stopwatch(){
