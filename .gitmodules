@@ -222,3 +222,6 @@
 [submodule "shell/autosrc"]
 	path = shell/autosrc
 	url = git@github.com:seanyeh/autosrc.git
+[submodule "vim-signature"]
+	path = vim/pack/bundle/opt/vim-signature
+	url = git@github.com:kshenoy/vim-signature.git
