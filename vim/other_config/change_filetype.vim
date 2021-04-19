@@ -9,3 +9,4 @@ autocmd BufRead .sequelizerc set filetype=javascript
 autocmd BufRead *.graphql set filetype=graphql
 autocmd BufRead gitconfig set filetype=gitconfig
 autocmd BufRead *.toml set filetype=toml
+autocmd BufRead Dockerfile* set filetype=dockerfile
