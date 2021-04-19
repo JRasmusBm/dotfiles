@@ -225,3 +225,6 @@
 [submodule "vim-signature"]
 	path = vim/pack/bundle/opt/vim-signature
 	url = git@github.com:kshenoy/vim-signature.git
+[submodule "tmux-open"]
+	path = tmux/plugins/tmux-open
+	url = git@@github.com:tmux-plugins/tmux-open
