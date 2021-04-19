@@ -8,7 +8,7 @@ inoremap <buffer> <leader>cf version: "3"
   \image: <++>
   \command:
   \  sh -c "<++>"
-  \:call BackwardMarker(4)
+  \:call jrasmusbm#snippets#backward_marker(4)
 " }}}
 " }}}
 
@@ -24,12 +24,12 @@ inoremap <buffer> <leader>sn :call append('$', "networks:")
 " Field {{{
 " Section {{{
 inoremap <buffer> <leader>fs <++>:
-      \<++>:call BackwardMarker(2)
+      \<++>:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " List {{{
 inoremap <buffer> <leader>fl <++>:
       \- <++>
-      \<++><<<<:call BackwardMarker(3)
+      \<++><<<<:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " }}}
 

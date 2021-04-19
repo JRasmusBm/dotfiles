@@ -1,12 +1,12 @@
 " Function Definition {{{
-inoremap <leader>fd <++>(<++>).<++>:call BackwardMarker(3)
+inoremap <leader>fd <++>(<++>).<++>:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 
 " Rule {{{
 " Definition {{{
-inoremap <leader>rd <++>(<++>) :-	<++>.:call BackwardMarker(3)
+inoremap <leader>rd <++>(<++>) :-	<++>.:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 " Node {{{
-inoremap <leader>rn $i,<++>:call BackwardMarker(1)
+inoremap <leader>rn $i,<++>:call jrasmusbm#snippets#backward_marker(1)
 "}}}
 "}}}

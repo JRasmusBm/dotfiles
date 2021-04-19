@@ -6,7 +6,7 @@ inoremap <buffer> <leader>rf import React from "react";
   \const <++>: React.FC<Props> = (<++>) => {
   \<++>
   \}
-  \export default <++>;:call BackwardMarker(5)
+  \export default <++>;:call jrasmusbm#snippets#backward_marker(5)
 "}}}
 " Component {{{
 inoremap <buffer> <leader>rc interface Props {
@@ -14,24 +14,24 @@ inoremap <buffer> <leader>rc interface Props {
       \const <++>: React.FC<Props> = (<++>) => {
       \<++>
       \}
-      \<++>:call BackwardMarker(5)
+      \<++>:call jrasmusbm#snippets#backward_marker(5)
 " }}}
 " }}}
 " Method {{{
 " Declaration {{{
 inoremap <buffer> <leader>md <++>: (<++>) => <++> = (<++>) => {
       \<++>return <++>; }
-      \<++>:call BackwardMarker(7)
+      \<++>:call jrasmusbm#snippets#backward_marker(7)
 " }}}
 " }}}
 " Types {{{
 " Interface {{{
-inoremap <buffer> <leader>if interface <++> {<++>}<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>if interface <++> {<++>}<++>:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " }}}
 " Imports {{{
 " All {{{
-inoremap <buffer> <leader>ia <++>Oimport * as <++> from "<++>";:call BackwardMarker(2)
+inoremap <buffer> <leader>ia <++>Oimport * as <++> from "<++>";:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " }}}
 " Tests {{{
@@ -47,35 +47,35 @@ inoremap <buffer> <leader>dr import React from "react";
                     \});
                     \test("<++>", async (): Promise<void> => {<++>})
                 \})
-            \}):call BackwardMarker(7)
+            \}):call jrasmusbm#snippets#backward_marker(7)
 " }}}
 " Before Each {{{
-inoremap <buffer> <leader>db beforeEach(async (): Promise<void> => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>db beforeEach(async (): Promise<void> => {<++>});<++>:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " Tear Down {{{
-inoremap <buffer> <leader>dt afterEach(async (): Promise<void> => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>dt afterEach(async (): Promise<void> => {<++>});<++>:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " Case {{{
 inoremap <buffer> <leader>dc test("<++>", async (): Promise<void> => {
       \Sthrow "Not implemented!";
       \})
-      \<++><<$:call BackwardMarker(2)
+      \<++><<$:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " }}}
 " Hooks {{{
-inoremap <buffer> <leader>he useEffect((): void => {<++>}, [<++>]);<++>:call BackwardMarker(3)
-inoremap <buffer> <leader>hl useLayoutEffect((): void => {<++>});<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>he useEffect((): void => {<++>}, [<++>]);<++>:call jrasmusbm#snippets#backward_marker(3)
+inoremap <buffer> <leader>hl useLayoutEffect((): void => {<++>});<++>:call jrasmusbm#snippets#backward_marker(2)
 " React Component
 " }}}
 " Logging {{{
 " Mock {{{
 inoremap <buffer> <leader>lm console.<++> = jest.fn();
-      \;(console.<++> as jest.Mock).mockClear();:call BackwardMarker(2)
+      \;(console.<++> as jest.Mock).mockClear();:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " }}}
 " Argument {{{
 " Typed {{{
 inoremap <buffer> <leader>at <++>: <++>,
-      \<++>:call BackwardMarker(3)
+      \<++>:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " }}}

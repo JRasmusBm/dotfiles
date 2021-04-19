@@ -7,28 +7,28 @@ inoremap <buffer> <leader>pf """
       \logger = logging.getLogger(__name__)
       \<++>
       \if __name__ == "__main__":
-      \pass:call BackwardMarker(2)
+      \pass:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " }}}
 
 " Function {{{
 " Definition {{{
-inoremap <buffer> <leader>fd def <++>(<++>):<++><++><<:call BackwardMarker(4)
+inoremap <buffer> <leader>fd def <++>(<++>):<++><++><<:call jrasmusbm#snippets#backward_marker(4)
 "}}}
 " Argument {{{
-inoremap <buffer> <leader>fa <++>, <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>fa <++>, <++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Inline {{{
-inoremap <buffer> <leader>fi lambda <++>: <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>fi lambda <++>: <++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 "}}}
 
 " Variable {{{
 " Definition {{{
-inoremap <buffer> <leader>vd <++> = <++><++>:call BackwardMarker(3)
+inoremap <buffer> <leader>vd <++> = <++><++>:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " Attribute {{{
-inoremap <buffer> <leader>va self.<++> = <++><++>:call BackwardMarker(3)
+inoremap <buffer> <leader>va self.<++> = <++><++>:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 " }}}
 
@@ -44,7 +44,7 @@ inoremap <buffer> <leader>pb plt.figure(<++>)
             \<++>
             \plt.legend()
             \plt.savefig(<++>)
-            \plt.close():call BackwardMarker(7)
+            \plt.close():call jrasmusbm#snippets#backward_marker(7)
 " }}}
 " Object {{{
 inoremap <buffer> <leader>po plt.<++>(
@@ -52,13 +52,13 @@ inoremap <buffer> <leader>po plt.<++>(
             \label=<++>,
             \color=<++>,
             \)
-            \<++>:call BackwardMarker(5)
+            \<++>:call jrasmusbm#snippets#backward_marker(5)
 " }}}
 " }}}
 "
 " Class {{{
 " Definition {{{
-inoremap <buffer> <leader>cd class <++>:<++><++><<:call BackwardMarker(3)
+inoremap <buffer> <leader>cd class <++>:<++><++><<:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 " Attribute {{{
 inoremap <buffer> <leader>ca self.
@@ -67,68 +67,68 @@ inoremap <buffer> <leader>ca self.
 
 " Logging {{{
 " Format {{{
-inoremap <buffer> <leader>lf pformat(<++>)<++>:call BackwardMarker()
+inoremap <buffer> <leader>lf pformat(<++>)<++>:call jrasmusbm#snippets#backward_marker()
 " Info {{{
-inoremap <buffer> <leader>li logger.info(<++>)<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>li logger.info(<++>)<++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Timestamps {{{
 inoremap <buffer> <leader>lt logger.debug(f"Start <++>...")
       \start = time()
       \end = time()
-      \logger.debug(f"Done <++>. {end - start} s"):call BackwardMarker(2)
+      \logger.debug(f"Done <++>. {end - start} s"):call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Warning {{{
-inoremap <buffer> <leader>lw logger.warning(<++>)<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>lw logger.warning(<++>)<++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Error {{{
 "}}}
-inoremap <buffer> <leader>le logger.error(<++>)<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>le logger.error(<++>)<++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Debug {{{
-inoremap <buffer> <leader>ld logger.debug(<++>)<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>ld logger.debug(<++>)<++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Print {{{
-inoremap <buffer> <leader>ll print(<++>)<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>ll print(<++>)<++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Breakpoint {{{
 inoremap <buffer> <leader>lb print(dict(
       \file = "%",
       \line = =line("."),
       \<++>
-      \));:call BackwardMarker(1)
+      \));:call jrasmusbm#snippets#backward_marker(1)
 " )}}
 "}}}
 
 " Object {{{
 " Identifier {{{
-inoremap <buffer> <leader>oi __<++>__<++>:call BackwardMarker(2)
+inoremap <buffer> <leader>oi __<++>__<++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Method {{{
-inoremap <buffer> <leader>om def __<++>__(self, <++>):<++><++><<$:call BackwardMarker(4)
+inoremap <buffer> <leader>om def __<++>__(self, <++>):<++><++><<$:call jrasmusbm#snippets#backward_marker(4)
 "}}}
 " Field {{{
-inoremap <buffer> <leader>of <++>: <++>,<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>of <++>: <++>,<++>:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 "}}}
 
 " Import {{{
 " Named {{{
-inoremap <buffer> <leader>in from <++> import <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>in from <++> import <++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Module {{{
-inoremap <buffer> <leader>im import <++> <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>im import <++> <++>:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 "}}}
 
 " GraphQL {{{
 " ResolveInfo {{{
 inoremap <buffer> <leader>qri from graphql.execution.base import ResolveInfo
-  \<++>:call BackwardMarker(1)
+  \<++>:call jrasmusbm#snippets#backward_marker(1)
 " }}}
 " Resolver {{{
 inoremap <buffer> <leader>qr ?classn:nohwyw2i	@staticmethod
   \def resolve_<++>(_parent: """, _info: ResolveInfo<++>) -> <++>:
-  \<++>:call BackwardMarker(4)
+  \<++>:call jrasmusbm#snippets#backward_marker(4)
 " }}}
 " Mutation {{{
 inoremap <buffer> <leader>qm """<++>"""
@@ -144,35 +144,35 @@ inoremap <buffer> <leader>qm """<++>"""
   \@staticmethod
   \def mutate(_parent: "<++>", _info: ResolveInfo) -> "<++>":
   \"""<++>"""
-  \<++>:call BackwardMarker(10)
+  \<++>:call jrasmusbm#snippets#backward_marker(10)
 " }}}
 " }}}
 
 " Arguments{{{
 " Named {{{
-inoremap <buffer> <leader>an <++>=<++>,<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>an <++>=<++>,<++>:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " Typed {{{
-inoremap <buffer> <leader>at <++>: <++>,<++>:call BackwardMarker(3)
+inoremap <buffer> <leader>at <++>: <++>,<++>:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 "}}}
 
 " Control Statements{{{
 " With{{{
-inoremap <buffer> <leader>cwi with <++>:<++><++><<:call BackwardMarker(3)
+inoremap <buffer> <leader>cwi with <++>:<++><++><<:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 " If {{{
 " Statement {{{
-inoremap <buffer> <leader>ci if <++>:<++><++><<:call BackwardMarker(3)
+inoremap <buffer> <leader>ci if <++>:<++><++><<:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 " Else {{{
-inoremap <buffer> <leader>ce else:<++><++><<:call BackwardMarker(2)
+inoremap <buffer> <leader>ce else:<++><++><<:call jrasmusbm#snippets#backward_marker(2)
 "}}}
 " Elif {{{
-inoremap <buffer> <leader>cei elif <++>:<++><++><<:call BackwardMarker(3)
+inoremap <buffer> <leader>cei elif <++>:<++><++><<:call jrasmusbm#snippets#backward_marker(3)
 "}}}
 " Ternary {{{
-inoremap <buffer> <leader>ct <++> if <++> else <++>:call BackwardMarker(3)
+inoremap <buffer> <leader>ct <++> if <++> else <++>:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " }}}
 " Try {{{
@@ -180,41 +180,41 @@ inoremap <buffer> <leader>ct try:
   \<++>
   \except <++>:
   \<++>
-  \<++><<:call BackwardMarker(3)
+  \<++><<:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " For {{{
 " Each {{{
 inoremap <buffer> <leader>cfe for <++> in <++>:
       \<++>
-      \<++><<:call BackwardMarker(4)
+      \<++><<:call jrasmusbm#snippets#backward_marker(4)
 " }}}
 " }}}
 " Index {{{
 inoremap <buffer> <leader>cfo for <++> in range(<++>):
       \<++>
-      \<++><<:call BackwardMarker(4)
+      \<++><<:call jrasmusbm#snippets#backward_marker(4)
 " }}}
 " Index {{{
-inoremap <buffer> <leader>cfi for <++> in <++>:call BackwardMarker(2)
+inoremap <buffer> <leader>cfi for <++> in <++>:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 "}}}
 
 " Testing{{{
 " Suite {{{
-inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call BackwardMarker(2)
+inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " Case {{{
 inoremap <buffer> <leader>dc def test_<++>(self, <++>) -> None:
       \raise Exception("Not Implemented!")
-      \<++><<:call BackwardMarker(3)
+      \<++><<:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " Before Each {{{
 inoremap <buffer> <leader>db @pytest.fixture
   \def <++>() -> <++>:
-  \<++><++><<:call BackwardMarker(4)
+  \<++><++><<:call jrasmusbm#snippets#backward_marker(4)
 " }}}
 " Expect {{{
-inoremap <buffer> <leader>de assert <++><++>:call BackwardMarker(2)
+inoremap <buffer> <leader>de assert <++><++>:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " Test File {{{
 inoremap <buffer> <leader>df """<++>"""
@@ -223,14 +223,14 @@ inoremap <buffer> <leader>df """<++>"""
   \"""<++>"""<++>
   \class Test<++>:<<A"""<++>"""
   \def test_<++>(self,<++>) -> None:
-  \raise Exception("Not Implemented!"):call BackwardMarker(9)
+  \raise Exception("Not Implemented!"):call jrasmusbm#snippets#backward_marker(9)
 "}}}
 " Conftest File{{{
 inoremap <buffer> <leader>dh """<++>"""
   \import pytest
   \@pytest.fixturedef <++>() -> <++>:
   \"""<++>"""<++>
-  \:call BackwardMarker(5)
+  \:call jrasmusbm#snippets#backward_marker(5)
 "}}}
 "}}}
 
@@ -243,16 +243,16 @@ inoremap <buffer> <leader>mf """<++>"""
   \"""<++>"""
   \__tablename__ = "<++>"
   \id = Column(Integer, primary_key=True)
-  \<++>:call BackwardMarker(5)
+  \<++>:call jrasmusbm#snippets#backward_marker(5)
 " }}}
 " Column {{{
 inoremap <buffer> <leader>mc <++> = Column(<++>)
-  \<++>:call BackwardMarker(3)
+  \<++>:call jrasmusbm#snippets#backward_marker(3)
 " }}}
 " Primary Key {{{
 inoremap <buffer> <leader>mp __table_args__ = (
       \PrimaryKeyConstraint("<++>", "<++>", name="<++>"),
       \)
-      \<++>:call BackwardMarker(4)
+      \<++>:call jrasmusbm#snippets#backward_marker(4)
 " }}}
 " }}}

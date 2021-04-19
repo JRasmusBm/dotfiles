@@ -3,12 +3,12 @@
 inoremap <buffer> <leader>bs @<++> {
       \<++>,
       \<++>="<++>",<<o
-      \}<++>:call BackwardMarker(5)
+      \}<++>:call jrasmusbm#snippets#backward_marker(5)
 " }}}
 " }}}
 " Source {{{
 " Field {{{
-inoremap <buffer> <leader>sf <++>="<++>",:call BackwardMarker(2)
+inoremap <buffer> <leader>sf <++>="<++>",:call jrasmusbm#snippets#backward_marker(2)
 " }}}
 " }}}
 " Add Name {{{
