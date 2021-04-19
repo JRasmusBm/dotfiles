@@ -97,11 +97,13 @@ function countdown(){
 }
 
 function source_env() {
-  export $(grep -v '^#' "$1" | xargs -d '\n')
+  export $(grep -v '^#' "$1" | xargs -0)
 }
 
 function with_env() {
-  env $(grep -v '^#' .env | xargs -d '\n') "$@"
+  file="$1";
+  shift;
+  env "$(grep -v '^#' "$file" | xargs -0)" "$@"
 }
 
 function stopwatch(){
