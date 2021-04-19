@@ -6,7 +6,7 @@ inoremap <buffer> <leader>fo # <++> {{{
       \S<++>:call BackwardMarker(3) 
 "}}}
 " Selection {{{
-nnoremap <buffer> <expr> zf FoldSelection()
+nnoremap <buffer> <expr> zf jrasmusbm#folds#fold_selection()
 "}}}
 "}}}
 

@@ -5,7 +5,7 @@ nnoremap zuz <Plug>(FastFoldUpdate)
 set foldmethod=syntax
 
 let g:fastfold_savehook = 0
-let g:fastfold_fold_command_suffixes =  ['x','X','a','A','o','O','c','C']
+let g:fastfold_fold_command_suffixes =  ['x','X','o','O','c','C']
 let g:fastfold_fold_movement_commands = [']z', '[z', 'zj', 'zk']
 let g:markdown_folding = 1
 let g:tex_fold_enabled = 1
