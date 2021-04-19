@@ -120,7 +120,7 @@ function scpb(){
 
 function translate() {
   directory=$(pwd)
-  cd ~/.fun_scraping
+  cd ~/projects/wikipedia-translator/cli
   pipenv run python wikipedia-translator.py "$1" "$2"
   cd "$directory"
 }
