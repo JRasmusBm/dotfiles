@@ -228,3 +228,6 @@
 [submodule "tmux-open"]
 	path = tmux/plugins/tmux-open
 	url = git@@github.com:tmux-plugins/tmux-open
+[submodule "vim-bushels"]
+	path = vim/pack/bundle/opt/vim-bushels
+	url = git@github.com:JRasmusBm/vim-bushels.git

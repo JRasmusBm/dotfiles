@@ -4,26 +4,26 @@ inoremap <buffer> <leader>cfo for i in {0..<++>}
     \do
     \<++>
     \done
-    \<++>:call jrasmusbm#snippets#backward_marker(3)
+    \<++>:call bushels#backward_marker(3)
 " }}}
 " For Each {{{
 inoremap <buffer> <leader>cfe for <++> in <++>
     \do
     \<++>
     \done
-    \<++>:call jrasmusbm#snippets#backward_marker(4)
+    \<++>:call bushels#backward_marker(4)
 " }}}
 " If {{{
 inoremap <buffer> <leader>ci if <++>; then
     \<++>
     \fi
-    \<++>:call jrasmusbm#snippets#backward_marker(3)
+    \<++>:call bushels#backward_marker(3)
 " }}}
 " Else {{{
 inoremap <buffer> <leader>cie 
     \<++>
     \fi
-    \<++>:call jrasmusbm#snippets#backward_marker(2)
+    \<++>:call bushels#backward_marker(2)
 " }}}
 " }}}
 " Script {{{
@@ -35,7 +35,7 @@ inoremap <buffer> <leader>sf #!/bin/sh
 " Function {{{
 " Definition {{{
 inoremap <buffer> <leader>fd <++>() {<++>}
-  \<++>:call jrasmusbm#snippets#backward_marker(3)
+  \<++>:call bushels#backward_marker(3)
 " }}}
 " }}}
 " Tmux {{{ 
@@ -58,34 +58,34 @@ inoremap <buffer> <leader>tf #!/bin/bash
   \else
   \tmux attach -t <++>:vim
   \fi
-  \cd "$previous_dir":call jrasmusbm#snippets#backward_marker(3)
+  \cd "$previous_dir":call bushels#backward_marker(3)
 " }}}
 " Session {{{
 inoremap <buffer> <leader>ts tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
-  \<++>:call jrasmusbm#snippets#backward_marker(3)
+  \<++>:call bushels#backward_marker(3)
 " }}}
 " Window {{{
 inoremap <buffer> <leader>tw tmux new-window -n <++>
-  \<++>:call jrasmusbm#snippets#backward_marker(2)
+  \<++>:call bushels#backward_marker(2)
 " }}}
 " Command {{{
 inoremap <buffer> <leader>tc tmux send-keys -t <++> "<++>" Enter
-  \<++>:call jrasmusbm#snippets#backward_marker(3)
+  \<++>:call bushels#backward_marker(3)
 " }}}
 " Vertical {{{
 inoremap <buffer> <leader>tv tmux split-window -t <++> -h
-  \<++>:call jrasmusbm#snippets#backward_marker(2)
+  \<++>:call bushels#backward_marker(2)
 " }}}
 " Horizontal {{{
 inoremap <buffer> <leader>th tmux split-window -t <++>
-  \<++>:call jrasmusbm#snippets#backward_marker(2)
+  \<++>:call bushels#backward_marker(2)
 " }}}
 " Import {{{
 inoremap <buffer> <leader>ti INITIATED_EXTERNALLY=true source_tmux_script<space>
 " }}}
 " Attach {{{
 inoremap <buffer> <leader>ta tmux attach -t <++>
-  \<++>:call jrasmusbm#snippets#backward_marker(2)
+  \<++>:call bushels#backward_marker(2)
 " }}}
 " }}}
 " Handle {{{
@@ -93,10 +93,10 @@ inoremap <buffer> <leader>ta tmux attach -t <++>
 inoremap <buffer> <leader>hc trap_ctrlc() { <++>
   \exit 2
   \}
-  \trap "trap_ctrlc" 2:call jrasmusbm#snippets#backward_marker(1)
+  \trap "trap_ctrlc" 2:call bushels#backward_marker(1)
 " }}}
 " }}}
 " Alias {{{
 inoremap <buffer> <leader>as alias "<++>"="<++>"
-      \<++>:call jrasmusbm#snippets#backward_marker(3)
+      \<++>:call bushels#backward_marker(3)
 " }}}
