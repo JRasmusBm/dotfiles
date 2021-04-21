@@ -152,6 +152,10 @@ install_brave() {
   sudo apt install -y brave-browser-beta
 }
 
+install_screenkey() {
+  sudo snap install --beta screenkey
+}
+
 install_git_extras() {
   TEMP_DEB="$(mktemp)"
   wget -O "$TEMP_DEB" "https://github.com/cli/cli/releases/download/v1.9.2/gh_1.9.2_linux_amd64.deb"
