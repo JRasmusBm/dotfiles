@@ -45,6 +45,7 @@
   rbo = "!git rb origin/$(git rev-parse --abbrev-ref HEAD)"
   rbof = "!git fetch && git rebase origin/$(git rev-parse --abbrev-ref HEAD)"
   rbs = rebase --skip
+  repo = !gh repo view --web
   rh = reset --hard
   ro = "!git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)"
   rof = "!git fetch && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)"
