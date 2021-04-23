@@ -231,3 +231,6 @@
 [submodule "vim-bushels"]
 	path = vim/pack/bundle/opt/vim-bushels
 	url = git@github.com:JRasmusBm/vim-bushels.git
+[submodule "vim-abolish"]
+	path = vim/pack/bundle/opt/vim-abolish
+	url = git@github.com:tpope/vim-abolish.git
