@@ -2,6 +2,7 @@ filetype plugin indent on
 set relativenumber
 set number
 set showcmd
+set noemoji
 set list
 set listchars=tab:>-
 set signcolumn=yes
