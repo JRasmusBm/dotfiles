@@ -244,3 +244,6 @@
 	path = vim/pack/bundle/opt/vim-caser
 	url = git@github.com:JRasmusBm/vim-caser.git
   ignore = dirty
+[submodule "vim/pack/bundle/opt/vim-be-good"]
+	path = vim/pack/bundle/opt/vim-be-good
+	url = git@github.com:ThePrimeagen/vim-be-good.git
