@@ -18,6 +18,7 @@
   bd = branch -D
   ca = commit --amend
   ch = checkout
+  chb = checkout -b
   ci = "!hub ci-status"
   co = commit
   cp = cherry-pick
