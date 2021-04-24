@@ -15,8 +15,6 @@ command! DNext call jrasmusbm#git#next_changes()
 command! DCurrent call jrasmusbm#git#open_diff()
 command! DPrevious call jrasmusbm#git#previous_changes()
 
-nnoremap <localleader>cd :Gvdiffsplit! <Space>
-
 set diffopt=""
 set diffopt+=filler
 set diffopt+=context:3
