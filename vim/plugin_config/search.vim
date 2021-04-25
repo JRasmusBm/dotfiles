@@ -3,6 +3,14 @@ packadd! fzf.vim
 packadd! loupe
 
 let g:LoupeCaseSettingsAlways=1
+
+function! UpdateX()
+  let @x = @/[4:-3]
+endfunction
+
+nmap <silent> * <Plug>(LoupeStar):call UpdateX()
+nmap <silent> # <Plug>(LoupeOctothorpe):call UpdateX()
+
 let g:fzf_layout = { "window": {"width": 0.8, "height": 0.8 } }
 let $FZF_DEFAULT_OPTS="--reverse --preview 'preview {}'"
 
