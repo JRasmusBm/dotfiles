@@ -1,4 +1,7 @@
-autocmd BufRead *.test.* setlocal foldlevel=1
+augroup CustomFoldlevel
+  autocmd BufRead *.test.* setlocal foldlevel=1
+augroup END
+
 nnoremap <leader>zs :setlocal foldmethod=syntax
 nnoremap <leader>zm :setlocal foldmethod=marker
 
