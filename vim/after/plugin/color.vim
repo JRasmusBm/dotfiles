@@ -1,5 +1,12 @@
 color base16-ia-dark
 
+function! CustomMarkers() abort
+  highlight SnippetMarker guifg=yellow guibg=NONE
+  highlight TODOMarker guifg=#FF87AF guibg=NONE
+  match TODOMarker /TODO/
+  match SnippetMarker /<++>/
+endfunction
+
 function! RespectAlacrittyColorscheme() abort
   highlight! Normal ctermbg=NONE guibg=NONE
   highlight! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
@@ -26,11 +33,6 @@ function! DiffHighlights() abort
   highlight DiffDelete guifg=None guibg=#500000
 endfunction
 
-function! HighlightMarker() abort
-  highlight SnippetMarker guifg=yellow guibg=NONE
-  match SnippetMarker /<++>/
-endfunction
-
 function! SpellingHighlights() abort
   highlight SpellBad guifg=teal guibg=NONE 
   highlight SpellCap guifg=teal guibg=NONE 
@@ -54,7 +56,6 @@ function! ColorCodeHighlights() abort
   lua require'colorizer'.setup()
 endfunction
 
-
 function! CommentHighlights() abort
   execute 'highlight Comment ' . pinnacle#italicize('Comment')
 endfunction
@@ -64,7 +65,7 @@ call DiffHighlights()
 call FoldHighlights()
 call ErrorHighlights()
 call SearchHighlights()
-call HighlightMarker()
 call SpellingHighlights()
 call CocHighlights()
 call ColorCodeHighlights()
+call CustomMarkers()
