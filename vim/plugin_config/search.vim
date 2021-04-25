@@ -1,5 +1,6 @@
-packadd! fzf
-packadd! fzf.vim
+packadd! popup.nvim
+packadd! plenary.nvim
+packadd! telescope.nvim
 packadd! loupe
 
 let g:LoupeCaseSettingsAlways=1
@@ -11,28 +12,15 @@ endfunction
 nmap <silent> * <Plug>(LoupeStar):call UpdateX()
 nmap <silent> # <Plug>(LoupeOctothorpe):call UpdateX()
 
-let g:fzf_layout = { "window": {"width": 0.8, "height": 0.8 } }
-let $FZF_DEFAULT_OPTS="--reverse --preview 'preview {}'"
-
-nnoremap <localleader>ff :Rg<Space>
-
-nnoremap <Leader>ff :GFiles<CR>
-nnoremap <Leader>fs :GFiles?<CR>
-nnoremap <Leader>fg :Files .<CR>
-nnoremap <Leader>fb :Buffers<CR>
-nnoremap <Leader>fl :Lines<CR>
-nnoremap <Leader>ft :Tags<CR>
-nnoremap <Leader>fm :Marks<CR>
-nnoremap <Leader>fw :Windows<CR>
-nnoremap <Leader>fu :History<CR>
-nnoremap <Leader>f: :History:<CR>
-nnoremap <Leader>f/ :History/<CR>
-nnoremap <Leader>fc :Commits<CR>
-nnoremap <Leader>f:r :Commands<CR>
-nnoremap <Leader>fm :Maps<CR>
-nnoremap <Leader>fh :Helptags<CR>
-nnoremap <Leader>fe :Filetypes<CR>
-
+nnoremap <leader>fs <cmd>lua require('telescope.builtin').git_status()<cr>
+nnoremap <leader>ff <cmd>lua require('telescope.builtin').git_files()<cr>
+nnoremap <leader>fl <cmd>lua require('telescope.builtin').live_grep()<cr>
+nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
+nnoremap <leader>f: <cmd>lua require('telescope.builtin').command_history()<cr>
+nnoremap <leader>f/ <cmd>lua require('telescope.builtin').search_history()<cr>
+nnoremap <leader>fgi <cmd>lua require('telescope.builtin').find_files()<cr>
+nnoremap <leader>fgc <cmd>lua require('telescope.builtin').git_commits()<cr>
+nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 
 nnoremap <Leader>ea :Files ~/.vim/after/<CR>
 nnoremap <Leader>el :Files ~/.vim/autoload/<CR>

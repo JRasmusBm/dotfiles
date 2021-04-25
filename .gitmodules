@@ -244,6 +244,19 @@
 	path = vim/pack/bundle/opt/vim-caser
 	url = git@github.com:JRasmusBm/vim-caser.git
   ignore = dirty
-[submodule "vim/pack/bundle/opt/vim-be-good"]
+[submodule "vim-be-good"]
 	path = vim/pack/bundle/opt/vim-be-good
 	url = git@github.com:ThePrimeagen/vim-be-good.git
+  ignore = dirty
+[submodule "popup.nvim"]
+	path = vim/pack/bundle/opt/popup.nvim
+	url = git@github.com:nvim-lua/popup.nvim.git
+  ignore = dirty
+[submodule "plenary.nvim"]
+	path = vim/pack/bundle/opt/plenary.nvim
+	url = git@github.com:nvim-lua/plenary.nvim.git
+  ignore = dirty
+[submodule "telescope.nvim"]
+	path = vim/pack/bundle/opt/telescope.nvim
+	url = git@github.com:nvim-telescope/telescope.nvim.git
+  ignore = dirty
