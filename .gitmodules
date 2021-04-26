@@ -267,6 +267,8 @@
 [submodule "diffview.nvim"]
   path = vim/pack/bundle/opt/diffview.nvim
   url = git@github.com:sindrets/diffview.nvim.git
+  ignore = dirty
 [submodule "nvim-web-devicons"]
   path = vim/pack/bundle/opt/nvim-web-devicons
   url = git@github.com:kyazdani42/nvim-web-devicons.git
+  ignore = dirty
