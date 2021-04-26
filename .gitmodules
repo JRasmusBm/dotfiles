@@ -260,3 +260,7 @@
 	path = vim/pack/bundle/opt/telescope.nvim
 	url = git@github.com:nvim-telescope/telescope.nvim.git
   ignore = dirty
+[submodule "vim/pack/bundle/opt/telescope-fzy-native.nvim"]
+	path = vim/pack/bundle/opt/telescope-fzy-native.nvim
+	url = git@github.com:nvim-telescope/telescope-fzy-native.nvim.git
+  ignore = dirty

@@ -1,6 +1,7 @@
 packadd! popup.nvim
 packadd! plenary.nvim
 packadd! telescope.nvim
+packadd! telescope-fzy-native.nvim
 packadd! loupe
 
 let g:LoupeCaseSettingsAlways=1
