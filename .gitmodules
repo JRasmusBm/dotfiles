@@ -46,10 +46,6 @@
 	path = vim/pack/bundle/opt/fzf
 	url = git@github.com:junegunn/fzf.git
   ignore = dirty
-[submodule "fzf.vim"]
-	path = vim/pack/bundle/opt/fzf.vim
-	url = git@github.com:junegunn/fzf.vim.git
-  ignore = dirty
 [submodule "vcs-jump"]
 	path = vim/pack/bundle/opt/vcs-jump
 	url = git@github.com:wincent/vcs-jump.git
