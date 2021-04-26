@@ -26,23 +26,23 @@ nnoremap <leader>fgs <cmd>lua require('telescope.builtin').git_status()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 
 nnoremap <leader>ea <cmd>lua require('telescope.builtin').find_files({
-      \ cwd = "~/.vim/after/"
-      \ })
+  \   cwd = "~/.vim/after/"
+  \ })
 nnoremap <leader>eu <cmd>lua require('telescope.builtin').find_files({
-      \ cwd = "~/.vim/autoload/"
-      \ })
+  \   cwd = "~/.vim/autoload/"
+  \ })
 nnoremap <leader>el <cmd>lua require('telescope.builtin').find_files({
-      \ cwd = "~/.vim/lua/"
-      \ })
+  \   cwd = "~/.vim/lua/"
+  \ })
 nnoremap <leader>es <cmd>lua require('telescope.builtin').find_files({
-      \ cwd = "~/.vim/snippets/"
-      \ })
+  \   cwd = "~/.vim/snippets/"
+  \ })
 nnoremap <leader>ep <cmd>lua require('telescope.builtin').find_files({
-      \ cwd = "~/.vim/plugin_config/"
-      \ })
+  \   cwd = "~/.vim/plugin_config/"
+  \ })
 nnoremap <leader>ef <cmd>lua require('telescope.builtin').find_files({
-      \ cwd = "~/.vim/ftplugin/"
-      \ })
+  \   cwd = "~/.vim/ftplugin/"
+  \ })
 nnoremap <leader>eo <cmd>lua require('telescope.builtin').find_files({
-      \ cwd = "~/.vim/other_config/"
-      \ })
+  \   cwd = "~/.vim/other_config/"
+  \ })
