@@ -5,6 +5,9 @@ function g() {
     git status
   fi
 }
+
+export FZF_DEFAULT_OPTS="--preview 'preview {}'"
+
 # Aliases
 alias "ac"="source ./.venv/bin/activate"
 alias "da"="deactivate"

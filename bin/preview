@@ -5,6 +5,11 @@ IFS=':'; arr_in=($in); unset IFS;
 path=${arr_in[0]}
 line=${arr_in[1]}
 
+if [ -d "$path" ]; then
+  echo "$path/" "$(ls $path | xargs -n 1 echo '  ')"
+  exit 0
+fi
+
 contents=$(bat --color=always $path)
 
 if [ -z $line ]; then
