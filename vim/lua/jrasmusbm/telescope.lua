@@ -1,3 +1,5 @@
+local actions = require("telescope.actions")
+
 require('telescope').setup{
   defaults = {
     vimgrep_arguments = {
@@ -44,7 +46,13 @@ require('telescope').setup{
     qflist_previewer = require'telescope.previewers'.vim_buffer_qflist.new,
 
     -- Developer configurations: Not meant for general override
-    buffer_previewer_maker = require'telescope.previewers'.buffer_previewer_maker
+    buffer_previewer_maker = require'telescope.previewers'.buffer_previewer_maker,
+    mappings = {
+      i = {
+        ["<C-x>"] = false,
+        ["<C-q>"] = actions.send_to_qflist,
+      }
+    }
   },
   extensions = {
     fzy_native = {
