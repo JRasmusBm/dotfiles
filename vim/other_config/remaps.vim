@@ -8,3 +8,6 @@ inoremap <C-U> <nop>
 
 nnoremap go o<Esc>S
 nnoremap gO O<Esc>S
+
+nnoremap <silent> <leader>qo :copen
+nnoremap <silent> <leader>qc :cclose
