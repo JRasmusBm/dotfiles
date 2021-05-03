@@ -1,6 +1,7 @@
 setlocal foldmethod=marker
 
 source ~/.vim/snippets/vim.vim
-vnoremap <buffer> <leader>c y:@"<CR>
-nnoremap <buffer> <leader>c ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
-
+vnoremap <buffer> <localleader>tl y:@"<CR>
+nnoremap <buffer> <localleader>tl ^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>
+nnoremap <buffer> <localleader>tf :so %
+nnoremap <buffer> <localleader>ts :so $MYVIMRC
