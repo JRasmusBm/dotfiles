@@ -82,7 +82,7 @@
 	path = vim/pack/bundle/opt/Latex-Text-Formatter
 	url = git@github.com:jrasmusbm/Latex-Text-Formatter.git
 [submodule "vim-peculiar"]
-	path = vim/pack/jrasmubm/start/vim-peculiar
+	path = vim/pack/bundle/opt/vim-peculiar
 	url = git@github.com:jrasmusbm/vim-peculiar.git
 [submodule "pinnacle"]
 	path = vim/pack/bundle/opt/pinnacle
