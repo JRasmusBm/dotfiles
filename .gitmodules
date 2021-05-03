@@ -275,6 +275,6 @@
   url = git@github.com:neovim/nvim-lspconfig.git
   ignore = dirty
 [submodule "nvim-lsp-diamove"]
-	path = vim/pack/bundle/nvim-lsp-diamove
-	url = https://github.com/weilbith/nvim-lsp-diamove
+  path = vim/pack/bundle/nvim-lsp-diamove
+  url = https://github.com/weilbith/nvim-lsp-diamove
   ignore = dirty
