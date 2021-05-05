@@ -26,3 +26,11 @@ fi
 
 export PATH=$PATH:/usr/local/go/bin
 export PATH="$HOME/.cargo/bin:$PATH"
+
+xmodmap -e "keysym Caps_Lock = Escape"
+xmodmap -e "clear lock"
+
+if command -v copyq &> /dev/null
+then
+  copyq --start-server
+fi
