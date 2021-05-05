@@ -164,15 +164,14 @@ function armageddon() {
 }
 
 function default_tmux_session() {
-    local SESSION_NAME=$(basename "${$(pwd)//[.:]/_}")
-    env SSH_AUTH_SOCK=$SOCK_SYMLINK tmux new -A -s "$SESSION_NAME"
+    INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source ~/.tmux-default
 }
 
 function source_tmux_script() {
   tmux_script_path="$1"
 
   if [ ! -x "$tmux_script_path" ]; then
-    default_tmux_session
+    INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY default_tmux_session
     return
   fi
 
