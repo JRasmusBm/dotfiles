@@ -7,6 +7,11 @@ function! CustomMarkers() abort
   match SnippetMarker /<++>/
 endfunction
 
+function! RulerHighlights() abort
+  highlight CursorColumn guibg=#303000
+  highlight CursorLine guibg=#303000
+endfunction
+
 function! RespectAlacrittyColorscheme() abort
   highlight! Normal ctermbg=NONE guibg=NONE
   highlight! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
@@ -69,3 +74,4 @@ call SpellingHighlights()
 call CocHighlights()
 call ColorCodeHighlights()
 call CustomMarkers()
+call RulerHighlights()
