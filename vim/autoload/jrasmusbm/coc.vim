@@ -2,8 +2,8 @@ function! jrasmusbm#coc#setup_maps() abort
   nmap <buffer> <leader>a :CocAction
   nmap <buffer> K :call CocAction("doHover")
   nmap <buffer> g/ :call CocAction("rename")
-  nmap <buffer> Q :call CocAction("format")
-  vmap <buffer> Q :call CocAction("formatSelected")
+  nmap <buffer> == :call CocAction("format")
+  vmap <buffer> = :call CocAction("formatSelected")
   nmap <buffer> <c-]> <Plug>(coc-definition)
   nmap <buffer> gt <Plug>(coc-type-definition)
   nmap <buffer> gD <Plug>(coc-implementation)
