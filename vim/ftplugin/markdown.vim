@@ -1,12 +1,12 @@
-set tabstop=4
-set shiftwidth=4
-set softtabstop=4
-set spell spelllang=en_us
+setlocal tabstop=4
+setlocal shiftwidth=4
+setlocal softtabstop=4
+setlocal spell spelllang=en_us
 
 let b:ale_fixers = ['prettier']
 
-set wrap
-set textwidth=80
+setlocal wrap
+setlocal textwidth=80
 
 nnoremap <buffer> j gj
 nnoremap <buffer> k gk
