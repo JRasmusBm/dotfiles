@@ -8,6 +8,7 @@ endif
 
 " Need to set the leader before defining any leader mappings
 syntax on
+filetype plugin indent on
 let mapleader=";"
 let maplocalleader="\<Space>"
 " In case I am using Scandinavian Keyboard (Breaks most insert mode mappings)
