@@ -11,3 +11,5 @@ nnoremap gO O<Esc>S
 
 nnoremap <silent> <leader>qo :copen
 nnoremap <silent> <leader>qc :cclose
+
+nmap == :call jrasmusbm#format#default()
