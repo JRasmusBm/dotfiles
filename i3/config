@@ -22,6 +22,7 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 bindsym $mod+Return exec i3-sensible-terminal
 bindsym $mod+b exec brave-browser
 bindsym $mod+d exec --no-startup-id dmenu_run
+bindsym $mod+p exec alacritty --class "Scratchpad" -e nvim -c "Scratchpad"
 # }}}
 
 # Windows {{{
@@ -122,7 +123,7 @@ bindsym $mod+0 workspace number $ws10
 
 
 # Session {{{
-bindsym $mod+Shift+r reload # Config file
+bindsym $mod+Shift+r reload
 bindsym $mod+Shift+e exec "i3-nagbar -t warning -m 'You pressed the exit shortcut. Do you really want to exit i3? This will end your X session.' -B 'Yes, exit i3' 'i3-msg exit'"
 # }}}
 
