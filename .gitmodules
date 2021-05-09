@@ -264,3 +264,7 @@
   path = vim/pack/bundle/opt/harpoon
   url = git@github.com:ThePrimeagen/harpoon.git
   ignore = dirty
+[submodule "vim-smoothie"]
+  path = vim/pack/bundle/opt/vim-smoothie
+  url = git@github.com:psliwka/vim-smoothie
+  ignore = dirty
