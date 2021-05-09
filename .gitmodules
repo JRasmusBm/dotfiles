@@ -268,3 +268,9 @@
   path = vim/pack/bundle/opt/vim-smoothie
   url = git@github.com:psliwka/vim-smoothie
   ignore = dirty
+[submodule "diffview.nvim"]
+  path = vim/pack/bundle/opt/diffview.nvim
+  url = git@github.com:sindrets/diffview.nvim.git
+[submodule "nvim-web-devicons"]
+  path = vim/pack/bundle/opt/nvim-web-devicons
+  url = git@github.com:kyazdani42/nvim-web-devicons.git

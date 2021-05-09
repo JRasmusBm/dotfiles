@@ -3,6 +3,7 @@ packadd! coc.nvim
 let g:coc_global_extensions=[
   \"coc-prettier",
   \"coc-python",
+  \"coc-lua",
   \"coc-json",
   \"coc-html",
   \"coc-vetur",
