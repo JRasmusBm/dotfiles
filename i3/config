@@ -30,7 +30,12 @@ bindsym $mod+p exec alacritty --class "Scratchpad" -e nvim -c "Scratchpad"
 # }}}
 
 # Windows {{{
+# Border {{{
+default_border none
+# }}}
+# Kill {{{
 bindsym $mod+w kill
+# }}}
 # Move Focus {{{
 bindsym $mod+h focus left
 bindsym $mod+j focus down
@@ -70,7 +75,7 @@ bindsym $mod+e layout toggle split
 # Floating {{{
 bindsym $mod+Shift+space floating toggle
 # }}}
-# Resize {{
+# Resize {{{
 mode "resize" {
         # These bindings trigger as soon as you enter the resize mode
 
