@@ -228,6 +228,13 @@ load_nvim_plugins() {
 
 # --- Everything above this line is tested ---
 
+install_xmonad() {
+  cabal install -z --lib --package-env=$HOME/.xmonad/ \
+    xmonad \
+    xmodbar \
+    xmonad-contrib
+}
+
 install_bat() {
   sudo apt-get install bat
   mkdir -p ~/.local/bin
