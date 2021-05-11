@@ -1,10 +1,11 @@
-module Config where
+module Main where
 
 import XMonad
 import XMonad.Actions.CopyWindow
 import XMonad.Actions.CycleWS
 import XMonad.Hooks.DynamicLog
 import XMonad.Hooks.ManageHelpers
+import XMonad.Layout.LayoutModifier
 import XMonad.Layout.NoBorders
 import XMonad.Layout.ResizableTile
 import qualified XMonad.StackSet as W
@@ -13,14 +14,19 @@ import XMonad.Util.Run (spawnPipe)
 
 main = xmonad =<< statusBar "xmobar" myPP toggleStrutsKey myConfig
 
+myBorderColour :: [Char]
 myBorderColour = "#333333"
 
+myBorderWidth :: Dimension
 myBorderWidth = 2
 
+myWorkspaces :: [[Char]]
 myWorkspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
+myTerminal :: [Char]
 myTerminal = "st"
 
+myPP :: PP
 myPP =
   xmobarPP
     { ppCurrent = xmobarColor "#117FF5" "",
@@ -29,6 +35,7 @@ myPP =
       ppHiddenNoWindows = xmobarColor "#626262" ""
     }
 
+myKeys :: [((KeyMask, KeySym), X ())]
 myKeys =
   [ -- Functions
 
@@ -40,9 +47,9 @@ myKeys =
     ((mod1Mask, xK_F6), spawn "sudo light -A 5"),
     ((mod1Mask, xK_F11), spawn "xkb-switch -n"),
     -- Applications
-    ((mod1Mask, xK_w), spawn "brave"),
-    ((mod1Mask, xK_F4), kill),
-    ((mod1Mask, xK_p), spawn "rofi -show run"),
+    ((mod1Mask, xK_b), spawn "brave"),
+    ((mod1Mask, xK_w), kill),
+    ((mod1Mask, xK_d), spawn "rofi -show run"),
     ((mod1Mask, xK_o), spawn "pass clip --rofi"),
     ((mod1Mask, xK_End), spawn "dm-tool lock"),
     ((mod1Mask, xK_v), windows copyToAll),
@@ -62,18 +69,25 @@ myKeys =
     ((mod1Mask, xK_semicolon), sendMessage (IncMasterN 1))
   ]
 
+toggleStrutsKey :: XConfig l -> (KeyMask, KeySym)
 toggleStrutsKey XConfig {modMask = modm} = (modm, xK_b)
 
+myManageHook :: ManageHook
 myManageHook =
   composeAll
     [ isFullscreen --> (doF W.focusDown <+> doFullFloat),
       className =? "mpv" --> doRectFloat (W.RationalRect 0.9 0.84 0.09 0.13) <+> doF copyToAll
     ]
 
+type MyResizable = ModifiedLayout SmartBorder ResizableTall
+
+myResizable :: MyResizable a
 myResizable = smartBorders $ ResizableTall 1 (3 / 100) (1 / 2) []
 
+myLayout :: Choose (ModifiedLayout SmartBorder ResizableTall) (Choose (Mirror (ModifiedLayout SmartBorder ResizableTall)) Full) a
 myLayout = myResizable ||| Mirror myResizable ||| Full
 
+myConfig :: XConfig (Choose (ModifiedLayout SmartBorder ResizableTall) (Choose (Mirror (ModifiedLayout SmartBorder ResizableTall)) Full))
 myConfig =
   def
     { terminal = myTerminal,
