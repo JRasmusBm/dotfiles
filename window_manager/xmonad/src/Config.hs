@@ -24,7 +24,7 @@ myWorkspaces :: [[Char]]
 myWorkspaces = ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
 
 myTerminal :: [Char]
-myTerminal = "st"
+myTerminal = "/usr/bin/zsh"
 
 myPP :: PP
 myPP =
@@ -39,34 +39,34 @@ myKeys :: [((KeyMask, KeySym), X ())]
 myKeys =
   [ -- Functions
 
-    ((mod1Mask, xK_F1), spawn "amixer -D pulse set Master 1+ toggle"),
-    ((mod1Mask, xK_F2), spawn "amixer -D pulse sset Master 5%-"),
-    ((mod1Mask, xK_F3), spawn "amixer -D pulse sset Master 5%+"),
+    ((mod4Mask, xK_F1), spawn "amixer -D pulse set Master 1+ toggle"),
+    ((mod4Mask, xK_F2), spawn "amixer -D pulse sset Master 5%-"),
+    ((mod4Mask, xK_F3), spawn "amixer -D pulse sset Master 5%+"),
     -- sudoers file hack, because of weird intel drivers
-    ((mod1Mask, xK_F5), spawn "sudo light -U 5"),
-    ((mod1Mask, xK_F6), spawn "sudo light -A 5"),
-    ((mod1Mask, xK_F11), spawn "xkb-switch -n"),
+    ((mod4Mask, xK_F5), spawn "sudo light -U 5"),
+    ((mod4Mask, xK_F6), spawn "sudo light -A 5"),
+    ((mod4Mask, xK_F11), spawn "xkb-switch -n"),
     -- Applications
-    ((mod1Mask, xK_b), spawn "brave"),
-    ((mod1Mask, xK_w), kill),
-    ((mod1Mask, xK_d), spawn "rofi -show run"),
-    ((mod1Mask, xK_o), spawn "pass clip --rofi"),
-    ((mod1Mask, xK_End), spawn "dm-tool lock"),
-    ((mod1Mask, xK_v), windows copyToAll),
-    ((controlMask .|. mod1Mask, xK_v), killAllOtherCopies),
+    ((mod4Mask, xK_b), spawn "brave"),
+    ((mod4Mask, xK_w), kill),
+    ((mod4Mask, xK_d), spawn "rofi -show run"),
+    ((mod4Mask, xK_o), spawn "pass clip --rofi"),
+    ((mod4Mask, xK_End), spawn "dm-tool lock"),
+    ((mod4Mask, xK_v), windows copyToAll),
+    ((controlMask .|. mod4Mask, xK_v), killAllOtherCopies),
     ((0, xK_Print), spawn "sleep 0.2; scrot -o -q 100 -s /tmp/shot.png; copyq write image/png - < /tmp/shot.png && copyq select 0"),
     ((controlMask, xK_Print), spawn "scrot -o -q 100 /tmp/shot.png; copyq write image/png - < /tmp/shot.png && copyq select 0"),
     -- Adjust split
-    ((mod1Mask, xK_j), sendMessage MirrorShrink),
-    ((mod1Mask, xK_k), sendMessage MirrorExpand),
+    ((mod4Mask, xK_j), sendMessage MirrorShrink),
+    ((mod4Mask, xK_k), sendMessage MirrorExpand),
     -- Workspaces
-    ((controlMask .|. mod1Mask, xK_l), nextWS),
-    ((controlMask .|. mod1Mask, xK_h), prevWS),
-    ((mod1Mask .|. shiftMask, xK_l), shiftToNext >> nextWS),
-    ((mod1Mask .|. shiftMask, xK_h), shiftToPrev >> prevWS),
+    ((controlMask .|. mod4Mask, xK_l), nextWS),
+    ((controlMask .|. mod4Mask, xK_h), prevWS),
+    ((mod4Mask .|. shiftMask, xK_l), shiftToNext >> nextWS),
+    ((mod4Mask .|. shiftMask, xK_h), shiftToPrev >> prevWS),
     -- Master pane count
-    ((mod1Mask, xK_apostrophe), sendMessage (IncMasterN (-1))),
-    ((mod1Mask, xK_semicolon), sendMessage (IncMasterN 1))
+    ((mod4Mask, xK_apostrophe), sendMessage (IncMasterN (-1))),
+    ((mod4Mask, xK_semicolon), sendMessage (IncMasterN 1))
   ]
 
 toggleStrutsKey :: XConfig l -> (KeyMask, KeySym)
@@ -96,7 +96,8 @@ myConfig =
       focusedBorderColor = myBorderColour,
       workspaces = myWorkspaces,
       manageHook = myManageHook,
+      modMask = mod4Mask,
       layoutHook = myLayout
     }
-    `removeKeys` [(mod1Mask, xK_comma), (mod1Mask, xK_period), (mod1Mask, xK_k), (mod1Mask, xK_j)]
+    `removeKeys` [(mod4Mask, xK_comma), (mod4Mask, xK_period), (mod4Mask, xK_k), (mod4Mask, xK_j)]
     `additionalKeys` myKeys
