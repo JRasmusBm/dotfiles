@@ -235,3 +235,4 @@ export SPROMPT="zsh: correct %F{red}'%R'%f to %F{red}'%r'%f [%B%Uy%u%bes, %B%Un%
 DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 
 [ -f $HOME/.config/broot/launcher/bash/br ] && source $HOME/.config/broot/launcher/bash/br
+[ -f "/home/jrasmusbm/.ghcup/env" ] && source "/home/jrasmusbm/.ghcup/env" # ghcup-env
