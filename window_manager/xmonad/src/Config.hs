@@ -1,3 +1,5 @@
+module Config where
+
 import XMonad
 import XMonad.Actions.CopyWindow
 import XMonad.Actions.CycleWS
