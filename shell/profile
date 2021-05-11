@@ -19,13 +19,32 @@ if [ -n "$BASH_VERSION" ]; then
   fi
 fi
 
-# set PATH so it includes user's private bin if it exists
-if [ -d "$HOME/bin" ] ; then
-  PATH="$HOME/bin:$PATH"
-fi
-
-export PATH=$PATH:/usr/local/go/bin
-export PATH="$HOME/.cargo/bin:$PATH"
+# Paths {{{
+PATH=/bin
+PATH=$PATH:/sbin
+PATH=$PATH:/usr/bin
+PATH=$PATH:/usr/sbin
+PATH=$PATH:/usr/local/bin
+PATH=$PATH:/usr/local/sbin
+PATH=$PATH:/usr/local/go/bin
+PATH=$PATH:/usr/games
+PATH=$PATH:/usr/local/games
+PATH=$PATH:/snap/bin
+PATH=$PATH:$HOME/go/bin
+PATH=$PATH:$HOME/.cargo/bin
+PATH=$PATH:$HOME/.cargo/bin
+PATH=$PATH:$HOME/.cargo/bin
+PATH=$PATH:$HOME/.cabal/bin
+PATH=$PATH:$HOME/.ghcup/bin
+PATH=$PATH:$HOME/.deno/bin
+PATH=$PATH:$HOME/.bin
+PATH=$PATH:$HOME/.local/bin
+PATH=$PATH:$HOME/Android/Sdk/tools
+PATH=$PATH:$HOME/Android/Sdk/emulator
+PATH=$PATH:$HOME/Android/Sdk/tools/bin
+PATH=$PATH:$HOME/Android/Sdk/platform-tools
+export PATH=$PATH
+# }}}
 
 xmodmap -e "keysym Caps_Lock = Escape"
 xmodmap -e "clear lock"

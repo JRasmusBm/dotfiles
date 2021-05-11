@@ -98,25 +98,6 @@ export MANPAGER="/bin/sh -c \"unset PAGER;col -b -x | \
     -c 'map <SPACE> <C-D>' -c 'map b <C-U>' \
     -c 'nmap K :Man <C-R>=expand(\\\"<cword>\\\")<CR><CR>' -\""
 
-# Paths
-export DENO_INSTALL="/home/jrasmusbm/.deno"
-export ANDROID_HOME=$HOME/Android/Sdk
-PATH=$PATH:$ANDROID_HOME/tools
-PATH=$PATH:$ANDROID_HOME/emulator
-PATH=$PATH:$ANDROID_HOME/tools/bin
-PATH=$PATH:$ANDROID_HOME/platform-tools
-PATH=$PATH:/opt/gradle/gradle-4.5/bin
-PATH="$PATH:$DENO_INSTALL/bin"
-PATH=$PATH:$HOME/.bin
-PATH=$PATH:$HOME/.local/bin
-if [ -d /snap/bin ]
-then
-  PATH=$PATH:/snap/bin
-fi
-PATH="$PATH:/usr/local/go/bin:$HOME/go/bin"
-PATH=$PATH:/home/rasmus/.local/bin
-PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
-export PATH=$PATH
 export GOPATH="${HOME}/go"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib

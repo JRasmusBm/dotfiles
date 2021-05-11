@@ -166,11 +166,6 @@ if [ -f /usr/local/lib/python2.7/dist-packages/powerline/bindings/bash/powerline
 export WORKON_HOME=$HOME/.virtualenvs
 export PROJECT_HOME=$HOME/Envs
 export ANDROID_HOME=$HOME/Android/Sdk
-PATH=$PATH:$ANDROID_HOME/tools
-PATH=$PATH:$ANDROID_HOME/platform-tools
-PATH=$PATH:/opt/gradle/gradle-4.5/bin
-export PATH="${HOME}/.config/yarn/global/node_modules/.bin${PATH:+:${PATH}}"; 
-export PATH
 
 source ~/.promptline.sh
 source ~/.z.sh
