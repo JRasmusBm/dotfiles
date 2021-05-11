@@ -23,17 +23,10 @@ myTerminal = "st"
 
 myPP =
   xmobarPP
-    { ppCurrent = (xmobarColor "#117FF5" ""),
-      ppTitle = (\str -> ""),
-      ppHidden = (xmobarColor "#626262" ""),
-      ppHiddenNoWindows = (xmobarColor "#626262" ""),
-      ppLayout =
-        ( \x -> case x of
-            "ResizableTall" -> "<icon=/home/owg1/.xmonad/icons/tall.xpm/>"
-            "Mirror ResizableTall" -> "<icon=/home/owg1/.xmonad/icons/mirror.xpm/>"
-            "Full" -> "<icon=/home/owg1/.xmonad/icons/full.xpm/>"
-            _ -> x
-        )
+    { ppCurrent = xmobarColor "#117FF5" "",
+      ppTitle = const "",
+      ppHidden = xmobarColor "#626262" "",
+      ppHiddenNoWindows = xmobarColor "#626262" ""
     }
 
 myKeys =
@@ -66,7 +59,7 @@ myKeys =
     ((mod1Mask .|. shiftMask, xK_h), shiftToPrev >> prevWS),
     -- Master pane count
     ((mod1Mask, xK_apostrophe), sendMessage (IncMasterN (-1))),
-    ((mod1Mask, xK_semicolon), sendMessage (IncMasterN (1)))
+    ((mod1Mask, xK_semicolon), sendMessage (IncMasterN 1))
   ]
 
 toggleStrutsKey XConfig {modMask = modm} = (modm, xK_b)
@@ -81,18 +74,14 @@ myResizable = smartBorders $ ResizableTall 1 (3 / 100) (1 / 2) []
 
 myLayout = myResizable ||| Mirror myResizable ||| Full
 
-startup = do
-  spawn "mpv ~/pikachu.webm"
-
 myConfig =
-  defaultConfig
+  def
     { terminal = myTerminal,
       borderWidth = myBorderWidth,
       normalBorderColor = myBorderColour,
       focusedBorderColor = myBorderColour,
       workspaces = myWorkspaces,
       manageHook = myManageHook,
-      startupHook = startup,
       layoutHook = myLayout
     }
     `removeKeys` [(mod1Mask, xK_comma), (mod1Mask, xK_period), (mod1Mask, xK_k), (mod1Mask, xK_j)]
