@@ -144,10 +144,6 @@
   path = vim/pack/bundle/opt/vim-test
   url = git@github.com:janko/vim-test.git
   ignore = dirty
-[submodule "vim-textobj-uri"]
-  path = vim/pack/bundle/opt/vim-textobj-uri
-  url = git@github.com:jceb/vim-textobj-uri.git
-  ignore = dirty
 [submodule "vim-textobj-entire"]
   path = vim/pack/bundle/opt/vim-textobj-entire
   url = git@github.com:kana/vim-textobj-entire.git
