@@ -27,6 +27,14 @@ inoremap <buffer> <leader>ci if <++>
 "}}}
 " }}}
 
+" Auto {{{
+" Group {{{
+inoremap <buffer> <leader>ag augroup <++>
+      \<++>
+      \augroup END:call bushels#backward_marker(2)
+" }}}
+inoremap <buffer> <leader>ac autocmd<Space>
+" }}}
 
 " Snippet {{{
 inoremap <buffer> <leader>sn inoremap <buffer> <lt>leader><++> <++>:call bushels#backward_marker(2)
@@ -45,6 +53,6 @@ inoremap <buffer> <leader>fd function! <++>() abort<++>endfunction<++>:call
 " Import {{{
 " Snippet {{{
 inoremap <buffer> <leader>is source ~/.vim/snippets/<++>
-  \<++>:call bushels#backward_marker(2)
+      \<++>:call bushels#backward_marker(2)
 " }}}
 " }}}
