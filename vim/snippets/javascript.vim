@@ -3,9 +3,6 @@
 inoremap <buffer> <leader>id import <++> from "<++>";
       \<++>:call bushels#backward_marker(2)
 "}}}
-" React {{{
-inoremap <buffer> <leader>ir import React from "react";
-"}}}
 " All {{{
 inoremap <buffer> <leader>ia import * as <++> from "<++>";
       \<++>:call bushels#backward_marker(3)
@@ -20,7 +17,7 @@ inoremap <buffer> <leader>im import "<++>";
 "}}}
 " Component {{{
 inoremap <buffer> <leader>ic import <++> from "components/<++>";<++>
-  \:call bushels#backward_marker(2)
+      \:call bushels#backward_marker(2)
 "}}}
 "}}}
 
@@ -36,31 +33,6 @@ inoremap <buffer> <leader>ed <++>Oexport default <++> ;:call bushels#backward_
 "}}}
 "}}}
 
-" ServiceWorker {{{
-" File {{{
-inoremap <buffer> <leader>sf "use strict";
-      \const version = <++>;
-      \self.addEventListener("install", onInstall);
-      \self.addEventListener("activate", onActivate);
-      \main().catch(console.error);
-      \/* ***************************** */
-      \async function main() {
-      \console.log(`Service Worker (${version}) starting...`);
-      \}
-      \async function onInstall(event) {
-      \console.log(`Service Worker (${version}) installed...`);
-      \self.skipWaiting();
-      \}
-      \function onActivate(event) {
-      \event.waitUntil(handleActivation());
-      \}
-      \async function handleActivation() {
-      \await clients.claim();
-      \console.log(`Service Worker (${version}) activated...`);
-      \}:call bushels#backward_marker(1)
-" }}}
-" }}}
-
 " Witchcraft {{{
 " File {{{
 inoremap <buffer> <leader>wf // @include "./utils/addAttributes.js"
@@ -73,57 +45,10 @@ inoremap <buffer> <leader>wf // @include "./utils/addAttributes.js"
 " }}}
 " Button {{{
 inoremap <buffer> <leader>wb addAttributes({
-     \query: "<++>",
-     \  attributes: { role: "button" },
-     \});
-     \<++>:call bushels#backward_marker(2)
-" }}}
-" }}}
-
-" React {{{
-" Styled {{{
-inoremap <buffer> <leader>rs const <++> = styled.<++>`<++>`<++>:call bushels#backward_marker(4)
-"}}}
-" Component {{{
-inoremap <buffer> <leader>rc const <++> = () => {<++>}<++>:call bushels#backward_marker(3)
-"}}}
-" File {{{
-inoremap <buffer> <leader>rf import React from "react";
-      \const <++> = () => {
-      \return <++>;
-      \}
-      \export default <++>;:call bushels#backward_marker(3)
-"}}}
-"}}}
-
-" Router {{{
-" Endpoint {{{
-inoremap <buffer> <leader>re router.get("<++>", (req, res) => {
-      \<++>
-      \}):call bushels#backward_marker(2)
-" }}}
-" }}}
-
-" Reducer {{{
-" Reducer {{{
-inoremap <buffer> <leader>rr const reducer = (state, action) => {
-      \switch (action.type) {
-      \case <++>:
-      \return produce(state, draftState => {
-      \<++>
-      \})
-      \<++>
-      \default:
-      \return state
-      \}
-      \}:call bushels#backward_marker(3)
-" }}}
-" Action {{{
-inoremap <buffer> <leader>ra case <++>:
-      \return produce(state, draftState => {
-      \<++>
-      \})
-      \<++>:call bushels#backward_marker(3)
+      \query: "<++>",
+      \  attributes: { role: "button" },
+      \});
+      \<++>:call bushels#backward_marker(2)
 " }}}
 " }}}
 
@@ -152,6 +77,7 @@ inoremap <buffer> <leader>li console.info(<++>);
 inoremap <buffer> <leader>lb console.log({
       \file: "%",
       \line: =line("."),
+      \timestamp: Date.now(),
       \<++>
       \});:call bushels#backward_marker(1)
 " }}}
@@ -191,7 +117,7 @@ inoremap <buffer> <leader>rt return <++>;<++>:call bushels#backward_marker(2)
 "}}}
 "}}}
 
-" Set {{{
+" Set Timeout / Interval {{{
 " Timeout {{{
 inoremap <buffer> <leader>st setTimeout(() => {
       \<++>
@@ -203,30 +129,6 @@ inoremap <buffer> <leader>si setInterval(() => {
       \}, <++>):call bushels#backward_marker(2)
 " }}}
 " }}}
-
-" Hooks {{{
-" Specify {{{
-inoremap <buffer> <leader>hh const <++> = use<++>(<++>);<++>:call bushels#backward_marker(4)
-"}}}
-" State {{{
-inoremap <buffer> <leader>hs const [<++>, set<++>] = React.useState(<++>);<++>:call bushels#backward_marker(4)
-"}}}
-" Reducer {{{
-inoremap <buffer> <leader>hr const [{<++>}, dispatch] = React.useReducer(reducer, {<++>});<++>:call bushels#backward_marker(3)
-"}}}
-" Effect {{{
-inoremap <buffer> <leader>he React.useEffect(() => {<++>}, [<++>]);<++>:call bushels#backward_marker(3)
-"}}}
-" Layout {{{
-inoremap <buffer> <leader>hl React.useLayoutEffect(() => {<++>}, [<++>]);<++>:call bushels#backward_marker(3)
-"}}}
-" Callback {{{
-inoremap <buffer> <leader>hc const <++> = React.useCallback((<++>) => {<++>}, [<++>]);<++>:call bushels#backward_marker(5)
-"}}}
-" Memo {{{
-inoremap <buffer> <leader>hm const <++> = React.useMemo((<++>) => {<++>}, [<++>]);<++>:call bushels#backward_marker(5)
-"}}}
-"}}}
 
 " Test {{{
 " Before Each {{{
@@ -325,15 +227,15 @@ inoremap <buffer> <leader>csc case <++>:
 " For {{{
 " Each {{{
 inoremap <buffer> <leader>cfe for(let <++> of <++>) {
-  \<++>
-  \}
-  \<++>:call bushels#backward_marker(4)
+      \<++>
+      \}
+      \<++>:call bushels#backward_marker(4)
 "}}}
 " Index {{{
 inoremap <buffer> <leader>cfo for(let i = 0; i < <++>; i++) {
-  \<++>
-  \}
-  \<++>:call bushels#backward_marker(3)
+      \<++>
+      \}
+      \<++>:call bushels#backward_marker(3)
 "}}}
 "}}}
 "}}}

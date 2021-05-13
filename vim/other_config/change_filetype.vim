@@ -11,4 +11,6 @@ augroup ChangeFiletype
   autocmd BufRead gitconfig set filetype=gitconfig
   autocmd BufRead *.toml set filetype=toml
   autocmd BufRead Dockerfile* set filetype=dockerfile
+  autocmd BufRead serviceworker.ts set filetype=typescript.serviceworker
+  autocmd BufRead serviceworker.js set filetype=javascript.serviceworker
 augroup END
