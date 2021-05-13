@@ -42,6 +42,7 @@ alias "gl"="g l"
 alias "gf"="g f"
 alias "gp"="g p"
 alias "q"="exit"
+alias "v"="nvim"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 
 rm_swapfile() {
