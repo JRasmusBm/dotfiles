@@ -10,6 +10,8 @@ let g:coc_filetype_map = {
   \ 'typescriptreact.react': 'typescriptreact',
   \ 'javascript.react': 'javascript',
   \ 'javascriptreact.react': 'javascriptreact',
+  \ 'typescript.express.typescript_mocha': 'typescript',
+  \ 'markdown.scratchpad': 'markdown',
   \ }
 
 let g:coc_global_extensions=[
@@ -24,7 +26,8 @@ let g:coc_global_extensions=[
   \"coc-texlab",
   \"coc-tsserver",
   \"coc-eslint",
-  \"coc-rls"
+  \"coc-rls",
+  \"coc-emoji"
   \]
 
 autocmd FileType python let b:coc_root_patterns = ['.git', '.env']
