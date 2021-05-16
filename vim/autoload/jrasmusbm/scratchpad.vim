@@ -1,7 +1,12 @@
 function! jrasmusbm#scratchpad#exit() abort
-  let @+ = join(getline(1, '$'), "\n")
-  w! ~/.last-scratchpad
-  %d   
-  w! ~/.scratchpad
+  silent w!
+  silent !~/projects/pyautogui/.venv/bin/python ~/projects/pyautogui/paste-scratchpad.py
+  %d
+  silent w!
   qa!
+endfunction
+
+function! jrasmusbm#scratchpad#start() abort
+  set filetype=markdown.scratchpad
+  call feedkeys("GA")
 endfunction

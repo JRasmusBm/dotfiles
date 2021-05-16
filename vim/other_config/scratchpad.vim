@@ -1,5 +1,5 @@
 command! Scratchpad e ~/.scratchpad
 
 augroup Scratchpad
-  autocmd BufRead .scratchpad set filetype=markdown.scratchpad | startinsert
+  autocmd BufRead .scratchpad call jrasmusbm#scratchpad#start()
 augroup END
