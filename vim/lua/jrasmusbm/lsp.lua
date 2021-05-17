@@ -1,4 +1,5 @@
-local nvim_lsp = require('lspconfig')
+local lspconfig = require('lspconfig')
+
 local function on_attach(client, bufnr)
   local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
   local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
@@ -47,4 +48,4 @@ local function on_attach(client, bufnr)
   end
 end
 
-require'lspconfig'.tsserver.setup{ on_attach=on_attach }
+lspconfig.tsserver.setup{ on_attach=on_attach }
