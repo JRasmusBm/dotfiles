@@ -7,5 +7,3 @@ sign define LspDiagnosticsInformationSign text=i texthl=LspDiagnosticsInformatio
 sign define LspDiagnosticsHintSign text=※ texthl=LspDiagnosticsHint
 
 let g:lsp_diamove_disable_default_mapping=1
-
-lua require'nvim_lsp'.tsserver.setup{}
