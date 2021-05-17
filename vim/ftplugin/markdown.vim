@@ -12,5 +12,3 @@ nnoremap <buffer> j gj
 nnoremap <buffer> k gk
 
 source ~/.vim/snippets/markdown.vim
-
-call jrasmusbm#lsp#setup_maps()

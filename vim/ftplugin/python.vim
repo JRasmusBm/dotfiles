@@ -13,5 +13,3 @@ endfunction
 nnoremap <buffer> <leader>c :call RunFile()
 
 source ~/.vim/snippets/python.vim
-
-call jrasmusbm#lsp#setup_maps()

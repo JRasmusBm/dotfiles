@@ -5,5 +5,4 @@ source ~/.vim/snippets/html.vim
 source ~/.vim/snippets/graphql.vim
 source ~/.vim/snippets/javascript.vim
 
-call jrasmusbm#lsp#setup_maps()
 command! Lint cex system("npm run lint -- --format=unix") <Bar> copen
