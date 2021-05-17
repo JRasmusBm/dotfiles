@@ -33,3 +33,5 @@ as well as installing my most normal settings on a remote server.
 - [Luke Smith's Dotfiles](https://github.com/LukeSmithxyz/voidrice)
 - [Chris Toomey's Dotfiles](https://github.com/christoomey/dotfiles)
 - [Greg Hurrel's Dotfiles](https://github.com/wincent/wincent)
+- [TJ DeVries](https://github.com/tjdevries)
+- [ThePrimeagen](https://github.com/ThePrimeagen)
