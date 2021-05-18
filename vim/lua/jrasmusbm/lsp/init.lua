@@ -27,10 +27,10 @@ local function on_attach(client, bufnr)
 
   -- Set some keybinds conditional on server capabilities
   if client.resolved_capabilities.document_formatting then
-    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+    buf_set_keymap("n", "==", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
   end
   if client.resolved_capabilities.document_range_formatting then
-    buf_set_keymap("v", "<space>f", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
+    buf_set_keymap("v", "==", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
   end
 
   -- Set autocommands conditional on server_capabilities
@@ -48,4 +48,26 @@ local function on_attach(client, bufnr)
   end
 end
 
+local lua_language_server = vim.fn.stdpath("cache").."/../lua-language-server"
+lspconfig.sumneko_lua.setup{ on_attach=on_attach , cmd = {lua_language_server.."/bin/Linux/lua-language-server", "-E", lua_language_server.."/main.lua"};
+  settings = {
+    Lua = {
+      runtime = {
+        version = 'LuaJIT',
+        path = vim.split(package.path, ';'),
+      },
+      diagnostics = {
+        globals = {'vim'},
+      },
+      workspace = {
+        library = {
+          [vim.fn.expand('$VIMRUNTIME/lua')] = true,
+          [vim.fn.expand('$VIMRUNTIME/lua/vim/lsp')] = true,
+        },
+      },
+      telemetry = {
+        enable = false,
+      },
+    },
+},}
 lspconfig.tsserver.setup{ on_attach=on_attach }

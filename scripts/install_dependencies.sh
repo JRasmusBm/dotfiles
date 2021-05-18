@@ -229,6 +229,38 @@ load_nvim_plugins() {
 
 # --- Everything above this line is tested ---
 
+install_luarocks() {
+  wget https://luarocks.org/releases/luarocks-3.7.0.tar.gz
+  tar zxpf luarocks-3.7.0.tar.gz
+  cd luarocks-3.7.0
+  ./configure --with-lua-include=/usr/include/lua5.3 
+  make
+  sudo make install 
+  cd ..
+  rm -rf luarocks-3.7.0
+}
+
+install_lua_language_server() {
+  CURRENT_PATH=$(pwd)
+  cd ~/.cache/
+  git clone git@github.com:sumneko/lua-language-server.git
+  cd lua-language-server
+  git submodule update --init --recursive
+  cd 3rd/luamake
+  compile/install.sh
+  cd ../..
+  ./3rd/luamake/luamake rebuild
+  cd $CURRENT_PATH
+}
+
+install_lua() {
+  sudo apt install -y \
+    lua5.3 \
+    liblua5.3-dev
+ install_luarocks
+ install_lua_language_server
+}
+
 install_xmonad() {
   cabal install -z --lib --package-env=$HOME/.xmonad/ \
     xmonad \
