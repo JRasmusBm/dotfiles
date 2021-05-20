@@ -7,6 +7,18 @@ inoremap <buffer> <leader>bn ?^ *- :nohyy0}PWc$
 "}}}
 "}}}
 
+" Checkbox {{{
+" List {{{
+inoremap <buffer> <leader>cl - [ ] <++>
+      \S
+      \<++><<<<:call bushels#backward_marker(2)
+"}}}
+" Node {{{
+inoremap <buffer> <leader>cn ?^ *- [:nohyy0}P0f]d$a]<Space>
+"}}}
+"}}}
+
+
 " Numbered {{{
 " List {{{
 inoremap <buffer> <leader>nl 1.	<++>s<++><<:call bushels#backward_marker(2)
