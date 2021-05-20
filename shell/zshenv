@@ -43,6 +43,7 @@ alias "gf"="g f"
 alias "gp"="g p"
 alias "q"="exit"
 alias "v"="nvim"
+alias "$"=""
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
 alias "node_profile"="~/.cache/v8/v8/tools/linux-tick-processor"
 
