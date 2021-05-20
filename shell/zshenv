@@ -44,6 +44,7 @@ alias "gp"="g p"
 alias "q"="exit"
 alias "v"="nvim"
 alias "kill_db"="sudo pkill mariadb; sudo pkill mysql; sudo pkill postgres"
+alias "node_profile"="~/.cache/v8/v8/tools/linux-tick-processor"
 
 rm_swapfile() {
   sudo swapoff -v "$1"
