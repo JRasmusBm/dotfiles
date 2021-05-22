@@ -44,6 +44,7 @@ PATH=$PATH:$HOME/Android/Sdk/emulator
 PATH=$PATH:$HOME/Android/Sdk/tools/bin
 PATH=$PATH:$HOME/Android/Sdk/platform-tools
 PATH=$PATH:$HOME/.cache/depot_tools
+PATH=$PATH:$HOME/.dotnet
 export PATH=$PATH
 # }}}
 

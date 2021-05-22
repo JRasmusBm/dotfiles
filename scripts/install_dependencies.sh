@@ -229,6 +229,15 @@ load_nvim_plugins() {
 
 # --- Everything above this line is tested ---
 
+install_pyls() {
+  CURRENT=$(pwd)
+  curl -L https://dot.net/v1/dotnet-install.sh | bash
+  cd ~/.cache
+  git clone https://github.com/Microsoft/python-language-server.git
+  cd python-language-server/src/LanguageServer/Impl
+  dotnet build
+}
+
 install_luarocks() {
   wget https://luarocks.org/releases/luarocks-3.7.0.tar.gz
   tar zxpf luarocks-3.7.0.tar.gz
