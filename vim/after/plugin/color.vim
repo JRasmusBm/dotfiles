@@ -49,10 +49,21 @@ function! SpellingHighlights() abort
 endfunction
 
 function! LspHighlights() abort
-  highlight LspDiagnosticsError guifg=red guibg=NONE
-  highlight LspDiagnosticsWarning guifg=yellow guibg=NONE
-  highlight LspDiagnosticsInformation guifg=yellow guibg=NONE
-  highlight LspDiagnosticsHint guifg=yellow guibg=NONE
+  highlight LspDiagnosticsDefaultError guifg=red guibg=NONE
+  sign define LspDiagnosticsSignError text=✗ texthl=LspDiagnosticsSignError linehl= numhl=
+  highlight LspDiagnosticsSignError guifg=red guibg=NONE 
+
+  highlight LspDiagnosticsDefaultWarning guifg=yellow guibg=NONE
+  sign define LspDiagnosticsSignWarning text=⚠ texthl=LspDiagnosticsSignWarning linehl= numhl=
+  highlight LspDiagnosticsSignWarning guifg=yellow guibg=NONE 
+
+  highlight LspDiagnosticsDefaultInformation guifg=yellow guibg=NONE
+  sign define LspDiagnosticsSignInformation text=i texthl=LspDiagnosticsSignInformation linehl= numhl=
+  highlight LspDiagnosticsSignInformation guifg=white guibg=NONE 
+
+  highlight LspDiagnosticsDefaultHint guifg=yellow guibg=NONE
+  sign define LspDiagnosticsSignHint text=☼ texthl=LspDiagnosticsSignHint linehl= numhl=
+  highlight LspDiagnosticsSignHint guifg=white guibg=NONE 
 endfunction
 
 function! ColorCodeHighlights() abort
