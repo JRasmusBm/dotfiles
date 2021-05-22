@@ -4,7 +4,7 @@ set showcmd
 set noemoji
 set list
 set listchars=tab:>-
-set signcolumn=yes
+set signcolumn=auto
 set ruler
 set laststatus=2
 set wrap
