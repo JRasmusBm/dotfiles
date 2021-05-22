@@ -278,3 +278,6 @@
   path = vim/pack/bundle/nvim-lsp-diamove
   url = https://github.com/weilbith/nvim-lsp-diamove
   ignore = dirty
+[submodule "vim-emoji"]
+  path = vim/pack/bundle/opt/vim-emoji
+  url = git@github.com:junegunn/vim-emoji.git
