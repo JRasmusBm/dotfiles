@@ -1,34 +1,24 @@
 local M = {}
 
+function M.format()
+  local contents = vim.fn.join(vim.fn.getline(1, '$'), "\n")
+  print(contents)
+end
+
 function M.setup(options)
-  require'lspconfig'.pyls_ms.setup{
-    on_attach=options.on_attach,
-    cmd = {
-      "dotnet",
-      "exec",
-      "~/.cache/python-language-server/output/bin/Debug/Microsoft.Python.LanguageServer.dll"
-    },
-    filetypes = { "python" },
-    init_options = {
-      analysisUpdates = true,
-      asyncStartup = true,
-      displayOptions = {},
-      interpreter = {
-        properties = {
-          InterpreterPath = "",
-          Version = ""
-        },
-      },
-    },
-    settings = {
-      python = {
-        analysis = {
-          disabled = {},
-          errors = {},
-          info = {},
-        },
-      },
-    },
+  require'lspconfig'.pyright.setup{
+    on_attach=function (client, bufnr)
+      options.on_attach(client)
+
+      if client.resolved_capabilities.document_formatting then
+        vim.api.nvim_buf_set_keymap(bufnr,
+          "n",
+          "==",
+          "<cmd>lua require(\"jrasmusbm.lsp.python\").format()<CR>",
+          { noremap=true, silent=true }
+          )
+      end
+    end,
   }
 end
 
