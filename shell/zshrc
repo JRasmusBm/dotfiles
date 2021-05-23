@@ -106,12 +106,9 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 export WORKON_HOME=$HOME/.virtualenvs
 export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
 
-if [ -f /usr/share/virtualenvwrapper/virtualenvwrapper.sh ]
+if [ -f $HOME/.local/bin/virtualenvwrapper.sh ]
 then 
-  source /usr/share/virtualenvwrapper/virtualenvwrapper.sh
-elif [ -f /usr/local/bin/virtualenvwrapper.sh ]
-then
-  source /usr/local/bin/virtualenvwrapper.sh
+  source $HOME/.local/bin/virtualenvwrapper.sh
 fi
 
 export WORKON_HOME=$HOME/.virtualenvs

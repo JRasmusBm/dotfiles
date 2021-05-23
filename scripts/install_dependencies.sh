@@ -55,17 +55,12 @@ install_python_39() {
   sudo apt install -y python3.9
 }
 
-
 install_virtualenvwrapper() {
   export WORKON_HOME=$HOME/.virtualenvs
   export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
   python3.7 -m pip install --user virtualenv
   python3.7 -m pip install --user virtualenvwrapper
-  if test -f /usr/local/bin/virtualenvwrapper.sh; then
-    source "/usr/local/bin/virtualenvwrapper.sh"
-  else
-    source "$HOME/.local/bin/virtualenvwrapper.sh"
-  fi
+  source "$HOME/.local/bin/virtualenvwrapper.sh"
 }
 
 install_ruby() {
@@ -196,6 +191,10 @@ install_ripgrep() {
 }
 
 setup_neovim_vm() {
+  if ! command -v mkvirtualenv
+  then
+    install_virtualenvwrapper
+  fi
   if command -v python2
   then
     mkvirtualenv -p $(which python2) neovim2
@@ -218,6 +217,10 @@ setup_neovim_vm() {
     pip install grip
     pip install flake8
     pip install black
+    pip install python-language-server
+    pip install pyls-black
+    pip install pyls-mypy
+    pip install pyls-isort
     deactivate
   fi
 }
@@ -228,15 +231,6 @@ load_nvim_plugins() {
 }
 
 # --- Everything above this line is tested ---
-
-install_pyls() {
-  CURRENT=$(pwd)
-  curl -L https://dot.net/v1/dotnet-install.sh | bash
-  cd ~/.cache
-  git clone https://github.com/Microsoft/python-language-server.git
-  cd python-language-server/src/LanguageServer/Impl
-  dotnet build
-}
 
 install_luarocks() {
   wget https://luarocks.org/releases/luarocks-3.7.0.tar.gz
