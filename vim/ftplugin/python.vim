@@ -11,5 +11,6 @@ function! RunFile() abort
 endfunction
 
 nnoremap <buffer> <leader>c :call RunFile()
+nnoremap <silent> <buffer> == :lua require("jrasmusbm.lsp.python").format()
 
 source ~/.vim/snippets/python.vim
