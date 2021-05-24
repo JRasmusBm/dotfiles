@@ -11,3 +11,11 @@ inoremap <buffer> <leader>fd function <++>(<++>)
 inoremap <buffer> <leader>lb print(<++>):call bushels#backward_marker(1)
 " }}}
 " }}}
+
+" Control Statement {{{
+" If {{{
+inoremap <buffer> <leader>ci if <++> then
+      \<++>
+      \end:call bushels#backward_marker(2)
+" }}}
+" }}}
