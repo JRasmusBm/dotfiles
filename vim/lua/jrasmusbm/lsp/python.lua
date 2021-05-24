@@ -24,14 +24,12 @@ function M.setup(options)
     on_attach=function (client, bufnr)
       options.on_attach(client)
 
-      if client.resolved_capabilities.document_formatting then
-        vim.api.nvim_buf_set_keymap(bufnr,
-          "n",
-          "==",
-          "<cmd>lua require(\"jrasmusbm.lsp.python\").format()<CR>",
-          { noremap=true, silent=true }
-          )
-      end
+      vim.api.nvim_buf_set_keymap(bufnr,
+        "n",
+        "==",
+        "<cmd>lua require(\"jrasmusbm.lsp.python\").format()<CR>",
+        { noremap=true, silent=true }
+        )
     end,
     settings={
       python = {
