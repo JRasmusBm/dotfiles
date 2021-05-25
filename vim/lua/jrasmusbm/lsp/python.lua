@@ -2,6 +2,7 @@ local M = {}
 
 function M.format()
   local contents = vim.fn.join(vim.fn.getline(1, '$'), "\n")
+  local current_position = vim.fn.getpos(".")
   local pyproject_path = vim.fn.getcwd() .. "/pyproject.toml"
   local command = { "black", "-c", contents }
   if vim.fn.filereadable(pyproject_path) ~= 0 then
@@ -10,6 +11,7 @@ function M.format()
   local formatted = vim.fn.systemlist(command)
   vim.fn.deletebufline("%", 1, "$")
   vim.fn.setline(1, formatted)
+  vim.fn.setpos(".", current_position)
 end
 
 function M.setup(options)
