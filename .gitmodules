@@ -281,6 +281,15 @@
 [submodule "vim-emoji"]
   path = vim/pack/bundle/opt/vim-emoji
   url = git@github.com:junegunn/vim-emoji.git
+  ignore = dirty
 [submodule "nvim-compe"]
   path = vim/pack/bundle/opt/nvim-compe
   url = git@github.com:hrsh7th/nvim-compe.git
+  ignore = dirty
+[submodule "nvim-treesitter"]
+  path = vim/pack/bundle/opt/nvim-treesitter
+  url = git@github.com:nvim-treesitter/nvim-treesitter.git
+  ignore = dirty
+[submodule "vim/pack/bundle/opt/melange"]
+	path = vim/pack/bundle/opt/melange
+	url = git@github.com:savq/melange.git
