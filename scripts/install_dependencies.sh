@@ -243,11 +243,6 @@ install_luarocks() {
   rm -rf luarocks-3.7.0
 }
 
-install_markdown_language_server() {
- wget -O ~/.local/bin/zeta-note https://github.com/artempyanykh/zeta-note/releases/download/2021-04-05/zeta-note-linux
- chmod +x ~/.local/bin/zeta-note
-}
-
 install_lua_language_server() {
   CURRENT_PATH=$(pwd)
   cd ~/.cache/
