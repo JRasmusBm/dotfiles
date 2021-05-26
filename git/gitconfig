@@ -54,6 +54,8 @@
   s = log --oneline --decorate --graph --all
   sl = log --oneline --decorate -20
   st = status
+  sua = submodule add
+  suu = submodule update --init --recursive
   td = tag -d
   wip = !git add --all && git commit -m "WIP"
 [color]
