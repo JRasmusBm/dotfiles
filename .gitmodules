@@ -281,3 +281,6 @@
 [submodule "vim-emoji"]
   path = vim/pack/bundle/opt/vim-emoji
   url = git@github.com:junegunn/vim-emoji.git
+[submodule "nvim-compe"]
+  path = vim/pack/bundle/opt/nvim-compe
+  url = git@github.com:hrsh7th/nvim-compe.git
