@@ -6,6 +6,14 @@ inoremap <buffer> <leader>fd function <++>(<++>)
 "}}}
 "}}}
 
+" Lua {{{
+" File {{{
+inoremap <buffer> <leader>lf local M = {}
+      \<++>
+      \return M:call bushels#backward_marker(1)
+" }}}
+" }}}
+
 " Log {{{
 " Breakpoint {{{
 inoremap <buffer> <leader>lb print(
