@@ -8,7 +8,13 @@ inoremap <buffer> <leader>fd function <++>(<++>)
 
 " Log {{{
 " Breakpoint {{{
-inoremap <buffer> <leader>lb print(<++>):call bushels#backward_marker(1)
+inoremap <buffer> <leader>lb print(
+      \vim.inspect({
+      \file = "%",
+      \line = =line("."),
+      \<++>,
+      \})
+      \):call bushels#backward_marker(1)
 " }}}
 " }}}
 
