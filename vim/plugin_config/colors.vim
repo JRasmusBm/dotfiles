@@ -1,3 +1,3 @@
-packadd! base16-vim
+packadd! melange
 packadd! nvim-colorizer.lua
 packadd! pinnacle

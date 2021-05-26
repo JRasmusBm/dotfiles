@@ -1,7 +1,7 @@
 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[40;2;%lu;%lu;%lum"
 
-color base16-ia-dark
+colorscheme melange
 
 function! CustomMarkers() abort
   highlight SnippetMarker guifg=yellow guibg=NONE

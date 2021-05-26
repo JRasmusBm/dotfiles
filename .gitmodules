@@ -290,6 +290,3 @@
   path = vim/pack/bundle/opt/nvim-treesitter
   url = git@github.com:nvim-treesitter/nvim-treesitter.git
   ignore = dirty
-[submodule "vim/pack/bundle/opt/melange"]
-	path = vim/pack/bundle/opt/melange
-	url = git@github.com:savq/melange.git
