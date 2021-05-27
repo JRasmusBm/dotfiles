@@ -84,3 +84,5 @@ call LspHighlights()
 call ColorCodeHighlights()
 call CustomMarkers()
 call RulerHighlights()
+
+lua require("jrasmusbm.statusline").setup()
