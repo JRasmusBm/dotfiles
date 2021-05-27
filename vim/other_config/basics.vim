@@ -10,7 +10,7 @@ set modelines=0
 set viewoptions=cursor,folds,slash,unix
 set hlsearch
 set shortmess=a
-set cmdheight=2
+set cmdheight=1
 set showmatch
 set ignorecase
 set smartcase
