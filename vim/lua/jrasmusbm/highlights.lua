@@ -7,6 +7,7 @@ M.set_highlight = function(group, options)
 
   local command = string.format('hi %s %s %s %s', group, bg, fg, gui)
 
+  -- vim.fn["gruvbox_material#highlight"](group, options.fg, options.bg)
   vim.api.nvim_exec(command, false)
 end
 

@@ -1,7 +1,8 @@
 let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
 let &t_8b = "\<Esc>[40;2;%lu;%lu;%lum"
 
-colorscheme melange
+let g:gruvbox_material_palette = 'material'
+colorscheme gruvbox-material
 
 function! CustomMarkers() abort
   highlight SnippetMarker guifg=yellow guibg=NONE
@@ -11,8 +12,8 @@ function! CustomMarkers() abort
 endfunction
 
 function! RulerHighlights() abort
-  highlight CursorColumn guibg=#303000
-  highlight CursorLine guibg=#303000
+  highlight CursorColumn guibg=#3a3a00
+  highlight CursorLine guibg=#3a3a00
 endfunction
 
 function! RespectAlacrittyColorscheme() abort

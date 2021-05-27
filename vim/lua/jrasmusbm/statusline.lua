@@ -3,8 +3,8 @@ local M = {}
 local utils = require("jrasmusbm.utils")
 
 local highlights = {
-  default = { "StatusLineDefault", { fg= "#ffffff", bg= "#303030"}},
-  git_branch = { "StatusLineGitBranch", { fg= "#33dd33", bg= "#303030"} },
+  default = { "StatusLineDefault", { fg= "fg0", bg= "bg1"}},
+  git_branch = { "StatusLineGitBranch", { fg="green", bg= "bg1"} },
 }
 
 local function hl_identifier(group)
