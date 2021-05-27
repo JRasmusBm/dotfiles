@@ -1,4 +1,4 @@
-let s:isVisible = 0
+let s:isVisible = 1
 
 function! jrasmusbm#ruler#toggle() abort
   if s:isVisible == 1
@@ -11,9 +11,9 @@ endfunction
 
 function! jrasmusbm#ruler#source() abort
   if s:isVisible == 1
-    call jrasmusbm#ruler#off()
-  else
     call jrasmusbm#ruler#on()
+  else
+    call jrasmusbm#ruler#off()
   endif
 endfunction
 
