@@ -4,7 +4,8 @@ local utils = require("jrasmusbm.utils")
 
 local highlights = {
   default = { "StatusLineDefault", { fg= "fg0", bg= "bg1"}},
-  git_branch = { "StatusLineGitBranch", { fg="green", bg= "bg1"} },
+  git_branch = { "StatusLineGitBranch", { fg="lightgreen", bg= "bg1"} },
+  modified = { "StatusLineModified", { fg="orange", bg= "bg1"} },
 }
 
 local function hl_identifier(group)
@@ -15,31 +16,14 @@ M.setup = function ()
   require("jrasmusbm.highlights").set_highlights(highlights)
 end
 
-local function lsp_status()
-  local warnings = vim.lsp.diagnostic.get_count(0, "Warning")
-  local errors = vim.lsp.diagnostic.get_count(0, "Error")
-  local info = vim.lsp.diagnostic.get_count(0, "Info")
-  local hints = vim.lsp.diagnostic.get_count(0, "Hint")
+local function lsp_diagnostic_count(options)
+  local count = vim.lsp.diagnostic.get_count(0, options.severity)
 
-  local result = ""
-
-  if errors ~= 0 then
-    result = result .. errors .. " ✗  "
+  if count == 0 then
+    return ""
   end
 
-  if warnings ~= 0 then
-    result = result .. warnings .. " ⚠  "
-  end
-
-  if info ~= 0 then
-    result = result .. info .. " i  "
-  end
-
-  if hints ~= 0 then
-    result = result .. hints .. " ☼  "
-  end
-
-  return result
+  return count .. utils.space(1) .. options.symbol .. utils.space(2)
 end
 
 local function cursor_position()
@@ -84,9 +68,12 @@ M.activeStatusLine = function ()
   .. utils.space(1)
   .. item_group{ value=vim.fn.bufname("%"), min_size=0, max_size=60 }
   .. utils.space(1)
-  .. item_group{ value=modified_flag(), min_size=4, max_size=4 }
+  .. item_group{ value=modified_flag(), min_size=4, max_size=4, highlight=highlights.modified }
   .. even_split
-  .. item_group{ value=lsp_status(), min_size=20, max_size=20 }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Error", symbol = "✗" }, min_size=0, max_size=8, highlight={ "LspDiagnosticsSignError" } }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Warning", symbol = "⚠" }, min_size=0, max_size=8, highlight={ "LspDiagnosticsSignWarning" } }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Information", symbol = "i" }, min_size=0, max_size=8, highlight={ "LspDiagnosticsSignInformation" } }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Hint", symbol = "☼" }, min_size=0, max_size=8, highlight={ "LspDiagnosticsSignHint" } }
   .. item_group{ value=cursor_position(), min_size=4, max_size=20 }
 end
 
@@ -100,7 +87,10 @@ M.inactiveStatusLine = function ()
   .. utils.space(1)
   .. item_group{ value=modified_flag(), min_size=4, max_size=4 }
   .. even_split
-  .. item_group{ value=lsp_status(), min_size=10, max_size=20 }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Error", symbol = "✗" }, min_size=0, max_size=8 }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Warning", symbol = "⚠" }, min_size=0, max_size=8 }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Information", symbol = "i" }, min_size=0, max_size=8 }
+  .. item_group{ value=lsp_diagnostic_count{ severity="Hint", symbol = "☼" }, min_size=0, max_size=8 }
   .. utils.space(10)
 end
 

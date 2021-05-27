@@ -50,21 +50,21 @@ function! SpellingHighlights() abort
 endfunction
 
 function! LspHighlights() abort
-  highlight LspDiagnosticsDefaultError guifg=red guibg=NONE
+  highlight LspDiagnosticsDefaultError guifg=red
   sign define LspDiagnosticsSignError text=✗ texthl=LspDiagnosticsSignError linehl= numhl=
-  highlight LspDiagnosticsSignError guifg=red guibg=NONE 
+  highlight LspDiagnosticsSignError guifg=red
 
-  highlight LspDiagnosticsDefaultWarning guifg=yellow guibg=NONE
+  highlight LspDiagnosticsDefaultWarning guifg=yellow
   sign define LspDiagnosticsSignWarning text=⚠ texthl=LspDiagnosticsSignWarning linehl= numhl=
-  highlight LspDiagnosticsSignWarning guifg=yellow guibg=NONE 
+  highlight LspDiagnosticsSignWarning guifg=yellow
 
-  highlight LspDiagnosticsDefaultInformation guifg=yellow guibg=NONE
+  highlight LspDiagnosticsDefaultInformation guifg=yellow
   sign define LspDiagnosticsSignInformation text=i texthl=LspDiagnosticsSignInformation linehl= numhl=
-  highlight LspDiagnosticsSignInformation guifg=white guibg=NONE 
+  highlight LspDiagnosticsSignInformation guifg=fg0
 
-  highlight LspDiagnosticsDefaultHint guifg=yellow guibg=NONE
+  highlight LspDiagnosticsDefaultHint guifg=yellow
   sign define LspDiagnosticsSignHint text=☼ texthl=LspDiagnosticsSignHint linehl= numhl=
-  highlight LspDiagnosticsSignHint guifg=white guibg=NONE 
+  highlight LspDiagnosticsSignHint guifg=fg0
 endfunction
 
 function! ColorCodeHighlights() abort
@@ -74,6 +74,8 @@ endfunction
 function! CommentHighlights() abort
   execute 'highlight Comment ' . pinnacle#italicize('Comment')
 endfunction
+
+lua require("jrasmusbm.statusline").setup()
 
 call RespectAlacrittyColorscheme()
 call DiffHighlights()
@@ -85,5 +87,3 @@ call LspHighlights()
 call ColorCodeHighlights()
 call CustomMarkers()
 call RulerHighlights()
-
-lua require("jrasmusbm.statusline").setup()
