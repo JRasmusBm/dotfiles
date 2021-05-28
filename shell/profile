@@ -25,3 +25,4 @@ export D8_PATH=$HOME/.cache/v8/v8/out/x64.release/
 
 xmodmap -e "keysym Caps_Lock = Escape"
 xmodmap -e "clear lock"
+xset r rate 150 25
