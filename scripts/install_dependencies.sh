@@ -232,6 +232,10 @@ load_nvim_plugins() {
 
 # --- Everything above this line is tested ---
 
+install_lynx() {
+  sudo apt-get install -y lynx
+}
+
 install_luarocks() {
   wget https://luarocks.org/releases/luarocks-3.7.0.tar.gz
   tar zxpf luarocks-3.7.0.tar.gz
