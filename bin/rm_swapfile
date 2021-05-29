@@ -1,0 +1,5 @@
+#!/bin/sh
+
+swapoff -v "$1"
+sed -i "\%$1%d" /etc/fstab 
+rm "$1"

@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if command -v emulate &> /dev/null;
+then
+  emulate -L zsh
+fi
+
+# Make sure even pre-existing tmux sessions use the latest SSH_AUTH_SOCK.
+# (Inspired by: https://gist.github.com/lann/6771001)
+local SOCK_SYMLINK=~/.ssh/ssh_auth_sock
+if [ -r "$SSH_AUTH_SOCK" -a ! -L "$SSH_AUTH_SOCK" ]; then
+  ln -sf "$SSH_AUTH_SOCK" $SOCK_SYMLINK
+fi
+
+# If provided with args, pass them through.
+if [[ -n "$@" ]]; then
+  env SSH_AUTH_SOCK=$SOCK_SYMLINK tmux "$@"
+else
+  INITIATED_EXTERNALLY=false source_tmux_script "$(pwd)/.tmux"
+fi

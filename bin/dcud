@@ -1,0 +1,4 @@
+#!/bin/sh
+
+dcdd
+docker-compose -f docker-compose-dev.y*ml up --build $@

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source ~/.tmux-default

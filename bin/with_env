@@ -1,0 +1,5 @@
+#!/bin/sh
+
+file="$1";
+shift;
+env "$(grep -v '^#' "$file" | xargs -0)" "$@"

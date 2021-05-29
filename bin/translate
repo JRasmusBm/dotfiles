@@ -1,0 +1,6 @@
+#!/bin/sh
+
+directory=$(pwd)
+cd ~/projects/wikipedia-translator/cli
+pipenv run python wikipedia-translator.py "$1" "$2"
+cd "$directory"

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+fallocate -l 1G "$1"
+chmod 600 "$1"
+mkswap "$1"
+swapon "$1"
+echo "$1" swap swap defaults 0 0 | sudo tee -a /etc/fstab

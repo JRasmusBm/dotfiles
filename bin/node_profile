@@ -1,0 +1,3 @@
+#!/bin/sh
+
+~/.cache/v8/v8/tools/linux-tick-processor
