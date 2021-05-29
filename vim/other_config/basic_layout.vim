@@ -7,6 +7,7 @@ set listchars=tab:>-
 set signcolumn=auto
 set ruler
 set laststatus=2
+set cmdheight=2
 set wrap
 set textwidth=79
 set colorcolumn=+1
