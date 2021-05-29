@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/zsh
 
 if command -v emulate &> /dev/null;
 then

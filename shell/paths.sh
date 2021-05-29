@@ -15,7 +15,6 @@ PATH=$PATH:$HOME/.cargo/bin
 PATH=$PATH:$HOME/.cabal/bin
 PATH=$PATH:$HOME/.ghcup/bin
 PATH=$PATH:$HOME/.deno/bin
-PATH=$PATH:$HOME/.bin
 PATH=$PATH:$HOME/.local/bin
 PATH=$PATH:$HOME/Android/Sdk/tools
 PATH=$PATH:$HOME/Android/Sdk/emulator
@@ -24,5 +23,6 @@ PATH=$PATH:$HOME/Android/Sdk/platform-tools
 PATH=$PATH:$HOME/.cache/depot_tools
 PATH=$PATH:$HOME/.dotnet
 PATH=$PATH:$HOME/.fzf/bin
+PATH=$PATH:$HOME/.bin
 
 export PATH=$PATH
