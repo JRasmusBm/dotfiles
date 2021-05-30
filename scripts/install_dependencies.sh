@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 update_system() {
   sudo apt-get -y update
@@ -236,6 +236,10 @@ install_lynx() {
   sudo apt-get install -y lynx
 }
 
+install_htop() {
+  sudo snap install htop
+}
+
 install_luarocks() {
   wget https://luarocks.org/releases/luarocks-3.7.0.tar.gz
   tar zxpf luarocks-3.7.0.tar.gz
@@ -324,7 +328,7 @@ install_haskell() {
   curl -sSL https://get.haskellstack.org/ | sh
 }
 
-function install_sshd() {
+install_sshd() {
   sudo apt install -y openssh-server
 }
 
