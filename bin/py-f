@@ -1,0 +1,140 @@
+#!/bin/python3
+import string
+from pprint import pprint
+import sys
+import ast
+
+
+from argparse import ArgumentParser
+
+
+parser = ArgumentParser(description="Extract Function")
+parser.add_argument("name", default="<++>")
+args = parser.parse_args()
+raw_input = [line for line in sys.stdin]
+
+
+built_ins = {
+    "abs": True,
+    "delattr": True,
+    "hash": True,
+    "memoryview": True,
+    "set": True,
+    "all": True,
+    "dict": True,
+    "help": True,
+    "min": True,
+    "setattr": True,
+    "any": True,
+    "dir": True,
+    "hex": True,
+    "next": True,
+    "slice": True,
+    "ascii": True,
+    "divmod": True,
+    "id": True,
+    "object": True,
+    "sorted": True,
+    "bin": True,
+    "enumerate": True,
+    "input": True,
+    "oct": True,
+    "staticmethod": True,
+    "bool": True,
+    "eval": True,
+    "int": True,
+    "open": True,
+    "str": True,
+    "breakpoint": True,
+    "exec": True,
+    "isinstance": True,
+    "ord": True,
+    "sum": True,
+    "bytearray": True,
+    "filter": True,
+    "issubclass": True,
+    "pow": True,
+    "super": True,
+    "bytes": True,
+    "float": True,
+    "iter": True,
+    "print": True,
+    "tuple": True,
+    "callable": True,
+    "format": True,
+    "len": True,
+    "property": True,
+    "type": True,
+    "chr": True,
+    "frozenset": True,
+    "list": True,
+    "range": True,
+    "vars": True,
+    "classmethod": True,
+    "getattr": True,
+    "locals": True,
+    "repr": True,
+    "zip": True,
+    "compile": True,
+    "globals": True,
+    "map": True,
+    "reversed": True,
+    "__import__": True,
+    "complex": True,
+    "hasattr": True,
+    "max": True,
+    "round": True,
+}
+
+
+def get_leading_spaces(string_: str):
+    return len(string_) - len(string_.lstrip())
+
+
+leading_spaces = get_leading_spaces(raw_input[0])
+
+
+def extract_parameters(ast_node):
+    assignments = dict(**built_ins)
+    parameters = set()
+
+    for node in ast.walk(ast_node):
+        if type(node) == ast.Name and type(node.ctx) == ast.Store:
+            assignments[node.id] = True
+
+    for node in ast.walk(ast_node):
+        if (
+            type(node) == ast.Name
+            and type(node.ctx) == ast.Load
+            and node.id not in assignments
+        ):
+            parameters.add(node.id)
+
+    return list(parameters)
+
+
+source ="\n".join(line.strip() for line in raw_input)
+ast_node = ast.parse(source)
+
+last_node =ast_node.body[-1]
+is_assignment = type(last_node) == ast.Assign
+assignment = ""
+
+if is_assignment:
+    assignment = ", ".join([ast.get_source_segment(source, target) or "" for target in last_node.targets]) + " = "
+    raw_input[-1:] = [f"{line}\n" for line in f"return {ast.get_source_segment(source, last_node.value)}".split("\n")]
+
+statement_lines = ((leading_spaces + 4) * " ").join(raw_input)
+parameters = ", ".join(extract_parameters(ast_node))
+arguments = ", ".join(
+    f"{parameter}={parameter}" for parameter in parameters.split(", ")
+)
+
+function_code = f"""
+{leading_spaces * " "}def {args.name}({parameters}):
+    {statement_lines}
+{leading_spaces * " "}{assignment}{args.name}({arguments})
+"""
+
+print(function_code)
+
