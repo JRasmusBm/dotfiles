@@ -49,6 +49,10 @@ nnoremap <leader>eb <cmd>lua require('telescope.builtin').find_files({
   \   prompt_title = "Filetype Config Files",
   \   cwd = "~/dotfiles/bin"
   \ })
+nnoremap <leader>ei <cmd>lua require('telescope.builtin').find_files({
+  \   prompt_title = "Filetype Config Files",
+  \   cwd = "~/dotfiles/install_dependencies"
+  \ })
 nnoremap <leader>ef <cmd>lua require('telescope.builtin').find_files({
   \   prompt_title = "Filetype Config Files",
   \   cwd = "~/.vim/ftplugin/"
