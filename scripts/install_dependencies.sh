@@ -1,45 +1,5 @@
 #!/bin/sh
 
-install_python_37() {
-  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
-    build-essential \
-    bzip2  \
-    checkinstall \
-    libbz2-dev  \
-    libc6-dev \
-    libffi-dev \
-    libgdbm-compat-dev  \
-    libgdbm-dev  \
-    liblzma-dev  \
-    libncursesw5-dev  \
-    libreadline-dev  \
-    libsqlite3-dev  \
-    libssl-dev  \
-    openssl  \
-    sqlite3  \
-    tk-dev \
-    uuid-dev \
-    wget \
-    gcc \
-    cmake \
-    make \
-    zlib1g-dev
-
-  export LD_LIBRARY_PATH=/lib:/usr/lib:/usr/local/lib
-  current=$(pwd)
-  sudo rm -rf /tmp/Python37
-  mkdir -p /tmp/Python37
-  cd /tmp/Python37
-
-  wget https://www.python.org/ftp/python/3.7.8/Python-3.7.8.tgz
-  tar zxvf Python-3.7.8.tgz
-  cd /tmp/Python37/Python-3.7.8
-  ./configure --enable-shared
-  sudo make altinstall
-  cd $current
-  sudo rm -rf /tmp/Python37
-}
-
 install_python_39() {
   sudo add-apt-repository -y ppa:deadsnakes/ppa
   sudo apt update 
