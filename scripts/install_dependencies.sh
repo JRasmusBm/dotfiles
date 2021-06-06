@@ -1,11 +1,5 @@
 #!/bin/sh
 
-install_python_39() {
-  sudo add-apt-repository -y ppa:deadsnakes/ppa
-  sudo apt update 
-  sudo apt install -y python3.9
-}
-
 install_virtualenvwrapper() {
   export WORKON_HOME=$HOME/.virtualenvs
   export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
