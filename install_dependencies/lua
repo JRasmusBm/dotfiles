@@ -1,0 +1,11 @@
+#!/bin/sh
+
+install_lua() {
+  sudo apt install -y \
+    lua5.3 \
+    liblua5.3-dev
+ install_luarocks
+ install_lua_language_server
+}
+
+install_lua

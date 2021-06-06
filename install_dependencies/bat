@@ -1,0 +1,9 @@
+#!/bin/sh
+
+install_bat() {
+  sudo apt-get install bat
+  mkdir -p ~/.local/bin
+  ln -s /usr/bin/batcat ~/.local/bin/bat
+}
+
+install_bat

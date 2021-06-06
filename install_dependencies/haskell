@@ -1,0 +1,7 @@
+#!/bin/sh
+
+install_haskell() {
+  curl -sSL https://get.haskellstack.org/ | sh
+}
+
+install_haskell

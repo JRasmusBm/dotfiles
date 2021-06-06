@@ -1,0 +1,9 @@
+#!/bin/sh
+
+uninstall_unnecessary_stuff() {
+  sudo apt-get purge -y thunderbird
+  sudo apt-get purge -y rhythmbox
+  sudo apt-get purge -y ubuntu-web-launchers
+}
+
+uninstall_unnecessary_stuff

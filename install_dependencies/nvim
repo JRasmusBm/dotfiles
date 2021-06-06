@@ -1,0 +1,27 @@
+#!/bin/sh
+
+install_nvim() {
+  current=$(pwd)
+  sudo apt-get install -y \
+    build-essential \
+    make \
+    cmake \
+    cmake-data \
+    pkg-config \
+    libtool-bin \
+    automake \
+    curl \
+    gettext \
+    zip
+  rm -rf /tmp/nvim
+  git clone git@github.com:neovim/neovim.git /tmp/nvim
+  cd /tmp/nvim
+  git checkout 4be0e92db
+  sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
+  sudo make install
+  cd $current
+  sudo rm -rf /tmp/nvim
+  setup_neovim_vm
+}
+
+install_nvim

@@ -1,0 +1,7 @@
+#!/bin/sh
+
+install_htop() {
+  sudo snap install htop
+}
+
+install_htop

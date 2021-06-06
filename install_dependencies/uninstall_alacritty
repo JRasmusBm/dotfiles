@@ -1,0 +1,7 @@
+#!/bin/sh
+
+uninstall_alacritty() {
+  sudo dpkg --remove alacritty
+}
+
+uninstall_alacritty

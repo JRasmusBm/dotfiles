@@ -1,0 +1,12 @@
+#!/bin/sh
+
+install_zsh() {
+  sudo apt-get update
+  sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
+    zsh \
+    fonts-powerline
+  mkdir -p ~/.zsh
+  curl -L git.io/antigen > ~/.zsh/antigen.zsh
+}
+
+install_zsh

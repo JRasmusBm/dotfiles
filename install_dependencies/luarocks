@@ -1,0 +1,14 @@
+#!/bin/sh
+
+install_luarocks() {
+  wget https://luarocks.org/releases/luarocks-3.7.0.tar.gz
+  tar zxpf luarocks-3.7.0.tar.gz
+  cd luarocks-3.7.0
+  ./configure --with-lua-include=/usr/include/lua5.3 
+  make
+  sudo make install 
+  cd ..
+  rm -rf luarocks-3.7.0
+}
+
+install_luarocks

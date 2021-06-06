@@ -1,0 +1,7 @@
+#!/bin/sh
+
+install_screenkey() {
+  sudo snap install --beta screenkey
+}
+
+install_screenkey

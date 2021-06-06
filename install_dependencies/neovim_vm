@@ -1,0 +1,38 @@
+#!/bin/sh
+
+setup_neovim_vm() {
+  if ! command -v mkvirtualenv
+  then
+    install_virtualenvwrapper
+  fi
+  if command -v python2
+  then
+    mkvirtualenv -p $(which python2) neovim2
+    workon neovim2
+    pip install pynvim
+    pip install yapf
+    pip install grip
+    pip install notedown
+    pip install flake8
+    pip install black
+    deactivate
+  fi
+  if command -v python3
+  then
+    mkvirtualenv -p $(which python3) neovim3
+    workon neovim3
+    pip install pynvim
+    pip install notedown
+    pip install yapf
+    pip install grip
+    pip install flake8
+    pip install black
+    pip install python-language-server
+    pip install pyls-black
+    pip install pyls-mypy
+    pip install pyls-isort
+    deactivate
+  fi
+}
+
+setup_neovim_vm

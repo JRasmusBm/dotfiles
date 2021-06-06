@@ -1,0 +1,10 @@
+#!/bin/sh
+
+install_xmonad() {
+  cabal install -z --lib --package-env=$HOME/.xmonad/ \
+    xmonad \
+    xmodbar \
+    xmonad-contrib
+}
+
+install_xmonad

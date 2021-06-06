@@ -1,0 +1,10 @@
+#!/bin/sh
+
+install_latest_firefox() {
+  sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys A6DCF7707EBC211F
+  sudo apt-add-repository "deb http://ppa.launchpad.net/ubuntu-mozilla-security/ppa/ubuntu bionic main"
+  sudo apt update
+  sudo apt install -y firefox
+}
+
+install_latest_firefox

@@ -1,0 +1,18 @@
+#!/bin/sh
+
+install_ruby() {
+  sudo apt update
+  ruby_version=2.7.1
+  wget https://cache.ruby-lang.org/pub/ruby/2.7/ruby-$ruby_version.tar.gz
+  tar zxvf ruby-$ruby_version.tar.gz
+  cd ruby-$ruby_version
+  ./configure
+  make
+  sudo make install
+  cd ..
+  rm -rf ruby-$ruby_version
+  rm -rf ruby-$ruby_version.tar.gz
+  install_ruby_extras
+}
+
+install_ruby

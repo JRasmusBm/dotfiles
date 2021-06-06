@@ -1,0 +1,8 @@
+#!/bin/sh
+
+install_ruby_extras() {
+ sudo gem install vimgolf
+ sudo gem install neovim
+}
+
+install_ruby_extras
