@@ -1,14 +1,5 @@
 #!/bin/sh
 
-update_system() {
-  sudo apt-get -y update
-  sudo apt -y update
-  sudo apt-get -y upgrade
-  sudo apt -y upgrade
-  sudo apt autoremove -y
-  sudo apt-get autoremove -y
-}
-
 install_python_37() {
   sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
     build-essential \
