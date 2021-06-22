@@ -137,7 +137,7 @@ bindsym $mod+Shift+q exec "i3-msg exit"
 
 # Status Bar {{{
 bar {
-        position top
-        status_command i3status
+    position top
+    status_command my-i3status
 }
 # }}}

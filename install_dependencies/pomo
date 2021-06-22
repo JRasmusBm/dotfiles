@@ -1,0 +1,23 @@
+#!/bin/sh
+
+install_pomo_for_i3() {
+  command -v gnome-pomodoro > /dev/null &&
+  (
+      set -x
+      set -e
+      TMP=$(mktemp -d)
+      cd "$TMP"
+      sudo apt-get install -y pkg-config libcairo2-dev libgirepository1.0-dev
+      $(which git) clone https://github.com/kantord/i3-gnome-pomodoro
+      cd i3-gnome-pomodoro
+      sudo $(which python3.6) -m pip install -r requirements.txt
+      sudo rm /usr/bin/i3-gnome-pomodoro
+      sed -i -e "s,\#python3,\#\!/usr/bin/python3.6," pomodoro-client.py
+      sudo cp pomodoro-client.py /usr/bin/i3-gnome-pomodoro
+      sudo sed -i -e "s,\#\!/usr/bin/env python3,\#\!/usr/bin/python3.6," /usr/bin/i3-gnome-pomodoro
+      /usr/bin/i3-gnome-pomodoro status
+      rm -rf "$TMP"
+  )
+}
+
+install_pomo_for_i3
