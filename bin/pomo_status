@@ -5,13 +5,22 @@ pomo_status() {
   status_text=${raw_status%% *}
   time=${raw_status#* }
 
+  if echo "$raw_status" | grep -q "PAUSED" ; then
+    printf "⭕ Paused"
+    return
+  fi
+
   if test "$status_text" = "Break"; then
     printf "%s%s" "⛱ " "$time"
-  elif test "$status_text" = "Pomodoro"; then
-    printf "%s %s" "🍅" "$time"
-  else
-    printf "⭕ No Pomo"
+    return
   fi
+
+  if (test "$status_text" = "Pomodoro") ; then
+    printf "%s %s" "🍅" "$time"
+    return
+  fi
+
+  printf "⭕ No Pomo"
 }
 
 pomo_status
