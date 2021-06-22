@@ -11,6 +11,10 @@ export FZF_DEFAULT_OPTS="--preview 'preview {}'"
 # Aliases
 alias "q"="exit"
 alias "$"=""
+alias "so"="source"
+alias "ac"="source ./.venv/bin/activate"
+alias "da"="deactivate"
+
 alias ssh="ssh -R 127.0.0.1:2222:127.0.0.1:22"
 
 function scpb(){
