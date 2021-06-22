@@ -25,8 +25,10 @@ inoremap <buffer> <leader>vc let <++> = <++>;
 " }}}
 " }}}
 
-" Print {{{
-inoremap <buffer> <leader>pr println!(<++>);<++>:call bushels#backward_marker(2) 
+" Log {{{
+" Simple {{{
+inoremap <buffer> <leader>ll println!(<++>);<++>:call bushels#backward_marker(2) 
+"}}}
 " }}}
 
 " Import {{{
@@ -50,6 +52,35 @@ inoremap <buffer> <leader>ci if <++> {
     \<++>
     \}
     \<++>:call bushels#backward_marker(3) 
+" }}}
+" While {{{
+inoremap <buffer> <leader>cw while <++> {
+    \<++>
+    \}
+    \<++>:call bushels#backward_marker(3) 
+" }}}
+" Loop {{{
+inoremap <buffer> <leader>cl loop {
+    \<++>
+    \}
+    \<++>:call bushels#backward_marker(2) 
+" }}}
+" Match {{{
+inoremap <buffer> <leader>cm match <++> {
+    \<++> => <++>,
+    \}
+    \<++>:call bushels#backward_marker(4) 
+" }}}
+" Case {{{
+inoremap <buffer> <leader>cc <++> => <++>,
+    \<++>:call bushels#backward_marker(4) 
+" }}}
+" Result {{{
+inoremap <buffer> <leader>cr match <++> {
+    \Ok(<++>) => <++>,
+    \Err(<++>) => <++>,
+    \}
+    \<++>:call bushels#backward_marker(6) 
 " }}}
 " }}}
 
