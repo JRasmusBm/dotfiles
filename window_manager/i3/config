@@ -27,6 +27,9 @@ bindsym $mod+Return exec i3-sensible-terminal
 bindsym $mod+b exec brave-browser
 bindsym $mod+d exec --no-startup-id dmenu_run
 bindsym $mod+p exec start_scratchpad
+bindsym Print exec screenshot
+bindsym Shift+Print exec screenshot --area
+bindsym Control+Print exec screenshot --window
 # }}}
 
 # Windows {{{

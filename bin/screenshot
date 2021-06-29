@@ -1,0 +1,8 @@
+#!/bin/sh
+
+file_name="$HOME/Pictures/screenshots/$(isosec).png"
+
+gnome-screenshot --clipboard --file="$file_name" "$@"
+
+copyq write image/png - < "$file_name"
+copyq select 0
