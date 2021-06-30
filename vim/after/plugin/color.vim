@@ -50,21 +50,21 @@ function! SpellingHighlights() abort
 endfunction
 
 function! LspHighlights() abort
-  highlight LspDiagnosticsDefaultError guifg=red
+  highlight LspDiagnosticsVirtualTextError guifg=red
   sign define LspDiagnosticsSignError text=✗ texthl=LspDiagnosticsSignError linehl= numhl=
   highlight LspDiagnosticsSignError guifg=red
 
-  highlight LspDiagnosticsDefaultWarning guifg=yellow
+  highlight LspDiagnosticsVirtualTextWarning guifg=yellow
   sign define LspDiagnosticsSignWarning text=⚠ texthl=LspDiagnosticsSignWarning linehl= numhl=
   highlight LspDiagnosticsSignWarning guifg=yellow
 
-  highlight LspDiagnosticsDefaultInformation guifg=yellow
+  highlight LspDiagnosticsVirtualTextInformation guifg=teal
   sign define LspDiagnosticsSignInformation text=i texthl=LspDiagnosticsSignInformation linehl= numhl=
-  highlight LspDiagnosticsSignInformation guifg=fg0
+  highlight LspDiagnosticsSignInformation guifg=teal
 
-  highlight LspDiagnosticsDefaultHint guifg=yellow
+  highlight LspDiagnosticsVirtualTextHint guifg=pink
   sign define LspDiagnosticsSignHint text=☼ texthl=LspDiagnosticsSignHint linehl= numhl=
-  highlight LspDiagnosticsSignHint guifg=fg0
+  highlight LspDiagnosticsSignHint guifg=pink
 endfunction
 
 function! ColorCodeHighlights() abort
