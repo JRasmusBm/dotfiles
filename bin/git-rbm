@@ -1,0 +1,17 @@
+#!/bin/sh
+
+rebase_on_main() {
+    local main_exists=$(git ls-remote --heads origin main)
+    local master_exists=$(git ls-remote --heads origin master)
+
+    if test -z ${main_exists}; then
+        git rebase origin/main
+    elif test -z ${master_exists}; then
+        git rebase origin/master
+    else
+      echo 'No branch named `main` or `master`'
+      exit 1
+    fi
+}
+
+rebase_on_main
