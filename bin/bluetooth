@@ -1,0 +1,20 @@
+#!/bin/sh
+
+bluetooth_devices="$HOME/.config/bluetooth_devices/"
+
+if test "$1" = "dc"; then
+  command="disconnect"
+elif test "$1" = "c" -o -z "$1"; then
+  command="connect"
+else
+  command="$1"
+fi
+
+if test -n "$2"; then
+  mac="$2"
+else
+  device_alias="$(find "$bluetooth_devices" -type f -print0 | xargs -0 basename -a | fzf)"
+  mac="$(cat "$bluetooth_devices/$device_alias")"
+fi
+
+bluetoothctl "$command" "$mac"
