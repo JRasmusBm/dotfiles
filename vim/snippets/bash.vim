@@ -42,23 +42,21 @@ inoremap <buffer> <leader>fd <++>() {<++>}
 " File {{{
 inoremap <buffer> <leader>tf #!/bin/bash
   \set -e
-  \source ~/.zshenv
   \previous_dir=$(pwd)
   \cd =expand("%:p:h")
-  \if ! tmux has-session -t=<++> 2> /dev/null; then
-  \tmux new-session -d -s <++> -n run -x $(tput cols) -y $(tput lines)
+  \if ! tmux has-session -t==trim(system("basename $(dirname " . expand("%") . ")")) 2> /dev/null; then
+  \tmux new-session -d -s =trim(system("basename $(dirname " . expand("%") . ")")) -n run -x $(tput cols) -y $(tput lines)
+  \<++>
   \tmux new-window -n vim
   \tmux send-keys -t vim "vim -c GFiles" Enter
   \tmux new-window -n cli
   \tmux send-keys -t cli "g l" Enter
   \tmux send-keys -t cli "g" Enter
   \fi
-  \if [ "$INITIATED_EXTERNALLY" = 'true' ]; then
-  \:
-  \else
-  \tmux attach -t <++>:vim
+  \if test ! "$INITIATED_EXTERNALLY" = 'true' ; then
+  \tmux attach -t =trim(system("basename $(dirname " . expand("%") . ")")):vim
   \fi
-  \cd "$previous_dir":call bushels#backward_marker(3)
+  \cd "$previous_dir":call bushels#backward_marker(1)
 " }}}
 " Session {{{
 inoremap <buffer> <leader>ts tmux new-session -d -s <++> -n <++> -x $(tput cols) -y $(tput lines)
