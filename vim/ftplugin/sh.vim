@@ -1,5 +1,3 @@
-nnoremap == :FormatCode<cr>
-
 source ~/.vim/snippets/bash.vim
 
 function! RunFile() abort
