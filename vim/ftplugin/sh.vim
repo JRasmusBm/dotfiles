@@ -1,6 +1,4 @@
-nnoremap <leader>p :FormatCode<cr>
-nnoremap <c-p> :!./%<cr>
-
+nnoremap == :FormatCode<cr>
 
 source ~/.vim/snippets/bash.vim
 
