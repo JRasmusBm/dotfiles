@@ -1,11 +1,17 @@
 #!/bin/bash
 
-if [ -z "$1" ]; then # g bd
-  selected_branch_ref=$(git branch --format='%(refname)' | fzf --reverse)
-  selected_branch=${selected_branch_ref#*/*/}
-else # g bd <branch>
-  selected_branch="$1"
-fi
+git_branch_delete() {
+  if [ -z "$1" ]; then # g bd
+    selected_branch_ref=$(git branch --format='%(refname)' | fzf --reverse)
+    selected_branch=${selected_branch_ref#*/*/}
+  else # g bd <branch>
+    selected_branch="$1"
+  fi
 
-echo "git branch -D $selected_branch"
-git branch -D "$selected_branch"
+  (
+    set -x
+    git branch -D "$selected_branch"
+  )
+}
+
+git_branch_delete "$@"
