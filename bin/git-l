@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_list_tree() {
+  (
+    set -x
+    g --no-pager log --oneline --decorate --graph --all -20 "$@"
+  )
+}
+
+git_list_tree "$@"

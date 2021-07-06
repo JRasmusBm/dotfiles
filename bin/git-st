@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_status() {
+  (
+    set -x
+    g status "$@"
+  )
+}
+
+git_status "$@"

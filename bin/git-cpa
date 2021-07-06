@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_cherry_pick_abort() {
+  (
+    set -x
+    g cherry-pick --abort "$@"
+  )
+}
+
+git_cherry_pick_abort "$@"

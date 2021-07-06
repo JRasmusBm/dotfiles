@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_delete_non_git_files() {
+  (
+    set -x
+    g ls-files -o --directory "$@" | xargs rm -rf
+  )
+}
+
+git_delete_non_git_files "$@"

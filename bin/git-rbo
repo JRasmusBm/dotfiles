@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_rebase_origin() {
+  (
+    set -x
+    g rb "origin/$(git rev-parse --abbrev-ref HEAD)" "$@"
+  )
+}
+
+git_rebase_origin "$@"

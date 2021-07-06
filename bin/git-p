@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_push() {
+  (
+    set -x
+    g push "$@"
+  )
+}
+
+git_push "$@"

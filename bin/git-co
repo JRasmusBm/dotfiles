@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_commit() {
+  (
+    set -x
+    g commit "$@"
+  )
+}
+
+git_commit "$@"

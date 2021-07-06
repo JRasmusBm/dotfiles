@@ -1,0 +1,11 @@
+#!/bin/sh
+
+my_git() {
+  if test $# -gt 0; then
+    git "$@"
+  else
+    git status
+  fi
+}
+
+my_git "$@"

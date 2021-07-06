@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_reset_origin() {
+  (
+    set -x
+    g reset --hard "origin/$(git rev-parse --abbrev-ref HEAD)" "$@"
+  )
+}
+
+git_reset_origin "$@"

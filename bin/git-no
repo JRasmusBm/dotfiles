@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_new_origin() {
+  (
+    set -x
+    g remote add origin "$@"
+  )
+}
+
+git_new_origin "$@"

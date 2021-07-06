@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_push_set_upstream() {
+  (
+    set -x
+    g push -u origin "$(git rev-parse --abbrev-ref HEAD)" "$@"
+  )
+}
+
+git_push_set_upstream "$@"

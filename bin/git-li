@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_list_issues() {
+  (
+    set -x
+    !gh issue list "$@"
+  )
+}
+
+git_list_issues "$@"

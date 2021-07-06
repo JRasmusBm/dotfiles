@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_commit_amend() {
+  (
+    set -x
+    g commit --amend "$@"
+  )
+}
+
+git_commit_amend "$@"

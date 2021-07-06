@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_submodule_update() {
+  (
+    set -x
+    g submodule update --init --recursive "$@"
+  )
+}
+
+git_submodule_update "$@"

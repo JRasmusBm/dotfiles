@@ -1,0 +1,14 @@
+#!/bin/sh
+
+git_update_main() {
+  (
+    set -e
+    local_main=$(g local-main-branch)
+    g f
+    g ch "$local_main"
+    g ro
+    g ch - "$@"
+  )
+}
+
+git_update_main "$@"

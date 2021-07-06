@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_cherry_pick_continue() {
+  (
+    set -x
+    g cherry-pick --continue "$@"
+  )
+}
+
+git_cherry_pick_continue "$@"

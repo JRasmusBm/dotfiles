@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_branch() {
+  (
+    set -x
+    g --no-pager branch "$@"
+  )
+}
+
+git_branch "$@"

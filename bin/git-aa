@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_add_all() {
+  (
+    set -x
+    g add --all "$@"
+  )
+}
+
+git_add_all "$@"

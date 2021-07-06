@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_checkout_new_branch() {
+  (
+    set -x
+    g checkout -b "$@"
+  )
+}
+
+git_checkout_new_branch "$@"

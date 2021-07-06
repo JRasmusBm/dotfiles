@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_first_commit() {
+  (
+    set -x
+    g commit --allow-empty -m 'First Commit' "$@"
+  )
+}
+
+git_first_commit "$@"

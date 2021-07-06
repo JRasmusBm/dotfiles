@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_remove_tag() {
+  (
+    set -x
+    g tag -d "$@"
+  )
+}
+
+git_remove_tag "$@"

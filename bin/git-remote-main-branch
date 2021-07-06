@@ -4,15 +4,14 @@ branch_exists_remotely() {
   git branch --list --remote "$1"
 }
 
-rebase_on_main() {
+git_get_remote_main_branch() {
   if test -n "$(branch_exists_remotely origin/main)"; then
-    g rb origin/main
+    echo "origin/main"
   elif test -n "$(branch_exists_remotely origin/master)"; then
-    g rb origin/master
+    echo "origin/master"
   else
-    echo 'No branch named "origin/main" or "origin/master"'
     exit 1
   fi
 }
 
-rebase_on_main
+git_get_remote_main_branch

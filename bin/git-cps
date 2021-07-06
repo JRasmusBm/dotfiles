@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_cherry_pick_skip() {
+  (
+    set -x
+    g cherry-pick --skip "$@"
+  )
+}
+
+git_cherry_pick_skip "$@"

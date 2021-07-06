@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_fetch() {
+  (
+    set -x
+    g fetch "$@"
+  )
+}
+
+git_fetch "$@"

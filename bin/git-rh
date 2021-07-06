@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_reset_hard() {
+  (
+    set -x
+    g reset --hard "$@"
+  )
+}
+
+git_reset_hard "$@"

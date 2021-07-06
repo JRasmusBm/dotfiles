@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_add_patch() {
+  (
+    set -x
+    g add --patch
+  )
+}
+
+git_add_patch

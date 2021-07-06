@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_fast_forward_merge() {
+  (
+    set -x
+    g merge --ff-only "$@"
+  )
+}
+
+git_fast_forward_merge "$@"

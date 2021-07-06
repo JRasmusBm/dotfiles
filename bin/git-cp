@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_cherry_pick() {
+  (
+    set -x
+    g cherry-pick "$@"
+  )
+}
+
+git_cherry_pick "$@"

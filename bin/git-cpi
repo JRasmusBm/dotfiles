@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_cherry_pick_in_history() {
+  (
+    set -x
+    g cherry-pick -i "$@"
+  )
+}
+
+git_cherry_pick_in_history "$@"

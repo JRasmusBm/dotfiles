@@ -10,54 +10,6 @@
   defaultBranch = main
 [diff]
   context = 4
-[alias]
-  aa = add --all
-  ap = add --patch
-  apply-gitignore = "!git ls-files -ci --exclude-standard -z | xargs -0 git rm --cached"
-  b =  "!git --no-pager branch"
-  bd = branch -D
-  ca = commit --amend
-  ch = checkout
-  chb = checkout -b
-  ci = "!hub ci-status"
-  co = commit
-  cp = cherry-pick
-  cpa = cherry-pick --abort
-  cpc = cherry-pick --continue
-  cpi = cherry-pick -i
-  cps = cherry-pick --skip
-  del-rest = "!git ls-files -o --directory | rm -rf"
-  f = fetch
-  ff = merge --ff-only
-  first = commit --allow-empty -m 'First Commit'
-  l = !git --no-pager log --oneline --decorate --graph --all -20
-  li = !gh issue list
-  ll = !git  log --oneline --decorate --graph --all
-  mup = !git checkout master && git fetch origin && echo && git sl master..origin/master && echo && git pull --quiet && git checkout -
-  no = remote add origin
-  pd = push -d origin
-  pf = push -f
-  p = push
-  pup = "!git push -u origin $(git rev-parse --abbrev-ref HEAD)"
-  rb = rebase
-  rba = rebase --abort
-  rbc = rebase --continue
-  rbi = rebase -i
-  rbo = "!git rb origin/$(git rev-parse --abbrev-ref HEAD)"
-  rbof = "!git fetch && git rebase origin/$(git rev-parse --abbrev-ref HEAD)"
-  rbs = rebase --skip
-  repo = !gh repo view --web
-  rh = reset --hard
-  ro = "!git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)"
-  rof = "!git fetch && git reset --hard origin/$(git rev-parse --abbrev-ref HEAD)"
-  rs = reset --soft
-  s = log --oneline --decorate --graph --all
-  sl = log --oneline --decorate -20
-  st = status
-  sua = submodule add
-  suu = submodule update --init --recursive
-  td = tag -d
-  wip = !git add --all && git commit -m "WIP"
 [color]
   ui = true
 [color "diff-highlight"]

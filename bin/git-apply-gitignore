@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_apply_gitignore() {
+  (
+    set -x
+    g ls-files -ci --exclude-standard -z | xargs -0 git rm --cached
+  )
+}
+
+git_apply_gitignore

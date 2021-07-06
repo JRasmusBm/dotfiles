@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_rebase() {
+  (
+    set -x
+    g rebase "$@"
+  )
+}
+
+git_rebase "$@"

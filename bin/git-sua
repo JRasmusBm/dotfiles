@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_submodule_add() {
+  (
+    set -x
+    g submodule add "$@"
+  )
+}
+
+git_submodule_add "$@"

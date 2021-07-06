@@ -1,11 +1,3 @@
-function g() {
-  if [[ $# > 0 ]]; then
-    git $@
-  else
-    git status
-  fi
-}
-
 export FZF_DEFAULT_OPTS="--preview 'preview {}'"
 
 # Aliases
