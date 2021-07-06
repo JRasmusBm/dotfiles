@@ -1,3 +1,5 @@
 #!/bin/bash
 
-export PYTHONPATH="$(pwd)/$1"
+PYTHONPATH="$(pwd)/$1"
+
+export PYTHONPATH

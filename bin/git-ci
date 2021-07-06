@@ -7,4 +7,4 @@ if [ $# -eq 0 ]
   number=$1 
 fi
 
-gh issue close $number
+gh issue close "$number"

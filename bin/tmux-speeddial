@@ -1,11 +1,10 @@
 #!/bin/sh
 
 file_name=$HOME/.tmux-speeddial
-session_name=$(cat $file_name | head -$1 | tail -1)
+session_name=$(head -"$1" <"$file_name" | tail -1)
 
 if [ -z "$TMUX" ]; then
-  tmux attach -t $session_name
+  tmux attach -t "$session_name"
 else
-  tmux switch-client -t $session_name
+  tmux switch-client -t "$session_name"
 fi
-

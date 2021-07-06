@@ -1,4 +1,4 @@
 #!/bin/sh
 
 dcdc
-docker-compose -f docker-compose-check.y*ml up --build $@
+docker-compose -f docker-compose-check.y*ml up --build "$@"

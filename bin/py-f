@@ -1,6 +1,4 @@
 #!/bin/python3
-import string
-from pprint import pprint
 import sys
 import ast
 

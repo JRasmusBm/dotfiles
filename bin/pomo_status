@@ -1,12 +1,12 @@
 #!/bin/bash
 
 pomo_status() {
-  raw_status=`/usr/bin/i3-gnome-pomodoro status`
+  raw_status=$(/usr/bin/i3-gnome-pomodoro status)
   status_text=${raw_status%% *}
   time=${raw_status#* }
   minutes="${time%%:*}m"
 
-  if echo "$raw_status" | grep -q "PAUSED" ; then
+  if echo "$raw_status" | grep -q "PAUSED"; then
     printf "⭕ Paused"
     return
   fi
@@ -16,7 +16,7 @@ pomo_status() {
     return
   fi
 
-  if test "$status_text" = "Pomodoro" ; then
+  if test "$status_text" = "Pomodoro"; then
     printf "%s %s" "🍅" "$minutes"
     return
   fi

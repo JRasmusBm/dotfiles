@@ -8,4 +8,4 @@ else # g bd <branch>
 fi
 
 echo "git branch -D $selected_branch"
-git branch -D $selected_branch
+git branch -D "$selected_branch"

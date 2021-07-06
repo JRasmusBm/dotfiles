@@ -3,12 +3,12 @@
 current_dir=$(pwd)
 
 exit_gracefully() {
-  cd "$current_dir"
+  cd "$current_dir" || exit
   exit 2
 }
 
 trap exit_gracefully 2
 
-cd "$HOME/projects/overlays"
+cd "$HOME/projects/overlays" || exit
 npm run dev
-cd "$current_dir"
+cd "$current_dir" || exit

@@ -1,4 +1,4 @@
 #!/bin/sh
 
 dcd
-docker-compose up --remove-orphans --build $@
+docker-compose up --remove-orphans --build "$@"

@@ -1,6 +1,6 @@
 #!/bin/sh
 
 directory=$(pwd)
-cd ~/projects/wikipedia-translator/cli
+cd ~/projects/wikipedia-translator/cli || exit
 pipenv run python wikipedia-translator.py "$1" "$2"
-cd "$directory"
+cd "$directory" || exit

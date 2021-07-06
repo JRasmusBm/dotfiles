@@ -3,12 +3,12 @@
 remote=""
 branch_without_remote=""
 
-if [ -z "$1" ]; then # g pd
+if test -z "$1"; then # g pd
   selected_branch=$(git branch --remote | fzf --reverse)
   branch_without_remote=${selected_branch#*/}
   remote_with_trailing_slash=${selected_branch%$branch_without_remote}
   remote=${remote_with_trailing_slash:0:-1}
-elif [ -z "$2" ]; then # g pd <branch>
+elif test -z "$2"; then # g pd <branch>
   remote="origin"
   branch_without_remote="$1"
 else # g pd <remote> <branch>
@@ -16,5 +16,7 @@ else # g pd <remote> <branch>
   branch_without_remote="$2"
 fi
 
-echo git push -d $remote $branch_without_remote
-git push -d $remote $branch_without_remote
+(
+  set -x
+  git push -d "$remote" "$branch_without_remote"
+)
