@@ -45,7 +45,7 @@ inoremap <buffer> <leader>tf #!/bin/bash
   \previous_dir=$(pwd)
   \cd =expand("%:p:h")
   \if ! tmux has-session -t==trim(system("basename $(dirname " . expand("%") . ")")) 2> /dev/null; then
-  \tmux new-session -d -s =trim(system("basename $(dirname " . expand("%") . ")")) -n run -x $(tput cols) -y $(tput lines)
+  \tmux new-session -d -s =trim(system("basename $(dirname " . expand("%") . ")")) -n run -x "$(tput cols)" -y "$(tput lines)"
   \<++>
   \tmux new-window -n vim
   \tmux send-keys -t vim "vim -c GFiles" Enter
