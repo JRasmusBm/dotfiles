@@ -1,0 +1,9 @@
+#!/bin/sh
+
+PRET=./node_modules/.bin/prettier
+
+if test -x "$PRET"; then
+  "$PRET" "$@"
+else
+  prettier "$@"
+fi

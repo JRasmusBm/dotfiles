@@ -1,0 +1,23 @@
+version: 2
+root-markers:
+  - .git/
+
+tools:
+  prettier: &prettier
+    format-command: 'pret'
+
+languages:
+  markdown:
+    - <<: *prettier
+
+  typescript:
+    - <<: *prettier
+
+  javascript:
+    - <<: *prettier
+
+  html:
+    - <<: *prettier
+
+  css:
+    - <<: *prettier

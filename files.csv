@@ -27,3 +27,4 @@ False,window_manager/i3/config,.config/i3/config
 True,window_manager/xmonad/src/Config.hs,.xmonad/xmonad.hs
 False,shell/paths.sh,.paths.sh
 False,window_manager/i3/i3status.conf,.config/i3status/config
+False,lsp/efm-langserver.yaml,.config/efm-langserver/config.yaml
