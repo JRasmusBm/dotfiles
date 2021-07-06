@@ -4,7 +4,10 @@ my_git() {
   if test $# -gt 0; then
     git "$@"
   else
-    git status
+    (
+      set -x
+      git status
+    )
   fi
 }
 
