@@ -6,6 +6,10 @@ tools:
   prettier: &prettier
     format-command: 'pret'
 
+  black: &black
+    format-command: 'black --quiet -'
+    format-stdin: true
+
 languages:
   markdown:
     - <<: *prettier
@@ -21,3 +25,6 @@ languages:
 
   css:
     - <<: *prettier
+
+  python:
+    - <<: *black
