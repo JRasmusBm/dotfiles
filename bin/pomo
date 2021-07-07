@@ -1,3 +1,8 @@
 #!/bin/sh
 
+if test "$1" = "restart"; then
+  pomo skip ; pomo skip
+  exit 0
+fi
+
 /usr/bin/i3-gnome-pomodoro "$@"
