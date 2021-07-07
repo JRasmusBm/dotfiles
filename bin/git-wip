@@ -3,7 +3,7 @@
 git_wip_everything() {
   (
     set -x
-    g !git add --all && git commit -m "WIP" "$@"
+    git add --all && git commit -m "WIP" "$@"
   )
 }
 
