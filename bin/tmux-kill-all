@@ -1,0 +1,20 @@
+#!/bin/sh
+
+tmux_kill_all() {
+  current_session="$(tmux-session-name)"
+
+  for session in $(tmux list-sessions -F "#S")
+  do
+    if test "$current_session" = "$session"; then
+      continue
+    fi
+
+    tks "$session"
+  done
+
+  tks "$current_session"
+
+  tmux kill-server
+}
+
+tmux_kill_all

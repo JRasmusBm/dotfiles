@@ -1,0 +1,12 @@
+#!/bin/sh
+
+list_descendants() {
+  children=$(ps -o pid= --ppid "$1")
+
+  for pid in $children; do
+    echo "$pid"
+    list_descendants "$pid"
+  done
+}
+
+list_descendants "$@"

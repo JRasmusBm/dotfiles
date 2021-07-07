@@ -1,0 +1,12 @@
+#!/bin/sh
+
+kill_descendants() {
+  for descendant in $(list-descendants "$1"); do
+    (
+      set -x
+      kill -9 "$descendant"
+    )
+  done
+}
+
+kill_descendants "$@"

@@ -1,0 +1,13 @@
+#!/bin/sh
+
+tmux_session_name() {
+  current_session=""
+
+  if test -n "$TMUX_PANE"; then
+    current_session="$(tmux list-panes -t "$TMUX_PANE" -F '#S' | head -n1)"
+  fi
+
+  echo "$current_session"
+}
+
+tmux_session_name

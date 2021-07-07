@@ -1,3 +1,27 @@
 #!/bin/sh
 
-tmux kill-session
+tmux_kill_session() {
+  session="${1:-"$(tmux-session-name)"}"
+
+  if test -z "$session"; then
+    session=$(tmux list-session -F '#S' | fzf)
+  fi
+
+  tmux has-session -t "$session" 2>/dev/null
+  if test "$?" -eq 1; then
+    exit 1
+  fi
+
+  for window in $(tmux list-windows -F '#{window_name}' -t "$session"); do
+    for pane_pid in $(tmux list-panes -F '#{pane_pid}' -t "$window"); do
+      nohup kill-descendants "$pane_pid" >/dev/null 2>&1 &
+    done
+  done
+
+  (
+    set -x
+    tmux kill-session -t "$session"
+  )
+}
+
+tmux_kill_session "$@"
