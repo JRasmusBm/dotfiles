@@ -1,6 +1,7 @@
-command! Emojify keeppatterns %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
+function! Emojify() abort
+  let pos = getpos(".")
+  keeppatterns %s/:\([^:]\+\):/\=emoji#for(submatch(1), submatch(0))/g
+  call setpos(".", pos)
+endfunction
 
-augroup Emoji
-  autocmd!
-  autocmd InsertLeave Emojify
-augroup END
+command! Emojify call Emojify()
