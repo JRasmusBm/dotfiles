@@ -3,10 +3,10 @@
 set -e
 
 previous_dir=$(pwd)
-cd /home/jrasmusbm/dotfiles
+cd "$HOME/dotfiles"
 
 if ! tmux has-session -t=dotfiles 2> /dev/null; then
-    tmux new-session -d -s dotfiles -n run -x $(tput cols) -y $(tput lines)
+    tmux new-session -d -s dotfiles -n run -x "$(tput cols)" -y "$(tput lines)"
 
     tmux new-window -n vim
     tmux send-keys -t vim "v -c GFiles" Enter
@@ -17,9 +17,7 @@ if ! tmux has-session -t=dotfiles 2> /dev/null; then
     tmux send-keys -t cli "g li" Enter
 fi
 
-if [ "$INITIATED_EXTERNALLY" = 'true' ]; then
-  :
-else
+if test ! "$INITIATED_EXTERNALLY" = 'true'; then
   tmux attach -t dotfiles
 fi
 

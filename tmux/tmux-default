@@ -2,12 +2,10 @@
 
 set -e
 
-source ~/.zshenv
-
 current_dir=${PWD##*/}
 
-if ! tmux has-session -t=$current_dir 2> /dev/null; then
-  tmux new-session -d -s $current_dir -n run -x $(tput cols) -y $(tput lines)
+if ! tmux has-session -t="$current_dir" 2> /dev/null; then
+  tmux new-session -d -s "$current_dir" -n run -x "$(tput cols)" -y "$(tput lines)"
 
   tmux new-window -n vim
   tmux send-keys -t vim "v -c GFiles" Enter
@@ -17,8 +15,6 @@ if ! tmux has-session -t=$current_dir 2> /dev/null; then
   tmux send-keys -t cli "g" Enter
 fi
 
-if [ "$INITIATED_EXTERNALLY" = 'true' ]; then
-  :
-else
-  tmux attach -t $current_dir:vim
+if test ! "$INITIATED_EXTERNALLY" = 'true'; then
+  tmux attach -t "$current_dir":vim
 fi
