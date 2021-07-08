@@ -1,0 +1,17 @@
+#!/bin/sh
+
+install_lua_format() {
+  current_dir=$(pwd)
+  (
+    set -xe
+    git clone --recurse-submodules git@github.com:Koihik/LuaFormatter.git /tmp/LuaFormatter
+    cd /tmp/LuaFormatter
+    cmake .
+    make
+    sudo make install
+    cd "$current_dir"
+    rm -rf /tmp/LuaFormatter
+  )
+}
+
+install_lua_format

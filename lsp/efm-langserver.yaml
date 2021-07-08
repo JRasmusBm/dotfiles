@@ -22,6 +22,10 @@ tools:
     format-command: 'shfmt -s -ci -bn -i=2'
     format-stdin: true
 
+  lua-format: &lua-format
+    format-command: 'lua-format -i'
+    format-stdin: true
+
 languages:
   markdown:
     - <<: *prettier
@@ -52,3 +56,6 @@ languages:
   bash:
     - <<: *shellcheck
     - <<: *shfmt
+
+  lua:
+    - <<: *lua-format 
