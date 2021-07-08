@@ -3,8 +3,29 @@ root-markers:
   - .git/
 
 tools:
-  prettier: &prettier
-    format-command: 'pret'
+  prettier-json: &prettier-json
+    format-command: 'pret --parser=json'
+    format-stdin: true
+
+  prettier-css: &prettier-css
+    format-command: 'pret --parser=css'
+    format-stdin: true
+
+  prettier-typescript: &prettier-typescript
+    format-command: 'pret --parser=typescript'
+    format-stdin: true
+
+  prettier-html: &prettier-html
+    format-command: 'pret --parser=html'
+    format-stdin: true
+
+  prettier-markdown: &prettier-markdown
+    format-command: 'pret --parser=markdown'
+    format-stdin: true
+
+  prettier-javascript: &prettier-javascript
+    format-command: 'pret --parser=typescript'
+    format-stdin: true
 
   black: &black
     format-command: 'black --quiet -'
@@ -28,19 +49,22 @@ tools:
 
 languages:
   markdown:
-    - <<: *prettier
+    - <<: *prettier-markdown
 
   typescript:
-    - <<: *prettier
+    - <<: *prettier-typescript
 
   javascript:
-    - <<: *prettier
+    - <<: *prettier-javascript
 
   html:
-    - <<: *prettier
+    - <<: *prettier-html
 
   css:
-    - <<: *prettier
+    - <<: *prettier-css
+
+  json:
+    - <<: *prettier-json
 
   python:
     - <<: *black
