@@ -25,11 +25,4 @@ require('telescope').setup{
   }
 }
 
--- require'telescope.builtin'.find_files({ attach_mappings = function(_, map)
---   -- map('i', '<c-e>', actions) -- this action already exist
---   -- map('n', '<c-d>', actions.git_delete_branch) -- this action already exist
---   -- -- for more actions look at lua/telescope/actions/init.lua
---   return true
--- end})
-
 require("telescope").load_extension("fzy_native")
