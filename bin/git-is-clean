@@ -1,0 +1,11 @@
+#!/bin/sh
+
+git_is_clean() {
+  status=$(git status --porcelain)
+  (
+    set -e
+    test -z "$status"
+  )
+}
+
+git_is_clean
