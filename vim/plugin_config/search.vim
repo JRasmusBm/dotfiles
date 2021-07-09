@@ -3,6 +3,7 @@ packadd! plenary.nvim
 packadd! telescope.nvim
 packadd! telescope-fzy-native.nvim
 packadd! loupe
+packadd! vcs-jump
 
 let g:LoupeCaseSettingsAlways=1
 
@@ -14,17 +15,27 @@ nmap <silent> * <Plug>(LoupeStar):call UpdateX()
 nmap <silent> # <Plug>(LoupeOctothorpe):call UpdateX()
 
 command! GFiles lua require('jrasmusbm.telescope.git_files').git_files()
-nnoremap <leader>ff <cmd>GFiles<cr>
+
+" Search in Vim {{{
+nnoremap <leader>ff <cmd>lua require('jrasmusbm.telescope.find_files').find_files({})<cr>
 nnoremap <leader>fl <cmd>lua require('telescope.builtin').live_grep()<cr>
 nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>f: <cmd>lua require('telescope.builtin').command_history()<cr>
 nnoremap <leader>f/ <cmd>lua require('telescope.builtin').search_history()<cr>
-nnoremap <leader>fa <cmd>lua require('jrasmusbm.telescope.find_files').find_files({})<cr>
-nnoremap <leader>fgc <cmd>lua require('telescope.builtin').git_commits()<cr>
-nnoremap <leader>fgb <cmd>lua require('telescope.builtin').git_branches()<cr>
-nnoremap <leader>fgs <cmd>lua require('telescope.builtin').git_status()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
+"}}}
 
+" Search in Git {{{
+nnoremap <localleader>ff <cmd>lua require('jrasmusbm.telescope.git_files').git_files()<cr>
+nnoremap <localleader>fd :VcsJump diff<Space>
+nnoremap <localleader>fg :VcsJump grep<Space>
+nnoremap <localleader>fm :VcsJump merge<Space>
+nnoremap <localleader>fc <cmd>lua require('telescope.builtin').git_commits()<cr>
+nnoremap <localleader>fb <cmd>lua require('telescope.builtin').git_branches()<cr>
+nnoremap <localleader>fs <cmd>lua require('telescope.builtin').git_status()<cr>
+"}}}
+
+" Search in Configuration {{{
 nnoremap <leader>ea <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "All Files",
   \   cwd = "~/.vim/after/"
@@ -61,3 +72,4 @@ nnoremap <leader>eo <cmd>lua require('jrasmusbm.telescope.find_files').find_file
   \   prompt_title = "Other Config Files",
   \   cwd = "~/.vim/other_config/"
   \ })
+"}}}
