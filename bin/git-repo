@@ -3,7 +3,7 @@
 git_open_repo_on_github() {
   (
     set -x
-    g !gh repo view --web "$@"
+    !gh repo view --web "$@"
   )
 }
 
