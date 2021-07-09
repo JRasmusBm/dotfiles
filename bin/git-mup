@@ -4,6 +4,7 @@ git_update_main() {
   (
     set -e
     local_main=$(g local-main-branch)
+    remote_main=$(g remote-main-branch)
     needs_stash=$(git is-clean || echo "yes")
 
     if test -n "$needs_stash"; then
@@ -12,7 +13,7 @@ git_update_main() {
 
     g f
     g ch "$local_main"
-    g ro
+    g ff "$remote_main"
     g ch - "$@"
 
     if test -n "$needs_stash"; then
