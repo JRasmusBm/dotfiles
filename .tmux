@@ -3,7 +3,7 @@
 set -e
 
 previous_dir=$(pwd)
-cd "$HOME/dotfiles"
+cd "$DOTFILES"
 
 if ! tmux has-session -t=dotfiles 2> /dev/null; then
     tmux new-session -d -s dotfiles -n run -x "$(tput cols)" -y "$(tput lines)"

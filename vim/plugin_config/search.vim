@@ -47,11 +47,11 @@ nnoremap <leader>ep <cmd>lua require('telescope.builtin').find_files({
   \ })
 nnoremap <leader>eb <cmd>lua require('telescope.builtin').find_files({
   \   prompt_title = "Filetype Config Files",
-  \   cwd = "~/dotfiles/bin"
+  \   cwd = getenv("DOTFILES") . "/bin"
   \ })
 nnoremap <leader>ei <cmd>lua require('telescope.builtin').find_files({
   \   prompt_title = "Filetype Config Files",
-  \   cwd = "~/dotfiles/install_dependencies"
+  \   cwd = getenv("DOTFILES") . "/install_dependencies"
   \ })
 nnoremap <leader>ef <cmd>lua require('telescope.builtin').find_files({
   \   prompt_title = "Filetype Config Files",
