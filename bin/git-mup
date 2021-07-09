@@ -4,10 +4,21 @@ git_update_main() {
   (
     set -e
     local_main=$(g local-main-branch)
+    needs_stash=$(git is-clean || echo "yes")
+
+    if test -n "$needs_stash"; then
+      g stash push -u
+    fi
+
     g f
     g ch "$local_main"
     g ro
     g ch - "$@"
+
+    if test -n "$needs_stash"; then
+      g stash pop
+      echo "Applied autostash."
+    fi
   )
 }
 
