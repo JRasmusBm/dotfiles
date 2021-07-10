@@ -15,15 +15,20 @@ function M.on_attach(client, bufnr)
   buf_set_keymap('n', 'gK', '<cmd>lua vim.lsp.buf.signature_help()<CR>', opts)
   buf_set_keymap('n', 'gt', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
   buf_set_keymap('n', 'g/', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
-  buf_set_keymap('n', ';a', '<cmd>lua require("telescope.builtin").lsp_code_actions()<CR>', opts)
-  buf_set_keymap('v', ';a', '<cmd>lua require("telescope.builtin").lsp_range_code_actions()<CR>', opts)
-  buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
+  buf_set_keymap('n', 'gr', '<cmd>lua require("telescope.builtin").lsp_references()<CR>', opts)
   buf_set_keymap('n', 'g?', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
   buf_set_keymap('n', '[v', '<cmd>lua vim.lsp.diagnostic.goto_prev{ severity_limit="Error" }<CR>', opts)
   buf_set_keymap('n', ']v', '<cmd>lua vim.lsp.diagnostic.goto_next{ severity_limit="Error" }<CR>', opts)
   buf_set_keymap('n', '[V', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
   buf_set_keymap('n', ']V', '<cmd>lua vim.lsp.diagnostic.goto_next()<CR>', opts)
   buf_set_keymap('n', '<space>q', '<cmd>lua vim.lsp.diagnostic.set_loclist()<CR>', opts)
+
+  -- Telescope
+  buf_set_keymap('n', ';af', '<cmd>lua require("telescope.builtin").lsp_code_actions()<CR>', opts)
+  buf_set_keymap('v', ';af', '<cmd>lua require("telescope.builtin").lsp_range_code_actions()<CR>', opts)
+  buf_set_keymap('n', ';as', '<cmd>lua require("telescope.builtin").lsp_workspace_symbols()<CR>', opts)
+  buf_set_keymap('n', ';ad', '<cmd>lua require("telescope.builtin").lsp_dynamic_workspace_symbols()<CR>', opts)
+  buf_set_keymap('n', ';ae', '<cmd>lua require("telescope.builtin").lsp_workspace_diagnostics()<CR>', opts)
 
   -- Set some keybinds conditional on server capabilities
   if client.resolved_capabilities.document_formatting then
