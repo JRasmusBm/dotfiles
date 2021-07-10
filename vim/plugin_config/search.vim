@@ -26,11 +26,13 @@ nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 "}}}
 
 " Search in Git {{{
-nnoremap <localleader>ff <cmd>lua require('jrasmusbm.telescope.git_files').git_files()<cr>
+nnoremap <localleader>ff <cmd>lua require('jrasmusbm.telescope.git_files').git_files({
+      \   show_untracked = true
+      \ })<cr>
 nnoremap <localleader>fd :VcsJump diff<Space>
 nnoremap <localleader>fg :VcsJump grep<Space>
 nnoremap <localleader>fm :VcsJump merge<Space>
-nnoremap <localleader>fc <cmd>lua require('telescope.builtin').git_commits()<cr>
+nnoremap <localleader>fc <cmd>lua require('jrasmusbm.telescope.git_commits').git_commits()<cr>
 nnoremap <localleader>fb <cmd>lua require('telescope.builtin').git_branches()<cr>
 nnoremap <localleader>fs <cmd>lua require('telescope.builtin').git_status()<cr>
 "}}}
