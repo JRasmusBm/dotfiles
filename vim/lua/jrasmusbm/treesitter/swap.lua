@@ -2,8 +2,8 @@ local M = {}
 
 M.swap = {
   enable = true,
-  swap_next = {["]p"] = "@parameter.inner"},
-  swap_previous = {["[p"] = "@parameter.inner"}
+  swap_next = {["]a"] = "@parameter.inner"},
+  swap_previous = {["[a"] = "@parameter.inner"}
 }
 
 return M
