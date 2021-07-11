@@ -23,6 +23,7 @@ nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>f: <cmd>lua require('telescope.builtin').command_history()<cr>
 nnoremap <leader>f/ <cmd>lua require('telescope.builtin').search_history()<cr>
 nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
+command! Reg Telescope registers
 "}}}
 
 " Search in Git {{{

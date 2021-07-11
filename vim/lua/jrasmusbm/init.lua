@@ -1,4 +1,5 @@
 require("jrasmusbm.telescope")
 require("jrasmusbm.diffview")
 require("jrasmusbm.harpoon")
+require("jrasmusbm.treesitter")
 require("jrasmusbm.lsp")
