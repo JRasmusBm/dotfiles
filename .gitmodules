@@ -248,7 +248,7 @@
   ignore = dirty
 [submodule "telescope.nvim"]
   path = vim/pack/bundle/opt/telescope.nvim
-  url = git@github.com:nvim-telescope/telescope.nvim.git
+  url = git@github.com:JRasmusBm/telescope.nvim.git
   ignore = dirty
 [submodule "telescope-fzy-native.nvim"]
   path = vim/pack/bundle/opt/telescope-fzy-native.nvim
@@ -294,9 +294,11 @@
   path = vim/pack/bundle/opt/gruvbox-material
   url = git@github.com:sainnhe/gruvbox-material.git
   ignore = dirty
-[submodule "vim/pack/bundle/opt/nvim-treesitter-textobjects"]
-	path = vim/pack/bundle/opt/nvim-treesitter-textobjects
-	url = git@github.com:nvim-treesitter/nvim-treesitter-textobjects.git
-[submodule "vim/pack/bundle/opt/playground"]
-	path = vim/pack/bundle/opt/nvim-treesitter-playground
-	url = git@github.com:nvim-treesitter/playground.git
+[submodule "nvim-treesitter-textobjects"]
+  path = vim/pack/bundle/opt/nvim-treesitter-textobjects
+  url = git@github.com:nvim-treesitter/nvim-treesitter-textobjects.git
+  ignore = dirty
+[submodule "nvim-treesitter-playground"]
+  path = vim/pack/bundle/opt/nvim-treesitter-playground
+  url = git@github.com:nvim-treesitter/playground.git
+  ignore = dirty
