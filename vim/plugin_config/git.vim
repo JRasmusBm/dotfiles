@@ -1,5 +1,6 @@
 packadd! fugitive-gitlab.vim
 packadd! vim-gitgutter
+packadd! vim-rhubarb
 packadd! vim-fugitive
 packadd! nvim-web-devicons
 packadd! diffview.nvim
@@ -11,4 +12,4 @@ set diffopt+=iwhiteall
 set diffopt+=internal
 set diffopt+=hiddenoff
 
-let g:fugitive_gitlab_domains = ['https://gitlab.xarepo.com']
+let g:fugitive_gitlab_domains = []

@@ -302,3 +302,7 @@
   path = vim/pack/bundle/opt/nvim-treesitter-playground
   url = git@github.com:nvim-treesitter/playground.git
   ignore = dirty
+[submodule "vim/pack/bundle/opt/vim-rhubarb"]
+  path = vim/pack/bundle/opt/vim-rhubarb
+  url = git@github.com:tpope/vim-rhubarb.git
+  ignore = dirty
