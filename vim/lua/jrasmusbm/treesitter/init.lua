@@ -1,6 +1,8 @@
 require'nvim-treesitter.configs'.setup {
     ensure_installed = "maintained",
     highlight = {enable = true},
+    playground = require("jrasmusbm.treesitter.playground").playground,
+    query_linter = require("jrasmusbm.treesitter.query_linter").query_linter,
     textobjects = {
         select = require("jrasmusbm.treesitter.select").select,
         swap = require("jrasmusbm.treesitter.swap").swap,

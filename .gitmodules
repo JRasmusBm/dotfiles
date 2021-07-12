@@ -297,3 +297,6 @@
 [submodule "vim/pack/bundle/opt/nvim-treesitter-textobjects"]
 	path = vim/pack/bundle/opt/nvim-treesitter-textobjects
 	url = git@github.com:nvim-treesitter/nvim-treesitter-textobjects.git
+[submodule "vim/pack/bundle/opt/playground"]
+	path = vim/pack/bundle/opt/nvim-treesitter-playground
+	url = git@github.com:nvim-treesitter/playground.git

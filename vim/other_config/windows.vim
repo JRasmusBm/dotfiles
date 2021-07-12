@@ -1,3 +1,5 @@
+set splitright
+
 nmap <leader>bd :bp! <BAR> bd #<CR>
 
 nnoremap <C-j> <C-w>j
