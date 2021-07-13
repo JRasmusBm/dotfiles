@@ -3,7 +3,7 @@
 git_list_tree_with_pager() {
   (
     set -x
-    g log --oneline --decorate --graph --all "$@"
+    nvim -c "call jrasmusbm#git#open_tree()"
   )
 }
 
