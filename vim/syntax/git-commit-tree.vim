@@ -4,9 +4,10 @@ endif
 
 let b:current_syntax = 'git-commit-tree'
 
-syntax match GitCommitTreeHash                                                 /\v%([*|] )@<=[0-9a-f]+/
+syntax match GitCommitTreeHash                                                 /\v%([*|] +)@<=[0-9a-f]+/
 syntax match GitCommitTreeRef                                                  /\v%( \()@<=([^)~\\:^]|tag:)+\ze\)/
 syntax match GitCommitTreeRefTag        contained containedin=GitCommitTreeRef /\vtag: .{-}\ze[),]/
+syntax match GitCommitTreeRefRef        contained containedin=GitCommitTreeRef /\vrefs\/.{-}\ze[),]/
 syntax match GitCommitTreeRefRemote     contained containedin=GitCommitTreeRef /\v(origin|upstream)+\/.{-}\ze[),]/
 syntax match GitCommitTreeRefHead       contained containedin=GitCommitTreeRef nextgroup=GitCommitTreeRefHeadArrow  /\v<HEAD/
 syntax match GitCommitTreeRefHeadArrow  contained                              nextgroup=GitCommitTreeRefHeadBranch / -> /
@@ -14,6 +15,7 @@ syntax match GitCommitTreeRefHeadBranch contained                               
 
 highlight default link GitCommitTreeHash TSType
 highlight default link GitCommitTreeRef TSProperty
+highlight default link GitCommitTreeRefRef TSFloat
 highlight default link GitCommitTreeRefTag TSNamespace
 highlight default link GitCommitTreeRefRemote Keyword
 highlight default link GitCommitTreeRefHead TSConstBuiltin
