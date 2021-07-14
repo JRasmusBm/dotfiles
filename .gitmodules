@@ -30,10 +30,6 @@
   path = vim/pack/bundle/opt/vim-eunuch
   url = git@github.com:tpope/vim-eunuch.git
   ignore = dirty
-[submodule "FastFold"]
-  path = vim/pack/bundle/opt/FastFold
-  url = git@github.com:Konfekt/FastFold.git
-  ignore = dirty
 [submodule "SimpylFold"]
   path = vim/pack/bundle/opt/SimpylFold
   url = git@github.com:tmhedberg/SimpylFold.git
