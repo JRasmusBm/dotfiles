@@ -1,0 +1,13 @@
+#!/bin/sh
+
+_tmux_window_name() {
+  current_window=""
+
+  if test -n "$TMUX_PANE"; then
+    current_window="$(tmux list-panes -t "$TMUX_PANE" -F '#W' | head -n1)"
+  fi
+
+  echo "$current_window"
+}
+
+_tmux_window_name
