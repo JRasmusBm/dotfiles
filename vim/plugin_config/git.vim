@@ -12,4 +12,6 @@ set diffopt+=iwhiteall
 set diffopt+=internal
 set diffopt+=hiddenoff
 
+command! L silent call jrasmusbm#git#open_tree()
+
 let g:fugitive_gitlab_domains = []

@@ -11,14 +11,18 @@ function! jrasmusbm#git#list_tree() abort
   w
 endfunction
 
-function! jrasmusbm#git#run_and_refresh(...) abort
-  let arguments = ""
+function! jrasmusbm#git#G_command(...) abort
+  let arguments = join(a:000, " ")
 
-  for s in a:000  " a list
-    let arguments .= ' ' . s
-  endfor
+  if arguments == "" || arguments == " "
+    silent e .git/index    
+    return "silent e .git/index"
+  endif
 
-  let cmd = "Git" . arguments
-  exec cmd
+  return "Git " . arguments
+endfunction
+
+function! jrasmusbm#git#run_and_refresh(command) abort
+  exec a:command
   silent call jrasmusbm#git#list_tree()
 endfunction
