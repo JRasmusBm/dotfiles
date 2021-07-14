@@ -1,0 +1,19 @@
+#!/bin/sh
+
+if test -n "$1"; then
+  pane="$1"
+else
+  pane="$TMUX_PANE"
+fi
+
+pane_pid="$(tmux list-panes -F "#{pane_id} #{pane_pid}" | grep "$pane" | cut -d ' ' -f 2)"
+
+for descendant in $(list-descendants "$pane_pid"); do
+  p_name="$(ps -q "$descendant" -o comm=)"
+
+  if test "$p_name" = "v" -o "$p_name" = "vi" -o "$p_name" = "vim" -o "$p_name" = "nvim"; then
+    exit 0
+  fi
+done
+
+exit 1
