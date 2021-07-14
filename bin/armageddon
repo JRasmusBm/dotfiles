@@ -1,14 +1,14 @@
 #!/bin/sh
 
-armageddon() {
+armageddon_() {
   remove_containers
   (
     set -x
     docker network prune -f
-    docker rmi -f $(docker images --filter dangling=true -qa)
-    docker volume rm $(docker volume ls --filter dangling=true -q)
-    docker rmi -f $(docker images -qa)
+    docker images --filter dangling=true -qa | xargs docker rmi -f
+    docker volume ls --filter dangling=true -q | xargs docker volume rm
+    docker images -qa | xargs docker rmi -f
   )
 }
 
-armageddon
+armageddon_

@@ -3,8 +3,8 @@
 remove_containers() {
   (
     set -x
-    docker stop "$(docker ps -aq)"
-    docker rm "$(docker ps -aq)"
+    docker ps -aq | xargs docker stop
+    docker ps -aq | xargs docker rm
   )
 }
 
