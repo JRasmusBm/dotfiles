@@ -1,5 +1,3 @@
-let b:ale_fixers = ['black', 'isort']
-
 match BadWhitespace /\s\+$/
 
 function! RunFile() abort
