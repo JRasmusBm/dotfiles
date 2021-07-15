@@ -9,3 +9,4 @@
 :command! Trc e ~/.tmux.conf
 :command! Vsc e ~/.config/nvim/coc-settings.json
 :command! Erc e ~/.config/efm-langserver/config.yaml
+:command! Frc exec "e $DOTFILES/vim/ftplugin/" . &ft . ".vim"
