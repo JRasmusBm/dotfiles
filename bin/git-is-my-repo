@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_is_my_repo() {
+  g remote -v | grep -qi jrasmusbm || return 1
+}
+
+_is_my_repo "$@"
