@@ -1,0 +1,15 @@
+#!/bin/sh
+
+_prevent_pushing_to_main() {
+  branch_name="$(g branch --show-current)"
+
+  if ! test "$branch_name" = "master" -o "$branch_name" = "main"; then
+    return 0
+  fi
+
+  if ! confirm "You are on $branch_name, do you want to continue?"; then
+    return 1
+  fi
+}
+
+_prevent_pushing_to_main "$@"
