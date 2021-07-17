@@ -34,6 +34,7 @@ nnoremap <localleader>fd :VcsJump diff<Space>
 nnoremap <localleader>fg :VcsJump grep<Space>
 nnoremap <localleader>fm :VcsJump merge<Space>
 nnoremap <localleader>fc <cmd>lua require('jrasmusbm.telescope.git_commits').git_commits()<cr>
+nnoremap <localleader>fi <cmd>lua require('jrasmusbm.telescope.git_issues').git_issues()<cr>
 nnoremap <localleader>fb <cmd>lua require('jrasmusbm.telescope.git_branches').git_branches()<cr>
 nnoremap <localleader>fs <cmd>lua require('telescope.builtin').git_status()<cr>
 "}}}
