@@ -3,7 +3,8 @@
 git_rebase_in_place() {
   (
     set -x
-    g rebase -i "$@"
+    remote_main="$(g remote-main-branch)"
+    g rebase -i "${1:-"$remote_main"}"
   )
 }
 
