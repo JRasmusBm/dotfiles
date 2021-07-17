@@ -1,10 +1,24 @@
 #!/bin/sh
 
 git_fast_forward_merge() {
-  (
-    set -x
-    g merge --ff-only "$@"
-  )
+  selected_branch_ref=$(git branch --all --format='%(refname)' | fzf --reverse)
+  selected_branch_ref_prefix=${selected_branch_ref#*/}
+  selected_branch_source=${selected_branch_ref_prefix%%/*}
+
+  if test "$selected_branch_source" = 'remotes'; then
+    branch_with_remote=${selected_branch_ref#refs/remotes/}
+    branch_without_remote=${branch_with_remote#*/}
+    (
+      set -x
+      git merge --ff-only "$branch_without_remote"
+    )
+  else
+    branch_name=${selected_branch_ref#refs/heads/}
+    (
+      set -x
+      git merge --ff-only "$branch_name"
+    )
+  fi
 }
 
 git_fast_forward_merge "$@"
