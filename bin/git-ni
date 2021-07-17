@@ -1,13 +1,27 @@
 #!/usr/bin/python3.8
 import subprocess
+import sys
 
-temp_file = subprocess.run(["mktemp"], capture_output=True).stdout.strip()
-subprocess.run(["touch", temp_file])
-subprocess.run(["nvim", "-c", "set filetype=gitcommit", temp_file])
-with open(temp_file) as f:
-    raw_issue = f.read().strip()
-subprocess.run(["rm", "-f", "temp_file"])
 
-title = raw_issue.split("\n")[0].strip()
-body = "\n".join(raw_issue.split("\n")[1:]).strip()
-subprocess.run(["gh", "issue", "create", "-t", title, "-b", body])
+def main():
+    if subprocess.run(["g", "is-my-repo"]).returncode != 0 and subprocess.run(
+        [
+            "confirm",
+            "You are in a repository that is not your own, do you want to continue?",
+        ]
+    ).returncode != 0:
+        sys.exit(1)
+    temp_file = subprocess.run(["mktemp"], capture_output=True).stdout.strip()
+    subprocess.run(["touch", temp_file])
+    subprocess.run(["nvim", "-c", "set filetype=gitcommit", temp_file])
+    with open(temp_file) as f:
+        raw_issue = f.read().strip()
+    subprocess.run(["rm", "-f", "temp_file"])
+
+    title = raw_issue.split("\n")[0].strip()
+    body = "\n".join(raw_issue.split("\n")[1:]).strip()
+    subprocess.run(["gh", "issue", "create", "-t", title, "-b", body])
+
+
+if __name__ == "__main__":
+    main()
