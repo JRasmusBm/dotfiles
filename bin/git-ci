@@ -1,10 +1,17 @@
 #!/bin/sh
 
-if [ $# -eq 0 ]
-  then
-  number=$(gh issue list | fzf --reverse | grep -o -E "^([0-9])+")
-  else
-  number=$1 
-fi
+_git_close_issue() {
+  if ! (g is-my-repo || confirm "This is not your repository, do you want to continue?"); then
+    return 1
+  fi
 
-gh issue close "$number"
+  if test $# -eq 0; then
+    number=$(gh issue list | fzf --reverse | grep -o -E "^([0-9])+")
+  else
+    number=$1
+  fi
+
+  gh issue close "$number"
+}
+
+_git_close_issue "$@"
