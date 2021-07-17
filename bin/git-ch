@@ -3,7 +3,7 @@
 git_checkout() {
   (
     set -x
-    g checkout "$@"
+    g checkout "$@" || git checkout -b "$@"
   )
 }
 
