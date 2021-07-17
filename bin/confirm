@@ -1,0 +1,18 @@
+#!/bin/sh
+
+exec < /dev/tty
+
+_confirm() {
+  message="${1:-Do you wish to continue?}"
+  printf "%s [y/n] " "$message"
+  while true ; do
+    read -r input
+    if test "$input" = "y" ; then
+      return 0;
+    elif test "$input" = "n" ; then
+      return 1;
+    fi
+  done
+}
+
+_confirm "$@"
