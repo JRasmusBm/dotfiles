@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_git_checkout_pr() {
+  gh pr checkout "$1"
+}
+
+_git_checkout_pr "$@"
