@@ -6,7 +6,7 @@
   pager = "diff-so-fancy" | less -RFX
   whitespace = blank-at-eol,tab-in-indent
   excludesfile = "~/.gitignore_global"
-  hooksPath = "~/dotfiles/git/global_hooks"
+  hooksPath = "~/.config/git/global_hooks"
 [init]
   defaultBranch = main
 [diff]
