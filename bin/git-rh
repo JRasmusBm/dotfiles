@@ -1,6 +1,10 @@
 #!/bin/sh
 
 git_reset_hard() {
+  if ! (g is-clean || confirm "Git tree is dirty, do you want to continue?"); then
+    return 1
+  fi
+
   (
     set -x
     g reset --hard "$@"
