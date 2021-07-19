@@ -1,0 +1,30 @@
+#!/bin/sh
+
+_git_merge_pr() {
+  current_branch="$(git branch --show-current)"
+  check_states="$(gh pr checks | awk '{ print $2 }')"
+
+  if echo "$check_states" | grep -qP 'fail' && ! confirm "There are failed checks, do you still want to continue?"; then
+    return 1
+  fi
+
+  if echo "$check_states" | grep -qP 'pending' && ! confirm "There are active checks, do you still want to continue?"; then
+    return 1
+  fi
+  
+  if echo "$check_states" | grep -qP '^\s*$' && ! confirm "There are no checks, do you still want to continue?"; then
+    return 1
+  fi
+
+  if ! g is-clean && ! confirm "Working tree is dirty, do you want to continue?"; then
+    return 1
+  fi
+
+  g ch "$(g local-main-branch)"
+  g ff "$current_branch"
+  g p
+  g pd origin "$current_branch"
+  g bd "$current_branch"
+}
+
+_git_merge_pr "$@"
