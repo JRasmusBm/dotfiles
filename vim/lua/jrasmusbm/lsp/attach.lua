@@ -38,6 +38,10 @@ function M.on_attach(client, bufnr)
     buf_set_keymap("v", "==", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
   end
 
+  vim.lsp.handlers["textDocument/publishDiagnostics"] =
+      vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics,
+                   {severity_sort = true})
+
   -- Set autocommands conditional on server_capabilities
   if client.resolved_capabilities.document_highlight then
     vim.api.nvim_exec([[
@@ -50,7 +54,7 @@ function M.on_attach(client, bufnr)
         autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
       augroup END
     ]], false)
-  end
+    end
 end
 
 return M
