@@ -302,3 +302,7 @@
   path = vim/pack/bundle/opt/nvim-dap
   url = git@github.com:mfussenegger/nvim-dap.git
   ignore = dirty
+[submodule "indent-blankline.nvim"]
+  path = vim/pack/bundle/opt/indent-blankline.nvim
+  url = git@github.com:lukas-reineke/indent-blankline.nvim.git
+  ignore = dirty
