@@ -19,3 +19,10 @@ inoremap <buffer> <leader>ded expect(<++>).to.deep.equal(<++>)
 " }}}
 "}}}
 "}}}
+
+" Log {{{
+" Mock {{{
+inoremap <buffer> <leader>lm sinon.replace(console, "<++>", sinon.fake())
+      \:call bushels#backward_marker(1)
+" }}}
+" }}}
