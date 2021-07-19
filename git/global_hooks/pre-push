@@ -1,6 +1,6 @@
 #!/bin/sh
 
-_prevent_pushing_to_main() {
+_may_push() {
   branch_name="$(g branch --show-current)"
 
   if ! test "$branch_name" = "master" -o "$branch_name" = "main"; then
@@ -10,7 +10,12 @@ _prevent_pushing_to_main() {
   if ! confirm "You are on $branch_name, do you want to continue?"; then
     return 1
   fi
+
+  return 0
 }
 
-_prevent_pushing_to_main "$@"
-g local-hook pre-push "$@"
+if ! _may_push "$@" ; then
+  exit 1
+fi
+
+g local-hook pre-commit "$@"
