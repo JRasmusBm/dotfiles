@@ -202,10 +202,6 @@
   path = vim/pack/bundle/opt/nvim-colorizer.lua
   url = git@github.com:JRasmusBm/nvim-colorizer.lua.git
   ignore = dirty
-[submodule "vimspector"]
-  path = vim/pack/bundle/opt/vimspector
-  url = git@github.com:puremourning/vimspector.git
-  ignore = dirty
 [submodule "shell/autosrc"]
   path = shell/autosrc
   url = git@github.com:seanyeh/autosrc.git
@@ -298,7 +294,11 @@
   path = vim/pack/bundle/opt/nvim-treesitter-playground
   url = git@github.com:nvim-treesitter/playground.git
   ignore = dirty
-[submodule "vim/pack/bundle/opt/vim-rhubarb"]
+[submodule "vim-rhubarb"]
   path = vim/pack/bundle/opt/vim-rhubarb
   url = git@github.com:tpope/vim-rhubarb.git
+  ignore = dirty
+[submodule "nvim-dap"]
+  path = vim/pack/bundle/opt/nvim-dap
+  url = git@github.com:mfussenegger/nvim-dap.git
   ignore = dirty
