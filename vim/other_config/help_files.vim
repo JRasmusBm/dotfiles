@@ -1,3 +1,3 @@
-augroup HelpMode
-  autocmd filetype help call jrasmusbm#help#help_mode()
-augroup END
+" augroup HelpMode
+"   autocmd filetype help call jrasmusbm#help#help_mode()
+" augroup END

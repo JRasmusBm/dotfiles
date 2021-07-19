@@ -5,4 +5,5 @@ function! jrasmusbm#help#help_mode()
   nnoremap <buffer> <bs> <c-T>
   nnoremap <buffer> q :q<CR>
   setlocal nonumber
+  only
 endfunction
