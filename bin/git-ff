@@ -1,7 +1,7 @@
 #!/bin/sh
 
 git_fast_forward_merge() {
-  selected_branch_ref=$(git branch --all --format='%(refname)' | fzf --reverse)
+  selected_branch_ref=${1:-$(git branch --all --format='%(refname)' | fzf --reverse)}
   selected_branch_ref_prefix=${selected_branch_ref#*/}
   selected_branch_source=${selected_branch_ref_prefix%%/*}
 
