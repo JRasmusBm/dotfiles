@@ -1,0 +1,13 @@
+#!/bin/sh
+
+_run_local_hook() {
+  hook_path="./.git/hooks/$1"
+  shift
+  if test -x "$hook_path"; then
+    "$hook_path" "$@"
+  else
+    return 0
+  fi
+}
+
+_run_local_hook "$@"
