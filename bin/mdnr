@@ -1,0 +1,39 @@
+#!/bin/python3.8
+import sys
+import re
+
+
+def indent(line):
+    return len(line) - len(line.lstrip(" "))
+
+
+def main():
+    list_re = re.compile("^ *([0-9]+.)")
+    stack = [1]
+    indent_stack = [0]
+    for line in sys.stdin:
+        m = list_re.match(line)
+
+        if not m:
+            print(line, end="")
+            continue
+
+        current_indent = indent(line)
+        if current_indent > indent_stack[-1]:
+            stack.append(1)
+            indent_stack.append(current_indent)
+        if current_indent < indent_stack[-1]:
+            while indent_stack[-1] > current_indent:
+                indent_stack.pop()
+                stack.pop()
+
+        group = m.group(1)
+        end = m.end()
+        start = end - len(group)
+
+        print(line[:start] + f"{stack[-1]}." + line[end:], end="")
+        stack[-1] += 1
+
+
+if __name__ == "__main__":
+    main()
