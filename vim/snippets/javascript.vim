@@ -33,6 +33,18 @@ inoremap <buffer> <leader>ed <++>Oexport default <++> ;:call bushels#backward_
 "}}}
 "}}}
 
+" Event {{{
+" Listener {{{
+inoremap <buffer> <leader>el <++>.eventListener("", <++>);
+      \:call bushels#backward_marker(2)
+" }}}
+" Dispatch {{{
+inoremap <buffer> <leader>ef <++>.dispatchEvent(new Event("<++>", {
+      \<++>
+      \})):call bushels#backward_marker(3)
+" }}}
+" }}}
+
 " Witchcraft {{{
 " File {{{
 inoremap <buffer> <leader>wf // @include "./utils/addAttributes.js"
