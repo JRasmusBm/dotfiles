@@ -1,6 +1,5 @@
 local M = {}
 
-local Job = require('plenary.job')
 local utils = require("telescope.utils")
 local pickers = require("telescope.pickers")
 local finders = require("telescope.finders")
@@ -9,21 +8,20 @@ local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
 local previewers = require("telescope.previewers")
 
-M.git_issues = function()
-    local results = utils.get_os_command_output({'g', 'li'})
+M.git_pull_requests = function()
+    local results = utils.get_os_command_output({'gh', 'pr', 'list'})
 
     pickers.new({}, {
-        prompt_title = 'Git Issues',
+        prompt_title = 'Git Pull Requests',
         finder = finders.new_table {
             results = results,
             entry_maker = function(line)
                 local raw_line_parts = vim.split(line, "\t")
                 local sections = {
                     id = raw_line_parts[1],
-                    status = raw_line_parts[2],
-                    title = raw_line_parts[3],
-                    unknown = raw_line_parts[4],
-                    date = vim.split(raw_line_parts[5], " ")[1]
+                    title = raw_line_parts[2],
+                    branch = raw_line_parts[3],
+                    status = raw_line_parts[4]
                 }
                 return {
                     value = line,
@@ -37,38 +35,27 @@ M.git_issues = function()
         previewer = previewers.new_termopen_previewer({
             title = "Issue Preview",
             get_command = function(entry)
-                print(vim.inspect({
-                    file = "/home/jrasmusbm/.vim/lua/jrasmusbm/telescope/git_issues.lua",
-                    line = 40,
-                    entry
-                }))
-                return {"gh", "issue", "view", entry.id}
+                return {"gh", "pr", "view", entry.id}
             end
         }),
         sorter = sorters.get_generic_fuzzy_sorter(),
         attach_mappings = function(prompt_bufnr, map)
             local checkout = function()
                 local selection = action_state.get_selected_entry()
-                local command = "echo \"" ..
-                                    (selection.id .. " " .. selection.title) ..
-                                    "\" | tr -cd \"[\\-a-zA-Z0-9 ]\" | tr \"[:upper:] \" \"[:lower:]-\""
-
-                local branch_name = vim.fn.system(command)
 
                 actions.close(prompt_bufnr)
-                vim.api.nvim_command('G ch ' .. branch_name)
+                vim.api.nvim_command('G pr ' .. selection.id)
             end
 
             local open_in_browser = function()
                 local selection = action_state.get_selected_entry()
 
                 actions.close(prompt_bufnr)
-                vim.api.nvim_command('!gh issue view --web ' .. selection.id)
+                vim.api.nvim_command('!gh pr view --web ' .. selection.id)
             end
 
             map('i', '<C-b>', open_in_browser)
             map('n', '<C-b>', open_in_browser)
-
             actions.select_default:replace(checkout)
             return true
         end
