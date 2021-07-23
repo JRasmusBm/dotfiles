@@ -18,4 +18,4 @@ if ! _may_push "$@" ; then
   exit 1
 fi
 
-g local-hook pre-commit "$@"
+g local-hook pre-commit
