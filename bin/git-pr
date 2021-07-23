@@ -1,6 +1,11 @@
 #!/bin/sh
 
 _git_checkout_pr() {
+  if test -z "$1"; then
+    gh pr list
+    return 0
+  fi
+
   gh pr checkout "$1"
 }
 

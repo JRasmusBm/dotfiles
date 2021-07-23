@@ -1,10 +1,18 @@
 #!/bin/sh
 
 git_rebase() {
-  (
-    set -x
-    g rebase "$@"
-  )
+  branch="${1:-$(g branch --all | tr -d ' *' | fzf)}"
+  if test -n "$1"; then
+    (
+      set -x
+      g rebase "$@"
+    )
+  else
+    (
+      set -x
+      g rebase "$branch"
+    )
+  fi
 }
 
 git_rebase "$@"
