@@ -35,6 +35,7 @@ nnoremap <localleader>fg :VcsJump grep<Space>
 nnoremap <localleader>fm :VcsJump merge<Space>
 nnoremap <localleader>fc <cmd>lua require('jrasmusbm.telescope.git_commits').git_commits()<cr>
 nnoremap <localleader>fi <cmd>lua require('jrasmusbm.telescope.git_issues').git_issues()<cr>
+nnoremap <localleader>fp <cmd>lua require('jrasmusbm.telescope.git_pull_requests').git_pull_requests()<cr>
 nnoremap <localleader>fb <cmd>lua require('jrasmusbm.telescope.git_branches').git_branches()<cr>
 nnoremap <localleader>fs <cmd>lua require('telescope.builtin').git_status()<cr>
 "}}}
@@ -65,7 +66,7 @@ nnoremap <leader>eb <cmd>lua require('jrasmusbm.telescope.find_files').find_file
   \   cwd = vim.fn.getenv("DOTFILES") .. "/bin"
   \ })
 nnoremap <leader>ei <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-  \   prompt_title = "Filetype Config Files",
+  \   prompt_title = "Install Dependencies",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/install_dependencies"
   \ })
 nnoremap <leader>ef <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
@@ -75,5 +76,10 @@ nnoremap <leader>ef <cmd>lua require('jrasmusbm.telescope.find_files').find_file
 nnoremap <leader>eo <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Other Config Files",
   \   cwd = "~/.vim/other_config/"
+  \ })
+"}}}
+nnoremap <leader>et <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
+  \   prompt_title = "Treesitter Queries",
+  \   cwd = "~/.vim/queries/"
   \ })
 "}}}
