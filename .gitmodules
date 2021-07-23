@@ -306,3 +306,7 @@
   path = vim/pack/bundle/opt/indent-blankline.nvim
   url = git@github.com:lukas-reineke/indent-blankline.nvim.git
   ignore = dirty
+[submodule "refactoring.nvim"]
+  path = vim/pack/bundle/opt/refactoring.nvim
+  url = git@github.com:ThePrimeagen/refactoring.nvim.git
+  ignore=dirty
