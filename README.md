@@ -2,6 +2,16 @@
 
 > Author: JRasmusBm
 
+Welcome to the configuration of my system! 😄 
+
+I have been configuring my system since I switched to Linux in the summer 2016.
+Sometime around Christmas 2017 I started adding it to source control. The
+purpose of this repository is to version control development setup, though I am
+very happy to share any learnings along the way. 
+
+**DISCLAIMER**: I change this repository heavily on a nearly daily basis, it is
+the very opposite of stable.
+
 # Vim
 
 ## Folder Structure
