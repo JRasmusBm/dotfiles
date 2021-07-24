@@ -18,10 +18,10 @@ the very opposite of stable.
 
 The vim configuration is split up into four folders
 
-- [Filetype Specific Settings](https://github.com/JRasmusBm/dotfiles/tree/master/.vim/ftplugin)
-- [Plugin Settings](https://github.com/JRasmusBm/dotfiles/tree/master/.vim/plugin_config)
-- [Other Settings](https://github.com/JRasmusBm/dotfiles/tree/master/.vim/other_config)
-- [Snippets](https://github.com/JRasmusBm/dotfiles/tree/master/.vim/snippets)
+- [Filetype Specific Settings](https://github.com/JRasmusBm/dotfiles/tree/master/vim/ftplugin)
+- [Plugin Settings](https://github.com/JRasmusBm/dotfiles/tree/master/vim/plugin_config)
+- [Other Settings](https://github.com/JRasmusBm/dotfiles/tree/master/vim/other_config)
+- [Snippets](https://github.com/JRasmusBm/dotfiles/tree/master/vim/snippets)
 
 To go to any of these folders, I have `ack.vim` wired up so that
 
