@@ -1,0 +1,11 @@
+#!/bin/sh
+
+_purge_current_branch() {
+  current_branch="$(g branch --show-current)"
+  g ch "$(g local-main-branch)"
+  g pd "$current_branch" || true
+  g bd "$current_branch" || true
+
+}
+
+_purge_current_branch "$@"
