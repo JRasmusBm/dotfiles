@@ -1,4 +1,4 @@
-# Dotfiles
+ Dotfiles
 
 > Author: JRasmusBm
 
@@ -22,11 +22,11 @@ the very opposite of stable.
 
 ## Inspiration
 
-- [Luke Smith's Dotfiles](https://github.com/LukeSmithxyz/voidrice)
-- [Chris Toomey's Dotfiles](https://github.com/christoomey/dotfiles)
 - [Greg Hurrel's Dotfiles](https://github.com/wincent/wincent)
 - [TJ DeVries](https://github.com/tjdevries)
 - [ThePrimeagen](https://github.com/ThePrimeagen)
+- [Chris Toomey's Dotfiles](https://github.com/christoomey/dotfiles)
+- [Luke Smith's Dotfiles](https://github.com/LukeSmithxyz/voidrice)
 
 ## Installation
 
