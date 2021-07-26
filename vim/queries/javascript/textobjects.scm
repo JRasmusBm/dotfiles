@@ -54,13 +54,13 @@
   (object
     (_) @argument.inner
   )
-  (array
-    (_) @argument.inner
-  )
   (array_pattern
     (_) @argument.inner
   )
   (object_pattern
+    (_) @argument.inner
+  )
+  (array
     (_) @argument.inner
   )
   (formal_parameters
