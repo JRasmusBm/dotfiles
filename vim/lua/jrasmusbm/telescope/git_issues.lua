@@ -37,11 +37,6 @@ M.git_issues = function()
         previewer = previewers.new_termopen_previewer({
             title = "Issue Preview",
             get_command = function(entry)
-                print(vim.inspect({
-                    file = "/home/jrasmusbm/.vim/lua/jrasmusbm/telescope/git_issues.lua",
-                    line = 40,
-                    entry
-                }))
                 return {"gh", "issue", "view", entry.id}
             end
         }),
