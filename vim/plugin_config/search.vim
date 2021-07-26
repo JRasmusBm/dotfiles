@@ -18,6 +18,7 @@ command! GFiles lua require('jrasmusbm.telescope.git_files').git_files()
 
 " Search in Vim {{{
 nnoremap <leader>ff <cmd>lua require('jrasmusbm.telescope.find_files').find_files({})<cr>
+nnoremap <leader>fq <cmd>lua require('telescope.builtin').quickfix({})<cr>
 nnoremap <leader>fl <cmd>lua require('telescope.builtin').live_grep()<cr>
 nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
 nnoremap <leader>f: <cmd>lua require('telescope.builtin').command_history()<cr>
