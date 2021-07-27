@@ -1,0 +1,9 @@
+#!/bin/sh
+
+_install_gorun() {
+  go get github.com/erning/gorun
+  sudo mv ~/go/bin/gorun /usr/local/bin/
+  echo ':golang:E::go::/usr/local/bin/gorun:OC' | sudo tee /proc/sys/fs/binfmt_misc/register
+}
+
+_install_gorun "$@"

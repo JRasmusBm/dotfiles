@@ -1,12 +1,17 @@
 " Import {{{
 " Module {{{
-inoremap <buffer> <leader>im import ("<++>")
+inoremap <buffer> <leader>id import ("<++>")
       \<++>:call bushels#backward_marker(2)
 " }}}
 " }}}
 " File {{{
-inoremap <buffer> <leader>fp package <++>
-  \<++>:call bushels#backward_marker(2)
+inoremap <buffer> <leader>gf package main
+      \import (
+      \"fmt"
+      \)
+      \func main() {
+      \<++>
+      \}:call bushels#backward_marker(1)
 " }}}
 " Function {{{
 inoremap <buffer> <leader>fd func <++>() {
@@ -30,11 +35,11 @@ inoremap <buffer> <leader>dc func Test<++>(t *testing.T) {<++>}
       \:call bushels#backward_marker(2)
 " }}}
 " }}}
-" Other {{{
-" Print {{{
-inoremap <buffer> <leader>pr fmt.Printf(<++>)
+" Log {{{
+" Standard {{{
+inoremap <buffer> <leader>ll fmt.Printf(<++>)
   \<++>:call bushels#backward_marker(2)
-" }}}
+"}}}
 " }}}
 " Control Statements {{{
 inoremap <buffer> <leader>ci if <++> {<++>}
