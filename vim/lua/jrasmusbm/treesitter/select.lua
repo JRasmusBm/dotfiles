@@ -8,7 +8,7 @@ M.select = {
         ["if"] = "@function.inner",
         ["adc"] = "@test.case.outer",
         ["ads"] = "@test.suite.outer",
-        ["as"] = "@statement.outer"
+        ["aS"] = "@statement.outer"
     }
 }
 
