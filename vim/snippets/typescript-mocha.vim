@@ -1,3 +1,8 @@
+" Import {{{
+" Sinon {{{
+inoremap <buffer> <leader>is import * as sinon from "sinon";
+" }}}
+" }}}
 " Test {{{
 " Case {{{
 inoremap <buffer> <leader>dc it("<++>", async (): Promise<void> => {
