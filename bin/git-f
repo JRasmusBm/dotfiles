@@ -3,7 +3,7 @@
 git_fetch() {
   (
     set -x
-    g fetch "$@"
+    g fetch --all "$@"
   )
 }
 
