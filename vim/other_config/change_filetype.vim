@@ -15,4 +15,5 @@ augroup ChangeFiletype
   autocmd BufRead Dockerfile* set filetype=dockerfile
   autocmd BufRead serviceworker.ts set filetype=typescript.serviceworker
   autocmd BufRead serviceworker.js set filetype=javascript.serviceworker
+  autocmd BufRead .tmux-speeddial set filetype=speeddial
 augroup END

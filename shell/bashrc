@@ -167,6 +167,5 @@ export PROJECT_HOME=$HOME/Envs
 export ANDROID_HOME=$HOME/Android/Sdk
 
 source ~/.promptline.sh
-source ~/.z.sh
 
 source /home/rasmus/.config/broot/launcher/bash/br

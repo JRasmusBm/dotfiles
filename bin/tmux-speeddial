@@ -3,8 +3,13 @@
 file_name=$HOME/.tmux-speeddial
 session_name=$(head -"$1" <"$file_name" | tail -1)
 
+if ! (tmux list-sessions | grep -q "$session_name") ; then
+  root_folder=$(z -e "$session_name")
+  INITIATED_EXTERNALLY=true source_tmux_script "$root_folder/.tmux"
+fi
+
 if [ -z "$TMUX" ]; then
-  tmux attach -t "$session_name"
+  tmux attach -t "$session_name" || true
 else
-  tmux switch-client -t "$session_name"
+  tmux switch-client -t "$session_name" || true
 fi

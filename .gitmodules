@@ -310,3 +310,7 @@
   path = vim/pack/bundle/opt/refactoring.nvim
   url = git@github.com:ThePrimeagen/refactoring.nvim.git
   ignore=dirty
+[submodule "shell/z"]
+  path = shell/z
+  url = git@github.com:rupa/z.git
+  ignore = dirty

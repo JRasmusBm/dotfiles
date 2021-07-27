@@ -20,7 +20,6 @@ antigen bundle command-not-found
 # Other Bundles
 antigen bundle colored-man-pages
 antigen bundle chrissicool/zsh-256color
-antigen bundle andrewferrier/fzf-z
 
 # # Syntax highlighting bundle.
 antigen bundle agkozak/zsh-z
