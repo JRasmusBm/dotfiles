@@ -4,6 +4,7 @@ M.setup = function(options)
   require"lspconfig".efm.setup {
     on_attach = options.on_attach,
     cmd = {"efm-langserver"},
+    init_options = {documentFormatting = true},
     settings = {
       rootMarkers = {".git/"},
       languages = {
