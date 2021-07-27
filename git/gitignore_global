@@ -9,3 +9,4 @@ temp*
 .vimrc
 .nvimrc
 .autosrc
+/tags
