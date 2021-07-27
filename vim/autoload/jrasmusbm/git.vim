@@ -8,7 +8,7 @@ endfunction
 
 function! jrasmusbm#git#list_tree() abort
   if &ft == "git-commit-tree"
-    exec "%!git --no-pager log --oneline --decorate --graph --all -50"
+    exec "%!git --no-pager log --oneline --decorate --graph --all"
     w
   endif
 endfunction
