@@ -1,10 +1,10 @@
 #!/bin/sh
 
-git_open_repo_on_github() {
+_git_open_repo_on_github() {
   (
     set -x
-    !gh repo view --web "$@"
+    gh repo view --web "$@"
   )
 }
 
-git_open_repo_on_github "$@"
+_git_open_repo_on_github "$@"
