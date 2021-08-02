@@ -1,6 +1,11 @@
 #!/bin/zsh
 
 source_tmux_script() {
+  if test "$1" = "-y" ; then
+    override_check="true"
+    shift
+  fi
+
   tmux_script_path="$1"
 
   if test ! -x "$tmux_script_path" ; then
@@ -14,16 +19,20 @@ source_tmux_script() {
     return
   fi
 
-  cat "$tmux_script_path"
-  echo 'Trust (and run) this .tmux file? (t = trust, otherwise = skip) '
-  read REPLY > /dev/null
+  if test -n "$override_check"; then
+    REPLY=T
+  else
+    cat "$tmux_script_path"
+    echo 'Trust (and run) this .tmux file? (t = trust, otherwise = skip) '
+    read REPLY > /dev/null
+  fi
   if [[ $REPLY =~ ^[Tt]$ ]]; then
     echo "$DIGEST" >> ~/..tmux.digests
-    source_tmux_script
+    INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source_tmux_script "$@"
     return
   fi
 
   default_tmux_session
 }
 
-source_tmux_script "$1"
+source_tmux_script "$@"
