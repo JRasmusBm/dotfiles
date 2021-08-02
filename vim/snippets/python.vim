@@ -95,7 +95,7 @@ inoremap <buffer> <leader>lb print(dict(
       \file = "%",
       \line = =line("."),
       \<++>
-      \));:call bushels#backward_marker(1)
+      \)):call bushels#backward_marker(1)
 " )}}
 "}}}
 " }}}
