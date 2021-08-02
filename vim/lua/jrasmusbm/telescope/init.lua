@@ -12,11 +12,12 @@ require('telescope').setup {
             preview_cutoff = 120
         },
         mappings = {
-            i = {
-                ["<C-x>"] = false,
-                ["<C-q>"] = actions.send_to_qflist,
-                ["<c-r>"] = require("jrasmusbm.telescope.refresh").refresh
+            i = {["<C-x>"] = false, ["<C-q>"] = actions.send_to_qflist},
+            n = {
+                ["<c-r>"] = require("jrasmusbm.telescope.refresh").refresh,
+                ["<C-q>"] = actions.send_to_qflist
             }
+
         }
     },
     extensions = {fzy_native = {override_file_sorter = true}}
