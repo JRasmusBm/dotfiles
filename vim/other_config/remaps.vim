@@ -14,4 +14,7 @@ nnoremap <silent> <leader>qc :cclose
 nnoremap <silent> <leader>lo :lopen
 nnoremap <silent> <leader>lc :lclose
 
+nnoremap <expr> j (v:count > 3 ? "m'" . v:count : "") . 'j'
+nnoremap <expr> k (v:count > 3 ? "m'" . v:count : "") . 'k'
+
 nmap == :call jrasmusbm#format#default()
