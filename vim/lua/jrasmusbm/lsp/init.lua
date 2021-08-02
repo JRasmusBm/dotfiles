@@ -9,3 +9,4 @@ require("jrasmusbm.lsp.markdown").setup{ on_attach=on_attach }
 require("jrasmusbm.lsp.rust").setup{ on_attach=on_attach }
 require("jrasmusbm.lsp.go").setup{ on_attach=on_attach }
 require("jrasmusbm.lsp.efm").setup{ on_attach=on_attach }
+require("jrasmusbm.lsp.latex").setup{ on_attach=on_attach }

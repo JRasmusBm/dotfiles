@@ -1,0 +1,12 @@
+#!/bin/sh
+
+_install_latex() {
+  sudo apt-get install -y \
+    texlive-latex-base \
+    texlive-fonts-recommended \
+    texlive-fonts-extra \
+    texlive-latex-extra
+  cargo install --git https://github.com/latex-lsp/texlab.git --locked
+}
+
+_install_latex
