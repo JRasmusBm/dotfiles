@@ -12,6 +12,7 @@ set wrap
 set textwidth=79
 set colorcolumn=+1
 set scrolloff=4
+set tabstop=2
 
 autocmd VimResized * :wincmd =
 
