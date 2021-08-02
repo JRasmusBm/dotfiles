@@ -8,8 +8,4 @@ if ! (tmux list-sessions | grep -q "$session_name") ; then
   INITIATED_EXTERNALLY=true source_tmux_script "$root_folder/.tmux"
 fi
 
-if [ -z "$TMUX" ]; then
-  tmux attach -t "$session_name" || true
-else
-  tmux switch-client -t "$session_name" || true
-fi
+ta "$session_name:vim" || true

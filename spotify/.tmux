@@ -11,7 +11,7 @@ if ! tmux has-session -t=spotify 2> /dev/null; then
 fi
 
 if test ! "$INITIATED_EXTERNALLY" = 'true'; then
-  tmux attach -t spotify:client
+  ta spotify:client
 fi
 
 cd "$previous_dir"

@@ -9,6 +9,8 @@ _tmux_attach() {
 
   if test "$1" = 'all'; then
     target_session="$(echo "$all_sessions" | fzf --reverse | xargs)"
+  elif test -n "$1"; then
+    target_session="$1"
   else
     target_session="$(echo "$filtered_sessions" | fzf --reverse | xargs)"
   fi
