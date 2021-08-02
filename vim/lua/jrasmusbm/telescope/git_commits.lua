@@ -10,6 +10,15 @@ M.git_commits = function(options_)
             vim.api.nvim_command('G rbi ' .. selection.value)
         end
 
+        local browse = function()
+            local selection = action_state.get_selected_entry()
+
+            vim.api.nvim_command('Gbrowse ' .. selection.value)
+        end
+
+        map('i', '<C-b>', browse)
+        map('n', '<C-b>', browse)
+
         map('i', '<C-i>', rebase_interactive)
         map('n', '<C-i>', rebase_interactive)
 
