@@ -2,7 +2,7 @@
 inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call bushels#backward_marker(2)
 " }}}
 
-" Case {{{
+" Cas {{{
 inoremap <buffer> <leader>dc def test_<++>(self, <++>) -> None:
       \raise Exception("Not Implemented!")
       \<++><<:call bushels#backward_marker(3)
@@ -15,7 +15,7 @@ inoremap <buffer> <leader>db @pytest.fixture
 " }}}
 
 " Expect {{{
-inoremap <buffer> <leader>de self.assertEquals(<++>, <++>):call bushels#backward_marker(2)
+inoremap <buffer> <leader>de self.assertEqual(<++>, <++>):call bushels#backward_marker(2)
 " Raises {{{
 inoremap <buffer> <leader>der with self.assertRaisesRegex(<++>, "<++>"):
       \<++>:call bushels#backward_marker(3)
