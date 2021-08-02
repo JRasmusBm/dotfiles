@@ -314,3 +314,7 @@
   path = shell/z
   url = git@github.com:rupa/z.git
   ignore = dirty
+[submodule "vim-textobj-fold"]
+	path = vim/pack/bundle/opt/vim-textobj-fold
+	url = git@github.com:kana/vim-textobj-fold.git
+  ignore = dirty

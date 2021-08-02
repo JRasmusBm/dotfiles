@@ -3,6 +3,7 @@ packadd! vim-textobj-entire
 packadd! vim-textobj-line
 packadd! vim-textobj-underscore
 packadd! vim-textobj-user
+packadd! vim-textobj-fold
 
 let g:textobj_between_no_default_key_mappings=0
 
