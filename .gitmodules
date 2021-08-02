@@ -318,3 +318,7 @@
 	path = vim/pack/bundle/opt/vim-textobj-fold
 	url = git@github.com:kana/vim-textobj-fold.git
   ignore = dirty
+[submodule "nvim-dap-python"]
+  path = vim/pack/bundle/opt/nvim-dap-python
+  url = git@github.com:mfussenegger/nvim-dap-python.git
+  ignore = dirty

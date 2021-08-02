@@ -1,4 +1,5 @@
 packadd! nvim-dap
+packadd! nvim-dap-python
 
 nnoremap <leader>ii :lua require('dap').launch()
 nnoremap <leader>is :lua require('dap').stop()
