@@ -3,7 +3,7 @@
 inoremap <buffer> <leader>bl \begin{itemize}\item <++>\end{itemize}<++>:call bushels#backward_marker(2)
 " }}}
 " Bullet {{{
-inoremap <buffer> <leader>bn o\item
+inoremap <buffer> <leader>bn o\item<Space>
 " }}}
 " }}}
 
@@ -12,7 +12,7 @@ inoremap <buffer> <leader>bn o\item
 inoremap <buffer> <leader>nl \begin{enumerate}\item <++>\end{enumerate}<++>:call bushels#backward_marker(2)
 " }}}
 " Node {{{
-inoremap <buffer> <leader>nn o\item
+inoremap <buffer> <leader>nn o\item<Space>
 " }}}
 " }}}
 
@@ -162,6 +162,14 @@ inoremap <buffer> <leader>cb \begin{figure}
       \\end{figure}
       \<++>:call bushels#backward_marker(5)
 " }}}
+" }}}
+
+" Columns {{{
+inoremap <buffer> <leader>c2 \begin{multicols}{2}
+      \<++>
+      \\columnbreak
+      \<++>
+      \\end{multicols}:call bushels#backward_marker(2)
 " }}}
 
 " Image {{{
