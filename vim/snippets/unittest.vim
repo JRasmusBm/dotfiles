@@ -1,8 +1,8 @@
 " Suite {{{
-inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call bushels#backward_marker(2)
+inoremap <buffer> <leader>ds class Test<++>(unittest.TestCase):<++><++><<:call bushels#backward_marker(3)
 " }}}
 
-" Cas {{{
+" Case {{{
 inoremap <buffer> <leader>dc def test_<++>(self, <++>) -> None:
       \raise Exception("Not Implemented!")
       \<++><<:call bushels#backward_marker(3)
