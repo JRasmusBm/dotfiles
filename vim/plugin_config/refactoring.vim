@@ -1,3 +1,3 @@
 packadd! refactoring.nvim
 
-vnoremap <leader>rf :lua require("refactoring.refactors").extract()
+vnoremap <silent> <leader>rf :lua require("jrasmusbm.telescope.refactoring").refactors()
