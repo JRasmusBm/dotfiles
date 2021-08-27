@@ -74,6 +74,8 @@ M.activeStatusLine = function ()
   .. item_group{ value=lsp_diagnostic_count{ severity="Warning", symbol = "⚠" }, min_size=0, max_size=8, highlight={ "LspDiagnosticsSignWarning" } }
   .. item_group{ value=lsp_diagnostic_count{ severity="Information", symbol = "i" }, min_size=0, max_size=8, highlight={ "LspDiagnosticsSignInformation" } }
   .. item_group{ value=lsp_diagnostic_count{ severity="Hint", symbol = "☼" }, min_size=0, max_size=8, highlight={ "LspDiagnosticsSignHint" } }
+  .. item_group{ value=vim.fn.VpmStatusline(), min_size=0, max_size=20 }
+  .. utils.space(1)
   .. item_group{ value=cursor_position(), min_size=4, max_size=20 }
 end
 
@@ -91,7 +93,8 @@ M.inactiveStatusLine = function ()
   .. item_group{ value=lsp_diagnostic_count{ severity="Warning", symbol = "⚠" }, min_size=0, max_size=8 }
   .. item_group{ value=lsp_diagnostic_count{ severity="Information", symbol = "i" }, min_size=0, max_size=8 }
   .. item_group{ value=lsp_diagnostic_count{ severity="Hint", symbol = "☼" }, min_size=0, max_size=8 }
-  .. utils.space(10)
+  .. item_group{ value=vim.fn.VpmStatusline(), min_size=0, max_size=20 }
+  .. utils.space(11)
 end
 
 return M
