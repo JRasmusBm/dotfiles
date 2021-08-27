@@ -322,3 +322,7 @@
   path = vim/pack/bundle/opt/nvim-dap-python
   url = git@github.com:mfussenegger/nvim-dap-python.git
   ignore = dirty
+[submodule "vim-presentation-mode"]
+	path = vim/pack/bundle/opt/vim-presentation-mode
+	url = git@github.com:JRasmusBm/vim-presentation-mode.git
+  ignore = dirty
