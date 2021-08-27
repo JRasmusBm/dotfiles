@@ -1,5 +1,5 @@
 " Suite {{{
-inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call bushels#backward_marker(2)
+inoremap <buffer> <leader>ds class Test<++>:<++><++><<:call bushels#backward_marker(3)
 " }}}
 
 " Case {{{
