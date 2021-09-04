@@ -47,4 +47,9 @@ inoremap <buffer> <leader>ci if <++> then
       \<++>
       \end:call bushels#backward_marker(2)
 " }}}
+" For {{{
+inoremap <buffer> <leader>cf for _, <++> in <++> do
+      \<++>
+      \end:call bushels#backward_marker(3)
+" }}}
 " }}}
