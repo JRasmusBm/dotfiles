@@ -2,12 +2,10 @@ is_dir,source,target
 False,spotify/config.toml,.config/ncspot/config.toml
 False,vim/vimrc,.vimrc
 False,terminal/alacritty.yml,.config/alacritty/alacritty.yml
-False,vim/init.vim,.config/nvim/init.vim
-False,vim/coc-settings.json,.config/nvim/coc-settings.json
 False,terminal/base16-shell,.config/base16-shell
 False,vscode/settings.json,.config/Code/User/settings.json
-True,vim/spell,.config/nvim/spell
 True,vim,.vim
+True,vim,.config/nvim
 False,git/gitconfig,.gitconfig
 False,git/gitmessage,.gitmessage
 False,git/gitignore_global,.gitignore_global

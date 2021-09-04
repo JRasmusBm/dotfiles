@@ -1,31 +1,57 @@
 local M = {}
 
+local filetype_path = require("plenary.path"):new(vim.fn.getenv("DOTFILES")) /
+                        "vim" / "lua" / "jrasmusbm" / "lsp" / "efm" /
+                        "filetypes"
+
+local lspconfig = require("lspconfig")
+local setup_efm = vim.schedule_wrap(function(options)
+  lspconfig.efm.setup {
+    on_attach = function(client, bufnr)
+      client.resolved_capabilities.document_formatting = false
+      client.resolved_capabilities.publish_diagnostics = false
+
+      local filetype = vim.fn.getbufvar(bufnr, "&ft")
+      local file_config = options.languages[filetype]
+
+      for _, v in ipairs(file_config) do
+        if v.formatCommand then
+          client.resolved_capabilities.document_formatting = true
+        end
+
+        if v.lintCommand then
+          client.resolved_capabilities.publish_diagnostics = true
+        end
+      end
+
+      options.on_attach(client, bufnr)
+    end,
+    cmd = {"efm-langserver"},
+    filetypes = options.filetypes,
+    settings = {rootMarkers = {".git/"}, languages = options.languages},
+  }
+end)
+
 M.setup = function(options)
-    require"lspconfig".efm.setup {
+  require("plenary.job"):new({
+    command = "ls",
+    cwd = filetype_path.filename,
+    on_exit = function(j)
+      local filetypes = {}
+      local languages = {}
+      for _, file in ipairs(j:result()) do
+        local filetype = vim.split(file, ".", true)[1]
+        languages[filetype] =
+          require("jrasmusbm.lsp.efm.filetypes." .. filetype)
+        table.insert(filetypes, filetype)
+      end
+      setup_efm({
+        languages = languages,
+        filetypes = filetypes,
         on_attach = options.on_attach,
-        cmd = {"efm-langserver"},
-        init_options = {documentFormatting = true},
-        filetypes = {
-            "bash", "css", "html", "javascript", "json", "lua", "markdown",
-            "python", "sh", "typescript", "zsh"
-        },
-        settings = {
-            rootMarkers = {".git/"},
-            languages = {
-                bash = require("jrasmusbm.lsp.efm.bash"),
-                css = require("jrasmusbm.lsp.efm.css"),
-                html = require("jrasmusbm.lsp.efm.html"),
-                javascript = require("jrasmusbm.lsp.efm.javascript"),
-                json = require("jrasmusbm.lsp.efm.json"),
-                lua = require("jrasmusbm.lsp.efm.lua"),
-                markdown = require("jrasmusbm.lsp.efm.markdown"),
-                python = require("jrasmusbm.lsp.efm.python"),
-                sh = require("jrasmusbm.lsp.efm.sh"),
-                typescript = require("jrasmusbm.lsp.efm.typescript"),
-                zsh = require("jrasmusbm.lsp.efm.zsh")
-            }
-        }
-    }
+      })
+    end,
+  }):start()
 end
 
 return M
