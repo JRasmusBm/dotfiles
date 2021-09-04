@@ -11,6 +11,11 @@ pomo_status() {
     return
   fi
 
+  if test "$status_text" = "Long"; then
+    printf "%s%s" "🌞 Long " "$minutes"
+    return
+  fi
+
   if test "$status_text" = "Break"; then
     printf "%s%s" "⛱ " "$minutes"
     return
