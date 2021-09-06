@@ -315,14 +315,18 @@
   url = git@github.com:rupa/z.git
   ignore = dirty
 [submodule "vim-textobj-fold"]
-	path = vim/pack/bundle/opt/vim-textobj-fold
-	url = git@github.com:kana/vim-textobj-fold.git
+  path = vim/pack/bundle/opt/vim-textobj-fold
+  url = git@github.com:kana/vim-textobj-fold.git
   ignore = dirty
 [submodule "nvim-dap-python"]
   path = vim/pack/bundle/opt/nvim-dap-python
   url = git@github.com:mfussenegger/nvim-dap-python.git
   ignore = dirty
 [submodule "vim-presentation-mode"]
-	path = vim/pack/bundle/opt/vim-presentation-mode
-	url = git@github.com:JRasmusBm/vim-presentation-mode.git
+  path = vim/pack/bundle/opt/vim-presentation-mode
+  url = git@github.com:JRasmusBm/vim-presentation-mode.git
+  ignore = dirty
+[submodule "vim-illuminate"]
+  path = vim/pack/bundle/opt/vim-illuminate
+  url = git@github.com:RRethy/vim-illuminate.git
   ignore = dirty

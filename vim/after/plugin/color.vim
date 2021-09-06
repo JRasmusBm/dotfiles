@@ -49,6 +49,13 @@ function! SpellingHighlights() abort
   highlight SpellRare guifg=teal guibg=NONE 
 endfunction
 
+function! IlluminateHighlights() abort
+  highlight def LspReferenceText link CursorLine
+  highlight def LspReferenceWrite link CursorLine
+  highlight def LspReferenceRead link CursorLine
+  highlight def illuminatedWord link CursorLine
+endfunction
+
 function! LspHighlights() abort
   highlight LspDiagnosticsVirtualTextError guifg=red
   sign define LspDiagnosticsSignError text=✗ texthl=LspDiagnosticsSignError linehl= numhl=
@@ -87,3 +94,4 @@ call LspHighlights()
 call ColorCodeHighlights()
 call CustomMarkers()
 call RulerHighlights()
+call IlluminateHighlights()
