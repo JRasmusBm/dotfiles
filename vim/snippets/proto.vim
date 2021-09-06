@@ -11,7 +11,7 @@ inoremap <buffer> <leader>s service <++> {
 " }}}
 
 " Endpoint {{{
-inoremap <buffer> <leader>e rpc <++>(<++>Req) returns (<++>Resp):call bushels#backward_marker(3)
+inoremap <buffer> <leader>e rpc <++>(<++>Req) returns (<++>Resp) {}:call bushels#backward_marker(3)
 " }}}
 
 " Complete Endpoint {{{
