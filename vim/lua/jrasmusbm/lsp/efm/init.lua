@@ -12,7 +12,7 @@ local setup_efm = vim.schedule_wrap(function(options)
       client.resolved_capabilities.publish_diagnostics = false
 
       local filetype = vim.fn.getbufvar(bufnr, "&ft")
-      local file_config = options.languages[filetype]
+      local file_config = options.languages[vim.split(filetype, ".", true)[1]]
 
       for _, v in ipairs(file_config) do
         if v.formatCommand then
