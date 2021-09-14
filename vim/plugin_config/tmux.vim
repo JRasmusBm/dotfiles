@@ -2,7 +2,8 @@ packadd! vim-tmux-navigator
 packadd! vim-tmux-runner
 
 let g:vtr_filetype_runner_overrides = {
-      \"rust": "cargo run {file}"
+      \"rust": "cargo run {file}",
+      \"go": "go run {file}"
       \ }
 
 nmap <localleader>tc :VtrSendCommandToRunner<Space>
