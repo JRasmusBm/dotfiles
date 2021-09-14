@@ -30,6 +30,7 @@ inoremap <buffer> <leader>ci if <++>
 " Auto {{{
 " Group {{{
 inoremap <buffer> <leader>ag augroup <++>
+      \autocmd!
       \<++>
       \augroup END:call bushels#backward_marker(2)
 " }}}
