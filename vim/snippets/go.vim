@@ -71,6 +71,21 @@ inoremap <buffer> <leader>dx func Example<++>() {
       \<++>
       \}:call bushels#backward_marker(2)
 " }}}
+" Table Test {{{
+inoremap <buffer> <leader>dt t.Run("Table Test", func(t *testing.T) {
+      \testTable := []struct {
+		  \<++>
+		  \want <++>
+		  \}{
+		  \{<++>},
+		  \}
+		  \for _, testEntry := range testTable {
+		  \got := <++>
+		  \if !reflect.DeepEqual(got, want) {
+		  \t.Errorf("got %v want %v", got, testEntry.want)
+		  \}
+		  \}:call bushels#backward_marker(4)
+"}}}
 " }}}
 " Log {{{
 " Standard {{{
