@@ -1,3 +1,6 @@
 #!/bin/sh
 
-/bin/sh "$DOTFILES/install_dependencies/$1"
+script_name="$1"
+shift
+
+/bin/sh "$DOTFILES/install_dependencies/$script_name" "$@"
