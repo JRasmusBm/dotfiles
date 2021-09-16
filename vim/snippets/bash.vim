@@ -42,7 +42,8 @@ inoremap <buffer> <leader>fd <++>() {<++>}
 " File {{{
 inoremap <buffer> <leader>tf #!/bin/bash
   \set -e
-  \folder_name=expand("%:p:h")
+  \folder_path==expand("%:p:h")
+  \folder_name=${folder_path##*/}
   \session_name=${folder_name//./_}
   \cd "$folder_name"
   \if ! tmux has-session -t="$session_name" 2> /dev/null; then
