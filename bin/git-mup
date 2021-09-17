@@ -14,7 +14,8 @@ git_update_main() {
     g f
     g ch "$local_main"
     g ff "$remote_main"
-    g ch - "$@"
+    g remove-merged
+    g ch - "$@" 2>/dev/null || true
 
     if test -n "$needs_stash"; then
       g stash pop

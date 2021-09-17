@@ -1,0 +1,9 @@
+#!/bin/sh
+
+_git_remove_merged() {
+  head="$(git branch --show-current)"
+  merged_branches=$(git branch --merged | grep -v "$head" | grep -P '\S+' -o)
+  echo "$merged_branches" | xargs -I '{}' -n 1 bash -c 'test -n "$@" && g bd "$@"' _ {}
+}
+
+_git_remove_merged "$@"
