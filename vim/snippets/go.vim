@@ -56,7 +56,7 @@ inoremap <buffer> <leader>dc t.Run("<++>", func(t *testing.T) {
       \}):call bushels#backward_marker(3)
 " }}}
 " Helper {{{
-inoremap <buffer> <leader>dh <++> := func(t testing.TB, <++>) {
+inoremap <buffer> <leader>dh func <++>(t testing.TB, <++>) {
       \t.Helper()
       \<++>
       \}:call bushels#backward_marker(3)
@@ -77,14 +77,14 @@ inoremap <buffer> <leader>dt t.Run("Table Test", func(t *testing.T) {
 		  \<++>
 		  \want <++>
 		  \}{
-		  \{<++>},
+		  \{ <++> want: <++>},
 		  \}
 		  \for _, testEntry := range testTable {
 		  \got := <++>
 		  \if !reflect.DeepEqual(got, want) {
-		  \t.Errorf("got %v want %v", got, testEntry.want)
+		  \t.Errorf("%#v, got %v want %v", <++>, got, testEntry.want)
 		  \}
-		  \}:call bushels#backward_marker(4)
+		  \}:call bushels#backward_marker(6)
 "}}}
 " }}}
 " Log {{{
@@ -92,6 +92,9 @@ inoremap <buffer> <leader>dt t.Run("Table Test", func(t *testing.T) {
 inoremap <buffer> <leader>ll fmt.Printf(<++>)
   \<++>:call bushels#backward_marker(2)
 "}}}
+" Format {{{
+inoremap <buffer> <leader>lf fmt.Sprintf(<++>):call bushels#backward_marker(2)
+" }}}
 " }}}
 " Control Statements {{{
 " If {{{
@@ -126,12 +129,19 @@ inoremap <buffer> <leader>cfe for _, <++> := range <++> {
 " }}}
 " }}}
 " Types {{{
+" Interface {{{
 inoremap <buffer> <leader>ti type <++> interface {
       \<++>
       \}<++>:call bushels#backward_marker(3)
+"}}}
+" Struct {{{
 inoremap <buffer> <leader>ts type <++> struct {
       \<++>
       \}<++>:call bushels#backward_marker(3)
+"}}}
+" Alias {{{
+inoremap <buffer> <leader>ta type<Space>
+" }}}
 " }}}
 " Method {{{
 " Declaration {{{
