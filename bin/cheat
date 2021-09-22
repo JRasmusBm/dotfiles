@@ -1,0 +1,54 @@
+#!/bin/sh
+
+_cheat_help() {
+  echo "Utility for exploring cheat.sh"
+}
+
+_cheat_path(){
+  path="$(echo "$@" | tr -s ' '  | tr ' ' '/')"
+  echo "$path"
+}
+
+_cheat_list() {
+  path="$(_cheat_path "$@")"
+  output="$(curl "cheat.sh/$path/:list" 2>/dev/null)"
+  echo "$output"
+}
+
+_cheat_details() {
+  if test "$1" = '-T' -o "$1" = '--no-color' ; then
+    shift
+    search='?T'
+  else
+    search=''
+  fi
+
+  path="$(_cheat_path "$@")"
+  output="$(curl "cheat.sh/$path$search" 2>/dev/null)"
+  echo "$output"
+}
+
+_cheat_menu() {
+  if test "$1" = '--help'; then
+    _cheat_help
+  fi
+
+  if test "$1" = 'list' -o "$1" = 'l'; then
+    shift
+    _cheat_list "$@" && return 0
+  fi
+
+  if test "$1" = 'show' -o "$1" = "s"; then
+    shift
+    _cheat_details "$@" && return 0
+  fi
+
+  output="$(_cheat_list "$@")"
+  if test -z "$output"; then
+    output="$(_cheat_details "$@")"
+  fi
+  echo "$output"
+  return 0
+}
+
+_cheat_menu "$@"

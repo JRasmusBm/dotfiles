@@ -27,6 +27,11 @@ nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 command! Reg Telescope registers
 "}}}
 
+" Cheat {{{
+command! -nargs=* Cheat lua require('jrasmusbm.telescope.cheat').cheat(<q-args>)
+nnoremap <leader>fc :Cheat
+"}}}
+
 " Search in Git {{{
 nnoremap <localleader>ff <cmd>lua require('jrasmusbm.telescope.git_files').git_files({
       \   show_untracked = true
