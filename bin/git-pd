@@ -12,12 +12,14 @@ if test -z "$1"; then # g pd
 elif test -z "$2"; then # g pd <branch>
   remote="origin"
   branch_without_remote="$1"
+  shift
 else # g pd <remote> <branch>
   remote="$1"
   branch_without_remote="$2"
+  shift 2
 fi
 
 (
   set -x
-  git push -d "$remote" "$branch_without_remote"
+  git push -d "$remote" "$branch_without_remote" "$@"
 )
