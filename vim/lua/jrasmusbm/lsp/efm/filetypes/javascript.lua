@@ -1,1 +1,1 @@
-return {{formatCommand = 'pret --parser=javascript', formatStdin = true}}
+return {{formatCommand = "pret --parser=javascript", formatStdin = true}}
