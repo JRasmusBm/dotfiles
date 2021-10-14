@@ -1,15 +1,7 @@
 #!/bin/sh
 
-_git_branch_name() {
-  full_branch_name="$(git rev-parse --abbrev-ref HEAD)"
-  desired_name_length="$(echo "$1" - 1 | bc)"
-
-  if test -z "$desired_name_length" || test "${#full_branch_name}" -lt "$desired_name_length"; then
-    echo "$full_branch_name"
-    return 0
-  fi
-
-  echo "$full_branch_name" | head -c "$desired_name_length" | xargs -I{} echo '{}…'
+_git_short_branch() {
+  shorten "$(git rev-parse --abbrev-ref HEAD)" "$1"
 }
 
-_git_branch_name "$@"
+_git_short_branch "$@"

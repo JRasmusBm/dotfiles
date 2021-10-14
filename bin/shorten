@@ -1,0 +1,15 @@
+#!/bin/sh
+
+_shorten() {
+  full_string="$1"
+  desired_length="$(echo "$2" - 1 | bc)"
+
+  if test -z "$desired_length" || test "${#full_string}" -lt "$desired_length"; then
+    echo "$full_string"
+    return 0
+  fi
+
+  echo "$full_string" | head -c "$desired_length" | xargs -I{} echo {}…
+}
+
+_shorten "$@"
