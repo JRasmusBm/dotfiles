@@ -9,7 +9,7 @@ _git_branch_name() {
     return 0
   fi
 
-  echo "$full_branch_name" | head -c "$desired_name_length" | xargs -I{} echo {}…
+  echo "$full_branch_name" | head -c "$desired_name_length" | xargs -I{} echo '{}…'
 }
 
 _git_branch_name "$@"
