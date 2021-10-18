@@ -410,3 +410,7 @@
 [submodule "vim/pack/bundle/opt/vim-vsnip"]
 	path = vim/pack/bundle/opt/vim-vsnip
 	url = git@github.com:hrsh7th/vim-vsnip.git
+[submodule "nvim-notify"]
+	path = vim/pack/bundle/opt/nvim-notify
+	url = git@github.com:rcarriga/nvim-notify.git
+  ignore = dirty
