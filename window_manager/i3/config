@@ -10,6 +10,10 @@ exec --no-startup-id xss-lock --transfer-sleep-lock -- i3lock --nofork
 exec --no-startup-id copyq --start-server
 # }}}
 
+# Keyboard {{{
+exec map-lang
+# }}}
+
 # Network manager {{{
 exec --no-startup-id nm-applet
 # }}}
