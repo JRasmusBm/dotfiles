@@ -47,6 +47,8 @@ function! SpellingHighlights() abort
   highlight SpellCap guifg=teal guibg=NONE 
   highlight SpellLocal guifg=teal guibg=NONE 
   highlight SpellRare guifg=teal guibg=NONE 
+  highlight link SpelunkerSpellBad SpellBad
+  highlight link SpelunkerComplexOrCompoundWord SpellRare
 endfunction
 
 function! IlluminateHighlights() abort
