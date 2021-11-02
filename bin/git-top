@@ -1,7 +1,8 @@
 #!/bin/sh
 
 _show_top_contributors() {
-  git log --format=format:%an | sort | uniq -c | sort -r | head -n "${1:-20}"
+  count="${1:-20}"
+  git log --format=format:%an | sort | uniq -c | sort -gr | head -n "${1:-$count}"
 }
 
 _show_top_contributors "$@"
