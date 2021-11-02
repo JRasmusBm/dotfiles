@@ -14,6 +14,7 @@ function M.setup(options)
   end
 
   require"lspconfig".pyright.setup {
+    capabilities = options.capabilities,
     on_attach = options.on_attach,
     filetypes = {"python", "python.unittest"},
     settings = {python = {pythonPath = python_path}},

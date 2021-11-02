@@ -1,8 +1,9 @@
 local M = {}
 
-M.setup = function (options)
-  require'lspconfig'.texlab.setup{
-    on_attach=options.on_attach
+M.setup = function(options)
+  require"lspconfig".texlab.setup {
+    capabilities = options.capabilities,
+    on_attach = options.on_attach,
   }
 end
 

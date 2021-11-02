@@ -1,30 +1,39 @@
 local M = {}
 
-M.setup = function ()
-  require'compe'.setup {
-    enabled = true;
-    autocomplete = true;
-    debug = false;
-    min_length = 1;
-    preselect = 'enable';
-    throttle_time = 80;
-    source_timeout = 200;
-    incomplete_delay = 400;
-    max_abbr_width = 100;
-    max_kind_width = 100;
-    max_menu_width = 100;
-    documentation = true;
+M.setup = vim.schedule_wrap(function()
+  local cmp = require("cmp")
 
-    source = {
-      path = true;
-      buffer = true;
-      calc = true;
-      nvim_lsp = true;
-      nvim_lua = true;
-      vsnip = false;
-      ultisnips = false;
-    };
-  }
-end
+  cmp.setup({
+    snippet = {
+      -- REQUIRED - you must specify a snippet engine
+      expand = function(args)
+        vim.fn["vsnip#anonymous"](args.body) -- For `vsnip` users.
+        -- require('luasnip').lsp_expand(args.body) -- For `luasnip` users.
+        -- vim.fn["UltiSnips#Anon"](args.body) -- For `ultisnips` users.
+        -- require'snippy'.expand_snippet(args.body) -- For `snippy` users.
+      end,
+    },
+    mapping = {
+      ["<C-d>"] = cmp.mapping(cmp.mapping.scroll_docs(-4), {"i", "c"}),
+      ["<C-f>"] = cmp.mapping(cmp.mapping.scroll_docs(4), {"i", "c"}),
+      ["<C-Space>"] = cmp.mapping(cmp.mapping.complete(), {"i", "c"}),
+      ["<C-y>"] = cmp.config.disable, -- If you want to remove the default `<C-y>` mapping, You can specify `cmp.config.disable` value.
+      ["<C-e>"] = cmp.mapping({i = cmp.mapping.abort(), c = cmp.mapping.close()}),
+      ["<CR>"] = cmp.mapping.confirm({select = true}),
+    },
+    sources = cmp.config.sources({{name = "nvim_lsp"}}, {{name = "buffer"}}),
+  })
+
+  -- Use buffer source for `/` (if you enabled `native_menu`, this wont work anymore).
+  cmp.setup.cmdline("/", {sources = {{name = "buffer"}}})
+
+  -- Use cmdline & path source for ':' (if you enabled `native_menu`, this wont work anymore).
+  cmp.setup.cmdline(":", {
+    sources = cmp.config.sources({{name = "path"}}, {{name = "cmdline"}}),
+  })
+end)
+
+M.capabilities = vim.lsp.protocol.make_client_capabilities()
+M.capabilities = require("cmp_nvim_lsp").update_capabilities(M.capabilities)
 
 return M
