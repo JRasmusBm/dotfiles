@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_clone_recursively() {
+  g clone --recursive "$@"
+}
+
+_clone_recursively "$@"
