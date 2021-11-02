@@ -29,7 +29,14 @@ M.setup = vim.schedule_wrap(function()
 
   -- Use cmdline & path source for ':' (if you enabled `native_menu`, this wont work anymore).
   cmp.setup.cmdline(":", {
-    sources = cmp.config.sources({{name = "path"}}, {{name = "cmdline"}}),
+    sources = cmp.config.sources({
+      {name = "path"},
+      {name = "cmdline"},
+      {
+        name = "buffer",
+        get_bufnrs = function() return vim.api.nvim_list_bufs() end,
+      },
+    }),
   })
 end)
 
