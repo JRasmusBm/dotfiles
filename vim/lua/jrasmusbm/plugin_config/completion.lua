@@ -3,6 +3,7 @@ local mappings = require("jrasmusbm.utils.mappings")
 vim.cmd [[
 packadd! nvim-cmp
 packadd! cmp-nvim-lsp
+packadd! cmp-path
 ]]
 
 vim.opt.completeopt = {"menuone", "noselect"}
