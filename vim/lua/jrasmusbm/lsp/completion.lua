@@ -21,21 +21,22 @@ M.setup = vim.schedule_wrap(function()
       ["<C-e>"] = cmp.mapping({i = cmp.mapping.abort(), c = cmp.mapping.close()}),
       ["<CR>"] = cmp.mapping.confirm({select = true}),
     },
-    sources = cmp.config.sources({{name = "nvim_lsp"}}, {{name = "buffer"}}),
-  })
-
-  -- Use buffer source for `/` (if you enabled `native_menu`, this wont work anymore).
-  cmp.setup.cmdline("/", {sources = {{name = "buffer"}}})
-
-  -- Use cmdline & path source for ':' (if you enabled `native_menu`, this wont work anymore).
-  cmp.setup.cmdline(":", {
     sources = cmp.config.sources({
-      {name = "path"},
-      {name = "cmdline"},
+      {name = "nvim_lsp"},
       {
         name = "buffer",
         get_bufnrs = function() return vim.api.nvim_list_bufs() end,
       },
+      {name = "path"},
+    }),
+  })
+
+  cmp.setup.cmdline("/", {sources = {{name = "buffer"}}})
+
+  cmp.setup.cmdline(":", {
+    sources = cmp.config.sources({
+      {name = "path"},
+      {name = "cmdline"},
     }),
   })
 end)

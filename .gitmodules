@@ -403,3 +403,7 @@
 	path = vim/pack/bundle/opt/cmp-path
 	url = git@github.com:hrsh7th/cmp-path.git
   ignore = dirty
+[submodule "cmp-cmdline"]
+	path = vim/pack/bundle/opt/cmp-cmdline
+	url = git@github.com:hrsh7th/cmp-cmdline.git
+  ignore = dirty
