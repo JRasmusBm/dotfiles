@@ -51,7 +51,7 @@ M.git_issues = function()
                 local branch_name = vim.fn.system(command)
 
                 actions.close(prompt_bufnr)
-                vim.api.nvim_command('G ch ' .. branch_name)
+                vim.api.nvim_command('!git ch ' .. branch_name .. '|| git ch -b ' .. branch_name)
             end
 
             local open_in_browser = function()
