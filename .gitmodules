@@ -307,11 +307,6 @@
   url = git@github.com:junegunn/vim-emoji.git
   branch = master
   ignore = dirty
-[submodule "nvim-compe"]
-  path = vim/pack/bundle/opt/nvim-compe
-  url = git@github.com:hrsh7th/nvim-compe.git
-  branch = master
-  ignore = dirty
 [submodule "nvim-treesitter"]
   path = vim/pack/bundle/opt/nvim-treesitter
   url = git@github.com:nvim-treesitter/nvim-treesitter.git
