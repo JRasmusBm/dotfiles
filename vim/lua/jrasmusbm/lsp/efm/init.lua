@@ -7,6 +7,7 @@ local filetype_path = require("plenary.path"):new(vim.fn.getenv("DOTFILES")) /
 local lspconfig = require("lspconfig")
 local setup_efm = vim.schedule_wrap(function(options)
   lspconfig.efm.setup {
+    capabilities=options.capabilities,
     on_attach = function(client, bufnr)
       client.resolved_capabilities.document_formatting = false
       client.resolved_capabilities.publish_diagnostics = false

@@ -387,3 +387,11 @@
 	url = git@github.com:Flydiverny/yarn-run.git
   branch = master
   ignore = dirty
+[submodule "nvim-cmp"]
+	path = vim/pack/bundle/opt/nvim-cmp
+	url = git@github.com:hrsh7th/nvim-cmp.git
+  ignore = dirty
+[submodule "cmp-nvim-lsp"]
+	path = vim/pack/bundle/opt/cmp-nvim-lsp
+	url = git@github.com:hrsh7th/cmp-nvim-lsp.git
+  ignore = dirty

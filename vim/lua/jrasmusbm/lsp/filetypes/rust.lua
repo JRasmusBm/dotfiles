@@ -1,8 +1,9 @@
 local M = {}
 
-M.setup = function (options)
+M.setup = function(options)
   require("lspconfig").rls.setup {
-    on_attach=options.on_attach,
+    capabilities = options.capabilities,
+    on_attach = options.on_attach,
     settings = {
       rust = {
         unstable_features = true,
