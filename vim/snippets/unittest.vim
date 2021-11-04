@@ -23,13 +23,10 @@ inoremap <buffer> <leader>der with self.assertRaisesRegex(<++>, "<++>"):
 " }}}
 
 " Test File {{{
-inoremap <buffer> <leader>df """<++>"""
-  \import pytest
-  \@pytest.fixturedef <++>() -> <++>:
-  \"""<++>"""<++>
-  \class Test<++>:<<A"""<++>"""
-  \def test_<++>(self,<++>) -> None:
-  \raise Exception("Not Implemented!"):call bushels#backward_marker(9)
+inoremap <buffer> <leader>df import unittest
+  \class Test<++>(unittest.TestCase):<<A
+  \def test_<++>(self) -> None:
+  \raise Exception("Not Implemented!"):call bushels#backward_marker(2)
 "}}}
 
 " Conftest File{{{
