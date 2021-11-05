@@ -1,1 +1,1 @@
-source ~/.vim/snippets/sql.vim
+execute "source $DOTFILES/vim/snippets/sql.vim"

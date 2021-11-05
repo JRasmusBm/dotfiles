@@ -1,1 +1,1 @@
-source ~/.vim/snippets/unittest.vim
+execute "source $DOTFILES/vim/snippets/unittest.vim"

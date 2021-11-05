@@ -1,1 +1,1 @@
-source ~/.vim/snippets/graphql.vim
+execute "source $DOTFILES/vim/snippets/graphql.vim"

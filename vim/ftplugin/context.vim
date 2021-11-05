@@ -6,4 +6,4 @@ nnoremap <buffer>  <ESC>:LLPStartPreview<CR>
 
 setlocal spell spelllang=en_us
 
-source ~/.vim/snippets/latex.vim
+execute "source $DOTFILES/vim/snippets/latex.vim"

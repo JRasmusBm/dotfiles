@@ -1,4 +1,4 @@
-source ~/.vim/snippets/bash.vim
+execute "source $DOTFILES/vim/snippets/bash.vim"
 
 function! RunFile() abort
   w

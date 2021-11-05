@@ -1,1 +1,1 @@
-source ~/.vim/snippets/dockerfile.vim
+execute "source $DOTFILES/vim/snippets/dockerfile.vim"

@@ -10,4 +10,4 @@ endfunction
 
 nnoremap <buffer> <leader>c :call RunFile()
 
-source ~/.vim/snippets/python.vim
+execute "source $DOTFILES/vim/snippets/python.vim"

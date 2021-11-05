@@ -1,1 +1,1 @@
-source ~/.vim/snippets/express.vim
+execute "source $DOTFILES/vim/snippets/express.vim"

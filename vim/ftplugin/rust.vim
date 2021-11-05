@@ -1,1 +1,1 @@
-source ~/.vim/snippets/rust.vim
+execute "source $DOTFILES/vim/snippets/rust.vim"

@@ -1,1 +1,1 @@
-source ~/.vim/snippets/go.vim
+execute "source $DOTFILES/vim/snippets/go.vim"

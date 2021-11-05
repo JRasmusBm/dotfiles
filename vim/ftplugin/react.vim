@@ -1,1 +1,1 @@
-source ~/.vim/snippets/react.vim
+execute "source $DOTFILES/vim/snippets/react.vim"

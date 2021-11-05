@@ -1,5 +1,5 @@
 setlocal foldmethod=marker
-source ~/.vim/snippets/haskell.vim
+execute "source $DOTFILES/vim/snippets/haskell.vim"
 
 packadd! ghcmod-vim
 

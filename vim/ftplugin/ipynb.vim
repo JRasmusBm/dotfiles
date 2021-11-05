@@ -1,5 +1,5 @@
 packadd! vimpyter
 
-source ~/.vim/snippets/python.vim
-source ~/.vim/snippets/markdown.vim
-source ~/.vim/snippets/ipynb.vim
+execute "source $DOTFILES/vim/snippets/python.vim"
+execute "source $DOTFILES/vim/snippets/markdown.vim"
+execute "source $DOTFILES/vim/snippets/ipynb.vim"

@@ -1,3 +1,3 @@
 setlocal foldmethod=marker
 
-source ~/.vim/snippets/conf.vim
+execute "source $DOTFILES/vim/snippets/conf.vim"

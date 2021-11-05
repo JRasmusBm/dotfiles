@@ -1,1 +1,1 @@
-source ~/.vim/snippets/javascript.vim
+execute "source $DOTFILES/vim/snippets/javascript.vim"

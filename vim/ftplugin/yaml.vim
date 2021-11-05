@@ -1,4 +1,4 @@
-source ~/.vim/snippets/yaml.vim
+execute "source $DOTFILES/vim/snippets/yaml.vim"
 
 function! RunFile() abort
   w

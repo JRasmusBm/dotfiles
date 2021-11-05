@@ -1,1 +1,1 @@
-source ~/.vim/snippets/dosini.vim
+execute "source $DOTFILES/vim/snippets/dosini.vim"
