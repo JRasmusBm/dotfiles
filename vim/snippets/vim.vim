@@ -57,3 +57,9 @@ inoremap <buffer> <leader>is source ~/.vim/snippets/<++>
       \<++>:call bushels#backward_marker(2)
 " }}}
 " }}}
+
+" Logging {{{
+" Breakpoint {{{
+inoremap <buffer> <leader>lb echo <++>:call bushels#backward_marker(1)
+" }}}
+" }}}
