@@ -4,7 +4,6 @@ False,vim/vimrc,.vimrc
 False,terminal/alacritty.yml,.config/alacritty/alacritty.yml
 False,terminal/base16-shell,.config/base16-shell
 False,vscode/settings.json,.config/Code/User/settings.json
-True,vim,.vim
 True,vim,.config/nvim
 False,git/gitconfig,.gitconfig
 False,git/gitmessage,.gitmessage

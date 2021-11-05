@@ -49,23 +49,23 @@ nnoremap <localleader>fs <cmd>lua require('telescope.builtin').git_status()<cr>
 " Search in Configuration {{{
 nnoremap <leader>ea <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "All Files",
-  \   cwd = "~/.vim/after/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/after/"
   \ })
 nnoremap <leader>eu <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Autoload Files",
-  \   cwd = "~/.vim/autoload/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/autoload/"
   \ })
 nnoremap <leader>el <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Lua Files",
-  \   cwd = "~/.vim/lua/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/lua/"
   \ })
 nnoremap <leader>es <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Snippet Files",
-  \   cwd = "~/.vim/snippets/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/snippets/"
   \ })
 nnoremap <leader>ep <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Plugin Config Files",
-  \   cwd = "~/.vim/plugin_config/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/plugin_config/"
   \ })
 nnoremap <leader>eb <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Filetype Config Files",
@@ -77,15 +77,15 @@ nnoremap <leader>ei <cmd>lua require('jrasmusbm.telescope.find_files').find_file
   \ })
 nnoremap <leader>ef <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Filetype Config Files",
-  \   cwd = "~/.vim/ftplugin/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/ftplugin/"
   \ })
 nnoremap <leader>eo <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Other Config Files",
-  \   cwd = "~/.vim/other_config/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/other_config/"
   \ })
 "}}}
 nnoremap <leader>et <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Treesitter Queries",
-  \   cwd = "~/.vim/queries/"
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/queries/"
   \ })
 "}}}
