@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_git_edit_command() {
+  v "$DOTFILES/bin/git-$1"
+}
+
+_git_edit_command "$@"
