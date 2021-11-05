@@ -35,4 +35,8 @@ inoremap <buffer> <leader>fs string <++> = 0;
 inoremap <buffer> <leader>fi int32 <++> = 0;
       \<++>:call bushels#backward_marker(2)
 " }}}
+" Bool {{{
+inoremap <buffer> <leader>fb bool <++> = 0;
+      \<++>:call bushels#backward_marker(2)
+" }}}
 " }}}
