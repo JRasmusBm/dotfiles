@@ -16,5 +16,5 @@ set ignorecase
 set smartcase
 set incsearch
 set splitbelow
-set timeoutlen=300 ttimeoutlen=0
+set timeoutlen=350 ttimeoutlen=0
 set lazyredraw
