@@ -14,6 +14,7 @@ endfunction
 function! RulerHighlights() abort
   highlight CursorColumn guibg=#3a3a00
   highlight CursorLine guibg=#3a3a00
+  highlight ColorColumn guibg=#472322
 endfunction
 
 function! RespectAlacrittyColorscheme() abort
