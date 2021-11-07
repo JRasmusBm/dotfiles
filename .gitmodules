@@ -2,6 +2,7 @@
   path = terminal/base16-shell
   url = https://github.com/chriskempson/base16-shell.git
   branch = master
+  ignore = dirty
 [submodule "vim-commentary"]
   path = vim/pack/bundle/opt/vim-commentary
   url = git@github.com:tpope/vim-commentary.git
@@ -200,7 +201,7 @@
   ignore = dirty
 [submodule "nvim-colorizer.lua"]
   path = vim/pack/bundle/opt/nvim-colorizer.lua
-  url = git@github.com:JRasmusBm/nvim-colorizer.lua.git
+  url = git@github.com:norcalli/nvim-colorizer.lua.git
   ignore = dirty
 [submodule "shell/autosrc"]
   path = shell/autosrc
@@ -212,7 +213,7 @@
   ignore = dirty
 [submodule "tmux-open"]
   path = tmux/plugins/tmux-open
-  url = git@@github.com:tmux-plugins/tmux-open
+  url = git@github.com:tmux-plugins/tmux-open
   ignore = dirty
 [submodule "vim-bushels"]
   path = vim/pack/bundle/opt/vim-bushels
