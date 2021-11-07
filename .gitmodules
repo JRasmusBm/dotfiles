@@ -2,10 +2,6 @@
   path = vim/pack/bundle/opt/vim-commentary
   url = git@github.com:tpope/vim-commentary.git
   ignore = dirty
-[submodule "base16-vim"]
-  path = vim/pack/bundle/opt/base16-vim
-  url = git@github.com:chriskempson/base16-vim.git
-  ignore = dirty
 [submodule "vim-css3-syntax"]
   path = vim/pack/bundle/opt/vim-css3-syntax
   url = git@github.com:hail2u/vim-css3-syntax.git
