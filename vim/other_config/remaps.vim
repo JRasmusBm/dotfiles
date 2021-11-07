@@ -14,4 +14,6 @@ nnoremap <silent> <leader>qc :cclose
 nnoremap <silent> <leader>lo :lopen
 nnoremap <silent> <leader>lc :lclose
 
+xmap <leader>h <cmd>call jrasmusbm#open#github()<CR>
+
 nmap == :call jrasmusbm#format#default()
