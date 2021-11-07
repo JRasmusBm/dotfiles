@@ -1,194 +1,242 @@
 [submodule "vim-commentary"]
   path = vim/pack/bundle/opt/vim-commentary
   url = git@github.com:tpope/vim-commentary.git
+  branch = master
   ignore = dirty
 [submodule "vim-endwise"]
   path = vim/pack/bundle/opt/vim-endwise
   url = git@github.com:tpope/vim-endwise.git
+  branch = master
   ignore = dirty
 [submodule "vim-enmasse"]
   path = vim/pack/bundle/opt/vim-enmasse
   url = git@github.com:Olical/vim-enmasse.git
+  branch = master
   ignore = dirty
 [submodule "vim-eunuch"]
   path = vim/pack/bundle/opt/vim-eunuch
   url = git@github.com:tpope/vim-eunuch.git
+  branch = master
   ignore = dirty
 [submodule "SimpylFold"]
   path = vim/pack/bundle/opt/SimpylFold
   url = git@github.com:tmhedberg/SimpylFold.git
+  branch = master
   ignore = dirty
 [submodule "fzf"]
   path = vim/pack/bundle/opt/fzf
   url = git@github.com:junegunn/fzf.git
+  branch = master
   ignore = dirty
 [submodule "vcs-jump"]
   path = vim/pack/bundle/opt/vcs-jump
   url = git@github.com:wincent/vcs-jump.git
+  branch = main
   ignore = dirty
 [submodule "vim-fugitive"]
   path = vim/pack/bundle/opt/vim-fugitive
   url = git@github.com:tpope/vim-fugitive.git
+  branch = master
   ignore = dirty
 [submodule "vim-gitgutter"]
   path = vim/pack/bundle/opt/vim-gitgutter
   url = git@github.com:airblade/vim-gitgutter.git
+  branch = master
   ignore = dirty
 [submodule "vim-graphql"]
   path = vim/pack/bundle/opt/vim-graphql
   url = git@github.com:jparise/vim-graphql.git
+  branch = master
   ignore = dirty
 [submodule "vim/pack/hardtime/vim-hardtime"]
   path = vim/pack/bundle/opt/vim-hardtime
   url = git@github.com:takac/vim-hardtime.git
+  branch = master
   ignore = dirty
 [submodule "ghcmod-vim"]
   path = vim/pack/bundle/opt/ghcmod-vim
   url = git@github.com:eagletmt/ghcmod-vim.git
+  branch = master
   ignore = dirty
 [submodule "vim-jsx"]
   path = vim/pack/bundle/opt/vim-jsx
   url = git@github.com:mxw/vim-jsx.git
+  branch = master
   ignore = dirty
 [submodule "vim-json"]
   path = vim/pack/bundle/opt/vim-json
   url = git@github.com:elzr/vim-json.git
+  branch = master
   ignore = dirty
 [submodule "Latex-Text-Formatter"]
   path = vim/pack/bundle/opt/Latex-Text-Formatter
   url = git@github.com:jrasmusbm/Latex-Text-Formatter.git
+  branch = master
   ignore = dirty
 [submodule "vim-peculiar"]
   path = vim/pack/bundle/opt/vim-peculiar
   url = git@github.com:jrasmusbm/vim-peculiar.git
+  branch = main
   ignore = dirty
 [submodule "pinnacle"]
   path = vim/pack/bundle/opt/pinnacle
   url = git@github.com:wincent/pinnacle.git
+  branch = main
   ignore = dirty
 [submodule "vim-polyglot"]
   path = vim/pack/bundle/opt/vim-polyglot
   url = git@github.com:sheerun/vim-polyglot.git
+  branch = master
   ignore = dirty
 [submodule "prolog.vim"]
   path = vim/pack/bundle/opt/prolog.vim
   url = git@github.com:adimit/prolog.vim.git
+  branch = master
   ignore = dirty
 [submodule "thesaurus_query.vim"]
   path = vim/pack/bundle/opt/thesaurus_query.vim
   url = git@github.com:Ron89/thesaurus_query.vim.git
+  branch = master
   ignore = dirty
 [submodule "vimpyter"]
   path = vim/pack/bundle/opt/vimpyter
   url = git@github.com:szymonmaszke/vimpyter.git
+  branch = master
   ignore = dirty
 [submodule "loupe"]
   path = vim/pack/bundle/opt/loupe
   url = git@github.com:Wincent/loupe.git
+  branch = main
   ignore = dirty
 [submodule "vim-sort-motion"]
   path = vim/pack/bundle/opt/vim-sort-motion
   url = git@github.com:christoomey/vim-sort-motion.git
+  branch = master
   ignore = dirty
 [submodule "vim-vmath"]
   path = vim/pack/bundle/opt/vim-vmath
   url = git@github.com:nixon/vim-vmath.git
+  branch = master
   ignore = dirty
 [submodule "vim-stay"]
   path = vim/pack/bundle/opt/vim-stay
   url = git@github.com:zhimsel/vim-stay.git
+  branch = master
   ignore = dirty
 [submodule "vim-repeat"]
   path = vim/pack/bundle/opt/vim-repeat
   url = git@github.com:tpope/vim-repeat.git
+  branch = master
   ignore = dirty
 [submodule "vim-surround"]
   path = vim/pack/bundle/opt/vim-surround
   url = git@github.com:tpope/vim-surround.git
+  branch = master
   ignore = dirty
 [submodule "matchit"]
   path = vim/pack/bundle/opt/matchit
   url = git@github.com:tmhedberg/matchit.git
+  branch = master
   ignore = dirty
 [submodule "auto-pairs"]
   path = vim/pack/bundle/opt/auto-pairs
   url = git@github.com:jiangmiao/auto-pairs.git
+  branch = master
   ignore = dirty
 [submodule "terminus"]
   path = vim/pack/bundle/opt/terminus
   url = git@github.com:wincent/terminus.git
+  branch = main
   ignore = dirty
 [submodule "vim-test"]
   path = vim/pack/bundle/opt/vim-test
   url = git@github.com:janko/vim-test.git
+  branch = master
   ignore = dirty
 [submodule "vim-textobj-entire"]
   path = vim/pack/bundle/opt/vim-textobj-entire
   url = git@github.com:kana/vim-textobj-entire.git
+  branch = master
   ignore = dirty
 [submodule "vim-textobj-line"]
   path = vim/pack/bundle/opt/vim-textobj-line
   url = git@github.com:kana/vim-textobj-line.git
+  branch = master
   ignore = dirty
 [submodule "vim-textobj-user"]
   path = vim/pack/bundle/opt/vim-textobj-user
   url = git@github.com:kana/vim-textobj-user.git
+  branch = master
   ignore = dirty
 [submodule "vim-textobj-underscore"]
   path = vim/pack/bundle/opt/vim-textobj-underscore
   url = git@github.com:lucapette/vim-textobj-underscore.git
+  branch = master
   ignore = dirty
 [submodule "vim-textobj-between"]
   path = vim/pack/bundle/opt/vim-textobj-between
   url = git@github.com:thinca/vim-textobj-between.git
+  branch = master
   ignore = dirty
 [submodule "vim-tmux-navigator"]
   path = vim/pack/bundle/opt/vim-tmux-navigator
   url = git@github.com:christoomey/vim-tmux-navigator.git
+  branch = master
   ignore = dirty
 [submodule "vim-tmux-runner"]
   path = vim/pack/bundle/opt/vim-tmux-runner
   url = git@github.com:christoomey/vim-tmux-runner.git
+  branch = master
   ignore = dirty
 [submodule "vim-tslint-config"]
   path = vim/pack/bundle/opt/vim-tslint-config
   url = git@github.com:heavenshell/vim-tslint-config.git
+  branch = master
   ignore = dirty
 [submodule "vim-unimpaired"]
   path = vim/pack/bundle/opt/vim-unimpaired
   url = git@github.com:tpope/vim-unimpaired.git
+  branch = master
   ignore = dirty
 [submodule "vim-wasm"]
   path = vim/pack/bundle/opt/vim-wasm
   url = git@github.com:rhysd/vim-wasm.git
+  branch = master
   ignore = dirty
 [submodule "tmux/plugins/tpm"]
   path = tmux/plugins/tpm
-  url = https://github.com/tmux-plugins/tpm
+  url = git@github.com:tmux-plugins/tpm.git
+  branch = master
   ignore = dirty
 [submodule "tmux/plugins/tmux-safekill"]
   path = tmux/plugins/tmux-safekill
   url = git@github.com:jlipps/tmux-safekill.git
+  branch = master
   ignore = dirty
 [submodule "fugitive-gitlab.vim"]
   path = vim/pack/bundle/opt/fugitive-gitlab.vim
   url = git@github.com:shumphrey/fugitive-gitlab.vim.git
+  branch = master
   ignore = dirty
 [submodule "witchcraft"]
   path = witchcraft
   url = git@github.com:JRasmusBm/witchcraft.git
+  branch = main
   ignore = dirty
 [submodule "nvim-colorizer.lua"]
   path = vim/pack/bundle/opt/nvim-colorizer.lua
   url = git@github.com:norcalli/nvim-colorizer.lua.git
+  branch = master
   ignore = dirty
 [submodule "shell/autosrc"]
   path = shell/autosrc
   url = git@github.com:seanyeh/autosrc.git
+  branch = master
   ignore = dirty
 [submodule "vim-signature"]
   path = vim/pack/bundle/opt/vim-signature
   url = git@github.com:kshenoy/vim-signature.git
+  branch = master
   ignore = dirty
 [submodule "tmux-open"]
   path = tmux/plugins/tmux-open
@@ -197,124 +245,150 @@
 [submodule "vim-bushels"]
   path = vim/pack/bundle/opt/vim-bushels
   url = git@github.com:JRasmusBm/vim-bushels.git
+  branch = main
   ignore = dirty
 [submodule "vim-abolish"]
   path = vim/pack/bundle/opt/vim-abolish
   url = git@github.com:tpope/vim-abolish.git
+  branch = master
   ignore = dirty
 [submodule "vim-caser"]
   path = vim/pack/bundle/opt/vim-caser
   url = git@github.com:JRasmusBm/vim-caser.git
+  branch = master
   ignore = dirty
 [submodule "vim-be-good"]
   path = vim/pack/bundle/opt/vim-be-good
   url = git@github.com:ThePrimeagen/vim-be-good.git
+  branch = master
   ignore = dirty
 [submodule "popup.nvim"]
   path = vim/pack/bundle/opt/popup.nvim
   url = git@github.com:nvim-lua/popup.nvim.git
+  branch = master
   ignore = dirty
 [submodule "plenary.nvim"]
   path = vim/pack/bundle/opt/plenary.nvim
   url = git@github.com:nvim-lua/plenary.nvim.git
+  branch = master
   ignore = dirty
 [submodule "telescope.nvim"]
   path = vim/pack/bundle/opt/telescope.nvim
   url = git@github.com:JRasmusBm/telescope.nvim.git
+  branch = master
   ignore = dirty
 [submodule "telescope-fzy-native.nvim"]
   path = vim/pack/bundle/opt/telescope-fzy-native.nvim
   url = git@github.com:nvim-telescope/telescope-fzy-native.nvim.git
+  branch = master
   ignore = dirty
 [submodule "harpoon"]
   path = vim/pack/bundle/opt/harpoon
   url = git@github.com:ThePrimeagen/harpoon.git
+  branch = master
   ignore = dirty
 [submodule "vim-smoothie"]
   path = vim/pack/bundle/opt/vim-smoothie
-  url = git@github.com:psliwka/vim-smoothie
+  url = git@github.com:psliwka/vim-smoothie.git
+  branch = master
   ignore = dirty
 [submodule "diffview.nvim"]
   path = vim/pack/bundle/opt/diffview.nvim
   url = git@github.com:sindrets/diffview.nvim.git
+  branch = main
   ignore = dirty
 [submodule "nvim-web-devicons"]
   path = vim/pack/bundle/opt/nvim-web-devicons
   url = git@github.com:kyazdani42/nvim-web-devicons.git
+  branch = master
   ignore = dirty
 [submodule "nvim-lspconfig"]
   path = vim/pack/bundle/opt/nvim-lspconfig
   url = git@github.com:neovim/nvim-lspconfig.git
-  ignore = dirty
-[submodule "nvim-lsp-diamove"]
-  path = vim/pack/bundle/nvim-lsp-diamove
-  url = https://github.com/weilbith/nvim-lsp-diamove
+  branch = master
   ignore = dirty
 [submodule "vim-emoji"]
   path = vim/pack/bundle/opt/vim-emoji
   url = git@github.com:junegunn/vim-emoji.git
+  branch = master
   ignore = dirty
 [submodule "nvim-compe"]
   path = vim/pack/bundle/opt/nvim-compe
   url = git@github.com:hrsh7th/nvim-compe.git
+  branch = master
   ignore = dirty
 [submodule "nvim-treesitter"]
   path = vim/pack/bundle/opt/nvim-treesitter
   url = git@github.com:nvim-treesitter/nvim-treesitter.git
+  branch = master
   ignore = dirty
 [submodule "gruvbox-material"]
   path = vim/pack/bundle/opt/gruvbox-material
   url = git@github.com:sainnhe/gruvbox-material.git
+  branch = master
   ignore = dirty
 [submodule "nvim-treesitter-textobjects"]
   path = vim/pack/bundle/opt/nvim-treesitter-textobjects
   url = git@github.com:nvim-treesitter/nvim-treesitter-textobjects.git
+  branch = master
   ignore = dirty
 [submodule "nvim-treesitter-playground"]
   path = vim/pack/bundle/opt/nvim-treesitter-playground
   url = git@github.com:nvim-treesitter/playground.git
+  branch = master
   ignore = dirty
 [submodule "vim-rhubarb"]
   path = vim/pack/bundle/opt/vim-rhubarb
   url = git@github.com:tpope/vim-rhubarb.git
+  branch = master
   ignore = dirty
 [submodule "nvim-dap"]
   path = vim/pack/bundle/opt/nvim-dap
   url = git@github.com:mfussenegger/nvim-dap.git
+  branch = master
   ignore = dirty
 [submodule "indent-blankline.nvim"]
   path = vim/pack/bundle/opt/indent-blankline.nvim
   url = git@github.com:lukas-reineke/indent-blankline.nvim.git
+  branch = master
   ignore = dirty
 [submodule "refactoring.nvim"]
   path = vim/pack/bundle/opt/refactoring.nvim
   url = git@github.com:ThePrimeagen/refactoring.nvim.git
+  branch = master
   ignore=dirty
 [submodule "shell/z"]
   path = shell/z
   url = git@github.com:rupa/z.git
+  branch = master
   ignore = dirty
 [submodule "vim-textobj-fold"]
   path = vim/pack/bundle/opt/vim-textobj-fold
   url = git@github.com:kana/vim-textobj-fold.git
+  branch = master
   ignore = dirty
 [submodule "nvim-dap-python"]
   path = vim/pack/bundle/opt/nvim-dap-python
   url = git@github.com:mfussenegger/nvim-dap-python.git
+  branch = master
   ignore = dirty
 [submodule "vim-presentation-mode"]
   path = vim/pack/bundle/opt/vim-presentation-mode
   url = git@github.com:JRasmusBm/vim-presentation-mode.git
+  branch = master
   ignore = dirty
 [submodule "vim-illuminate"]
   path = vim/pack/bundle/opt/vim-illuminate
   url = git@github.com:RRethy/vim-illuminate.git
+  branch = master
   ignore = dirty
 [submodule "spelunker.vim"]
-	path = vim/pack/bundle/opt/spelunker.vim
-	url = git@github.com:kamykn/spelunker.vim.git
+  path = vim/pack/bundle/opt/spelunker.vim
+  url = git@github.com:kamykn/spelunker.vim.git
+  branch = master
   ignore = dirty
 [submodule "popup-menu.nvim"]
-	path = vim/pack/bundle/opt/popup-menu.nvim
-	url = git@github.com:kamykn/popup-menu.nvim.git
+  path = vim/pack/bundle/opt/popup-menu.nvim
+  url = git@github.com:kamykn/popup-menu.nvim.git
+  branch = master
   ignore = dirty
