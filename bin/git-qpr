@@ -4,6 +4,7 @@ _create_and_merge_pr() {
   g pup
   g opr -f
   gh pr merge -md
+  g mup
 }
 
 _create_and_merge_pr "$@"
