@@ -1,1 +1,54 @@
+" This file represents a minimal .vimrc for use where I won't have access to
+" the latest version of neovim. It is intentially void of plugins, the whole
+" idea is that I want to be able to hit the ground running on it on any
+" machine.
 
+" Layout {{{
+syntax on
+filetype plugin indent on
+
+set relativenumber
+set number
+set list
+set listchars=tab:>-
+set ruler
+set wrap
+set textwidth=79
+set scrolloff=4
+set tabstop=2
+" }}}
+
+" Other settings {{{
+set background=dark
+set mouse=a
+set encoding=utf-8
+set noswapfile
+set fileformat=unix
+set hidden
+set hlsearch
+set showmatch
+set shortmess=a
+set cmdheight=1
+set ignorecase
+set smartcase
+set incsearch
+set splitbelow
+set lazyredraw
+" }}}
+
+" Mappings {{{
+let mapleader=";"
+let maplocalleader="\<Space>"
+
+nmap Q <nop>
+
+nnoremap <leader>fl :vimgrep  *<Left><Left>
+
+nnoremap <leader>qo :copen
+nnoremap <leader>qc :cclose
+
+nnoremap ]q :cnext
+nnoremap [q :cprev
+
+nnoremap <Leader>d :Ex<CR>
+" }}}
