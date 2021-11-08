@@ -7,7 +7,7 @@ sign define LspDiagnosticsInformationSign text=i texthl=LspDiagnosticsInformatio
 sign define LspDiagnosticsHintSign text=※ texthl=LspDiagnosticsHint
 
 augroup LspLocationList
-  autocmd User LspDiagnosticsChanged lua vim.lsp.diagnostic.set_loclist({ open_loclist=false })
+  autocmd User LspDiagnosticsChanged lua vim.lsp.diagnostic.setloclist({ open=false })
 augroup END
 
 let g:lsp_diamove_disable_default_mapping=1
