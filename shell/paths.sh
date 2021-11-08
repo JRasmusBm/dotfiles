@@ -24,5 +24,6 @@ PATH=$PATH:$HOME/.cache/depot_tools
 PATH=$PATH:$HOME/.dotnet
 PATH=$PATH:$HOME/.fzf/bin
 PATH=$PATH:$HOME/.bin
+PATH="$PATH:$HOME/.pyenv/bin"
 
 export PATH=$PATH
