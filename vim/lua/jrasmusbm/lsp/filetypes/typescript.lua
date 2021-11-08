@@ -5,8 +5,8 @@ function M.setup(options)
         on_attach = function(client)
             client.resolved_capabilities.document_formatting = false
             options.on_attach(client)
-
-        end
+        end,
+        filetypes={"typescript", "typescript.express"}
     }
 end
 
