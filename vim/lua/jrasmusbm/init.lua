@@ -16,29 +16,38 @@ vim.opt.exrc = true
 
 vim.api.nvim_set_keymap("n", "ö", ";", {noremap = true})
 
-local source_config_files_in = vim.schedule_wrap(function(module)
-  -- Inspired by @ChrisToomey's vimrc.
-  local path = os.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/" .. module
-  require("jrasmusbm.utils").for_each_file_in_directory(path,
-                                                        function(file_name)
-                                                          print(
-                                                            vim.inspect({
-                                                                file = "vim/lua/jrasmusbm/init.lua",
-                                                                line = 27,
-                                                                path,
-                                                                file_name,
-                                                              })
-                                                            )
-    local full_module = path .. "/" .. file_name
-    print(vim.inspect({
+local result = os.execute("ls vim/lua/jrasmusbm/plugin_config")
+print(
+  vim.inspect({
       file = "vim/lua/jrasmusbm/init.lua",
-      line = 32,
-      full_module,
-    }))
-    dofile(full_module)
+      line = 23,
+      result=result,
+    })
+  )
 
-  end)
-end)
+-- local source_config_files_in = vim.schedule_wrap(function(module)
+--   -- Inspired by @ChrisToomey's vimrc.
+--   local path = os.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/" .. module
+--   require("jrasmusbm.utils").for_each_file_in_directory(path,
+--                                                         function(file_name)
+--                                                           print(
+--                                                             vim.inspect({
+--                                                                 file = "vim/lua/jrasmusbm/init.lua",
+--                                                                 line = 27,
+--                                                                 path,
+--                                                                 file_name,
+--                                                               })
+--                                                             )
+--     local full_module = path .. "/" .. file_name
+--     print(vim.inspect({
+--       file = "vim/lua/jrasmusbm/init.lua",
+--       line = 32,
+--       full_module,
+--     }))
+--     dofile(full_module)
+
+--   end)
+-- end)
 
 vim.cmd [[ packadd! plenary.nvim ]]
 source_config_files_in("plugin_config")
