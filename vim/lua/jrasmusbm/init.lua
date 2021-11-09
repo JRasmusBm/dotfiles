@@ -1,8 +1,6 @@
 local os = require("os")
 local io = require("io")
 
-print(vim.inspect({file = "vim/lua/init.lua", line = 5, "hello"}))
-
 vim.g.python3_host_prog = os.getenv("HOME") ..
                             "/.virtualenvs/neovim3/bin/python"
 
@@ -16,9 +14,15 @@ vim.opt.exrc = true
 
 vim.api.nvim_set_keymap("n", "ö", ";", {noremap = true})
 
+local dotfiles = os.getenv("DOTFILES")
+if dotfiles == nil then
+			vim.fn.setenv('DOTFILES', os.getenv("HOME") .. "/dotfiles")
+end
+
 local source_config_files_in = function(module)
   -- Inspired by @ChrisToomey's vimrc.
-  local process = io.popen("ls vim/lua/jrasmusbm/" .. module .. "/*")
+  local folder_path = os.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/" .. module
+  local process = io.popen("ls " .. folder_path .. "/*")
   local result = vim.split(process:read("a*"), "\n")
   for _, file in ipairs(result) do
     if file ~= "" then
