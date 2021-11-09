@@ -27,8 +27,8 @@ inoremap <buffer> <leader>lb print(
 " }}}
 
 " Import {{{
-" Default {{{
-inoremap <buffer> <leader>id local <++> = require("<++>"):call bushels#backward_marker(2)
+" Module {{{
+inoremap <buffer> <leader>im local <++> = require("<++>"):call bushels#backward_marker(2)
 " }}}
 " }}}
 
@@ -51,5 +51,13 @@ inoremap <buffer> <leader>ci if <++> then
 inoremap <buffer> <leader>cf for _, <++> in <++> do
       \<++>
       \end:call bushels#backward_marker(3)
+" }}}
+" }}}
+
+" Vim {{{
+" Command {{{
+inoremap <buffer> <leader>vc vim.cmd [[
+                  \<++>
+                  \]]:call bushels#backward_marker(1)
 " }}}
 " }}}
