@@ -1,3 +1,4 @@
+vim.cmd [[
 set splitright
 
 nmap <leader>bd :bp! <BAR> bd #<CR>
@@ -18,3 +19,4 @@ nnoremap o<C-j> :bel sp %<cr><C-w>j<C-w>c
 nnoremap o<C-k> :abo sp %<cr><C-w>k<C-w>c
 nnoremap o<C-h> :lefta vsp %<cr><C-w>h<C-w>c
 nnoremap o<C-l> :rightb vsp %<cr><C-w>l<C-w>c
+]]

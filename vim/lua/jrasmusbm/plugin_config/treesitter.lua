@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! nvim-treesitter
 packadd! nvim-treesitter-textobjects
 packadd! nvim-treesitter-playground
@@ -9,3 +10,4 @@ let g:indent_blankline_char = '│'
 
 set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
+]]

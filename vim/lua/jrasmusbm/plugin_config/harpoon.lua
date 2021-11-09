@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! harpoon
 
 nnoremap <leader>mf :lua require("harpoon.mark").add_file()
@@ -12,3 +13,4 @@ nnoremap <leader>m7 :lua require("harpoon.ui").nav_file(7)
 nnoremap <leader>m8 :lua require("harpoon.ui").nav_file(8)
 nnoremap <leader>m9 :lua require("harpoon.ui").nav_file(9)
 nnoremap <leader>m0 :lua require("harpoon.ui").nav_file(10)
+]]

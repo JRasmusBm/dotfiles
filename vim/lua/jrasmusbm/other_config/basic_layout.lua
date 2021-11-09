@@ -1,3 +1,4 @@
+vim.cmd [[
 set relativenumber
 set number
 set showcmd
@@ -24,3 +25,4 @@ nnoremap <silent><Leader>ww :syntax sync fromstart<CR>
 
 highlight! Normal ctermbg=NONE guibg=NONE
 highlight! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
+]]

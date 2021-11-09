@@ -1,3 +1,4 @@
+vim.cmd [[
 nnoremap <C-Y> "+y
 nnoremap <C-P> "+p
 vnoremap <C-Y> "+y
@@ -8,3 +9,4 @@ augroup ShowYank
     autocmd TextYankPost * lua vim.highlight.on_yank {higroup='IncSearch', timeout=200}
   endif
 augroup END
+]]

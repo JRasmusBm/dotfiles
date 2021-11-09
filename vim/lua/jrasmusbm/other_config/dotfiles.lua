@@ -1,3 +1,4 @@
+vim.cmd [[
 :command! Vrc exec "e $DOTFILES/vim/vimrc"
 :command! Nrc exec "e $DOTFILES/vim/init.vim"
 :command! Lrc exec "e $DOTFILES/vim/lua/jrasmusbm/init.lua"
@@ -8,3 +9,4 @@
 :command! Grc exec "e $DOTFILES/git/gitconfig"
 :command! Trc exec "e $DOTFILES/tmux/tmux.conf"
 :command! Frc exec "e $DOTFILES/vim/ftplugin/" . &ft . ".vim"
+]]

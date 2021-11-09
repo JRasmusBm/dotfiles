@@ -1,3 +1,4 @@
+vim.cmd [[
 augroup CustomFoldlevel
   autocmd BufRead *.test.* setlocal foldlevel=1
 augroup END
@@ -17,3 +18,4 @@ set foldopen+=quickfix
 set foldclose=""
 
 nnoremap za :call jrasmusbm#folds#toggle_foldopen()
+]]

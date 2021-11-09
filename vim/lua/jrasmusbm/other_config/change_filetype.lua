@@ -1,3 +1,4 @@
+vim.cmd [[
 augroup ChangeFiletype
   autocmd!
   autocmd BufRead, BufNewFile *.j set filetype=jasmin
@@ -17,3 +18,4 @@ augroup ChangeFiletype
   autocmd BufRead serviceworker.js set filetype=javascript.serviceworker
   autocmd BufRead .tmux-speeddial set filetype=speeddial
 augroup END
+]]

@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! fugitive-gitlab.vim
 packadd! vim-gitgutter
 packadd! vim-rhubarb
@@ -15,3 +16,4 @@ set diffopt+=hiddenoff
 command! L silent call jrasmusbm#git#open_tree()
 
 let g:fugitive_gitlab_domains = []
+]]

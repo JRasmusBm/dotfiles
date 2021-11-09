@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! nvim-lspconfig
 packadd! nvim-lsp-diamove
 
@@ -11,3 +12,4 @@ augroup LspLocationList
 augroup END
 
 let g:lsp_diamove_disable_default_mapping=1
+]]

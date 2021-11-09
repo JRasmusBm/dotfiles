@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! vim-bushels
 
 inoremap <leader><leader> <++>
@@ -17,4 +18,5 @@ nmap <leader>G <Plug>BushelsBackwardMarker
 imap <leader>g <Plug>BushelsForwardMarker
 nmap <leader>g <Plug>BushelsForwardMarker
 
-inoremap <leader>cp :call bushels#forward_marker(1).:call bushels#forward_marker(1)
+inoremap <leader>cp :call bushels#forward_marker(1)<Enter><C-R>.<Esc>:call bushels#forward_marker(1)
+]]

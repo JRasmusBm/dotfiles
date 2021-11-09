@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! nvim-dap
 packadd! nvim-dap-python
 
@@ -12,3 +13,4 @@ nnoremap <leader>iL :lua require('dap').run_last()
 nnoremap <leader>io :lua require('dap').repl.open()
 nnoremap <leader>ib :lua require('dap').toggle_breakpoint()
 nnoremap <leader>iB :lua require('dap').list_breakpoints()
+]]

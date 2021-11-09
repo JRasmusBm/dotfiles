@@ -1,3 +1,4 @@
+vim.cmd [[
 inoremap <C-c> <Esc>
 nmap Q <nop>
 nmap gQ qqVipJ2jq2{w0
@@ -17,3 +18,4 @@ nnoremap <silent> <leader>lc :lclose
 xmap <leader>h <cmd>call jrasmusbm#open#github()<CR>
 
 nmap == :call jrasmusbm#format#default()
+]]

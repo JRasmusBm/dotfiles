@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! vim-test
 
 let test#python#project_root = "./tests"
@@ -11,3 +12,4 @@ nmap <silent> <localleader>df :TestFile<CR>
 nmap <silent> <localleader>ds :TestSuite<CR>
 nmap <silent> <localleader>dp :TestLast<CR>
 nmap <silent> <localleader>dv :TestVisit<CR>
+]]

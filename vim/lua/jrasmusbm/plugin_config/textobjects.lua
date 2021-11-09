@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! vim-textobj-between
 packadd! vim-textobj-entire
 packadd! vim-textobj-line
@@ -11,3 +12,4 @@ omap ao <Plug>(textobj-between-a)
 vmap ao <Plug>(textobj-between-a)
 omap io <Plug>(textobj-between-i)
 vmap io <Plug>(textobj-between-i)
+]]

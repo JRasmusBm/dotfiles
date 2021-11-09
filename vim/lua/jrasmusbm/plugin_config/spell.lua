@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! spelunker.vim
 packadd! popup-menu.nvim
 
@@ -41,3 +42,4 @@ augroup spelunker
   autocmd BufWinEnter,BufWritePost * call s:check_file()
   autocmd CursorHold * call s:check_displayed_words()
 augroup END
+]]

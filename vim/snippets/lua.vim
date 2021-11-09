@@ -56,6 +56,8 @@ inoremap <buffer> <leader>cf for _, <++> in <++> do
 
 " Vim {{{
 " Command {{{
-inoremap <buffer> <leader>vc vim.cmd [[ <++> ]]:call bushels#backward_marker(1)
+inoremap <buffer> <leader>vc vim.cmd [[
+                  \<++>
+                  \]]:call bushels#backward_marker(1)
 " }}}
 " }}}

@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! popup.nvim
 packadd! plenary.nvim
 packadd! telescope.nvim
@@ -11,8 +12,8 @@ function! UpdateX()
   let @x = @/[4:-3]
 endfunction
 
-nmap <silent> * <Plug>(LoupeStar):call UpdateX()
-nmap <silent> # <Plug>(LoupeOctothorpe):call UpdateX()
+nmap <silent> * <Plug>(LoupeStar):call UpdateX()<CR>
+nmap <silent> # <Plug>(LoupeOctothorpe):call UpdateX()<CR>
 
 command! GFiles lua require('jrasmusbm.telescope.git_files').git_files()
 
@@ -29,7 +30,7 @@ command! Reg Telescope registers
 
 " Cheat {{{
 command! -nargs=* Cheat lua require('jrasmusbm.telescope.cheat').cheat(<q-args>)
-nnoremap <leader>fc :Cheat
+nnoremap <leader>fc :Cheat<CR>
 "}}}
 
 " Search in Git {{{
@@ -50,42 +51,43 @@ nnoremap <localleader>fs <cmd>lua require('telescope.builtin').git_status()<cr>
 nnoremap <leader>ea <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "All Files",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/after/"
-  \ })
+  \ })<CR>
 nnoremap <leader>eu <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Autoload Files",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/autoload/"
-  \ })
+  \ })<CR>
 nnoremap <leader>el <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Lua Files",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/lua/"
-  \ })
+  \ })<CR>
 nnoremap <leader>es <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Snippet Files",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/snippets/"
-  \ })
+  \ })<CR>
 nnoremap <leader>ep <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Plugin Config Files",
-  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/plugin_config/"
-  \ })
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/plugin_config/"
+  \ })<CR>
 nnoremap <leader>eb <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Filetype Config Files",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/bin"
-  \ })
+  \ })<CR>
 nnoremap <leader>ei <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Install Dependencies",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/install_dependencies"
-  \ })
+  \ })<CR>
 nnoremap <leader>ef <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Filetype Config Files",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/ftplugin/"
-  \ })
+  \ })<CR>
 nnoremap <leader>eo <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Other Config Files",
-  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/other_config/"
-  \ })
+  \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/other_config/"
+  \ })<CR>
 "}}}
 nnoremap <leader>et <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
   \   prompt_title = "Treesitter Queries",
   \   cwd = vim.fn.getenv("DOTFILES") .. "/vim/queries/"
-  \ })
+  \ })<CR>
 "}}}
+]]

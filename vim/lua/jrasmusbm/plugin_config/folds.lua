@@ -1,1 +1,3 @@
+vim.cmd [[
 packadd! SimpylFold
+]]

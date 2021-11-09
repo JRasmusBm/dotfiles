@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! vim-signature
 
 let g:SignatureMarkTextHL = "Function"
@@ -25,3 +26,4 @@ let g:SignatureMap = {
 \ 'ListBufferMarks'    :  "m/",
 \ 'ListBufferMarkers'  :  "m?"
 \ }
+]]

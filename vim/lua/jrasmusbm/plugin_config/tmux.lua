@@ -1,3 +1,4 @@
+vim.cmd [[
 packadd! vim-tmux-navigator
 packadd! vim-tmux-runner
 
@@ -16,3 +17,4 @@ nmap <localleader>tp :VtrSendCommandToRunner r
 vmap <localleader>tl :'<,'>VtrSendLinesToRunner
 
 let g:VtrStripLeadingWhitespace = 0
+]]

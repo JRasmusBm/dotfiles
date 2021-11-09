@@ -1,3 +1,4 @@
+vim.cmd [[
 let g:name='Rasmus Bergström'
 set background=dark
 set termguicolors
@@ -18,3 +19,4 @@ set incsearch
 set splitbelow
 set timeoutlen=350 ttimeoutlen=0
 set lazyredraw
+]]
