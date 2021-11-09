@@ -21,7 +21,15 @@ local source_config_files_in = vim.schedule_wrap(function(module)
   local path = os.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/" .. module
   require("jrasmusbm.utils").for_each_file_in_directory(path,
                                                         function(file_name)
-    local full_module = module .. "." .. file_name
+                                                          print(
+                                                            vim.inspect({
+                                                                file = "vim/lua/jrasmusbm/init.lua",
+                                                                line = 27,
+                                                                path,
+                                                                file_name,
+                                                              })
+                                                            )
+    local full_module = path .. "/" .. file_name
     print(vim.inspect({
       file = "vim/lua/jrasmusbm/init.lua",
       line = 32,
@@ -38,9 +46,9 @@ source_config_files_in("other_config")
 
 vim.opt.secure = true
 
-require("jrasmusbm.telescope")
-require("jrasmusbm.diffview")
-require("jrasmusbm.harpoon")
-require("jrasmusbm.treesitter")
-require("jrasmusbm.lsp")
-require("jrasmusbm.dap")
+-- require("jrasmusbm.telescope")
+-- require("jrasmusbm.diffview")
+-- require("jrasmusbm.harpoon")
+-- require("jrasmusbm.treesitter")
+-- require("jrasmusbm.lsp")
+-- require("jrasmusbm.dap")

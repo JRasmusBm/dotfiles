@@ -1,57 +1,60 @@
+local mappings = require("jrasmusbm.utils.mappings")
+
 vim.cmd [[ packadd! vim-caser ]]
 
 vim.g.caser_no_mappings = 1
 
-" Pascal{{{
-nmap <localleader>cp <Plug>CaserMixedCase
-vmap <localleader>cp <Plug>CaserVMixedCase
-"}}}
+local function case_pascal()
+  mappings.nmap("<localleader>cp", "<Plug>CaserMixedCase")
+  mappings.vmap("<localleader>cp", "<Plug>CaserVMixedCase")
+end
 
-" Camel {{{
-nmap <localleader>cc <Plug>CaserCamelCase
-vmap <localleader>cc <Plug>CaserVCamelCase
-"}}}
+local function case_camel()
+  mappings.nmap("<localleader>cc", "<Plug>CaserCamelCase")
+  mappings.vmap("<localleader>cc", "<Plug>CaserVCamelCase")
+end
 
-" Snake {{{
-nmap <localleader>cs <Plug>CaserSnakeCase
-vmap <localleader>cs <Plug>CaserVSnakeCase
-"}}}
+local function case_snake()
+  mappings.nmap("<localleader>cs", "<Plug>CaserSnakeCase")
+  mappings.vmap("<localleader>cs", "<Plug>CaserVSnakeCase")
+end
 
-" Upper {{{
-nmap <localleader>cu <Plug>CaserUpperCase
-vmap <localleader>cu <Plug>CaserVUpperCase
-"}}}
+local function case_upper()
+  mappings.nmap("<localleader>cu", "<Plug>CaserUpperCase")
+  mappings.vmap("<localleader>cu", "<Plug>CaserVUpperCase")
+end
 
-" Words {{{
-" Title {{{
-nmap <localleader>cwt <Plug>CaserTitleCase
-vmap <localleader>cwt <Plug>CaserVTitleCase
-"}}}
+local function case_words_title()
+  mappings.nmap("<localleader>cwt", "<Plug>CaserTitleCase")
+  mappings.vmap("<localleader>cwt", "<Plug>CaserVTitleCase")
+end
 
-" Sentence {{{
-nmap <localleader>cws <Plug>CaserSentenceCase
-vmap <localleader>cws <Plug>CaserVSentenceCase
-"}}}
+local function case_words_sentence()
+  mappings.nmap("<localleader>cws", "<Plug>CaserSentenceCase")
+  mappings.vmap("<localleader>cws", "<Plug>CaserVSentenceCase")
+end
 
-" Lower {{{
-nmap <localleader>cwl <Plug>CaserKebabCase
-vmap <localleader>cwl <Plug>CaserVKebabCase
-" }}}
-"}}}
+local function case_kebab_lower()
+  mappings.nmap("<localleader>ckl", "<Plug>CaserKebabCase")
+  mappings.vmap("<localleader>ckl", "<Plug>CaserVKebabCase")
+end
 
-" Kebab {{{
-" Lower {{{
-nmap <localleader>ck <Plug>CaserKebabCase
-vmap <localleader>ck <Plug>CaserVKebabCase
-"}}}
+local function case_kebab_title()
+  mappings.nmap("<localleader>ckt", "<Plug>CaserTitleKebabCase")
+  mappings.vmap("<localleader>ckt", "<Plug>CaserVTitleKebabCase")
+end
 
-" Upper {{{
-nmap <localleader>cK <Plug>CaserTitleKebabCase
-vmap <localleader>cK <Plug>CaserVTitleKebabCase
-"}}}
-"}}}
+local function case_dot()
+  mappings.nmap("<localleader>cd", "<Plug>CaserDotCase")
+  mappings.vmap("<localleader>cd", "<Plug>CaserVDotCase")
+end
 
-" Dot {{{
-nmap <localleader>cd <Plug>CaserDotCase
-vmap <localleader>cd <Plug>CaserVDotCase
-"}}}
+case_pascal()
+case_camel()
+case_snake()
+case_upper()
+case_words_title()
+case_words_sentence()
+case_kebab_lower()
+case_kebab_title()
+case_dot()

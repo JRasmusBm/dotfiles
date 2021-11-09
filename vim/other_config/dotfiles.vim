@@ -1,5 +1,6 @@
 :command! Vrc exec "e $DOTFILES/vim/vimrc"
 :command! Nrc exec "e $DOTFILES/vim/init.vim"
+:command! Lrc exec "e $DOTFILES/vim/lua/jrasmusbm/init.lua"
 :command! Brc exec "e $DOTFILES/shell/bashrc"
 :command! Zrc exec "e $DOTFILES/shell/zshrc"
 :command! Zenv exec "e $DOTFILES/shell/zshenv"
