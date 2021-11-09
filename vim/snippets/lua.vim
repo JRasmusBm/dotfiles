@@ -67,9 +67,9 @@ inoremap <buffer> <leader>vc vim.cmd [[
 inoremap <buffer> <leader>mi local mappings = require("jrasmusbm.utils.mappings")
 " }}}
 " Normal {{{
-inoremap <buffer> <leader>mn mappings.nmap(<++>, <++>, { <++> })<Esc>:call bushels#backward_marker(3)<CR>
+inoremap <buffer> <leader>mn mappings.nmap("<++>", "<++>", { <++> })<Esc>:call bushels#backward_marker(3)<CR>
 " }}}
 " Visual {{{
-inoremap <buffer> <leader>mv mappings.vmap(<++>, <++>, { <++> })<Esc>:call bushels#backward_marker(3)<CR>
+inoremap <buffer> <leader>mv mappings.vmap("<++>", "<++>", { <++> })<Esc>:call bushels#backward_marker(3)<CR>
 " }}}
 " }}}
