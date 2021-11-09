@@ -8,7 +8,7 @@ vim.cmd "syntax on"
 vim.cmd "filetype plugin indent on"
 
 vim.g.mapleader = ";"
-vim.g.maplocalleader = "<Space>"
+vim.g.maplocalleader = " "
 
 vim.opt.exrc = true
 
