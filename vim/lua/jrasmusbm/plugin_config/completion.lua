@@ -1,8 +1,6 @@
 vim.cmd [[
-packadd! vim-emoji
 packadd! nvim-compe
 
-set completefunc=emoji#complete
 set completeopt=menuone,noselect
 
 inoremap <silent><expr> <C-Space> compe#complete()
