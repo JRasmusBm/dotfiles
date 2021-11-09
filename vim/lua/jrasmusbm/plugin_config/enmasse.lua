@@ -1,5 +1,7 @@
+local mappings = require("jrasmusbm.utils.mappings")
+
 vim.cmd [[
 packadd! vim-enmasse
-
-nnoremap <leader>fi :EnMasse
 ]]
+
+mappings.nmap("<leader>fi", "<cmd>EnMasse<CR>", {noremap = true})
