@@ -1,10 +1,12 @@
+local mappings = require("jrasmusbm.utils.mappings")
+
 vim.cmd [[
 packadd! vim-presentation-mode
-
-nnoremap <leader>vc :VpmOff<cr>
-nnoremap <leader>vn :VpmNextHighlight<cr>
-nnoremap <leader>vp :VpmPreviousHighlight<cr>
-nnoremap <leader>vf :VpmOpenNextFile<cr>
-
-let g:vpm_highlight_color='gray'
 ]]
+
+mappings.nmap("<leader>vc", "<cmd>VpmOff<cr>", {noremap = true})
+mappings.nmap("<leader>vn", "<cmd>VpmNextHighlight<cr>", {noremap = true})
+mappings.nmap("<leader>vp", "<cmd>VpmPreviousHighlight<cr>", {noremap = true})
+mappings.nmap("<leader>vf", "<cmd>VpmOpenNextFile<cr>", {noremap = true})
+
+vim.g.vpm_highlight_color = "gray"
