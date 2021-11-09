@@ -1,12 +1,13 @@
 local M = {}
 
-M.nmap = function (left, right)
-  vim.api.nvim_set_keymap("n", left, right, {})
+local map_wrapper = function(mode, left, right, opts)
+  if opts == nil then opts = {} end
+
+  vim.api.nvim_set_keymap(mode, left, right, opts)
 end
 
-M.vmap = function (left, right)
-  vim.api.nvim_set_keymap("v", left, right, {})
-end
+M.nmap = function(left, right, opts) map_wrapper("n", left, right, opts) end
 
+M.vmap = function(left, right, opts) map_wrapper("v", left, right, opts) end
 
 return M
