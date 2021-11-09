@@ -42,7 +42,7 @@ let maplocalleader="\<Space>"
 
 nmap Q <nop>
 
-nnoremap <leader>fl :vimgrep  *<Left><Left>
+nnoremap <leader>fl :vimgrep  **/*<Left><Left><Left><Left><Left>
 
 nnoremap <leader>qo :copen
 nnoremap <leader>qc :cclose
