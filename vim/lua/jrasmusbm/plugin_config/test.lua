@@ -1,3 +1,5 @@
+local mappings = require("jrasmusbm.utils.mappings")
+
 vim.cmd [[
 packadd! vim-test
 
@@ -6,10 +8,12 @@ let test#strategy = "vtr"
 
 let test#go#gotest#options = "-cover"
 let test#javascript#reactscripts#options = "--coverage --watchAll=false"
-
-nmap <silent> <localleader>dn :TestNearest<CR>
-nmap <silent> <localleader>df :TestFile<CR>
-nmap <silent> <localleader>ds :TestSuite<CR>
-nmap <silent> <localleader>dp :TestLast<CR>
-nmap <silent> <localleader>dv :TestVisit<CR>
 ]]
+
+mappings.nmap ("<localleader>dn",":TestNearest<CR>", {noremap=true})
+mappings.nmap ("<localleader>df",":TestFile<CR>", {noremap=true})
+mappings.nmap ("<localleader>ds",":TestSuite<CR>", {noremap=true})
+mappings.nmap ("<localleader>dp",":TestLast<CR>", {noremap=true})
+mappings.nmap ("<localleader>dv",":TestVisit<CR>", {noremap=true})
+
+
