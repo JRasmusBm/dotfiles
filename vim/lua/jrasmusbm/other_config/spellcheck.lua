@@ -1,3 +1,5 @@
+vim.opt.spellang = {"en_us"}
+
 vim.cmd [[
 nnoremap <leader>ce :set spell spelllang+=en_us,<CR>
 nnoremap <leader>cv :set spell spelllang+=sv,<CR>
