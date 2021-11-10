@@ -9,12 +9,12 @@ let g:vtr_filetype_runner_overrides = {
 
 nmap <localleader>tc :VtrSendCommandToRunner<Space>
 nmap <localleader>ta :VtrAttach<Space>
-nmap <localleader>to :VtrOpenRunner
-nmap <localleader>tk :VtrKillRunner
-nmap <localleader>tf :VtrSendFile
-nmap <localleader>tl :VtrSendLinesToRunner
-nmap <localleader>tp :VtrSendCommandToRunner r
-vmap <localleader>tl :'<,'>VtrSendLinesToRunner
+nmap <localleader>to <cmd>VtrOpenRunner<CR>
+nmap <localleader>tk <cmd>VtrKillRunner<CR>
+nmap <localleader>tf <cmd>VtrSendFile<CR>
+nmap <localleader>tl <cmd>VtrSendLinesToRunner<CR>
+nmap <localleader>tp <cmd>VtrSendCommandToRunner r<CR>
+vmap <localleader>tl <cmd>'<,'>VtrSendLinesToRunner<CR>
 
 let g:VtrStripLeadingWhitespace = 0
 ]]
