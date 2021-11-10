@@ -55,47 +55,15 @@ mappings.nmap("<localleader>fb","<cmd>lua require('jrasmusbm.telescope.git_branc
 mappings.nmap("<localleader>fs","<cmd>lua require('telescope.builtin').git_status()<cr>")
 
 -- Config files
-mappings.nmap("<leader>ea", [[ print("hello")
-  -- <cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-  --    prompt_title = "All Files",
-  --    cwd = vim.fn.getenv("DOTFILES") .. "/vim/after/"
-  --  })<CR>
- ]], { noremap = true })
-mappings.nmap("<leader>eu", [[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-     prompt_title = "Autoload Files",
-     cwd = vim.fn.getenv("DOTFILES") .. "/vim/autoload/"
-   })<CR>]], { noremap = true })
-mappings.nmap("<leader>el",[[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-      prompt_title = "Lua Files",
-      cwd = vim.fn.getenv("DOTFILES") .. "/vim/lua/"
-    })<CR>]], { noremap = true })
-mappings.nmap("<leader>es",[[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-      prompt_title = "Snippet Files",
-      cwd = vim.fn.getenv("DOTFILES") .. "/vim/snippets/"
-    })<CR>]], { noremap = true })
-mappings.nmap("<leader>ep", [[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-      prompt_title = "Plugin Config Files",
-      cwd = vim.fn.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/plugin_config/"
-    })<CR>]], { noremap = true })
-mappings.nmap("<leader>eb", [[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-      prompt_title = "Filetype Config Files",
-      cwd = vim.fn.getenv("DOTFILES") .. "/bin"
-    })<CR>]], { noremap = true })
-mappings.nmap("<leader>ei", [[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-      prompt_title = "Install Dependencies",
-      cwd = vim.fn.getenv("DOTFILES") .. "/install_dependencies"
-    })<CR>]], { noremap = true })
-mappings.nmap("<leader>ef", [[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-      prompt_title = "Filetype Config Files",
-      cwd = vim.fn.getenv("DOTFILES") .. "/vim/ftplugin/"
-    })<CR>]], { noremap = true })
-mappings.nmap("<leader>eo", [[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-      prompt_title = "Other Config Files",
-      cwd = vim.fn.getenv("DOTFILES") .. "/vim/lua/jrasmusbm/other_config/"
-    })<CR>]], { noremap = true })
-mappings.nmap("<leader>et", [[<cmd>lua require('jrasmusbm.telescope.find_files').find_files({
-     prompt_title = "Treesitter Queries",
-     cwd = vim.fn.getenv("DOTFILES") .. "/vim/queries/"
-   })<CR>]], { noremap = true })
+mappings.nmap("<leader>ea", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'All Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/after/' })<CR>", { noremap = true })
+mappings.nmap("<leader>eu", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Autoload Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/autoload/' })<CR>", { noremap = true })
+mappings.nmap("<leader>el","<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Lua Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/lua/' })<CR>", { noremap = true })
+mappings.nmap("<leader>es","<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Snippet Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/snippets/' })<CR>", { noremap = true })
+mappings.nmap("<leader>ep", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Plugin Config Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/lua/jrasmusbm/plugin_config/' })<CR>", { noremap = true })
+mappings.nmap("<leader>eb", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Filetype Config Files', cwd = vim.fn.getenv('DOTFILES') .. '/bin' })<CR>", { noremap = true })
+mappings.nmap("<leader>ei", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Install Dependencies', cwd = vim.fn.getenv('DOTFILES') .. '/install_dependencies' })<CR>", { noremap = true })
+mappings.nmap("<leader>ef", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Filetype Config Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/ftplugin/' })<CR>", { noremap = true })
+mappings.nmap("<leader>eo", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Other Config Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/lua/jrasmusbm/other_config/' })<CR>", { noremap = true })
+mappings.nmap("<leader>et", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Treesitter Queries', cwd = vim.fn.getenv('DOTFILES') .. '/vim/queries/' })<CR>", { noremap = true })
 
 return M
