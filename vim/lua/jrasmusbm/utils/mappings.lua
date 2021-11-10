@@ -12,4 +12,6 @@ M.vmap = function(left, right, opts) map_wrapper("v", left, right, opts) end
 
 M.omap = function(left, right, opts) map_wrapper("o", left, right, opts) end
 
+M.imap = function(left, right, opts) map_wrapper("i", left, right, opts) end
+
 return M
