@@ -1,0 +1,3 @@
+#!/bin/sh
+
+"$DOTFILES"/.venv/bin/python -m rich.markdown "$1"
