@@ -1,28 +1,33 @@
+local mappings = require("jrasmusbm.utils.mappings")
+
+vim.opt.relativenumber = true
+vim.opt.number = true
+vim.opt.showcmd = true
+vim.opt.emoji = false
+vim.opt.list = true
+vim.opt.listchars = "tab:>-"
+vim.opt.signcolumn = "auto"
+vim.opt.ruler = true
+vim.opt.laststatus = 2
+vim.opt.cmdheight = 2
+vim.opt.wrap = true
+vim.opt.textwidth = 79
+vim.opt.colorcolumn = "+1"
+vim.opt.scrolloff = 4
+vim.opt.tabstop = 2
+vim.opt.guicursor = require("jrasmusbm.utils.options").list {
+  "n-v-c-sm:block",
+  "i-ci-ve:ver25",
+  "r-cr-o:hor20",
+}
+
 vim.cmd [[
-set relativenumber
-set number
-set showcmd
-set noemoji
-set list
-set listchars=tab:>-
-set signcolumn=auto
-set ruler
-set laststatus=2
-set cmdheight=2
-set wrap
-set textwidth=79
-set colorcolumn=+1
-set scrolloff=4
-set tabstop=2
-
 autocmd VimResized * :wincmd =
-
-" Set the mouse as a bar in insert mode, as a block in normal mode.
-let &t_SI = "\e[6 q"
-let &t_EI = "\e[2 q"
-
-nnoremap <silent><Leader>ww :syntax sync fromstart<CR>
 
 highlight! Normal ctermbg=NONE guibg=NONE
 highlight! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
 ]]
+
+mappings.nmap("<silent><Leader>ww", ":syntax sync fromstart<CR>",
+              {noremap = true})
+
