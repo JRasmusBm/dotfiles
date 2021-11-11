@@ -5,7 +5,11 @@ require"diffview".setup {
   file_panel = {width = 35},
   use_icons = true,
   key_bindings = {
-    view = {["R"] = cb("refresh_files"), ["-"] = cb("toggle_stage_entry")},
+    view = {
+      ["R"] = cb("refresh_files"),
+      ["-"] = cb("toggle_stage_entry"),
+      ["gq"] = cb("close"),
+    },
     file_panel = {
       ["j"] = cb("next_entry"),
       ["k"] = cb("prev_entry"),
