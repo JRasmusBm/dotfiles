@@ -1,29 +1,28 @@
 vim.cmd [[
 packadd! vim-signature
-
-let g:SignatureMarkTextHL = "Function"
-
-let g:SignatureMap = {
-\ 'Leader'             :  "m",
-\ 'PlaceNextMark'      :  "m,",
-\ 'ToggleMarkAtLine'   :  "m.",
-\ 'PurgeMarksAtLine'   :  "m-",
-\ 'DeleteMark'         :  "dm",
-\ 'PurgeMarks'         :  "m<Space>",
-\ 'PurgeMarkers'       :  "m<BS>",
-\ 'GotoNextLineAlpha'  :  "']",
-\ 'GotoPrevLineAlpha'  :  "'[",
-\ 'GotoNextSpotAlpha'  :  "`]",
-\ 'GotoPrevSpotAlpha'  :  "`[",
-\ 'GotoNextLineByPos'  :  "]'",
-\ 'GotoPrevLineByPos'  :  "['",
-\ 'GotoNextSpotByPos'  :  "]`",
-\ 'GotoPrevSpotByPos'  :  "[`",
-\ 'GotoNextMarker'     :  "]-",
-\ 'GotoPrevMarker'     :  "[-",
-\ 'GotoNextMarkerAny'  :  "]=",
-\ 'GotoPrevMarkerAny'  :  "[=",
-\ 'ListBufferMarks'    :  "m/",
-\ 'ListBufferMarkers'  :  "m?"
-\ }
 ]]
+
+vim.g.SignatureMarkTextHL = "Function"
+vim.g.SignatureMap = {
+  Leader = "m",
+  ToggleMarkAtLine = "m,",
+  PurgeMarks = "m<Space>",
+  GotoNextLineAlpha = "[<Left>",
+  GotoPrevLineAlpha = "]<Left>",
+  GotoNextSpotAlpha = "[<Right>",
+  GotoPrevSpotAlpha = "]<Right>",
+  ListBufferMarks = "ml",
+  PlaceNextMark = "",
+  PurgeMarksAtLine = "",
+  DeleteMark = "",
+  PurgeMarkers = "",
+  GotoNextLineByPos = "",
+  GotoPrevLineByPos = "",
+  GotoNextSpotByPos = "",
+  GotoPrevSpotByPos = "",
+  GotoNextMarker = "",
+  GotoPrevMarker = "",
+  GotoNextMarkerAny = "",
+  GotoPrevMarkerAny = "",
+  ListBufferMarkers = "",
+}
