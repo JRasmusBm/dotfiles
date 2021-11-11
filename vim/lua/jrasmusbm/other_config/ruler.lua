@@ -1,3 +1,5 @@
+local mappings = require("jrasmusbm.utils.mappings")
+
 vim.cmd [[
 augroup Ruler
   autocmd WinEnter * :silent call jrasmusbm#ruler#source()
@@ -5,6 +7,7 @@ augroup Ruler
 augroup END
 
 silent call jrasmusbm#ruler#source()
-
-nnoremap <Leader>sr :call jrasmusbm#ruler#toggle()
 ]]
+
+mappings.nmap("<Leader>sr", "<cmd>call jrasmusbm#ruler#toggle()<cr>",
+              {noremap = true})
