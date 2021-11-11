@@ -1,16 +1,29 @@
+local mappings = require("jrasmusbm.utils.mappings")
+
 vim.cmd [[
 packadd! nvim-dap
 packadd! nvim-dap-python
-
-nnoremap <leader>ii :lua require('dap').launch()
-nnoremap <leader>is :lua require('dap').stop()
-nnoremap <leader>in :lua require('dap').continue()
-nnoremap <leader>ih :lua require('dap').step_back()
-nnoremap <leader>ij :lua require('dap').step_into()
-nnoremap <leader>ik :lua require('dap').step_out()
-nnoremap <leader>il :lua require('dap').step_over()
-nnoremap <leader>iL :lua require('dap').run_last()
-nnoremap <leader>io :lua require('dap').repl.open()
-nnoremap <leader>ib :lua require('dap').toggle_breakpoint()
-nnoremap <leader>iB :lua require('dap').list_breakpoints()
 ]]
+
+mappings.nmap("<leader>ii", "<cmd>lua require('dap').launch()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>is", "<cmd>lua require('dap').stop()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>in", "<cmd>lua require('dap').continue()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>ih", "<cmd>lua require('dap').step_back()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>ij", "<cmd>lua require('dap').step_into()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>ik", "<cmd>lua require('dap').step_out()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>il", "<cmd>lua require('dap').step_over()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>iL", "<cmd>lua require('dap').run_last()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>io", "<cmd>lua require('dap').repl.open()<cr>",
+              {noremap = true})
+mappings.nmap("<leader>ib", "<cmd>lua require('dap').toggle_breakpoint()<cr>",
+              {})
+mappings.nmap("<leader>iB", "<cmd>lua require('dap').list_breakpoints()<cr>",
+              {noremap = true})
