@@ -1,8 +1,8 @@
-vim.cmd [[
-set formatoptions=c  " Wrap comments at textwidth
-set formatoptions+=r " Add comments when using enter in insert mode
-set formatoptions+=q " Allow using gq on comments
-set formatoptions+=n " Recognize numbered lists
-set formatoptions+=1 " Break line before one letter words, not after
-set formatoptions+=j " Remove comment when joining lines
-]]
+vim.opt.formatoptions = require("jrasmusbm.utils.options").list({
+  "c", -- Add comments when using enter in insert mode
+  "r", -- Wrap comments at textwidth
+  "q", -- Allow using gq on comments
+  "n", -- Recognize numbered lists
+  "1", -- Break line before one letter words, not after
+  "j", -- Remove comment when joining lines
+}, "", "")
