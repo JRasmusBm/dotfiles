@@ -188,11 +188,6 @@
   url = git@github.com:christoomey/vim-tmux-runner.git
   branch = master
   ignore = dirty
-[submodule "vim-tslint-config"]
-  path = vim/pack/bundle/opt/vim-tslint-config
-  url = git@github.com:heavenshell/vim-tslint-config.git
-  branch = master
-  ignore = dirty
 [submodule "vim-unimpaired"]
   path = vim/pack/bundle/opt/vim-unimpaired
   url = git@github.com:tpope/vim-unimpaired.git
