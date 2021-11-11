@@ -1,10 +1,24 @@
-vim.cmd [[
-set complete=.
-set complete+=w
-set complete+=b
-set complete+=u
-set complete+=kspell
-set complete+=i
+vim.opt.complete=require("jrasmusbm.utils.options").list {
+  ".",
+  "w",
+  "b",
+  "u",
+  "kspell",
+  "i",
+}
 
-set isfname-==
-]]
+vim.opt.isfname=require("jrasmusbm.utils.options").list {
+  "@",
+  "48-57",
+  "/",
+  ".",
+  "-",
+  "_",
+  "+",
+  ",",
+  "#",
+  "$",
+  "%",
+  "~",
+  "=",
+}
