@@ -1,22 +1,21 @@
-vim.cmd [[
-let g:name='Rasmus Bergström'
-set background=dark
-set termguicolors
-set mouse=a
-set encoding=utf-8
-set noswapfile
-set fileformat=unix
-set hidden
-set modelines=0
-set viewoptions=cursor,folds,slash,unix
-set hlsearch
-set shortmess=a
-set cmdheight=1
-set showmatch
-set ignorecase
-set smartcase
-set incsearch
-set splitbelow
-set timeoutlen=350 ttimeoutlen=0
-set lazyredraw
-]]
+vim.g.name='Rasmus Bergström'
+vim.opt.background="dark"
+vim.opt.termguicolors = true
+vim.opt.mouse="a"
+vim.opt.encoding="utf-8"
+vim.opt.swapfile = false
+vim.opt.fileformat="unix"
+vim.opt.hidden = true
+vim.opt.modelines=0
+vim.opt.viewoptions={ "cursor","folds","slash","unix" }
+vim.opt.hlsearch = true
+vim.opt.shortmess="a"
+vim.opt.cmdheight=1
+vim.opt.showmatch = true
+vim.opt.ignorecase = true
+vim.opt.smartcase = true
+vim.opt.incsearch = true
+vim.opt.splitbelow = true
+vim.opt.timeoutlen=350
+vim.opt.ttimeoutlen=0
+vim.opt.lazyredraw = true
