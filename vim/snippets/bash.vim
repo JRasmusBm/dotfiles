@@ -99,3 +99,8 @@ inoremap <buffer> <leader>hc trap_ctrlc() { <++>
 inoremap <buffer> <leader>as alias "<++>"="<++>"
       \<++>:call bushels#backward_marker(3)
 " }}}
+" Folds {{{
+" Selection {{{
+nnoremap <buffer> <expr> zf jrasmusbm#folds#fold_selection()
+"}}}
+"}}}
