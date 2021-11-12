@@ -87,12 +87,6 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 # Plugins
 bindkey '^ ' autosuggest-accept
 
-# WebAssembly
-if [ -f ~/emsdk/emsdk_set_env.sh ]
-then
-  source ~/emsdk/emsdk_set_env.sh
-fi
-
 export MANPAGER="/bin/sh -c \"unset PAGER;col -b -x | \
     nvim -R -c 'set ft=man nomod nolist' -c 'map q :q<CR>' \
     -c 'map <SPACE> <C-D>' -c 'map b <C-U>' \
@@ -105,14 +99,13 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 # Virtualenvs
 export WORKON_HOME=$HOME/.virtualenvs
 export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
+export PROJECT_HOME=$HOME/Envs
 
 if [ -f $HOME/.local/bin/virtualenvwrapper.sh ]
 then 
   source $HOME/.local/bin/virtualenvwrapper.sh
 fi
 
-export WORKON_HOME=$HOME/.virtualenvs
-export PROJECT_HOME=$HOME/Envs
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
