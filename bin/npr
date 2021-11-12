@@ -1,0 +1,3 @@
+#!/bin/sh
+
+BASH_SOURCE="$DOTFILES/shell/yarn-run/abc" sh "$DOTFILES"/shell/yarn-run/npm-run "$@"

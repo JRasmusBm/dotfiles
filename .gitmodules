@@ -387,3 +387,8 @@
   url = git@github.com:kamykn/popup-menu.nvim.git
   branch = master
   ignore = dirty
+[submodule "shell/yarn-run"]
+	path = shell/yarn-run
+	url = git@github.com:Flydiverny/yarn-run.git
+  branch = master
+  ignore = dirty
