@@ -13,7 +13,8 @@ augroup LargeFile
 M.large_file_limit = 3000
 
 local function is_large_file()
-  return M.large_file_limit < vim.api.nvim_buf_line_count(0)
+  return false
+  -- return M.large_file_limit < vim.api.nvim_buf_line_count(0)
 end
 
 M.handle_buf_enter = function() end
