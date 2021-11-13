@@ -11,7 +11,7 @@ exec --no-startup-id copyq --start-server
 # }}}
 
 # Keyboard {{{
-exec map-lang
+exec setup-keyboard-settings
 # }}}
 
 # Network manager {{{

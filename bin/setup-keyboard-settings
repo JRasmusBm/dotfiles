@@ -1,0 +1,6 @@
+#!/bin/sh
+
+map-lang
+map-esc
+
+xset r rate 150 100
