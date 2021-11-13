@@ -42,9 +42,7 @@ mappings.nmap("<leader>fh","<cmd>lua require('telescope.builtin').help_tags()<cr
 
 -- Git search mappings
 
-mappings.nmap("<localleader>ff", [[
-<cmd>lua require('jrasmusbm.telescope.git_files').git_files({ show_untracked = true })<cr>
-]], { noremap = true })
+mappings.nmap("<localleader>ff", "<cmd>lua require('jrasmusbm.telescope.git_files').git_files({ show_untracked = true })<cr>", { noremap = true })
 mappings.nmap("<localleader>fd",":VcsJump diff<Space>")
 mappings.nmap("<localleader>fg",":VcsJump grep<Space>")
 mappings.nmap("<localleader>fm",":VcsJump merge<Space>")
