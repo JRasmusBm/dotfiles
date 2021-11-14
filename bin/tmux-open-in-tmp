@@ -1,0 +1,7 @@
+#!/bin/sh
+
+temp="$(mktemp)"
+tmux send -X copy-selection-and-cancel
+tmux showb > "$temp"
+
+nr --remote "$temp"
