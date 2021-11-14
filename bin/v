@@ -1,3 +1,8 @@
 #!/bin/sh
 
+if test -x "$(which nvim-server-name)" ; then
+  NVIM_LISTEN_ADDRESS="$(nvim-server-name)"
+  export NVIM_LISTEN_ADDRESS
+fi
+
 nvim "$@"
