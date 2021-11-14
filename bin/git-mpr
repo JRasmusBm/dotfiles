@@ -20,11 +20,8 @@ _git_merge_pr() {
     return 1
   fi
 
-  g ch "$(g local-main-branch)"
-  g ff "$current_branch"
-  echo 'y' | g p
-  echo 'y' | g pd origin "$current_branch"
-  g bd "$current_branch"
+  gh pr merge -md
+  g mup
 }
 
 _git_merge_pr "$@"
