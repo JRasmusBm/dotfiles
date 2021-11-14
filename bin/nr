@@ -1,0 +1,24 @@
+#!/bin/sh
+
+. "$DOTFILES/.venv/bin/activate"
+
+if ! (pip list 2>/dev/null | grep -q neovim-remote); then
+  echo "hi"
+  pip install neovim-remote
+fi
+
+tmux select-window -t vim
+tmux select-pane -t 0
+
+if test "$(echo "$1" | cut -c1-1)" = ":"; then
+  (
+    set -x
+    nvr --servername "$(nvim-server-name)" --remote-send "$*"
+  )
+  exit 0
+fi
+
+(
+  set -x
+  nvr --servername "$(nvim-server-name)" "$@"
+)
