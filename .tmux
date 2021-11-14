@@ -12,7 +12,6 @@ if ! tmux has-session -t=dotfiles 2> /dev/null; then
     tmux send-keys -t vim "v -c GFiles" Enter
 
     tmux new-window -n cli
-    tmux send-keys -t cli "g l" Enter
     tmux send-keys -t cli "g" Enter
     tmux send-keys -t cli "g li" Enter
 fi
