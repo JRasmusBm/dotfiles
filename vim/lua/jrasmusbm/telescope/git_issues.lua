@@ -61,6 +61,16 @@ M.git_issues = function()
                 vim.api.nvim_command('!gh issue view --web ' .. selection.id)
             end
 
+            local close_issue = function()
+                local selection = action_state.get_selected_entry()
+
+                actions.close(prompt_bufnr)
+                vim.fn.jobstart('gh issue close ' .. selection.id)
+            end
+
+            map('i', '<C-d>', close_issue)
+            map('n', '<C-d>', close_issue)
+
             map('i', '<C-b>', open_in_browser)
             map('n', '<C-b>', open_in_browser)
 
