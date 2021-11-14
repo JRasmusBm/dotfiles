@@ -1,9 +1,14 @@
 #!/bin/sh
 
 git_list_tree() {
+  if type nr ; then
+    nr -c "silent call jrasmusbm#git#open_tree()"
+    exit 0
+  fi
+
   (
     set -x
-    g --no-pager log --oneline --decorate --graph --all -20 "$@"
+    g log --oneline --decorate --graph --all -20 "$@"
   )
 }
 
