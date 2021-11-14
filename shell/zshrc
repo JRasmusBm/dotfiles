@@ -88,7 +88,7 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 bindkey '^ ' autosuggest-accept
 
 export MANPAGER="/bin/sh -c \"unset PAGER;col -b -x | \
-    nvim -R -c 'set ft=man nomod nolist' -c 'map q :q<CR>' \
+    v -R -c 'set ft=man nomod nolist' -c 'map q :q<CR>' \
     -c 'map <SPACE> <C-D>' -c 'map b <C-U>' \
     -c 'nmap K :Man <C-R>=expand(\\\"<cword>\\\")<CR><CR>' -\""
 
@@ -111,12 +111,12 @@ fi
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
 
 # Set default editor
-if type "nvim" &> /dev/null;
+if type "v" &> /dev/null;
 then
-  export VISUAL="nvim"
-  alias "vim"="nvim"
+  export VISUAL="v"
+  alias "vim"="v"
 else
-  export VISUAL="vim"
+  export VISUAL="v"
 fi
 
 export EDITOR="$VISUAL"
