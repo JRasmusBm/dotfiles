@@ -7,7 +7,6 @@
   whitespace = blank-at-eol,tab-in-indent
   excludesfile = "~/.gitignore_global"
   hooksPath = "~/.config/git/global_hooks"
-  editor = "$DOTFILES/bin/nr --remote-wait-silent"
 [init]
   defaultBranch = main
 [diff]
