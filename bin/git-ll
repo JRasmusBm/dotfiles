@@ -3,7 +3,7 @@
 git_list_tree_with_pager() {
   (
     set -x
-    nr -c "call jrasmusbm#git#open_tree()"
+    nr -c "silent call jrasmusbm#git#open_tree()"
   )
 }
 
