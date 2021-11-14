@@ -18,5 +18,6 @@ mappings.nmap("<localleader>tf","<cmd>VtrSendFile<CR>")
 mappings.nmap("<localleader>tl","<cmd>VtrSendLinesToRunner<CR>")
 mappings.nmap("<localleader>tp","<cmd>VtrSendCommandToRunner r<CR>")
 mappings.vmap("<localleader>tl","<cmd>'<,'>VtrSendLinesToRunner<CR>")
+mappings.nmap("<localleader>tr", "<cmd>!tmux last-window && tmux last-pane<cr>")
 
 vim.g.VtrStripLeadingWhitespace = 0

@@ -5,6 +5,7 @@ _install_git_cli() {
   wget -O "$TEMP_DEB" "https://github.com/cli/cli/releases/download/v2.0.0/gh_2.0.0_linux_amd64.deb"
   sudo dpkg -i "$TEMP_DEB"
   rm -f "$TEMP_DEB"
+  gh config set editor "$DOTFILES/bin/nr --remote-wait-silent -c 'set filetype=gitcommit'"
 }
 
 _install_git_cli
