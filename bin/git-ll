@@ -3,7 +3,7 @@
 git_list_tree_with_pager() {
   (
     set -x
-    nr -c "silent call jrasmusbm#git#open_tree()"
+    g --no-pager log --oneline --decorate --graph --all -20 "$@"
   )
 }
 
