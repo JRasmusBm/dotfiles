@@ -68,8 +68,16 @@ M.git_issues = function()
                 vim.fn.jobstart('gh issue close ' .. selection.id)
             end
 
+            local create_issue = function()
+                actions.close(prompt_bufnr)
+                vim.fn.jobstart('g ni')
+            end
+
             map('i', '<C-d>', close_issue)
             map('n', '<C-d>', close_issue)
+
+            map('i', '<C-e>', create_issue)
+            map('n', '<C-e>', create_issue)
 
             map('i', '<C-b>', open_in_browser)
             map('n', '<C-b>', open_in_browser)
