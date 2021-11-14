@@ -2,7 +2,8 @@
 
 _install_git_cli() {
   TEMP_DEB="$(mktemp)"
-  wget -O "$TEMP_DEB" "https://github.com/cli/cli/releases/download/v2.0.0/gh_2.0.0_linux_amd64.deb"
+  GH_VERSION='2.2.0'
+  wget -O "$TEMP_DEB" https://github.com/cli/cli/releases/download/v"$GH_VERSION"/gh_"$GH_VERSION"_linux_amd64.deb
   sudo dpkg -i "$TEMP_DEB"
   rm -f "$TEMP_DEB"
   gh config set editor "$DOTFILES/bin/nr --remote-wait-silent -c 'set filetype=gitcommit'"
