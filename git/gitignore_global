@@ -10,3 +10,4 @@ temp*
 .nvimrc
 .autosrc
 /tags
+.python-version
