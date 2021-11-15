@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_git_open() {
+  xdg-open "https://github.com/$1" 2> /dev/null
+}
+
+_git_open "$@"
