@@ -12,6 +12,8 @@ unset GTK_IM_MODULES
 unset QT_IM_MODULES
 
 export DOTFILES="$HOME/dotfiles"
+export PIP_REQUIRE_VIRTUALENV=true # use --isolated to bypass
+
 
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
