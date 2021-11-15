@@ -1,0 +1,27 @@
+#!/bin/python3.8
+
+from sys import argv
+
+from subprocess import run
+
+
+def get(command):
+    return run(command, capture_output=True).stdout.decode("utf-8")
+
+
+def main():
+    path = argv[1]
+
+    if path.startswith("http"):
+        run(["xdg-open", path])
+        return
+
+    if path.startswith("git@github.com"):
+        run(["git-open", path.split(":")[1][:-4]])
+        return
+
+    run(["nr", "--remote", path], capture_output=True)
+
+
+if __name__ == "__main__":
+    main()
