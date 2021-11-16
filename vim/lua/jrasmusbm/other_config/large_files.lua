@@ -41,7 +41,7 @@ M.buf_read_pre = function(file_path)
   if not is_large_file(file_path) then return end
 
   previous_settings.eventignore = vim.o.eventignore
-  vim.o.eventignore = options.list {"FileType"}
+  vim.opt.eventignore = options.list {"FileType"}
 
   local augroup_name= "LargeFileEnter" ..vim.fn.substitute(file_path, "\\A", "", "g")
   vim.cmd ("augroup " .. augroup_name .. [[
@@ -53,7 +53,7 @@ end
 
 M.buf_read_post = function()
   if previous_settings.eventignore ~= nil then
-    vim.o.eventignore = previous_settings.eventignore
+    vim.opt.eventignore = previous_settings.eventignore
   end
 end
 
