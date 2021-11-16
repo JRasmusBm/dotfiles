@@ -6,10 +6,10 @@ packadd! cmp-nvim-lsp
 packadd! cmp-path
 packadd! cmp-buffer
 packadd! cmp-cmdline
+packadd! vim-vsnip
 ]]
 
-vim.opt.completeopt = {"menuone", "noselect"}
-
+vim.opt.completeopt = {"menu", "menuone", "noselect"}
 
 mappings.imap("<C-Space>", "compe#complete()", {silent = true, expr = true})
 mappings.imap("<C-y>", "compe#confirm('<CR>')", {silent = true, expr = true})
