@@ -10,7 +10,7 @@ function M.setup(options)
   elseif vim.fn.isdirectory(venv_path) ~= 0 then
     python_path = venv_path .. "/bin/python"
   else
-    python_path = "python3.8"
+    python_path = "python"
   end
 
   require"lspconfig".pyright.setup {
