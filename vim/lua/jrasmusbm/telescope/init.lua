@@ -23,5 +23,5 @@ require('telescope').setup {
     extensions = {fzy_native = {override_file_sorter = true}}
 }
 
-require("telescope").load_extension("notify")
+-- require("telescope").load_extension("notify")
 require("telescope").load_extension("fzy_native")

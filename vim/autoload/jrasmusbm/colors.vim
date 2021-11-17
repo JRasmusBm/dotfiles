@@ -87,7 +87,7 @@ function! jrasmusbm#colors#comment_highlights() abort
 endfunction
 
 function! jrasmusbm#colors#notify_highlights() abort
-  highlight NotifyBackground guifg=#32302f guibg=#32302f
+  highlight def NotifyBackground guifg=#32302f guibg=#32302f
 
   highlight NotifyERRORBorder guifg=#ea6962 guibg=#32302f
   highlight NotifyERRORIcon guifg=#ea6962 guibg=#32302f

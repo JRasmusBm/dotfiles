@@ -1,3 +1,9 @@
+vim.cmd [[
+highlight NotifyBackground guifg=#32302f guibg=#32302f
+
+packadd! nvim-notify
+]]
+
 require("notify").setup({
   stages = "fade",
   timeout = 3000,
