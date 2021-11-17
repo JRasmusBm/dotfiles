@@ -6,4 +6,4 @@ colorscheme gruvbox-material
 
 lua require("jrasmusbm.statusline").setup()
 
-call jrasmusbm#colors#update_highlights()
+silent! call jrasmusbm#colors#update_highlights()
