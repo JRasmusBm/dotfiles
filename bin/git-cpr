@@ -2,7 +2,7 @@
 
 g pup
 
-if test "$1" = '-'; then
+if test "$(echo "$1" | cut -c1-1)" = "-" ; then
   gh pr create "$@"
 fi
 
