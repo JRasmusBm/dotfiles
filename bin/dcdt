@@ -1,0 +1,4 @@
+#!/bin/sh
+
+docker-compose -f docker-compose*test.y*ml down --remove-orphans 
+docker-compose -f docker-compose*test.y*ml up --build "$@"

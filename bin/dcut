@@ -1,0 +1,4 @@
+#!/bin/sh
+
+dcdt
+docker-compose -f docker-compose*test.y*ml up --build "$@"
