@@ -54,6 +54,28 @@ inoremap <buffer> <leader>aj <++>={<++>} <++>:call bushels#backward_marker(3)
 inoremap <buffer> <leader>tf <!DOCTYPE html><html>	<head>	<++></head><body>	<++></body></html>:call bushels#backward_marker(2)
 "}}}
 
+" Form {{{
+inoremap <buffer> <leader>tfo <form method="post">
+      \<++>
+      \</form>:call bushels#backward_marker(1)
+" Submit {{{
+inoremap <buffer> <leader>tfs <button type="submit" <++>><++></button><++>:call bushels#backward_marker(3)
+"}}}
+" Input {{{
+inoremap <buffer> <leader>tfi <input type="<++>" />
+      \:call bushels#backward_marker(1)
+"}}}
+" Label {{{
+inoremap <buffer> <leader>tfl <label>
+      \<span><++></span>
+      \<++>
+      \</label>o<++>:call bushels#backward_marker(3)
+"}}}
+" Fieldset {{{
+inoremap <buffer> <leader>tff <fieldset><legend><++></legend><++></fieldset><++>:call bushels#backward_marker(3)
+"}}}
+" }}}
+
 " Button {{{
 inoremap <buffer> <leader>tb <button type="<++>" <++>><++></button><++>:call bushels#backward_marker(4)
 "}}}
@@ -64,20 +86,6 @@ inoremap <buffer> <leader>tp <p><++></p><++>:call bushels#backward_marker(2)
 
 " Image {{{
 inoremap <buffer> <leader>ti <img src="<++>" <++> /><++>:call bushels#backward_marker(3)
-"}}}
-
-" Form {{{
-" Input {{{
-inoremap <buffer> <leader>tfi <label>
-      \<span><++></span>
-      \<input <++>>
-      \<++>
-      \</input>
-      \</label>o<++>:call bushels#backward_marker(4)
-"}}}
-" Fieldset {{{
-inoremap <buffer> <leader>tfs <fieldset><legend><++></legend><++></fieldset><++>:call bushels#backward_marker(3)
-"}}}
 "}}}
 
 " Bullet {{{
