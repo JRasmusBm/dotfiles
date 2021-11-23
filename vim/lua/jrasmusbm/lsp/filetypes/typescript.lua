@@ -7,7 +7,7 @@ function M.setup(options)
       client.resolved_capabilities.document_formatting = false
       options.on_attach(client)
     end,
-    filetypes = {"typescript", "typescript.express"},
+    filetypes = {"typescript", "typescript.express", "typescript.tsx"},
   }
 end
 
