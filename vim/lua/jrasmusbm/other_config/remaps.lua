@@ -1,5 +1,7 @@
 local mappings = require("jrasmusbm.utils.mappings")
 
+mappings.imap("<CR>","<Esc>", {noremap=true})
+mappings.imap("<C-h>","<Esc>", {noremap=true})
 mappings.imap("<C-c>","<Esc>", {noremap=true})
 mappings.nmap("Q","<nop>")
 mappings.nmap("gQ","qqVipJ2jq2{w0")
