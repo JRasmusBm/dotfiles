@@ -2,6 +2,6 @@ local M = {}
 
 M.config = {{formatCommand = 'pret --parser=typescript', formatStdin = true}}
 
-M.filetypes = {"typescript", "typescript.express", "typescript.tsx"}
+M.filetypes = require("jrasmusbm.filetypes").typescript
 
 return M

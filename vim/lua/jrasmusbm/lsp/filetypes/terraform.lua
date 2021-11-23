@@ -7,7 +7,7 @@ M.setup = function(options)
       client.resolved_capabilities.document_formatting = false
       options.on_attach(client)
     end,
-    filetypes = {"terraform"},
+    filetypes = require("jrasmusbm.filetypes").terraform,
   }
 end
 

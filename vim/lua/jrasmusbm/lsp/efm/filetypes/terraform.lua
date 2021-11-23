@@ -7,6 +7,6 @@ M.config = {
     }
 }
 
-M.filetypes = {"terraform"}
+M.filetypes = require("jrasmusbm.filetypes").terraform
 
 return M

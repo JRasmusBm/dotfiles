@@ -7,6 +7,6 @@ M.config = {
     }
 }
 
-M.filetypes = {"zsh"}
+M.filetypes = require("jrasmusbm.filetypes").zsh
 
 return M

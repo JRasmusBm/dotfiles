@@ -10,6 +10,6 @@ M.config = {
   },
 }
 
-M.filetypes = {"lua"}
+M.filetypes = require("jrasmusbm.filetypes").lua
 
 return M

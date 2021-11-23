@@ -2,6 +2,6 @@ local M = {}
 
 M.config = {{formatCommand = 'pret --parser=html', formatStdin = true}}
 
-M.filetypes = {"html"}
+M.filetypes = require("jrasmusbm.filetypes").html
 
 return M

@@ -14,6 +14,6 @@ M.config = {
   },
 }
 
-M.filetypes = {"sh", "bash"}
+M.filetypes = require("jrasmusbm.filetypes").sh
 
 return M

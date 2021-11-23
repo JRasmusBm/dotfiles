@@ -22,6 +22,7 @@ function M.setup(options)
   require("lspconfig").sumneko_lua.setup {
     capabilities = options.capabilities,
     on_attach = options.on_attach,
+    filetypes = require("jrasmusbm.filetypes").lua,
     cmd = {
       lua_language_server .. "/bin/Linux/lua-language-server",
       "-E",

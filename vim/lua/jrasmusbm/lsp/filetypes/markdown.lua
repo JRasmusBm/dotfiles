@@ -5,7 +5,7 @@ function M.setup(options)
     capabilities = options.capabilities,
     on_attach = options.on_attach,
     cmd = {"zeta-note"},
-    filetypes = {"markdown"},
+    filetypes = require("jrasmusbm.filetypes").markdown,
   }
 end
 
