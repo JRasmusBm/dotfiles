@@ -65,7 +65,7 @@ function M.on_attach(client, bufnr)
 
   buf_set_keymap_if_supported("document_formatting", "n", "==",
     "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
-  buf_set_keymap_if_supported("document_range_formatting", "n", "==",
+  buf_set_keymap_if_supported("document_range_formatting", "v", "==",
     "<cmd>lua vim.lsp.buf.range_formatting()<CR>",
     opts)
 
