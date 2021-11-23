@@ -1,13 +1,12 @@
 local M = {}
 
-local filetype_path = require("plenary.path"):new(vim.fn.getenv("DOTFILES")) /
-                        "vim" / "lua" / "jrasmusbm" / "lsp" / "efm" /
-                        "filetypes"
+local file_names = require("plenary.path"):new(vim.fn.getenv("DOTFILES")) /
+"vim" / "lua" / "jrasmusbm" / "lsp" / "efm" / "filetypes"
 
 local lspconfig = require("lspconfig")
 local setup_efm = vim.schedule_wrap(function(options)
   lspconfig.efm.setup {
-    capabilities=options.capabilities,
+    capabilities = options.capabilities,
     on_attach = function(client, bufnr)
       client.resolved_capabilities.document_formatting = false
       client.resolved_capabilities.publish_diagnostics = false
@@ -35,24 +34,26 @@ end)
 
 M.setup = function(options)
   require("plenary.job"):new({
-    command = "ls",
-    cwd = filetype_path.filename,
-    on_exit = function(j)
-      local filetypes = {}
-      local languages = {}
-      for _, file in ipairs(j:result()) do
-        local filetype = vim.split(file, ".", true)[1]
-        languages[filetype] =
-          require("jrasmusbm.lsp.efm.filetypes." .. filetype)
-        table.insert(filetypes, filetype)
-      end
-      setup_efm({
-        languages = languages,
-        filetypes = filetypes,
-        on_attach = options.on_attach,
-      })
-    end,
-  }):start()
+      command = "ls",
+      cwd = file_names.filename,
+      on_exit = function(j)
+        local filetypes = {}
+        local languages = {}
+        for _, file_name in ipairs(j:result()) do
+          local module_name = vim.split(file_name, ".", true)[1]
+          local module = require("jrasmusbm.lsp.efm.filetypes." .. module_name)
+          for _, filetype in ipairs(module.filetypes) do
+            languages[filetype] = module.config
+            table.insert(filetypes, filetype)
+          end
+        end
+        setup_efm({
+            languages = languages,
+            filetypes = filetypes,
+            on_attach = options.on_attach,
+          })
+      end,
+    }):start()
 end
 
 return M

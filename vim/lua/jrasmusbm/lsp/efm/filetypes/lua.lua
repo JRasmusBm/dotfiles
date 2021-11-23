@@ -1,9 +1,15 @@
 local Path = require("plenary.path")
 
-return {
+local M = {}
+
+M.config = {
   {
     formatCommand = "lua-format -c " .. Path:new("~/.lua-format.yaml"):expand() ..
       " -i",
     formatStdin = true,
   },
 }
+
+M.filetypes = {"lua"}
+
+return M
