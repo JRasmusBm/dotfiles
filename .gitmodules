@@ -410,3 +410,8 @@
 [submodule "vim/pack/bundle/opt/vim-vsnip"]
 	path = vim/pack/bundle/opt/vim-vsnip
 	url = git@github.com:hrsh7th/vim-vsnip.git
+[submodule "firenvim"]
+	path = vim/pack/bundle/opt/firenvim
+	url = git@github.com:glacambre/firenvim.git
+  branch = master
+  ignore = dirty
