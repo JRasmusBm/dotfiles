@@ -18,6 +18,13 @@ exec setup-keyboard-settings
 exec --no-startup-id nm-applet
 # }}}
 
+# Brightness {{{
+bindsym XF86MonBrightnessUp exec brightness up
+bindsym Shift+XF86MonBrightnessUp exec brightness up 0.1
+bindsym XF86MonBrightnessDown exec brightness down
+bindsym Shift+XF86MonBrightnessDown exec brightness down 0.1
+# }}}
+
 # patcl (PulseAudio) {{{
 set $refresh_i3status killall -SIGUSR1 i3status
 bindsym XF86AudioRaiseVolume exec --no-startup-id pactl set-sink-volume @DEFAULT_SINK@ +10% && $refresh_i3status

@@ -2,5 +2,5 @@
 
 i3status | while :; do
   read -r line
-  echo "$(pomo_status) | $line" || exit 1
+  echo "$(pomo_status) | 🔦 $(brightness current) | $line" || exit 1
 done

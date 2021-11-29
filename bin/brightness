@@ -1,0 +1,44 @@
+#!/bin/python3
+
+import sys
+import math
+from subprocess import run
+from pathlib import Path
+
+BRIGHTNESS_CONFIG_FOLDER = Path("~").expanduser() / ".local" / "share" / "brightness"
+
+BRIGTHNESS_CONFIG_FILE = BRIGHTNESS_CONFIG_FOLDER / "config"
+SUPPORTED_COMMANDS = ["up", "down", "current"]
+
+
+def main(command, step):
+    if not command or command not in SUPPORTED_COMMANDS:
+        print(f"Usage: brightness ({'|'.join(SUPPORTED_COMMANDS)})")
+
+    if not BRIGHTNESS_CONFIG_FOLDER.exists():
+        BRIGHTNESS_CONFIG_FOLDER.mkdir(exist_ok=True, parents=True)
+
+    brightness: float = 1.0
+    if BRIGTHNESS_CONFIG_FILE.exists():
+        with open(BRIGTHNESS_CONFIG_FILE, "r") as f:
+            brightness = float(f.read())
+
+    if command == "up":
+        brightness = min(brightness + step, 1.0)
+    if command == "down":
+        brightness = max(brightness - step, 0.0)
+    if command == "current":
+        print(brightness)
+
+    with open(BRIGTHNESS_CONFIG_FILE, "w") as f:
+        f.write(str(round(brightness, 3)))
+
+    run(["xrandr", "--output", "eDP-1", "--brightness", str(brightness)])
+
+
+def list_get(list_, index, default=None):
+    return (list_[index:] or [default])[0]
+
+
+if __name__ == "__main__":
+    main(command=list_get(sys.argv, 1), step=float(list_get(sys.argv, 2, 0.025)))
