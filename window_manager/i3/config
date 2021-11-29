@@ -55,7 +55,8 @@ bindsym $mod+h focus left
 bindsym $mod+j focus down
 bindsym $mod+k focus up
 bindsym $mod+l focus right
-bindsym $mod+m move workspace to output right
+bindsym $mod+Right move workspace to output right
+bindsym $mod+Up move workspace to output up
 # }}}
 # Move Window {{{
 bindsym $mod+Shift+h move left
