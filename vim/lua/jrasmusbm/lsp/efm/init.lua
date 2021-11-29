@@ -1,7 +1,7 @@
 local M = {}
 
 local file_names = require("plenary.path"):new(vim.fn.getenv("DOTFILES")) /
-"vim" / "lua" / "jrasmusbm" / "lsp" / "efm" / "filetypes"
+                     "vim" / "lua" / "jrasmusbm" / "lsp" / "efm" / "filetypes"
 
 local lspconfig = require("lspconfig")
 local setup_efm = vim.schedule_wrap(function(options)
@@ -34,26 +34,26 @@ end)
 
 M.setup = function(options)
   require("plenary.job"):new({
-      command = "ls",
-      cwd = file_names.filename,
-      on_exit = function(j)
-        local filetypes = {}
-        local languages = {}
-        for _, file_name in ipairs(j:result()) do
-          local module_name = vim.split(file_name, ".", true)[1]
-          local module = require("jrasmusbm.lsp.efm.filetypes." .. module_name)
-          for _, filetype in ipairs(module.filetypes) do
-            languages[filetype] = module.config
-            table.insert(filetypes, filetype)
-          end
+    command = "ls",
+    cwd = file_names.filename,
+    on_exit = function(j)
+      local filetypes = {}
+      local languages = {}
+      for _, file_name in ipairs(j:result()) do
+        local module_name = vim.split(file_name, ".", true)[1]
+        local module = require("jrasmusbm.lsp.efm.filetypes." .. module_name)
+        for _, filetype in ipairs(module.filetypes) do
+          languages[filetype] = module.config
+          table.insert(filetypes, filetype)
         end
-        setup_efm({
-            languages = languages,
-            filetypes = filetypes,
-            on_attach = options.on_attach,
-          })
-      end,
-    }):start()
+      end
+      setup_efm({
+        languages = languages,
+        filetypes = filetypes,
+        on_attach = options.on_attach,
+      })
+    end,
+  }):start()
 end
 
 return M
