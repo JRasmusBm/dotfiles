@@ -1,5 +1,0 @@
-#!/bin/bash
-
-source "$DOTFILES/shell/z/z.sh"
-
-_z "$@"
