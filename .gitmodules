@@ -410,3 +410,8 @@
 	url = git@github.com:glacambre/firenvim.git
   branch = master
   ignore = dirty
+[submodule "impatient.nvim"]
+	path = vim/pack/bundle/opt/impatient.nvim
+	url = git@github.com:lewis6991/impatient.nvim.git
+  branch = main
+  ignore = dirty
