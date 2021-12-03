@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_install_z() {
+  curl -sS https://webinstall.dev/zoxide | bash
+}
+
+_install_z "$@"

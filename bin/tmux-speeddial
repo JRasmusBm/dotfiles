@@ -4,9 +4,10 @@ file_name=$HOME/.tmux-speeddial
 session_name=$(head -"$1" <"$file_name" | tail -1)
 
 if ! (tmux list-sessions | grep -q "$session_name") ; then
-  root_folder=$(z -e "$session_name")
+  root_folder="$(echo "$session_name" | xargs zoxide query)"
   cd "$root_folder" || return 1
-  INITIATED_EXTERNALLY=true source_tmux_script "$root_folder/.tmux" || default_tmux_script
+  INITIATED_EXTERNALLY=false source_tmux_script "$root_folder/.tmux" || default_tmux_session
+  return 0
 fi
 
 ta "$session_name:vim" || ta "$session_name" || true
