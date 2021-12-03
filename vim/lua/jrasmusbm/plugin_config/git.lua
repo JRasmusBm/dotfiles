@@ -6,7 +6,7 @@ packadd! vim-fugitive
 packadd! nvim-web-devicons
 packadd! diffview.nvim
 
-command! L silent call jrasmusbm#git#open_tree()
+command! -nargs=? L silent call jrasmusbm#git#open_tree(<f-args>)
 ]]
 
 vim.g.diffopt = require("jrasmusbm.utils.options").list {
