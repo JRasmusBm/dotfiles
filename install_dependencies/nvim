@@ -16,7 +16,7 @@ install_nvim() {
   rm -rf /tmp/nvim
   git clone git@github.com:neovim/neovim.git /tmp/nvim
   cd /tmp/nvim || return 1
-  git checkout 4174244d8b6718c703f8b8d3e907809bde9430bd
+  git checkout 4e352ecc42dc9c4ec0639007c13b03d5dceef619
   sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
   sudo make install
   cd "$current" || return 1

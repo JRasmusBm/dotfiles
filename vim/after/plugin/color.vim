@@ -59,22 +59,22 @@ function! IlluminateHighlights() abort
   highlight def illuminatedWord link CursorLine
 endfunction
 
-function! LspHighlights() abort
-  highlight LspDiagnosticsVirtualTextError guifg=red
-  sign define LspDiagnosticsSignError text=✗ texthl=LspDiagnosticsSignError linehl= numhl=
-  highlight LspDiagnosticsSignError guifg=red
+function! DiagnosticHighlight() abort
+  highlight DiagnosticVirtualTextError guifg=red
+  sign define DiagnosticSignError text=✗ texthl=DiagnosticSignError linehl= numhl=
+  highlight DiagnosticSignError guifg=red
 
-  highlight LspDiagnosticsVirtualTextWarning guifg=yellow
-  sign define LspDiagnosticsSignWarning text=⚠ texthl=LspDiagnosticsSignWarning linehl= numhl=
-  highlight LspDiagnosticsSignWarning guifg=yellow
+  highlight DiagnosticVirtualTextWarn guifg=yellow
+  sign define DiagnosticSignWarn text=⚠ texthl=DiagnosticSignWarn linehl= numhl=
+  highlight DiagnosticSignWarn guifg=yellow
 
-  highlight LspDiagnosticsVirtualTextInformation guifg=teal
-  sign define LspDiagnosticsSignInformation text=i texthl=LspDiagnosticsSignInformation linehl= numhl=
-  highlight LspDiagnosticsSignInformation guifg=teal
+  highlight DiagnosticVirtualTextInfo guifg=teal
+  sign define DiagnosticSignInfo text=i texthl=DiagnosticSignInfo linehl= numhl=
+  highlight DiagnosticSignInfo guifg=teal
 
-  highlight LspDiagnosticsVirtualTextHint guifg=pink
-  sign define LspDiagnosticsSignHint text=☼ texthl=LspDiagnosticsSignHint linehl= numhl=
-  highlight LspDiagnosticsSignHint guifg=pink
+  highlight DiagnosticVirtualTextHint guifg=pink
+  sign define DiagnosticSignHint text=☼ texthl=DiagnosticSignHint linehl= numhl=
+  highlight DiagnosticSignHint guifg=pink
 endfunction
 
 function! ColorCodeHighlights() abort
@@ -93,7 +93,7 @@ call FoldHighlights()
 call ErrorHighlights()
 call SearchHighlights()
 call SpellingHighlights()
-call LspHighlights()
+call DiagnosticHighlight()
 call ColorCodeHighlights()
 call CustomMarkers()
 call RulerHighlights()

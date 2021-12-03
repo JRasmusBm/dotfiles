@@ -1,12 +1,12 @@
 vim.cmd [[
 packadd! nvim-lspconfig
 
-sign define LspDiagnosticsErrorSign text=✗ texthl=LspDiagnosticsError
-sign define LspDiagnosticsWarningSign text=⚠ texthl=LspDiagnosticsWarning
-sign define LspDiagnosticsInformationSign text=i texthl=LspDiagnosticsInformation
-sign define LspDiagnosticsHintSign text=※ texthl=LspDiagnosticsHint
+sign define DiagnosticErrorSign text=✗ texthl=DiagnosticError
+sign define DiagnosticWarningSign text=⚠ texthl=DiagnosticWarning
+sign define DiagnosticInformationSign text=i texthl=DiagnosticInformation
+sign define DiagnosticHintSign text=※ texthl=DiagnosticHint
 
 augroup LspLocationList
-  autocmd User LspDiagnosticsChanged lua vim.diagnostic.setloclist({ open=false })
+  autocmd User DiagnosticChanged lua vim.diagnostic.setloclist({ open=false })
 augroup END
 ]]
