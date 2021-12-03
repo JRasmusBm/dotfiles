@@ -53,8 +53,8 @@ inoremap <buffer> <leader>fd function! <++>() abort<++>endfunction<++>:call
 
 " Import {{{
 " Snippet {{{
-inoremap <buffer> <leader>is source ~/.vim/snippets/<++>
-      \<++>:call bushels#backward_marker(2)
+inoremap <buffer> <leader>is execute "source $DOTFILES/vim/snippets/<++>"
+      \:call bushels#backward_marker(2)
 " }}}
 " }}}
 
