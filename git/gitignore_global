@@ -1,5 +1,6 @@
 .nvimlog
 .rgignore
+node_modules
 .vim/
 .venv/
 .vimspector.json
