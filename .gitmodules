@@ -1,8 +1,3 @@
-[submodule "vim-commentary"]
-  path = vim/pack/bundle/opt/vim-commentary
-  url = git@github.com:tpope/vim-commentary.git
-  branch = master
-  ignore = dirty
 [submodule "vim-endwise"]
   path = vim/pack/bundle/opt/vim-endwise
   url = git@github.com:tpope/vim-endwise.git
@@ -420,5 +415,15 @@
 [submodule "impatient.nvim"]
 	path = vim/pack/bundle/opt/impatient.nvim
 	url = git@github.com:lewis6991/impatient.nvim.git
+  branch = main
+  ignore = dirty
+[submodule "Comment.nvim"]
+	path = vim/pack/bundle/opt/Comment.nvim
+	url = git@github.com:numToStr/Comment.nvim.git
+  branch = master
+  ignore = dirty
+[submodule "nvim-ts-context-commentstring"]
+	path = vim/pack/bundle/opt/nvim-ts-context-commentstring
+	url = git@github.com:JoosepAlviste/nvim-ts-context-commentstring.git
   branch = main
   ignore = dirty
