@@ -14,10 +14,14 @@
   (list
     (_) @argument.inner
   )
+  (tuple
+    (_) @argument.inner
+  )
   (pattern_list
     (_) @argument.inner
   )
 ]
+
 
 ; }}}
 ; }}}
