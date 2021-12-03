@@ -16,6 +16,7 @@ M.typescript = {
   "typescript",
   "typescript.express",
   "typescript.tsx",
+  "typescript.tsx.remix",
   "typescript.express.typescript_mocha",
 }
 M.zsh = {"zsh"}
