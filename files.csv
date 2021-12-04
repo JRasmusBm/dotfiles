@@ -26,3 +26,4 @@ False,shell/paths.sh,.paths.sh
 False,window_manager/i3/i3status.conf,.config/i3status/config
 False,lsp/efm-langserver.yaml,.config/efm-langserver/config.yaml
 False,lua-format.yaml,.lua-format.yaml
+True,shell/zsh_completions,.zsh_completions
