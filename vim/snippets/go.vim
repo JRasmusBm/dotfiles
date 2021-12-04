@@ -4,6 +4,9 @@ inoremap <buffer> <leader>id import ("<++>")
       \<++>:call bushels#backward_marker(2)
 " }}}
 " }}}
+" Return {{{
+inoremap <buffer> <leader>rt return<Space><++>:call bushels#backward_marker(1)
+" }}}
 " File {{{
 inoremap <buffer> <leader>gf package main
       \import (
