@@ -1,0 +1,8 @@
+#!/bin/sh
+
+_my_git() {
+  g clone "git@github.com:jrasmusbm/$1.git"
+}
+
+_my_git "$@"
+
