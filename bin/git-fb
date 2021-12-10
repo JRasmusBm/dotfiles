@@ -1,6 +1,6 @@
 #!/bin/bash
 
-selected_branch_ref=$(git branch --all --format='%(refname)' | fzf --reverse)
+selected_branch_ref=$(git branch --all --format='%(refname)' --sort='committerdate' | fzf --reverse)
 selected_branch_ref_prefix=${selected_branch_ref#*/}
 selected_branch_source=${selected_branch_ref_prefix%%/*}
 
