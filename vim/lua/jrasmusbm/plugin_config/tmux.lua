@@ -12,12 +12,12 @@ vim.g.vtr_filetype_runner_overrides = {
 
 mappings.nmap("<localleader>tc",":VtrSendCommandToRunner<Space>")
 mappings.nmap("<localleader>ta",":VtrAttach<Space>")
-mappings.nmap("<localleader>to","<cmd>VtrOpenRunner<CR>")
-mappings.nmap("<localleader>tk","<cmd>VtrKillRunner<CR>")
-mappings.nmap("<localleader>tf","<cmd>VtrSendFile<CR>")
-mappings.nmap("<localleader>tl","<cmd>VtrSendLinesToRunner<CR>")
-mappings.nmap("<localleader>tp","<cmd>VtrSendCommandToRunner r<CR>")
-mappings.vmap("<localleader>tl","<cmd>'<,'>VtrSendLinesToRunner<CR>")
-mappings.nmap("<localleader>tr", "<cmd>!tmux last-window && tmux last-pane<cr>")
+mappings.nmap("<localleader>to",":VtrOpenRunner<CR>")
+mappings.nmap("<localleader>tk",":VtrKillRunner<CR>")
+mappings.nmap("<localleader>tf",":VtrSendFile<CR>")
+mappings.nmap("<localleader>tl",":VtrSendLinesToRunner<CR>")
+mappings.nmap("<localleader>tp",":VtrSendCommandToRunner r<CR>")
+mappings.vmap("<localleader>tl",":'<,'>VtrSendLinesToRunner<CR>")
+mappings.nmap("<localleader>tr", ":!tmux last-window && tmux last-pane<cr>")
 
 vim.g.VtrStripLeadingWhitespace = 0
