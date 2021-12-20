@@ -156,6 +156,9 @@ inoremap <buffer> <leader>an <++>=<++>,<++>:call bushels#backward_marker(3)
 " Typed {{{
 inoremap <buffer> <leader>at <++>: <++>,<++>:call bushels#backward_marker(3)
 " }}}
+" Unused {{{
+inoremap <buffer> <leader>au del <++>  # Explicitly marked as unused:call bushels#backward_marker(1)
+" }}}
 "}}}
 
 " Control Statements{{{
