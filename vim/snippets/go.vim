@@ -17,10 +17,10 @@ inoremap <buffer> <leader>gf package main
       \}:call bushels#backward_marker(1)
 " }}}
 " Function {{{
-inoremap <buffer> <leader>fd func <++>() <++> {
+inoremap <buffer> <leader>fd func <++>(<++>) <++> {
   \<++>
   \}
-  \<++>:call bushels#backward_marker(4)
+  \<++>:call bushels#backward_marker(5)
 "}}}
 " Testing {{{
 " Equals {{{
@@ -109,6 +109,12 @@ inoremap <buffer> <leader>cs switch <++> {
       \case <++>:
       \<++>
       \}:call bushels#backward_marker(3)
+" }}}
+" Select (Wait) Statement {{{
+inoremap <buffer> <leader>cw select {
+      \case <++>:
+      \<++>
+      \}:call bushels#backward_marker(2)
 " }}}
 " Switch Case {{{
 inoremap <buffer> <leader>cc o
