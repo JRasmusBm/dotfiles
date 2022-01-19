@@ -69,3 +69,6 @@ if test -d "$HOME/.pyenv" ; then
 fi
 
 source "$DOTFILES/shell/aliases"
+test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
+
+source /home/jrasmusbm/.config/broot/launcher/bash/br

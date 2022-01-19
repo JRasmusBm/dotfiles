@@ -1,14 +1,18 @@
 [[verbs]]
 execution = ":line_down"
-key = "alt-j"
+key = "ctrl-alt-j"
 
 [[verbs]]
 execution = ":line_up"
-key = "alt-k"
+key = "ctrl-alt-k"
 
 [[verbs]]
 execution = ":parent"
 key = "alt-h"
+
+[[verbs]]
+execution = ":open_stay"
+key = "alt-l"
 
 [[verbs]]
 execution = ":select_first"

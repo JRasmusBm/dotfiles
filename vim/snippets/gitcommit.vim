@@ -1,6 +1,6 @@
 " Close {{{
 function! CloseCommit() abort
-  norm +0d/#
+  norm /#dG
   w!
   bd!
 endfunction
