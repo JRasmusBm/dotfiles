@@ -28,3 +28,10 @@ function! jrasmusbm#git#run_and_refresh(command) abort
   exec a:command
   silent call jrasmusbm#git#list_tree()
 endfunction
+
+function! jrasmusbm#git#push_all() abort
+  wa!
+  G wip
+  G rbof
+  G push
+endfunction
