@@ -98,6 +98,17 @@ inoremap <buffer> <leader>ll fmt.Printf(<++>)
 " Format {{{
 inoremap <buffer> <leader>lf fmt.Sprintf(<++>):call bushels#backward_marker(2)
 " }}}
+" Breakpoint {{{
+inoremap <buffer> <leader>lb fmt.Printf("\n%v\n\n", map[string]string{
+      \"\nfile": "%",
+      \"\nline": fmt.Sprintf("%v", =line(".")),
+      \"\n<++>": fmt.Sprintf("%v", "<++>"),
+      \}):call bushels#backward_marker(2)
+" }}}
+" Node {{{
+inoremap <buffer> <leader>ln o"\n<++>": fmt.Sprintf("%v", "<++>"),
+                  \:call bushels#backward_marker(2)
+" }}}
 " }}}
 " Control Statements {{{
 " If {{{
@@ -136,6 +147,11 @@ inoremap <buffer> <leader>cfe for _, <++> := range <++> {
       \<++>
       \}:call bushels#backward_marker(3)
 " }}}
+" Loop {{{
+inoremap <buffer> <leader>cl for <++> {
+      \<++>
+      \}:call bushels#backward_marker(2)
+" }}}
 " }}}
 " Types {{{
 " Interface {{{
@@ -167,6 +183,9 @@ inoremap <buffer> <leader>md :call GetName()i
 " Variable {{{
 " Declaration {{{
 inoremap <buffer> <leader>vd <++> := <++>:call bushels#backward_marker(2)
+" }}}
+" Var {{{
+inoremap <buffer> <leader>vv var<Space>
 " }}}
 " Const {{{
 inoremap <buffer> <leader>vc const <++> = <++>:call bushels#backward_marker(2)
