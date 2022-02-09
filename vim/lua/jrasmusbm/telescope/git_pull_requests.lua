@@ -40,7 +40,7 @@ M.git_pull_requests = function()
         }),
         sorter = sorters.get_generic_fuzzy_sorter(),
         attach_mappings = function(prompt_bufnr, map)
-            local checkout = function()
+            local switch = function()
                 local selection = action_state.get_selected_entry()
 
                 actions.close(prompt_bufnr)
@@ -56,7 +56,7 @@ M.git_pull_requests = function()
 
             map('i', '<C-b>', open_in_browser)
             map('n', '<C-b>', open_in_browser)
-            actions.select_default:replace(checkout)
+            actions.select_default:replace(switch)
             return true
         end
     }):find()

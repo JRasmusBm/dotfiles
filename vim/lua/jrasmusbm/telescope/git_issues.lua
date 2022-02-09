@@ -42,7 +42,7 @@ M.git_issues = function()
         }),
         sorter = sorters.get_generic_fuzzy_sorter(),
         attach_mappings = function(prompt_bufnr, map)
-            local checkout = function()
+            local switch = function()
                 local selection = action_state.get_selected_entry()
                 local command = "echo \"" ..
                                     (selection.id .. " " .. selection.title) ..
@@ -51,7 +51,7 @@ M.git_issues = function()
                 local branch_name = vim.fn.system(command)
 
                 actions.close(prompt_bufnr)
-                vim.api.nvim_command('!git ch ' .. branch_name .. '|| git ch -b ' .. branch_name)
+                vim.api.nvim_command('!git s ' .. branch_name .. '|| git sc ' .. branch_name)
             end
 
             local open_in_browser = function()
@@ -82,7 +82,7 @@ M.git_issues = function()
             map('i', '<C-b>', open_in_browser)
             map('n', '<C-b>', open_in_browser)
 
-            actions.select_default:replace(checkout)
+            actions.select_default:replace(switch)
             return true
         end
     }):find()

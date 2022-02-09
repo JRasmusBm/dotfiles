@@ -13,7 +13,7 @@ M.git_branches = function(options_)
             vim.api.nvim_command('call jrasmusbm#git#list_tree()')
         end
 
-        local checkout = function()
+        local switch = function()
             actions.git_checkout(prompt_bufnr)
             vim.api.nvim_command('call jrasmusbm#git#list_tree()')
         end
@@ -38,8 +38,8 @@ M.git_branches = function(options_)
 
         map('i', '<C-h>', reset_hard)
         map('n', '<C-h>', reset_hard)
-        map('i', '<CR>', checkout)
-        map('n', '<CR>', checkout)
+        map('i', '<CR>', switch)
+        map('n', '<CR>', switch)
         map('i', '<C-d>', delete)
         map('n', '<C-d>', delete)
         map('i', '<C-t>', track)
