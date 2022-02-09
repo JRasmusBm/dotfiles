@@ -2,9 +2,4 @@
 
 g pup
 
-if test "$(echo "$1" | cut -c1-1)" = "-" ; then
-  gh pr create "$@"
-fi
-
-copyq add "$*"
-gh pr create -t "$*"
+gh pr create

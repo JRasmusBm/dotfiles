@@ -2,7 +2,7 @@
 
 _install_git_cli() {
   TEMP_DEB="$(mktemp)"
-  GH_VERSION='2.2.0'
+  GH_VERSION='2.5.0'
   wget -O "$TEMP_DEB" https://github.com/cli/cli/releases/download/v"$GH_VERSION"/gh_"$GH_VERSION"_linux_amd64.deb
   sudo dpkg -i "$TEMP_DEB"
   rm -f "$TEMP_DEB"
