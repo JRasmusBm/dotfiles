@@ -12,3 +12,5 @@ temp*
 .autosrc
 /tags
 .python-version
+*.pyc
+__pycache__/
