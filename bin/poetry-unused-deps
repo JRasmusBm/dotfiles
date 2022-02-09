@@ -1,0 +1,15 @@
+#!/bin/sh
+
+CREOSOTE_PATH="$HOME/projects/creosote"
+
+run_creosote() {
+  cd "$CREOSOTE_PATH" || return 1
+
+  if test ! -d "$CREOSOTE_PATH/.venv"; then
+    poetry install
+  fi
+
+  poetry run python "$CREOSOTE_PATH/src/creosote/cli.py" "$@"
+}
+
+run_creosote "$@"
