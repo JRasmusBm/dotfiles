@@ -9,12 +9,12 @@ if test "$selected_branch_source" = 'remotes'; then
   branch_without_remote=${branch_with_remote#*/}
   (
     set -x
-    git checkout "$branch_without_remote" || git checkout -t "$branch_with_remote"
+    git switch "$branch_without_remote" || git switch -t "$branch_with_remote"
   )
 else
   branch_name=${selected_branch_ref#refs/heads/}
   (
     set -x
-    git checkout "$branch_name"
+    git switch "$branch_name"
   )
 fi

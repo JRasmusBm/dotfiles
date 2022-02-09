@@ -1,0 +1,3 @@
+#!/bin/sh
+
+git s "$(git local-main-branch)"

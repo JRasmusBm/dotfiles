@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_switch_create() {
+  (
+    set -x
+    g switch -c "$@"
+  )
+}
+
+git_switch_create "$@"

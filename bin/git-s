@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_switch() {
+  (
+    set -x
+    g switch "$@"
+  )
+}
+
+git_switch "$@"
