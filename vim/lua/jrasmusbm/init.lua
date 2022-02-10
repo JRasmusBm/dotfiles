@@ -39,9 +39,9 @@ source_config_files_in("other_config")
 
 vim.opt.secure = true
 
+require("jrasmusbm.dap")
+require("jrasmusbm.lsp")
 require("jrasmusbm.telescope")
 require("jrasmusbm.diffview")
 require("jrasmusbm.harpoon")
 require("jrasmusbm.treesitter")
-require("jrasmusbm.lsp")
-require("jrasmusbm.dap")

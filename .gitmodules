@@ -432,3 +432,8 @@
 	url = git@github.com:theHamsta/nvim-dap-virtual-text.git
   branch = master
   ignore = dirty
+[submodule "telescope-dap.nvim"]
+	path = vim/pack/bundle/opt/telescope-dap.nvim
+	url = git@github.com:nvim-telescope/telescope-dap.nvim.git
+  branch = master
+  ignore = dirty
