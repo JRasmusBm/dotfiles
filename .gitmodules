@@ -427,3 +427,8 @@
 	url = git@github.com:JoosepAlviste/nvim-ts-context-commentstring.git
   branch = main
   ignore = dirty
+[submodule "nvim-dap-virtual-text"]
+	path = vim/pack/bundle/opt/nvim-dap-virtual-text
+	url = git@github.com:theHamsta/nvim-dap-virtual-text.git
+  branch = master
+  ignore = dirty

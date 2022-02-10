@@ -3,6 +3,7 @@ local mappings = require("jrasmusbm.utils.mappings")
 vim.cmd [[
 packadd! nvim-dap
 packadd! nvim-dap-python
+packadd! nvim-dap-virtual-text
 ]]
 
 mappings.nmap("<leader>i<Enter>", "<cmd>lua require('dap').continue()<cr>",
@@ -19,7 +20,7 @@ mappings.nmap("<leader>ik", "<cmd>lua require('dap').step_over()<cr>",
               {noremap = true})
 mappings.nmap("<leader>ir", "<cmd>lua require('dap').run_last()<cr>",
               {noremap = true})
-mappings.nmap("<leader>ip", "<cmd>lua require('dap').repl.open()<cr>",
+mappings.nmap("<leader>io", "<cmd>lua require('dap').repl.open()<cr>",
               {noremap = true})
 mappings.nmap("<leader>i<Space>", "<cmd>lua require('dap').toggle_breakpoint()<cr>",
               {})
