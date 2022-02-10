@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_rebase_onto() {
+  (
+    set -x
+    g rebase --onto "$@"
+  )
+}
+
+git_rebase_onto "$@"
