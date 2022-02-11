@@ -329,7 +329,7 @@
   ignore = dirty
 [submodule "nvim-dap"]
   path = vim/pack/bundle/opt/nvim-dap
-  url = git@github.com:mfussenegger/nvim-dap.git
+  url = git@github.com:JRasmusBm/nvim-dap.git 
   branch = master
   ignore = dirty
 [submodule "indent-blankline.nvim"]
