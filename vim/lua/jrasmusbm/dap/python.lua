@@ -31,22 +31,29 @@ dap.configurations.python = {
     type = "python",
     request = "custom",
     name = "Attach to debugger",
-    command = "Debugpy attach 0.0.0.0 5678"
+    command = "Debugpy attach 0.0.0.0 5678",
   },
 }
 
-M.debug_nearest = function()
-  local temp = vim.g["test#python#unittest#executable"]
-  vim.g["test#python#unittest#executable"] =
-    "python -m debugpy --listen 5678 -m unittest"
-  vim.cmd [[
-  TestNearest
-  ]]
-  vim.g["test#python#unittest#executable"] = temp
-  vim.cmd [[
+M.debug_test = function(cmd)
+  local temp_unittest = vim.g["test#python#pyunit#executable"]
+  local temp_pytest = vim.g["test#python#pytest#executable"]
+
+  vim.g["test#python#pytest#executable"] =
+    "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m pytest"
+  vim.g["test#python#pyunit#executable"] =
+    "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m unittest"
+
+  vim.cmd(cmd)
+
+  vim.g["test#python#pytest#executable"] = temp_pytest
+  vim.g["test#python#pyunit#executable"] = temp_unittest
+
+  vim.defer_fn(vim.schedule_wrap(function()
+    vim.cmd [[
   Debugpy attach 0.0.0.0 5678
   ]]
+  end), 1000)
 end
-
 
 return M
