@@ -11,3 +11,5 @@ endfunction
 nnoremap <buffer> <leader>c :call RunFile()
 
 execute "source $DOTFILES/vim/snippets/python.vim"
+
+nnoremap <leader>ii :Debugpy attach 0.0.0.0 5678

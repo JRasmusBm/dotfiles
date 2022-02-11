@@ -145,7 +145,7 @@
   ignore = dirty
 [submodule "vim-test"]
   path = vim/pack/bundle/opt/vim-test
-  url = git@github.com:janko/vim-test.git
+  url = git@github.com:JRasmusBm/vim-test.git 
   branch = master
   ignore = dirty
 [submodule "vim-textobj-entire"]
@@ -435,5 +435,10 @@
 [submodule "telescope-dap.nvim"]
 	path = vim/pack/bundle/opt/telescope-dap.nvim
 	url = git@github.com:nvim-telescope/telescope-dap.nvim.git
+  branch = master
+  ignore = dirty
+[submodule "debugpy.nvim"]
+	path = vim/pack/bundle/opt/debugpy.nvim
+  url = git@github.com:JRasmusBm/debugpy.nvim.git
   branch = master
   ignore = dirty

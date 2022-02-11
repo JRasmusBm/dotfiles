@@ -5,6 +5,7 @@ packadd! nvim-dap
 packadd! nvim-dap-python
 packadd! nvim-dap-virtual-text
 packadd! telescope-dap.nvim
+packadd! debugpy.nvim
 ]]
 
 mappings.nmap("<leader>i<Enter>", "<cmd>lua require('dap').continue()<cr>",
