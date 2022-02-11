@@ -1,0 +1,10 @@
+#!/bin/sh
+
+git_new_upstream() {
+  (
+    set -x
+    g remote add upstream "$@"
+  )
+}
+
+git_new_upstream "$@"
