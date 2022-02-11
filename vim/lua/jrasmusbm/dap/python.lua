@@ -27,6 +27,26 @@ dap.configurations.python = {
       return "/usr/bin/python"
     end,
   },
+  {
+    type = "python",
+    request = "custom",
+    name = "Attach to debugger",
+    command = "Debugpy attach 0.0.0.0 5678"
+  },
 }
+
+M.debug_nearest = function()
+  local temp = vim.g["test#python#unittest#executable"]
+  vim.g["test#python#unittest#executable"] =
+    "python -m debugpy --listen 5678 -m unittest"
+  vim.cmd [[
+  TestNearest
+  ]]
+  vim.g["test#python#unittest#executable"] = temp
+  vim.cmd [[
+  Debugpy attach 0.0.0.0 5678
+  ]]
+end
+
 
 return M
