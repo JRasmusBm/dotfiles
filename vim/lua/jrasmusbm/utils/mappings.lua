@@ -3,7 +3,13 @@ local M = {}
 local map_wrapper = function(mode, left, right, opts)
   if opts == nil then opts = {} end
 
-  vim.api.nvim_set_keymap(mode, left, right, opts)
+  if opts.buffer then
+    opts.buffer = nil
+    vim.api.nvim_buf_set_keymap(0, mode, left, right, opts)
+  else
+    vim.api.nvim_set_keymap(mode, left, right, opts)
+  end
+
 end
 
 M.nmap = function(left, right, opts) map_wrapper("n", left, right, opts) end
