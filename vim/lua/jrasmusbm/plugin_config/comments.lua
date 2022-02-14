@@ -5,9 +5,8 @@ packadd! nvim-ts-context-commentstring
 packadd! Comment.nvim
 ]]
 
-require("Comment").setup()
 
-local config = require("Comment.api").get_config()
+local config = {}
 
 config["prehook"] = function(context)
   -- Only calculate commentstring for tsx filetypes
@@ -33,3 +32,5 @@ config["prehook"] = function(context)
     location = location,
   })
 end
+
+require("Comment").setup(config)

@@ -1,5 +1,7 @@
 local parser_config = require("nvim-treesitter.parsers").get_parser_configs()
 
-parser_config["typescript"]["used_by"]= "typescript.express"
-parser_config["typescript"]["used_by"]= "typescript.express.typescript_mocha"
-parser_config["typescript"]["used_by"]= "typescript.typescript_mocha"
+local filetype_to_parsername = require"nvim-treesitter.parsers".filetype_to_parsername
+
+for _, filetype in ipairs(require("jrasmusbm.filetypes").typescript) do
+  if filetype ~= "typescript" then filetype_to_parsername["typescript"] = filetype end
+end

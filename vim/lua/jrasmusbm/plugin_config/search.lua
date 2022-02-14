@@ -19,6 +19,7 @@ M.set_search_as_x = function ()
   ]]
 end
 
+mappings.nmap("gs", ':%s/<c-r>=expand("<cword>")<cr>/')
 mappings.nmap("*", "<Plug>(LoupeStar)<cmd>call require('jrasmusbm.plugin_config.search').set_search_as_x()<CR>", { silent=true })
 mappings.nmap("#", "<Plug>(LoupeOctothorpe)<cmd>call require('jrasmusbm.plugin_config.search').set_search_as_x()<CR>", { silent=true })
 
