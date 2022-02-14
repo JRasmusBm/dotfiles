@@ -13,14 +13,14 @@ install_nvim() {
     curl \
     gettext \
     zip
-  rm -rf /tmp/nvim
-  git clone git@github.com:neovim/neovim.git /tmp/nvim
-  cd /tmp/nvim || return 1
+  temp_file="$(mktemp -d)"
+  git clone git@github.com:neovim/neovim.git "$temp_file"
+  cd "$temp_file" || return 1
   git switch -d 046950f6309070d98ab5a3deeff9d00e079ccdd4
   sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
   sudo make install
   cd "$current" || return 1
-  sudo rm -rf /tmp/nvim
+  sudo rm -rf "$temp_file"
   idep neovim_vm
 }
 
