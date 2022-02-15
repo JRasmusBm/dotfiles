@@ -7,5 +7,5 @@ services:
     build: .
     image: install-test
     command:
-        sh -c "python3.7 -m pip install -r requirements-dev.txt && pytest -s"
+        sh -c "python --version"
 

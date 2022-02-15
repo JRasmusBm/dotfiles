@@ -1,0 +1,10 @@
+#!/bin/sh
+
+_install_latest_git() {
+  sudo add-apt-repository ppa:git-core/ppa
+  sudo apt update -y
+  sudo apt install git -y
+}
+
+
+_install_latest_git "$@"
