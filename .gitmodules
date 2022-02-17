@@ -442,3 +442,8 @@
   url = git@github.com:JRasmusBm/debugpy.nvim.git
   branch = master
   ignore = dirty
+[submodule "LuaSnip"]
+  branch = master
+  ignore = dirty
+	path = vim/pack/bundle/opt/LuaSnip
+	url = git@github.com:L3MON4D3/LuaSnip.git

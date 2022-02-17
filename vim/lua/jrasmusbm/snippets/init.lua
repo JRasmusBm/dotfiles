@@ -1,0 +1,30 @@
+vim.cmd [[
+packadd! LuaSnip
+packadd! vim-bushels
+]]
+
+local ls = require("luasnip")
+
+vim.keymap.set({"i", "s", "n"}, "<leader>s",
+               function() if ls.expandable() then ls.expand() end end,
+               {silent = true})
+
+vim.keymap.set({"i", "n"}, "<leader>g", function()
+  if ls.jumpable(1) then
+    ls.jump(1)
+  else
+    pcall(vim.fn["bushels#forward_marker"], 1)
+  end
+end, {silent = true})
+
+vim.keymap.set({"i", "n"}, "<leader>G", function()
+  if ls.jumpable(-1) then
+    ls.jump(-1)
+  else
+    pcall(vim.fn["bushels#backward_marker"], 1)
+  end
+end, {silent = true})
+
+vim.keymap.set({"i"}, "<leader><leader>", "<++>")
+
+ls.config.set_config {updateevents = "TextChanged,TextChangedI"}
