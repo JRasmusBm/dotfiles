@@ -45,11 +45,14 @@ ls.snippets.lua = {
 
   s("vc", fmt("vim.cmd[[\n{}\n]]\n\n{}", {i(1), i(0)})),
 
-  s("im", fmt("local mappings = require(\"jrasmusbm.utils.mappings\")\n{}", {i(0)})),
+  s("im",
+    fmt("local mappings = require(\"jrasmusbm.utils.mappings\")\n{}", {i(0)})),
 
-  s("sn", fmt('s("{}", fmt("{}", {{ {} }})),\n{}', {i(1), i(2), i(3), i(0)})),
+  s("sn", fmt("s(\"{}\", fmt(\"{}\", {{ {} }})),\n{}", {i(1), i(2), i(3), i(0)})),
 
-  s("an", fmt("{} = {},{}", { i(1), rep(1), i(0) })),
+  s("an", fmt("{} = {},{}", {i(1), rep(1), i(0)})),
+
+  s("mk", fmt("vim.keymap.set({{ \"{}\" }}, \"{}\", function()\n {}\nend, {{ {} }})\n{}",
+             {i(1), i(2), i(3), i(4), i(0)})),
 }
-
 
