@@ -1,9 +1,12 @@
 #!/bin/sh
 
 git_rebase_onto() {
+  previous_branch="$(git branch --show-current)"
   (
     set -x
     g rebase --onto "$@"
+    g switch "$previous_branch" 2> /dev/null
+    g reset --hard 'HEAD@{1}'
   )
 }
 
