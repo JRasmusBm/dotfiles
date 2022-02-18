@@ -39,7 +39,7 @@ ls.snippets.unittest = {
   s({trig = "dc", name = "Test case"}, test_case()),
 
   s({trig = "de", name = "Expect equals"},
-    fmt("self.assertEquals({}, {}):\n{}", {i(1), i(2), i(0)})),
+    fmt("self.assertEquals({}, {})\n{}", {i(1), i(2), i(0)})),
   s({trig = "der", name = "Expect raises regex"},
     fmt("with self.assertRaisesRegex({}, \"{}\"):\n    {}", {i(1), i(2), i(0)})),
 }
