@@ -22,13 +22,13 @@ ls.snippets.lua = {
     fmt("local M = {{}}\n\n{}\n\nreturn M{}", {i(1), i(0)})),
   s({trig = "lb", name = "log breakpoint"}, {
     t {"print(", "\t"},
-    t {"inspect({", "\t\t"},
-    t("file = "),
+    t {"vim.inspect({", "\t\t"},
+    t("file = \""),
     d(1, ls_utils.file_name, {}),
-    t {"", "\t\t"},
+    t {"\",", "\t\t"},
     t("line = "),
     d(2, ls_utils.line_number, {}),
-    t {"", "\t\t"},
+    t {",", "\t\t"},
     i(3),
     t {"", "\t"},
     t {"})", ""},
@@ -65,7 +65,7 @@ ls.snippets.lua = {
 
   s({trig = "mk", name = "map keys"},
     fmt(
-      "vim.keymap.set({{ \"{}\" }}, \"{}\", function()\n {}\nend, {{ {} }})\n{}",
+      "vim.keymap.set({{ \"{}\" }}, \"{}\", {}, {{ {} }})\n{}",
       {i(1), i(2), i(3), i(4), i(0)})),
 }
 
