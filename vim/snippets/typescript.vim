@@ -34,34 +34,6 @@ inoremap <buffer> <leader>if interface <++> {<++>}<++>:call bushels#backward
 inoremap <buffer> <leader>ia <++>Oimport * as <++> from "<++>";:call bushels#backward_marker(2)
 " }}}
 " }}}
-" Tests {{{
-" React File {{{
-inoremap <buffer> <leader>dr import React from "react";
-            \import { render } from "__testutils__/testing-library";
-            \import <++> from "..";
-            \describe("<++>", () => {
-                \describe("<++>", () => {
-                    \let result: ReturnType<typeof render>;
-                    \beforeEach((): void => {
-                        \result = render(<<++>/><++>);
-                    \});
-                    \test("<++>", async (): Promise<void> => {<++>})
-                \})
-            \}):call bushels#backward_marker(7)
-" }}}
-" Before Each {{{
-inoremap <buffer> <leader>db beforeEach(async (): Promise<void> => {<++>});<++>:call bushels#backward_marker(2)
-" }}}
-" Tear Down {{{
-inoremap <buffer> <leader>dt afterEach(async (): Promise<void> => {<++>});<++>:call bushels#backward_marker(2)
-" }}}
-" Case {{{
-inoremap <buffer> <leader>dc test("<++>", async (): Promise<void> => {
-      \Sthrow "Not implemented!";
-      \})
-      \<++><<$:call bushels#backward_marker(2)
-" }}}
-" }}}
 " Hooks {{{
 inoremap <buffer> <leader>he useEffect((): void => {<++>}, [<++>]);<++>:call bushels#backward_marker(3)
 inoremap <buffer> <leader>hl useLayoutEffect((): void => {<++>});<++>:call bushels#backward_marker(2)
