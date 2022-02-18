@@ -1,72 +1,38 @@
 local M = {};
 
 function M.on_attach(client, bufnr)
-  local function buf_set_keymap(...) vim.api.nvim_buf_set_keymap(bufnr, ...) end
-
-  local function buf_set_keymap_if_supported(feature, ...)
-    if client.resolved_capabilities[feature] then buf_set_keymap(...) end
-  end
-
-  local function buf_set_option(...) vim.api.nvim_buf_set_option(bufnr, ...) end
-
-  buf_set_option("omnifunc", "v:lua.vim.lsp.omnifunc")
+  bufnr = bufnr or 0
+  vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
 
   require"illuminate".on_attach(client)
 
   -- Mappings.
-  local opts = {noremap = true, silent = true}
+  local opts = {noremap = true, silent = true, buffer = bufnr}
 
-  buf_set_keymap("n", "g?", "<cmd>lua vim.diagnostic.open_float()<CR>", opts)
-  buf_set_keymap("n", "[v",
-                 "<cmd>lua vim.diagnostic.goto_prev{ severity={min=vim.diagnostic.severity.ERROR} }<CR>",
-                 opts)
-  buf_set_keymap("n", "]v",
-                 "<cmd>lua vim.diagnostic.goto_next{ severity={min=vim.diagnostic.severity.ERROR} }<CR>",
-                 opts)
-  buf_set_keymap("n", "[V", "<cmd>lua vim.diagnostic.goto_prev{severity={max=vim.diagnostic.severity.WARN}}<CR>", opts)
-  buf_set_keymap("n", "]V", "<cmd>lua vim.diagnostic.goto_next{severity={max=vim.diagnostic.severity.WARN}}<CR>", opts)
-  buf_set_keymap("n", "<space>q",
-                 "<cmd>lua vim.diagnostic.setloclist({ open=true })<CR>", opts)
-  buf_set_keymap("n", ";ae",
-                 "<cmd>lua require(\"telescope.builtin\").lsp_workspace_diagnostics()<CR>",
-                 opts)
+  vim.keymap.set({"n"}, "g?", vim.diagnostic.open_float, opts)
 
-  buf_set_keymap_if_supported("declaration", "n", "gD",
-                              "<Cmd>lua vim.lsp.buf.declaration()<CR>", opts)
-  buf_set_keymap_if_supported("goto_definition", "n", "<c-]>",
-                              "<Cmd>lua vim.lsp.buf.definition()<CR>", opts)
-  buf_set_keymap_if_supported("hover", "n", "K",
-                              "<Cmd>lua vim.lsp.buf.hover()<CR>", opts)
-  buf_set_keymap_if_supported("implementation", "n", "gi",
-                              "<cmd>lua vim.lsp.buf.implementation()<CR>", opts)
-  buf_set_keymap_if_supported("signature_help", "n", "gK",
-                              "<cmd>lua vim.lsp.buf.signature_help()<CR>", opts)
-  buf_set_keymap_if_supported("type_definition", "n", "gt",
-                              "<cmd>lua vim.lsp.buf.type_definition()<CR>", opts)
-  buf_set_keymap_if_supported("rename", "n", "g/",
-                              "<cmd>lua vim.lsp.buf.rename()<CR>", opts)
-  buf_set_keymap_if_supported("find_references", "n", "gr",
-                              "<cmd>lua require(\"telescope.builtin\").lsp_references()<CR>",
-                              opts)
+  vim.keymap.set({"n"}, "[v", function()
+    vim.diagnostic.goto_prev {severity = {min = vim.diagnostic.severity.ERROR}}
+  end, opts)
+  vim.keymap.set({"n"}, "]v", function()
+    vim.diagnostic.goto_next {severity = {min = vim.diagnostic.severity.ERROR}}
+  end, opts)
+  vim.keymap.set({"n"}, "[V", function()
+    vim.diagnostic.goto_prev {severity = {max = vim.diagnostic.severity.WARN}}
+  end, opts)
+  vim.keymap.set({"n"}, "[V", function()
+    vim.diagnostic.goto_next {severity = {max = vim.diagnostic.severity.WARN}}
+  end, opts)
 
-  buf_set_keymap_if_supported("code_action", "n", ";af",
-                              "<cmd>lua require(\"telescope.builtin\").lsp_code_actions()<CR>",
-                              opts)
-  buf_set_keymap_if_supported("code_action", "v", ";af",
-                              "<cmd>lua require(\"telescope.builtin\").lsp_range_code_actions()<CR>",
-                              opts)
-  buf_set_keymap_if_supported("workspace_symbol", "n", ";as",
-                              "<cmd>lua require(\"telescope.builtin\").lsp_workspace_symbols()<CR>",
-                              opts)
-  buf_set_keymap_if_supported("workspace_symbol", "n", ";ad",
-                              "<cmd>lua require(\"telescope.builtin\").lsp_dynamic_workspace_symbols()<CR>",
-                              opts)
+  vim.keymap.set({"n"}, "<localleader>q",
+                 function() vim.diagnostic.setloclist({open = true}) end, opts)
 
-  buf_set_keymap_if_supported("document_formatting", "n", "==",
-                              "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
-  buf_set_keymap_if_supported("document_range_formatting", "v", "==",
-                              "<cmd>lua vim.lsp.buf.range_formatting()<CR>",
-                              opts)
+  for _, capability in ipairs(require("jrasmusbm.lsp.capabilities")) do
+    if client.resolved_capabilities[capability.name] then
+      vim.keymap.set(capability.modes or {"n"}, capability.mapping,
+                     capability.handler, opts)
+    end
+  end
 
   vim.lsp.handlers["textDocument/publishDiagnostics"] =
     vim.lsp.with(vim.lsp.diagnostic.on_publish_diagnostics,
