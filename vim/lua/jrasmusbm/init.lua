@@ -10,7 +10,6 @@ vim.cmd "filetype plugin indent on"
 vim.g.mapleader = ";"
 vim.g.maplocalleader = " "
 
-vim.opt.exrc = true
 
 vim.api.nvim_set_keymap("n", "ö", ";", {noremap = true})
 
@@ -46,3 +45,8 @@ require("jrasmusbm.diffview")
 require("jrasmusbm.harpoon")
 require("jrasmusbm.treesitter")
 require("jrasmusbm.snippets")
+
+local local_config = vim.fn.getcwd()..'/.vim/init.lua'
+if vim.loop.fs_stat(local_config) then
+  vim.cmd('source '..local_config)
+end
