@@ -15,10 +15,12 @@ local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 ls.snippets.lua = {
-  s("im", fmt("local {} = require('{}')\n{}", {i(1), rep(1), i(0)})),
+  s({trig = "im", name = "import module"},
+    fmt("local {} = require('{}')\n{}", {i(1), rep(1), i(0)})),
 
-  s("lf", fmt("local M = {{}}\n\n{}\n\nreturn M{}", {i(1), i(0)})),
-  s("ld", {
+  s({trig = "lf", name = "lua file"},
+    fmt("local M = {{}}\n\n{}\n\nreturn M{}", {i(1), i(0)})),
+  s({trig = "lb", name = "log breakpoint"}, {
     t {"print(", "\t"},
     t {"inspect({", "\t\t"},
     t("file = "),
@@ -34,25 +36,36 @@ ls.snippets.lua = {
     i(0),
   }),
 
-  s("vl", fmt("local {} = {}\n{}", {i(1), i(2), i(0)})),
-  s("ve", fmt("M.{} = {}\n{}", {i(1), i(2), i(0)})),
+  s({trig = "vl", name = "local variable"},
+    fmt("local {} = {}\n{}", {i(1), i(2), i(0)})),
+  s({trig = "ve", name = "exported variable"},
+    fmt("M.{} = {}\n{}", {i(1), i(2), i(0)})),
 
-  s("fd", fmt("function {}({})\n  {}\nend\n\n{}", {i(1), i(2), i(3), i(0)})),
+  s({trig = "fd", name = "function definition"},
+    fmt("function {}({})\n  {}\nend\n\n{}", {i(1), i(2), i(3), i(0)})),
 
-  s("ci", fmt("if {} then\n  {}\nend\n\n{}", {i(1), i(2), i(0)})),
-  s("cf", fmt("for {}, {} in {} do\n  {}\nend\n\n{}",
-              {i(1, "_"), i(2), i(3), i(4), i(0)})),
+  s({trig = "ci", name = "if statement"},
+    fmt("if {} then\n  {}\nend\n\n{}", {i(1), i(2), i(0)})),
+  s({trig = "cf", name = "for loop"}, fmt(
+      "for {}, {} in {} do\n  {}\nend\n\n{}",
+      {i(1, "_"), i(2), i(3), i(4), i(0)})),
 
-  s("vc", fmt("vim.cmd[[\n{}\n]]\n\n{}", {i(1), i(0)})),
+  s({trig = "vc", name = "vim command"},
+    fmt("vim.cmd[[\n{}\n]]\n\n{}", {i(1), i(0)})),
 
-  s("im",
+  s({trig = "im", name = "import module"},
     fmt("local mappings = require(\"jrasmusbm.utils.mappings\")\n{}", {i(0)})),
 
-  s("sn", fmt("s(\"{}\", fmt(\"{}\", {{ {} }})),\n{}", {i(1), i(2), i(3), i(0)})),
+  s({trig = "sn", name = "create snippet"},
+    fmt("s({{ trig=\"{}\", name=\"{}\" }}, fmt(\"{}\", {{ {} }})),\n{}",
+        {i(1), i(2), i(3), i(4), i(0)})),
 
-  s("an", fmt("{} = {},{}", {i(1), rep(1), i(0)})),
+  s({trig = "an", name = "named argument"},
+    fmt("{} = {},{}", {i(1), rep(1), i(0)})),
 
-  s("mk", fmt("vim.keymap.set({{ \"{}\" }}, \"{}\", function()\n {}\nend, {{ {} }})\n{}",
-             {i(1), i(2), i(3), i(4), i(0)})),
+  s({trig = "mk", name = "map keys"},
+    fmt(
+      "vim.keymap.set({{ \"{}\" }}, \"{}\", function()\n {}\nend, {{ {} }})\n{}",
+      {i(1), i(2), i(3), i(4), i(0)})),
 }
 
