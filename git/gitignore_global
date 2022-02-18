@@ -9,6 +9,7 @@ temp*
 !template*
 .vimrc
 .nvimrc
+.nvim.lua
 .autosrc
 /tags
 .python-version
