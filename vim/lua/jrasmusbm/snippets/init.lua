@@ -27,4 +27,7 @@ end, {silent = true})
 
 vim.keymap.set({"i"}, "<leader><leader>", "<++>")
 
-ls.config.set_config {history=true, updateevents = "TextChanged,TextChangedI"}
+ls.config.set_config {history = true, updateevents = "TextChanged,TextChangedI"}
+
+ls.filetype_extend("tsx", {"html", "css"})
+ls.filetype_extend("typescript", {"graphql"})
