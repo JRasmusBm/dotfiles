@@ -1,25 +1,36 @@
 local ls = require("luasnip")
 local s = ls.s
-local sn = ls.snippet_node
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
-
-local test_suite = function(contents)
-  return fmt("describe(\"{}\", async (): Promise<void> => {{\n  {}\n}}){}",
-             {i(1, "sample suite"), sn(2, contents), i(0)})
-end
-
-local test_case = function()
-  return fmt("it(\"{}\", async (): Promise<void> => {{\n  {}\n}})\n\n{}",
-             {i(1, "sample test"), i(2, "throw \"Not implemented!\""), i(0)})
-end
+local t = ls.text_node
 
 ls.snippets.typescript_mocha = {
   s({trig = "is", name = "import sinon"},
     fmt("import * as sinon from \"sinon\"\n{}", {i(0)})),
 
-  s({trig = "dc", name = "test case"}, {sn(1, test_case())}),
-  s({trig = "ds", name = "test case"}, test_suite(test_case())),
+  s({trig = "ds", name = "test suite"}, {
+    t {"describe(\""},
+    i(1),
+    t {"\", async (): Promise<void> => {", "\t"},
+    t {"it(\""},
+    i(2),
+    t {"\", async (): Promise<void> => {", "\t\t"},
+    i(3, "throw \"Not implemented!\""),
+    t {"", "\t"},
+    t {"})", "\t"},
+    t {"", "\t"},
+    i(0),
+    t {"", ""},
+    t {"})"},
+  }),
+  s({trig = "dc", name = "test case"}, {
+    t {"it(\""},
+    i(1),
+    t {"\", async (): Promise<void> => {", "\t"},
+    i(0, "throw \"Not implemented!\""),
+    t {"", ""},
+    t {"})"},
+  }),
 
   s({trig = "db", name = "test case"},
     fmt("beforeEach(async (): Promise<void> => {{\n  {}\n}}){}\n",

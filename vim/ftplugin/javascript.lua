@@ -17,8 +17,8 @@ local rep = require("luasnip.extras").rep
 
 ls.snippets.javascript = {}
 
-require("plenary.reload").reload_module("jrasmusbm.snippets.shared.javascript")
+require("plenary.reload").reload_module("jrasmusbm.snippets.shared.js_ts")
 
-for _, snippet in pairs(require("jrasmusbm.snippets.shared.javascript")) do
+for _, snippet in pairs(require("jrasmusbm.snippets.shared.js_ts")) do
   table.insert(ls.snippets.javascript, snippet())
 end
