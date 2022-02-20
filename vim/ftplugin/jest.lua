@@ -1,6 +1,7 @@
 local ls = require("luasnip")
 local s = ls.s
 local i = ls.insert_node
+local ls_utils = require("jrasmusbm.snippets.utils.init")
 
 local t = ls.text_node
 
@@ -30,8 +31,4 @@ ls.snippets.jest = {
   }),
 }
 
-require("plenary.reload").reload_module("jrasmusbm.snippets.shared.jest")
-
-for _, snippet in pairs(require("jrasmusbm.snippets.shared.jest")) do
-  table.insert(ls.snippets.jest, snippet())
-end
+ls_utils.load_shared(ls.snippets.jest, "jest")

@@ -1,13 +1,13 @@
 vim.cmd [[
 execute "source $DOTFILES/vim/snippets/css.vim"
 execute "source $DOTFILES/vim/snippets/html.vim"
-execute "source $DOTFILES/vim/snippets/graphql.vim"
 ]]
 
 local ls = require("luasnip")
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
+local ls_utils = require("jrasmusbm.snippets.utils")
 
 ls.snippets.typescript = {
   s({trig = "at", name = "typed argument"},
@@ -18,8 +18,5 @@ ls.snippets.typescript = {
   s({trig = "ta", name = "type"}, fmt("type {} = {}\n{}", {i(1), i(2), i(0)})),
 }
 
-require("plenary.reload").reload_module("jrasmusbm.snippets.shared.js_ts")
-
-for _, snippet in pairs(require("jrasmusbm.snippets.shared.js_ts")) do
-  table.insert(ls.snippets.typescript, snippet())
-end
+ls_utils.load_shared(ls.snippets.typescript, "js_ts")
+ls_utils.load_shared(ls.snippets.typescript, "graphql")
