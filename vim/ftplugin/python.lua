@@ -122,7 +122,7 @@ ls.snippets.python = {
     fmt("try:\n    {}\nexcept{}:\n    {}\n\n{}", {i(1), i(2), i(3), i(0)})),
   s({trig = "cf", name = "for-each loop"},
     fmt("for {} in {}:\n    {}\n\n{}", {i(1), i(2), i(3), i(0)})),
-  s({trig = "cfo", name = "index loop"},
+  s({trig = "cfr", name = "range loop"},
     fmt("for {} in range({}):\n    {}\n\n{}", {i(1, "i"), i(2), i(3), i(0)})),
 
   s({trig = "et", name = "ternary expression"},
