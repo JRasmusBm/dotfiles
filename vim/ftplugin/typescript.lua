@@ -1,6 +1,5 @@
 vim.cmd [[
 execute "source $DOTFILES/vim/snippets/css.vim"
-execute "source $DOTFILES/vim/snippets/html.vim"
 ]]
 
 local ls = require("luasnip")
@@ -19,4 +18,5 @@ ls.snippets.typescript = {
 }
 
 ls_utils.load_shared(ls.snippets.typescript, "js_ts")
+ls_utils.load_shared(ls.snippets.typescript, "html")
 ls_utils.load_shared(ls.snippets.typescript, "graphql")
