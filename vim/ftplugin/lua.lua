@@ -79,6 +79,9 @@ ls.snippets.lua = {
     t "ls.snippets.",
     i(0),
   }),
+  s({trig = "st", name = "text node"},
+    fmt("t {{\"{}\", \"{}\"}},\n{}", {i(1), i(2), i(0)})),
+
   s({trig = "i1", name = "one i(n)"}, fmt("i(0)", {})),
   s({trig = "i2", name = "two i(n)"}, fmt("i(1), i(0)", {})),
   s({trig = "i3", name = "three i(n)"}, fmt("i(1), i(2), i(0)", {})),
