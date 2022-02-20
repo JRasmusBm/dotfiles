@@ -2,4 +2,4 @@
 
 g pup
 
-gh pr create
+gh pr create "$@"
