@@ -6,7 +6,9 @@ local t = ls.text_node
 
 M.line_number = function(_, _) return sn(0, {t(tostring(vim.fn.line(".")))}) end
 
-M.file_name = function(_, _) return sn(0, {t(vim.fn.expand("%"))}) end
+M.file_path = function(_, _) return sn(0, {t(vim.fn.expand("%"))}) end
+
+M.file_name = function(_, _) return sn(0, {t(vim.fn.expand("%:p:h"))}) end
 
 M.load_shared = function(snippets, file)
   local module_name = "jrasmusbm.snippets.shared." .. file
