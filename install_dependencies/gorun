@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 _install_gorun() {
   go get github.com/erning/gorun
   sudo mv ~/go/bin/gorun /usr/local/bin/

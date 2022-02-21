@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_alacritty() {
   TEMP_DEB="$(mktemp)"
   wget -O $TEMP_DEB https://github.com/alacritty/alacritty/releases/download/v0.4.1/Alacritty-v0.4.1-ubuntu_18_04_amd64.deb 

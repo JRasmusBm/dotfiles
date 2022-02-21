@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_python_38() {
   sudo apt-get install -o Dpkg::Options::="--force-confnew" -y \
     build-essential \

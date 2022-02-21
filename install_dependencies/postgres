@@ -1,5 +1,8 @@
 #!/bin/bash
 
+set -e
+
+
 _install_postgres() {
   if test -z "$1"; then
     echo "Please supply a version!"

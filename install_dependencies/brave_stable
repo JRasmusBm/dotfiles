@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_brave_stable() {
     sudo apt install -y apt-transport-https curl
 

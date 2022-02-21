@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 _install_z() {
   curl -sS https://webinstall.dev/zoxide | bash
 }

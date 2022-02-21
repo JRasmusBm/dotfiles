@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 _install_golang() {
   (
     set -xe

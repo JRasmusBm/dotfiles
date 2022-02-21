@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_lua_language_server() {
   CURRENT_PATH=$(pwd)
   cd ~/.cache/

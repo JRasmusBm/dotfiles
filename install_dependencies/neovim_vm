@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 setup_neovim_vm() {
   if ! command -v mkvirtualenv
   then

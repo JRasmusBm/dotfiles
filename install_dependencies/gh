@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 _install_git_cli() {
   TEMP_DEB="$(mktemp)"
   GH_VERSION='2.5.0'

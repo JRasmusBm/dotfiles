@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_virtualenvwrapper() {
   export WORKON_HOME=$HOME/.virtualenvs
   export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
