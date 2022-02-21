@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_lua() {
   sudo apt install -y \
     lua5.3 \

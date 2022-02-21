@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_pomo_for_i3() {
   command -v gnome-pomodoro > /dev/null &&
   (

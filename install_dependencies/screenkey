@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_screenkey() {
   sudo snap install --beta screenkey
 }

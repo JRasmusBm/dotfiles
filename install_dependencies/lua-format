@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_lua_format() {
   current_dir=$(pwd)
   (

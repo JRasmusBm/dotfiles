@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 uninstall_unnecessary_stuff() {
   sudo apt-get purge -y thunderbird
   sudo apt-get purge -y rhythmbox

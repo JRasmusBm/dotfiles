@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_spotify_cli() {
   sudo apt install -y \
     libncursesw5-dev \

@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_node() {
   sudo apt-get install -y \
     software-properties-common \

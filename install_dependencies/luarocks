@@ -1,5 +1,8 @@
 #!/bin/sh
 
+set -e
+
+
 install_luarocks() {
   wget https://luarocks.org/releases/luarocks-3.7.0.tar.gz
   tar zxpf luarocks-3.7.0.tar.gz
