@@ -55,7 +55,7 @@ return {
   s({trig = "lb", name = "log breakpoint"}, {
     t {"console.dir({", "\t"},
     t("file: \""),
-    d(1, ls_utils.file_name, {}),
+    d(1, ls_utils.file_path, {}),
     t {"\",", "\t"},
     t("line: "),
     d(2, ls_utils.line_number, {}),

@@ -24,7 +24,7 @@ ls.snippets.lua = {
     t {"print(", "\t"},
     t {"vim.inspect({", "\t\t"},
     t("file = \""),
-    d(1, ls_utils.file_name, {}),
+    d(1, ls_utils.file_path, {}),
     t {"\",", "\t\t"},
     t("line = "),
     d(2, ls_utils.line_number, {}),
