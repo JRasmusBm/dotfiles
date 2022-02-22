@@ -1,6 +1,7 @@
 local ls = require("luasnip")
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
+local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 local s = function(context, nodes, options)
@@ -8,9 +9,9 @@ local s = function(context, nodes, options)
 end
 
 return {
-  s({trig = "tc", name = "closed tag"}, fmt("<{} {} />\n{}", {i(1), i(2), i(0)})),
+  s({trig = "tt", name = "closed tag"}, fmt("<{} {} />\n{}", {i(1), i(2), i(0)})),
   s({trig = "to", name = "open tag"},
-    fmt("<{} {}>\n  {}\n</{}>", {i(1), i(2), rep(1), i(0)})),
+    fmt("<{} {}>\n  {}\n</{}>\n{}", {i(1), i(2), i(3), rep(1), i(0)})),
 
   s({trig = "th1", name = "h1 tag"},
     fmt("<h1 {}>\n  {}\n</h1>\n{}", {i(1), i(2), i(0)})),
@@ -31,8 +32,8 @@ return {
     fmt("<p {}>\n  {}\n</p>\n{}", {i(1), i(2), i(0)})),
   s({trig = "ti", name = "image tag"},
     fmt("<img src=\"{}\" {}/>\n{}", {i(1), i(2), i(0)})),
-  s({trig = "tbutton", name = "form submit"},
-    fmt("<button type=\"{}\" {}>\n  {}\n</button>\n{}", {i(1), i(2), i(3), i(0)})),
+  s({trig = "tb", name = "button tag"}, fmt(
+      "<button type=\"{}\" {}>\n  {}\n</button>\n{}", {i(1), i(2), i(3), i(0)})),
 
   s({trig = "tbl", name = "bullet list tag"},
     fmt("<ul {}>\n  {}\n</ul>\n{}", {i(1), i(2), i(0)})),
@@ -49,34 +50,39 @@ return {
   s({trig = "aj", name = "interpolated (javascript) argument"},
     fmt("{}={{{}{}}} {}", {i(1), i(2), rep(1), i(0)})),
 
-  s({ trig="ttf", name="HTML file" }, {
-      t{"<!DOCTYPE html>", ""},
-      t{"", ""},
-      t{"<html>", "\t"},
-      t{"<head>", "\t\t"},
-      i(1)
-      t{"", "\t"},
-      t{"</head>", "\t"},
-      t{"<body>", "\t\t"},
-      i(2)
-      t{"", "\t"},
-      t{"</body>", "\t"},
-      t{"</html>"},
-    }),
+  s({trig = "ttf", name = "HTML file"}, {
+    t {"<!DOCTYPE html>", ""},
+    t {"", ""},
+    t {"<html>", "\t"},
+    t {"<head>", "\t\t"},
+    i(1),
+    t {"", "\t"},
+    t {"</head>", "\t"},
+    t {"<body>", "\t\t"},
+    i(2),
+    t {"", "\t"},
+    t {"</body>", "\t"},
+    t {"</html>"},
+  }),
 
-  s({ trig="tis", name="import stylesheet" }, fmt("<link rel=\"stylesheet\" href=\"{}.css\" />\n{}", { i(1), i(0) })),
-  s({ trig="tij", name="import javascript" }, fmt("<script type=\"module\" src=\"{}.js\"></script>\n{}", { i(1), i(0) })),
-  s({ trig="tvp", name="set viewport" }, fmt("<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n{}", { i(0) })),
+  s({trig = "tis", name = "import stylesheet"},
+    fmt("<link rel=\"stylesheet\" href=\"{}.css\" />\n{}", {i(1), i(0)})),
+  s({trig = "tij", name = "import javascript"},
+    fmt("<script type=\"module\" src=\"{}.js\"></script>\n{}", {i(1), i(0)})),
+  s({trig = "tvp", name = "set viewport"}, fmt(
+      "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n{}",
+      {i(0)})),
 
   s({trig = "tf", name = "form tag"},
     fmt("<form {}>\n  {}\n</form>\n{}", {i(1), i(2), i(0)})),
   s({trig = "tfs", name = "form submit"},
     fmt("<button type=\"submit\" {}>\n  {}\n</button>\n{}", {i(1), i(2), i(0)})),
-  s({trig = "tfi", name = "form input"},
-    fmt("<input type=\"{}\" {}>\n  {}\n</button>\n{}", {i(1), i(2), i(3), i(0)})),
+  s({trig = "tfi", name = "form input"}, fmt(
+      "<input type=\"{}\" {}>\n  {}\n</button>\n{}", {i(1), i(2), i(3), i(0)})),
   s({trig = "tfl", name = "form label"},
     fmt("<label>\n  <span>{}</span>\n  {}\n</label>\n{}", {i(1), i(2), i(0)})),
   s({trig = "tff", name = "form fieldset"},
-    fmt("<fieldset>\n  <legend>{}</legend>\n  {}\n</fieldset>\n{}", {i(1), i(2), i(0)})),
-  
+    fmt("<fieldset>\n  <legend>{}</legend>\n  {}\n</fieldset>\n{}",
+        {i(1), i(2), i(0)})),
+
 }
