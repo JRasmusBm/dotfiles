@@ -3,6 +3,7 @@ local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local rep = require("luasnip.extras").rep
+local ls_utils = require("jrasmusbm.snippets.utils")
 
 ls.snippets.tsx = {
   s({trig = "rf", name = "react file"}, fmt(
@@ -17,3 +18,7 @@ ls.snippets.tsx = {
   s({trig = "hl", name = "useLayoutEffect hook"},
     fmt("useLayoutEffect(() => {{\n  {}\n}}, [{}])\n\n{}", {i(1), i(2), i(0)})),
 }
+
+ls_utils.load_shared(ls.snippets.tsx, "html")
+ls_utils.load_shared(ls.snippets.tsx, "css")
+ls_utils.load_shared(ls.snippets.tsx, "graphql")
