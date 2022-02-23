@@ -9,6 +9,8 @@ vim.keymap.set({"i", "s", "n"}, "<leader>s",
                function() if ls.expandable() then ls.expand() end end,
                {silent = true})
 
+vim.keymap.set({"i", "s", "n"}, "<leader>S", ls.unlink_current, {silent = true})
+
 vim.keymap.set({"i", "n"}, "<leader>g", function()
   if ls.jumpable(1) then
     ls.jump(1)
