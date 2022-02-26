@@ -105,23 +105,41 @@ func Example{}() {{
 ]], {i(1), i(2), i(0)})),
 
   s({trig = "dt", name = "table test"}, fmt([[
-t.Run("Table Test", func(t *testing.T) {{
-  testTable := []struct {{
-    {}
+t.Run("{}", func(t *testing.T) {{
+  type {} struct {{
+    name string
+    {} {}
     want {}
-  }}{{
-    {{ {} want: {} }},
   }}
-  for _, testEntry := range testTable {{
+
+  cases := []{} {{
+      {{ name: {}, {}: {}, want: {} }},
+  }}
+  for _, c := range cases {{
       got := {}
       if !reflect.DeepEqual(got, want) {{
-          t.Errorf("%#v, got %v want %v", {}, got, testEntry.want)
+          t.Errorf("%#v, got %v want %v", got, {}, c.want)
         }}
       }}
   }}
+}}
 
 {}
-]], {i(1), i(2), i(3), i(4), i(5), i(6), i(0)})),
+]], {
+    i(1),
+    i(2, "testCase"),
+    i(3),
+    i(4),
+    i(5),
+    rep(2),
+    i(6),
+    rep(3),
+    i(7),
+    i(8),
+    i(9),
+    rep(3),
+    i(0),
+  })),
 
   s({trig = "ll", name = "log standard"}, fmt([[
 fmt.Printf({})
