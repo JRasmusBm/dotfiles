@@ -11,6 +11,7 @@ augroup ChangeFiletype
   autocmd BufNew,BufNewFile,BufRead gitconfig set filetype=gitconfig
   autocmd BufNew,BufNewFile,BufRead .rgignore,.ignore set filetype=gitignore
   autocmd BufNew,BufNewFile,BufRead *.toml set filetype=toml
+  autocmd BufNew,BufNewFile,BufRead *.tex set filetype=tex
   autocmd BufNew,BufNewFile,BufRead *.scm set filetype=query
   autocmd BufNew,BufNewFile,BufRead Dockerfile* set filetype=dockerfile
   autocmd BufNew,BufNewFile,BufRead serviceworker.ts set filetype=typescript.serviceworker
