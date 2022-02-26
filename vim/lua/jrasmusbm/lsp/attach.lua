@@ -20,7 +20,7 @@ function M.on_attach(client, bufnr)
   vim.keymap.set({"n"}, "[V", function()
     vim.diagnostic.goto_prev {severity = {max = vim.diagnostic.severity.WARN}}
   end, opts)
-  vim.keymap.set({"n"}, "[V", function()
+  vim.keymap.set({"n"}, "]V", function()
     vim.diagnostic.goto_next {severity = {max = vim.diagnostic.severity.WARN}}
   end, opts)
 
