@@ -31,3 +31,4 @@ xmodmap -e "keysym Caps_Lock = Escape"
 xmodmap -e "clear lock"
 xset r rate 150 25
 test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
+test -f "$HOME/.rover/env" && . "$HOME/.rover/env"

@@ -28,5 +28,6 @@ PATH="$PATH:$HOME/.fzf/bin"
 PATH="$PATH:$HOME/.poetry/bin"
 PATH="$PATH:$DOTFILES/bin"
 PATH="$PATH:$HOME/.pyenv/bin"
+PATH="$PATH:$HOME/.rover/bin"
 
 export PATH=$PATH
