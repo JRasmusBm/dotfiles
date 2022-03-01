@@ -45,3 +45,4 @@ if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
 fi
 
 test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
+test -f "$HOME/.rover/env" && . "/home/jrasmusbm/.rover/env"

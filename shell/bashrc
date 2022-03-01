@@ -2,15 +2,15 @@
 
 # Interactice Shells {{{
 case $- in
-    *i*) ;;
-      *) return;;
+  *i*) ;;
+  *) return ;;
 esac
 #}}}
 
 export DOTFILES="$HOME/dotfiles"
 export plug="$DOTFILES/vim/pack/bundle/opt"
 export dot="$DOTFILES"
-      
+
 export PATH="$PATH:$HOME/bin"
 export PATH="$PATH:$DOTFILES/bin"
 export PATH="$HOME/.pyenv/bin:$PATH"
@@ -39,8 +39,8 @@ shopt -s globstar
 
 test -x "/usr/bin/lesspipe" && eval "$(SHELL=/bin/sh lesspipe)"
 
-if test -z "${debian_chroot:-}" && test -r "/etc/debian_chroot" ; then
-    debian_chroot=$(cat /etc/debian_chroot)
+if test -z "${debian_chroot:-}" && test -r "/etc/debian_chroot"; then
+  debian_chroot=$(cat /etc/debian_chroot)
 fi
 
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
@@ -60,15 +60,16 @@ export WORKON_HOME=$HOME/.virtualenvs
 export PROJECT_HOME=$HOME/Envs
 export ANDROID_HOME=$HOME/Android/Sdk
 
-test -f "$HOME/.config/broot/launcher/bash/br" && source "$HOME/.config/broot/launcher/bash/br"
-
-if test -d "$HOME/.pyenv" ; then
+if test -d "$HOME/.pyenv"; then
   export PYENV_ROOT="$HOME/.pyenv"
   eval "$(pyenv init --path)"
   eval "$(pyenv init -)"
 fi
 
 source "$DOTFILES/shell/aliases"
+
+test -f "$HOME/.config/broot/launcher/bash/br" && source "$HOME/.config/broot/launcher/bash/br"
+
 test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
 
-source /home/jrasmusbm/.config/broot/launcher/bash/br
+test -f "$HOME/.rover/env" && source "$HOME/.rover/env"
