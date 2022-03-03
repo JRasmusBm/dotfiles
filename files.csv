@@ -28,3 +28,4 @@ False,lsp/efm-langserver.yaml,.config/efm-langserver/config.yaml
 False,lua-format.yaml,.lua-format.yaml
 True,shell/zsh_completions,.zsh_completions
 False,python/poetry-config.toml,.config/pypoetry/config.toml
+False,db/pgcli.conf,.config/pgcli/config
