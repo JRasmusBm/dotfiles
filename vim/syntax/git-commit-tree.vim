@@ -14,13 +14,13 @@ syntax match GitCommitTreeRefHeadArrow  contained                              n
 syntax match GitCommitTreeRefHeadBranch contained                                                 /[^,)]\+/
 
 highlight default link GitCommitTreeHash TSType
-highlight default link GitCommitTreeRef TSProperty
+highlight default link GitCommitTreeRef TSMethod
 highlight default link GitCommitTreeRefRef TSFloat
 highlight default link GitCommitTreeRefTag TSNamespace
 highlight default link GitCommitTreeRefRemote Keyword
 highlight default link GitCommitTreeRefHead TSConstBuiltin
 highlight default link GitCommitTreeRefHeadArrow TSConstBuiltin
-highlight default link GitCommitTreeRefHeadBranch TSProperty
+highlight default link GitCommitTreeRefHeadBranch TSMethod
 
 syntax match GitCommitTreeGraphEdge9 /[_/ ]\?[|/\\*]/  nextgroup=GitCommitTreeGraphEdge1,@GitCommitTreeDiff contained
 syntax match GitCommitTreeGraphEdge8 /[_/ ]\?[|/\\*]/  nextgroup=GitCommitTreeGraphEdge9,@GitCommitTreeDiff contained
