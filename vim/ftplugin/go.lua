@@ -115,14 +115,17 @@ t.Run("{}", func(t *testing.T) {{
   cases := []{} {{
       {{ name: {}, {}: {}, want: {} }},
   }}
+
   for _, c := range cases {{
+    t.Run("{}", func(t *testing.T) {{
       got := {}
-      if !reflect.DeepEqual(got, want) {{
-          t.Errorf("%#v, got %v want %v", got, {}, c.want)
-        }}
+
+      if !reflect.DeepEqual(got, c.want) {{
+          t.Errorf("%#v, got %v want %v", c.{}, got, c.want)
       }}
+    }})
   }}
-}}
+}})
 
 {}
 ]], {
@@ -137,6 +140,7 @@ t.Run("{}", func(t *testing.T) {{
     i(7),
     i(8),
     i(9),
+    i(10),
     rep(3),
     i(0),
   })),
