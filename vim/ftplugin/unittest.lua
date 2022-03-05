@@ -1,22 +1,12 @@
-local mappings = require("jrasmusbm.utils.mappings")
 local ls = require("luasnip")
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local sn = ls.snippet_node
 local i = ls.insert_node
 
-mappings.nmap("<localleader>din",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestNearest')<CR>",
-              {noremap = true, buffer = true})
-mappings.nmap("<localleader>dip",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestLast')<CR>",
-              {noremap = true, buffer = true})
-mappings.nmap("<localleader>dif",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestFile')<CR>",
-              {noremap = true, buffer = true})
-mappings.nmap("<localleader>dis",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestSuite')<CR>",
-              {noremap = true, buffer = true})
+require("jramusbm.dap.test").setup_test_debugging({
+  ["test#python#pyunit#executable"] = "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m unittest",
+}, function() vim.cmd("Debugpy attach 0.0.0.0 5678") end)
 
 local test_class = function()
   return fmt("class Test{}(unittest.TestCase):\n    {}", {i(1), i(0)})
