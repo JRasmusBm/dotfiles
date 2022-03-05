@@ -2,7 +2,6 @@ vim.cmd [[
 match BadWhitespace /\s\+$/
 ]]
 
-local mappings = require("jrasmusbm.utils.mappings")
 local ls = require("luasnip")
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
@@ -12,19 +11,6 @@ local i = ls.insert_node
 local d = ls.dynamic_node
 local t = ls.text_node
 local rep = require("luasnip.extras").rep
-
-mappings.nmap("<localleader>din",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestNearest')<CR>",
-              {noremap = true, buffer = true})
-mappings.nmap("<localleader>dip",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestLast')<CR>",
-              {noremap = true, buffer = true})
-mappings.nmap("<localleader>dif",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestFile')<CR>",
-              {noremap = true, buffer = true})
-mappings.nmap("<localleader>dis",
-              ":lua require(\"jrasmusbm.dap.python\").debug_test('TestSuite')<CR>",
-              {noremap = true, buffer = true})
 
 local docstring =
   function() return fmt("\"\"\"\n{}\n\"\"\"\n{}", {i(1), i(0)}) end
