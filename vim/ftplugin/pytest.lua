@@ -4,7 +4,7 @@ local fmt = require("luasnip.extras.fmt").fmt
 local sn = ls.snippet_node
 local i = ls.insert_node
 
-require("jramusbm.dap.test").setup_test_debugging({
+require("jrasmusbm.dap.test").setup_test_debugging({
   ["test#python#pytest#executable"] = "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m pytest",
 }, function() vim.cmd("Debugpy attach 0.0.0.0 5678") end)
 
