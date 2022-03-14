@@ -8,7 +8,7 @@ vim.g["test#python#pyunit#executable"] = "python -m unittest"
 
 require("jrasmusbm.dap.test").setup_test_debugging({
   ["test#python#pyunit#executable"] = "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m unittest",
-}, function() vim.cmd("Debugpy attach 0.0.0.0 5678") end)
+}, vim.schedule_wrap(function() vim.cmd("Debugpy attach 0.0.0.0 5678") end))
 
 local test_class = function()
   return fmt("class Test{}(unittest.TestCase):\n    {}", {i(1), i(0)})
