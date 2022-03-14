@@ -1,7 +1,7 @@
 local M = {}
 
 M.setup = function(options)
-  require"lspconfig".terraformls.setup {
+  require("lspconfig").terraformls.setup {
     capabilities = options.capabilities,
     on_attach = function(client)
       client.resolved_capabilities.document_formatting = false

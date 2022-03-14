@@ -1,4 +1,4 @@
-local mappings = require("jrasmusbm.utils.mappings")
+local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
 augroup CustomFoldlevel
@@ -6,10 +6,8 @@ augroup CustomFoldlevel
 augroup END
 ]]
 
-mappings.nmap("<leader>zs", "<cmd>setlocal foldmethod=syntax<cmd>",
-              {noremap = true})
-mappings.nmap("<leader>zm", "<cmd>setlocal foldmethod=marker<cmd>",
-              {noremap = true})
+mappings.nmap("<leader>zs", "<cmd>setlocal foldmethod=syntax<cmd>", { noremap = true })
+mappings.nmap("<leader>zm", "<cmd>setlocal foldmethod=marker<cmd>", { noremap = true })
 
 vim.opt.foldopen = require("jrasmusbm.utils.options").list {
   "block",
@@ -25,5 +23,4 @@ vim.opt.foldopen = require("jrasmusbm.utils.options").list {
 
 vim.opt.foldclose = ""
 
-mappings.nmap("za", "<cmd>call jrasmusbm#folds#toggle_foldopen()<cr>",
-              {noremap = true})
+mappings.nmap("za", "<cmd>call jrasmusbm#folds#toggle_foldopen()<cr>", { noremap = true })

@@ -1,4 +1,4 @@
-vim.opt.complete=require("jrasmusbm.utils.options").list {
+vim.opt.complete = require("jrasmusbm.utils.options").list {
   ".",
   "w",
   "b",
@@ -7,7 +7,7 @@ vim.opt.complete=require("jrasmusbm.utils.options").list {
   "i",
 }
 
-vim.opt.isfname=require("jrasmusbm.utils.options").list {
+vim.opt.isfname = require("jrasmusbm.utils.options").list {
   "@",
   "48-57",
   "/",

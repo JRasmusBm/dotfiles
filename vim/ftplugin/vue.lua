@@ -5,8 +5,8 @@ execute "source $DOTFILES/vim/snippets/vue.vim"
 
 vim.b.is_markdown_file = false
 
-local ls = require("luasnip")
-local ls_utils = require("jrasmusbm.snippets.utils.init")
+local ls = require "luasnip"
+local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 ls.snippets.vue = {}
 

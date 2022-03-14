@@ -1,11 +1,11 @@
 return {
-  {name = "declaration", handler = vim.lsp.buf.declaration, mapping = "gD"},
+  { name = "declaration", handler = vim.lsp.buf.declaration, mapping = "gD" },
   {
     name = "goto_definition",
     handler = vim.lsp.buf.definition,
     mapping = "<c-]>",
   },
-  {name = "hover", handler = vim.lsp.buf.hover, mapping = "K"},
+  { name = "hover", handler = vim.lsp.buf.hover, mapping = "K" },
   {
     name = "implementation",
     handler = vim.lsp.buf.implementation,
@@ -21,7 +21,7 @@ return {
     handler = vim.lsp.buf.type_definition,
     mapping = "gt",
   },
-  {name = "rename", handler = vim.lsp.buf.rename, mapping = "g/"},
+  { name = "rename", handler = vim.lsp.buf.rename, mapping = "g/" },
   {
     name = "find_references",
     handler = require("telescope.builtin").lsp_references,
@@ -36,7 +36,7 @@ return {
     name = "code_action",
     handler = require("telescope.builtin").lsp_range_code_actions,
     mapping = ";af",
-    modes = {"v"},
+    modes = { "v" },
   },
   {
     name = "workspace_symbol",
@@ -57,6 +57,6 @@ return {
     name = "document_range_formatting",
     handler = vim.lsp.buf.range_formatting,
     mapping = "==",
-    modes = {"v"},
+    modes = { "v" },
   },
 }

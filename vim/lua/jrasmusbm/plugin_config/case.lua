@@ -1,4 +1,4 @@
-local mappings = require("jrasmusbm.utils.mappings")
+local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[ packadd! vim-caser ]]
 

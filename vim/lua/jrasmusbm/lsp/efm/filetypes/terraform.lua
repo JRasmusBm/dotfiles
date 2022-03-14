@@ -1,10 +1,10 @@
 local M = {}
 
 M.config = {
-    {
-        formatCommand = 'terraform fmt -',
-        formatStdin = true
-    }
+  {
+    formatCommand = "terraform fmt -",
+    formatStdin = true,
+  },
 }
 
 M.filetypes = require("jrasmusbm.filetypes").terraform

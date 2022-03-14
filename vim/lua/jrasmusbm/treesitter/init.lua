@@ -1,8 +1,8 @@
-require("jrasmusbm.treesitter.parsers")
+require "jrasmusbm.treesitter.parsers"
 
-require"nvim-treesitter.configs".setup {
+require("nvim-treesitter.configs").setup {
   ensure_installed = "maintained",
-  highlight = {enable = true, disable = {"markdown"}},
+  highlight = { enable = true, disable = { "markdown" } },
   playground = require("jrasmusbm.treesitter.playground").playground,
   query_linter = require("jrasmusbm.treesitter.query_linter").query_linter,
   textobjects = {

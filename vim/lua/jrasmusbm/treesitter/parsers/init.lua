@@ -1,2 +1,2 @@
-require("jrasmusbm.treesitter.parsers.typescript")
-require("jrasmusbm.treesitter.parsers.python")
+require "jrasmusbm.treesitter.parsers.typescript"
+require "jrasmusbm.treesitter.parsers.python"

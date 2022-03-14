@@ -1,9 +1,14 @@
 local M = {}
 
-local file_names = require("plenary.path"):new(vim.fn.getenv("DOTFILES")) /
-                     "vim" / "lua" / "jrasmusbm" / "lsp" / "efm" / "filetypes"
+local file_names = require("plenary.path"):new(vim.fn.getenv "DOTFILES")
+  / "vim"
+  / "lua"
+  / "jrasmusbm"
+  / "lsp"
+  / "efm"
+  / "filetypes"
 
-local lspconfig = require("lspconfig")
+local lspconfig = require "lspconfig"
 local setup_efm = vim.schedule_wrap(function(options)
   lspconfig.efm.setup {
     capabilities = options.capabilities,
@@ -26,34 +31,36 @@ local setup_efm = vim.schedule_wrap(function(options)
 
       options.on_attach(client, bufnr)
     end,
-    cmd = {"efm-langserver"},
+    cmd = { "efm-langserver" },
     filetypes = options.filetypes,
-    settings = {rootMarkers = {".git/"}, languages = options.languages},
+    settings = { rootMarkers = { ".git/" }, languages = options.languages },
   }
 end)
 
 M.setup = function(options)
-  require("plenary.job"):new({
-    command = "ls",
-    cwd = file_names.filename,
-    on_exit = function(j)
-      local filetypes = {}
-      local languages = {}
-      for _, file_name in ipairs(j:result()) do
-        local module_name = vim.split(file_name, ".", true)[1]
-        local module = require("jrasmusbm.lsp.efm.filetypes." .. module_name)
-        for _, filetype in ipairs(module.filetypes) do
-          languages[filetype] = module.config
-          table.insert(filetypes, filetype)
+  require("plenary.job")
+    :new({
+      command = "ls",
+      cwd = file_names.filename,
+      on_exit = function(j)
+        local filetypes = {}
+        local languages = {}
+        for _, file_name in ipairs(j:result()) do
+          local module_name = vim.split(file_name, ".", true)[1]
+          local module = require("jrasmusbm.lsp.efm.filetypes." .. module_name)
+          for _, filetype in ipairs(module.filetypes) do
+            languages[filetype] = module.config
+            table.insert(filetypes, filetype)
+          end
         end
-      end
-      setup_efm({
-        languages = languages,
-        filetypes = filetypes,
-        on_attach = options.on_attach,
-      })
-    end,
-  }):start()
+        setup_efm {
+          languages = languages,
+          filetypes = filetypes,
+          on_attach = options.on_attach,
+        }
+      end,
+    })
+    :start()
 end
 
 return M
