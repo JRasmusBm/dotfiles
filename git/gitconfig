@@ -37,6 +37,8 @@
   old = red bold
   new = green bold
   whitespace = red reverse
+[blame]
+  ignoreRefsFile = .git-blame-ignore-revs
 [merge]
   conflictstyle = diff3
   ff = only
