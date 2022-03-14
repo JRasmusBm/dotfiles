@@ -1,7 +1,9 @@
-if vim.b.is_markdown_file then return end
+if vim.b.is_markdown_file then
+  return
+end
 
-local ls = require("luasnip")
-local ls_utils = require("jrasmusbm.snippets.utils.init")
+local ls = require "luasnip"
+local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 ls.snippets.html = {}
 

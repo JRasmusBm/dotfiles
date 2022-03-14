@@ -1,5 +1,5 @@
-local ls = require("luasnip")
-local ls_utils = require("jrasmusbm.snippets.utils.init")
+local ls = require "luasnip"
+local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 ls.snippets.htmldjango = {}
 

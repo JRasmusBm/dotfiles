@@ -1,13 +1,13 @@
 local M = {}
 
-local Job = require("plenary.job")
-local utils = require("telescope.utils")
-local pickers = require("telescope.pickers")
-local finders = require("telescope.finders")
-local sorters = require("telescope.sorters")
-local actions = require("telescope.actions")
-local action_state = require("telescope.actions.state")
-local previewers = require("telescope.previewers")
+local Job = require "plenary.job"
+local utils = require "telescope.utils"
+local pickers = require "telescope.pickers"
+local finders = require "telescope.finders"
+local sorters = require "telescope.sorters"
+local actions = require "telescope.actions"
+local action_state = require "telescope.actions.state"
+local previewers = require "telescope.previewers"
 
 local cheat_bufnr = nil
 
@@ -18,12 +18,12 @@ local function update_bufnr()
 end
 
 local function cheat_show(path)
-  local command = vim.list_extend({"cheat", "-T", "s"}, path)
+  local command = vim.list_extend({ "cheat", "-T", "s" }, path)
   return utils.get_os_command_output(command)
 end
 
 local function cheat_list(path)
-  return utils.get_os_command_output(vim.list_extend({"cheat", "l"}, path))
+  return utils.get_os_command_output(vim.list_extend({ "cheat", "l" }, path))
 end
 
 M.cheat = function(path)
@@ -37,20 +37,19 @@ M.cheat = function(path)
 
   pickers.new({}, {
     prompt_title = "cheat.sh",
-    layout_config = {width = .8, preview_width = .8},
+    layout_config = { width = 0.8, preview_width = 0.8 },
     finder = finders.new_table {
       results = results,
       entry_maker = function(line)
-        return {value = line, ordinal = line, display = line}
+        return { value = line, ordinal = line, display = line }
       end,
     },
-    previewer = previewers.new_termopen_previewer({
+    previewer = previewers.new_termopen_previewer {
       title = "Preview",
       get_command = function(entry)
-        return vim.list_extend(vim.list_extend({"cheat"}, current_path),
-                               {entry.value})
+        return vim.list_extend(vim.list_extend({ "cheat" }, current_path), { entry.value })
       end,
-    }),
+    },
     sorter = sorters.get_generic_fuzzy_sorter(),
     attach_mappings = function(prompt_bufnr, map)
       local show = function()

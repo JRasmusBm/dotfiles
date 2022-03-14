@@ -1,10 +1,10 @@
 local M = {}
 
 M.setup = function(options)
-  require"lspconfig".gopls.setup {
+  require("lspconfig").gopls.setup {
     capabilities = options.capabilities,
     on_attach = options.on_attach,
-    filetypes=require("jrasmusbm.filetypes").go
+    filetypes = require("jrasmusbm.filetypes").go,
   }
 end
 

@@ -1,11 +1,8 @@
-local Path = require("plenary.path")
-
 local M = {}
 
 M.config = {
   {
-    formatCommand = "lua-format -c " .. Path:new("~/.lua-format.yaml"):expand() ..
-      " -i",
+    formatCommand = "stylua -",
     formatStdin = true,
   },
 }

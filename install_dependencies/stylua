@@ -1,0 +1,7 @@
+#!/bin/sh
+
+_install_stylua() {
+  cargo install stylua
+}
+
+_install_stylua "$@"

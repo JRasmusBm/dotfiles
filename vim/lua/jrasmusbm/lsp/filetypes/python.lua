@@ -10,11 +10,11 @@ function M.setup(options)
     python_path = "python"
   end
 
-  require"lspconfig".pyright.setup {
+  require("lspconfig").pyright.setup {
     capabilities = options.capabilities,
     on_attach = options.on_attach,
     filetypes = require("jrasmusbm.filetypes").python,
-    settings = {python = {pythonPath = python_path}},
+    settings = { python = { pythonPath = python_path } },
   }
 end
 

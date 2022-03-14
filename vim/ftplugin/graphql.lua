@@ -1,5 +1,5 @@
-local ls = require("luasnip")
-local ls_utils = require("jrasmusbm.snippets.utils")
+local ls = require "luasnip"
+local ls_utils = require "jrasmusbm.snippets.utils"
 
 ls.snippets.graphql = {}
 

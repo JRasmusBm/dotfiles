@@ -1,6 +1,6 @@
 local M = {}
 
-local mappings = require("jrasmusbm.utils.mappings")
+local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
 packadd! spelunker.vim
@@ -20,17 +20,17 @@ vim.g.spelunker_disable_acronym_checking = 1
 vim.g.spelunker_disable_backquoted_checking = 1
 vim.g.spelunker_disable_auto_group = 1
 
-local remap = function ()
+local remap = function()
   if vim.o.spell == 0 then
-    mappings.nmap("]s", "<Plug>(spelunker-jump-next)", { silent= true })
-    mappings.nmap("[s", "<Plug>(spelunker-jump-prev)", { silent= true })
+    mappings.nmap("]s", "<Plug>(spelunker-jump-next)", { silent = true })
+    mappings.nmap("[s", "<Plug>(spelunker-jump-prev)", { silent = true })
   else
-    mappings.nmap("]s", "]s", { noremap =  true })
-    mappings.nmap("[s", "[s", { noremap =  true })
+    mappings.nmap("]s", "]s", { noremap = true })
+    mappings.nmap("[s", "[s", { noremap = true })
   end
 end
 
-M.check_file = function ()
+M.check_file = function()
   if vim.o.spell == 0 then
     vim.fn["spelunker#check"]()
   end
@@ -38,7 +38,7 @@ M.check_file = function ()
   remap()
 end
 
-M.check_displayed_words  = function ()
+M.check_displayed_words = function()
   if vim.o.spell == 0 then
     vim.fn["spelunker#check_displayed_words"]()
   end

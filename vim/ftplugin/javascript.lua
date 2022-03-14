@@ -2,8 +2,8 @@ vim.cmd [[
 command! Lint cex system("npm run lint -- --format=unix") <Bar> copen
 ]]
 
-local ls = require("luasnip")
-local ls_utils = require("jrasmusbm.snippets.utils.init")
+local ls = require "luasnip"
+local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 ls.snippets.javascript = {}
 
