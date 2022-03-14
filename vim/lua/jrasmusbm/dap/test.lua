@@ -13,25 +13,18 @@ local debug_test = function(cmd, debug_handlers, callback)
 
     for k, v in pairs(original_handlers) do vim.g[k] = v end
 
-    local function retry_wrapper()
-      local ok = pcall(callback)
-
-      if ok ~= true then vim.defer_fn(retry_wrapper, 2000) end
-    end
-
-    vim.defer_fn(retry_wrapper, 2000)
+    callback()
   end
 end
 
 M.setup_test_debugging = function(...)
   vim.keymap.set({"n"}, "din", debug_test("TestNearest", ...),
-    {noremap = true, buffer = 0})
-  vim.keymap.set({"n"}, "dip", debug_test("TestLast", ...),
-    {noremap = true, buffer = 0})
+                 {noremap = true, buffer = 0})
+  vim.keymap.set({"n"}, "dip", debug_test("TestLast", ...), {noremap = true})
   vim.keymap.set({"n"}, "dif", debug_test("TestFile", ...),
-    {noremap = true, buffer = 0})
+                 {noremap = true, buffer = 0})
   vim.keymap.set({"n"}, "dis", debug_test("TestSuite", ...),
-    {noremap = true, buffer = 0})
+                 {noremap = true, buffer = 0})
 end
 
 return M
