@@ -11,7 +11,9 @@ require("jrasmusbm.dap.test").setup_test_debugging(
     ["test#python#pyunit#executable"] = "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m unittest",
   },
   vim.schedule_wrap(function()
-    vim.cmd "Debugpy attach 0.0.0.0 5678"
+    vim.defer_fn(function()
+      vim.cmd "Debugpy attach 0.0.0.0 5678"
+    end, 500)
   end)
 )
 
