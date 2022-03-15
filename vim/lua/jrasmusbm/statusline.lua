@@ -32,15 +32,11 @@ local function cursor_position()
 end
 
 local function file_type()
-  return "[" .. vim.bo.filetype .. "]"
+  return "%y"
 end
 
-local function git_branch()
-  local head = vim.fn["fugitive#head"]()
-  if not head or head == "" then
-    return ""
-  end
-  return "⎇  " .. head
+local bufname = function()
+  return "%f"
 end
 
 local function modified_flag()
@@ -57,16 +53,9 @@ local even_split = "%="
 
 M.activeStatusLine = function()
   return ""
-    .. item_group {
-      value = git_branch(),
-      min_size = 0,
-      max_size = 20,
-      highlight = highlights.git_branch,
-    }
-    .. utils.space(1)
     .. item_group { value = file_type(), min_size = 0, max_size = 20 }
     .. utils.space(1)
-    .. item_group { value = vim.fn.bufname "%", min_size = 0, max_size = 60 }
+    .. item_group { value = bufname(), min_size = 0, max_size = 60 }
     .. utils.space(1)
     .. item_group {
       value = modified_flag(),
@@ -118,11 +107,9 @@ end
 
 M.inactiveStatusLine = function()
   return ""
-    .. item_group { value = git_branch(), min_size = 0, max_size = 20 }
-    .. utils.space(1)
     .. item_group { value = file_type(), min_size = 0, max_size = 20 }
     .. utils.space(1)
-    .. item_group { value = vim.fn.bufname "%", min_size = 0, max_size = 60 }
+    .. item_group { value = bufname(), min_size = 0, max_size = 60 }
     .. utils.space(1)
     .. item_group { value = modified_flag(), min_size = 4, max_size = 4 }
     .. even_split
