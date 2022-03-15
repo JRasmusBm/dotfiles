@@ -1,0 +1,4 @@
+#!/bin/sh
+
+g status --porcelain | grep -P '^(M|A).*\.lua$' | awk '{ print $2 }' | xargs -n 1 stylua
+g status --porcelain | grep -P '^(M|A).*\.lua$' | awk '{ print $2 }' | xargs git add
