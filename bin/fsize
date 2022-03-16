@@ -1,0 +1,9 @@
+#!/bin/sh
+
+ALACRITTY_FILE="$DOTFILES/terminal/alacritty.yml"
+
+if test -z "$1" ; then
+  grep -Po '(?<=size: )[0-9]+' "$ALACRITTY_FILE"
+else
+  sed -Ei "s/size: [0-9]+/size: $1/" "$ALACRITTY_FILE"
+fi
