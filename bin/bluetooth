@@ -2,21 +2,31 @@
 
 bluetooth_devices="$HOME/.config/bluetooth_devices/"
 
-if test "$1" = "dc"; then
-  command="disconnect"
-elif test "$1" = "c" -o -z "$1"; then
-  command="connect"
-else
-  command="$1"
-fi
+_bluetooth_cli() {
+  if test "$1" = "dc"; then
+    command="disconnect"
+  elif test "$1" = "c" -o -z "$1"; then
+    command="connect"
+  else
+    command="$1"
+  fi
 
-if test -n "$2" -a -e "$bluetooth_devices/$2"; then
-  mac="$(cat "$bluetooth_devices/$2")"
-elif test -n "$2"; then
-  mac="$2"
-else
-  device_alias="$(find "$bluetooth_devices" -type f -print0 | xargs -0 basename -a | fzf)"
-  mac="$(cat "$bluetooth_devices/$device_alias")"
-fi
+  if test -n "$2" -a -e "$bluetooth_devices/$2"; then
+    mac="$(cat "$bluetooth_devices/$2")"
+  elif test -n "$2"; then
+    mac="$2"
+  else
+    device_alias="$(find "$bluetooth_devices" -type f -print0 | xargs -0 basename -a | fzf)"
+    mac="$(cat "$bluetooth_devices/$device_alias")"
+  fi
 
-bluetoothctl "$command" "$mac"
+  if test "$command" = "connect"; then
+    bluetoothctl disconnect "$mac" || true;
+    bluetoothctl connect "$mac"
+    return 0
+  fi
+
+  bluetoothctl "$command" "$mac"
+}
+
+_bluetooth_cli "$@"
