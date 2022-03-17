@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 . "$DOTFILES/.venv/bin/activate"
 
 if ! (pip list 2>/dev/null | grep -q neovim-remote); then

@@ -1,3 +1,5 @@
 #!/bin/sh
 
+set -e
+
 v "$DOTFILES/install_dependencies/$1"

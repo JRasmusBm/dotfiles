@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 tmux_session_name() {
   tmux display-message -p "#S"
 }

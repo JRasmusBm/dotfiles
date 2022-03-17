@@ -1,3 +1,5 @@
 #!/bin/sh
 
+set -e
+
 "$DOTFILES"/.venv/bin/python -m rich.markdown "$1"

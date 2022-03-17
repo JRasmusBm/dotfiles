@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 _tmux_attach() {
   all_sessions=$(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^"$(tmux display-message -p "#S")"\$\")
   speeddial_sessions=$(head -10 <"$HOME/.tmux-speeddial" | tr "\n " "|" | tr -s '|')

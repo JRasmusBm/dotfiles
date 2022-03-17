@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 file_name=$HOME/.tmux-speeddial
 session_name=$(head -"$1" <"$file_name" | tail -1)
 

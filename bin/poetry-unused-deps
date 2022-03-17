@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 CREOSOTE_PATH="$HOME/projects/creosote"
 
 run_creosote() {

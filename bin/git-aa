@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 git_add_all() {
   (
     set -x

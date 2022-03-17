@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 tmux-next-prompt
 tmux send -X cursor-up
 tmux send -X select-line

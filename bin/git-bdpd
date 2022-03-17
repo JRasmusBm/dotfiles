@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 _purge_current_branch() {
   current_branch="$(g branch --show-current)"
   g s "$(g local-main-branch)"

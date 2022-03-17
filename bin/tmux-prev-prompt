@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 unique_prompt_symbol='›'
 
 tmux send -X start-of-line

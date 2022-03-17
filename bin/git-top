@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 _show_top_contributors() {
   count="${1:-20}"
   git log --format=format:%an | sort | uniq -c | sort -gr | head -n "${1:-$count}"

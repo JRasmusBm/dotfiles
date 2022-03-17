@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 file_name="$HOME/Pictures/screenshots/$(isosec).png"
 
 gnome-screenshot --clipboard --file="$file_name" "$@"

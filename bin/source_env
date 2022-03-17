@@ -1,3 +1,5 @@
 #!/bin/sh
 
+set -e
+
 export "$(grep -v '^#' "$1" | xargs -0)"

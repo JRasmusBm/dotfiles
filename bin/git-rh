@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 git_reset_hard() {
   if ! (g is-clean || confirm "Git tree is dirty, do you want to continue?"); then
     return 1

@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 _my_git() {
   g clone "git@github.com:jrasmusbm/$1.git"
 }

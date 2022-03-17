@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 git_submodule_add() {
   (
     set -x

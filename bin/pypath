@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 PYTHONPATH="$(pwd)/$1"
 
 export PYTHONPATH

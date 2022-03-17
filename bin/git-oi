@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 if test $# -eq 0 ; then
   number=$(gh issue list | fzf --reverse | grep -o -E "^([0-9])+")
 elif test "$1" = '.' ; then

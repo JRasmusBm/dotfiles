@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 git_cherry_pick_skip() {
   (
     set -x

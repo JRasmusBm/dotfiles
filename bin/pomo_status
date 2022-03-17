@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 pomo_status() {
   raw_status=$(/usr/bin/i3-gnome-pomodoro status)
   status_text=${raw_status%% *}

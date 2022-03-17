@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 list_descendants() {
   children=$(ps -o pid= --ppid "$1")
 

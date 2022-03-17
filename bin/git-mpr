@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 _git_merge_pr() {
   current_branch="$(git branch --show-current)"
   check_states="$(gh pr checks | awk '{ print $2 }')"

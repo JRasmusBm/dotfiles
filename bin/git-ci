@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 _git_close_issue() {
   if ! (g is-my-repo || confirm "This is not your repository, do you want to continue?"); then
     return 1

@@ -1,3 +1,5 @@
 #!/bin/sh
 
+set -e
+
 docker-compose -f docker-compose-check.y*ml down --remove-orphans

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 git_branch_delete() {
   if [ -z "$1" ]; then # g bd
     selected_branch_ref=$(git branch --format='%(refname)' | fzf --reverse)

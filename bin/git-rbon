@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 git_rebase_onto() {
   previous_branch="$(git branch --show-current)"
   (

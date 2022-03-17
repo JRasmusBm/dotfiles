@@ -1,3 +1,5 @@
 #!/bin/sh
 
+set -e
+
 printf '\033[2J\033[;H'

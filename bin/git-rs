@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 git_reset_soft() {
   (
     set -x

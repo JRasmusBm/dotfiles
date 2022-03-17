@@ -1,5 +1,7 @@
 #!/bin/sh
 
+set -e
+
 bluetooth_devices="$HOME/.config/bluetooth_devices/"
 
 _bluetooth_cli() {
