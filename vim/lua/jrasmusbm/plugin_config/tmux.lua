@@ -21,3 +21,7 @@ mappings.vmap("<localleader>tl", ":'<,'>VtrSendLinesToRunner<CR>")
 mappings.nmap("<localleader>tr", ":!tmux last-window && tmux last-pane<cr>")
 
 vim.g.VtrStripLeadingWhitespace = 0
+
+vim.defer_fn(function()
+  vim.cmd "silent VtrAttachToPane 1"
+end, 100)
