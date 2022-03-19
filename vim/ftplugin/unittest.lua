@@ -4,6 +4,7 @@ local fmt = require("luasnip.extras.fmt").fmt
 local sn = ls.snippet_node
 local i = ls.insert_node
 
+vim.g["test#python#runner"] = 'pyunit'
 vim.g["test#python#pyunit#executable"] = "python -m unittest"
 
 require("jrasmusbm.dap.test").setup_test_debugging(
