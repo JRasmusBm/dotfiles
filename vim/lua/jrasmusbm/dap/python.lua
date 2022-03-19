@@ -1,5 +1,9 @@
 local M = {}
 
+vim.cmd [[
+packadd! debugpy.nvim
+]]
+
 local dap = require "dap"
 
 dap.adapters.python = {
