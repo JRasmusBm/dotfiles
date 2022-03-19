@@ -5,8 +5,7 @@ set -e
 git_rebase_origin_fetch() {
   (
     set -xe
-    g fetch
-    g rebase "origin/$(git rev-parse --abbrev-ref HEAD)" "$@"
+    g pull --rebase
   )
 }
 
