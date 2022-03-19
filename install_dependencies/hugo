@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+trap 'trap_ctrlc' 2
+
+_install_hugo() {
+  temp="$(mktemp -d)"
+  cd "$temp"
+  git clone git@github.com:gohugoio/hugo.git
+  cd hugo
+  go mod download github.com/yuin/goldmark
+  go get github.com/gohugoio/hugo/common/herrors
+  go install
+  rm -rf "$temp"
+}
+
+_install_hugo "$@"
