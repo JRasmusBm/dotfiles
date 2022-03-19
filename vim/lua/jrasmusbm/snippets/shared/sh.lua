@@ -40,11 +40,11 @@ return {
     t { 'folder_name="${folder_path##*/}"', "" },
     t { 'session_name="${folder_name//./_}"', "" },
     t { "", "" },
-    t { 'cd "$folder_name"', "" },
+    t { 'cd "$folder_path"', "" },
     t { "", "" },
     t { 'if ! tmux has-session -t="$session_name" 2> /dev/null ; then', "\t" },
     t {
-      'tmux new-sesison -d -s "$session_name" -n run -x "$(tput cols)" -y "$(tput lines)"',
+      'tmux new-session -d -s "$session_name" -n run -x "$(tput cols)" -y "$(tput lines)"',
       "",
     },
     t { "", "\t" },
