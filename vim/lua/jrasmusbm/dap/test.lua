@@ -1,7 +1,7 @@
 local M = {}
 
 local debug_test = function(cmd, debug_handlers, callback)
-  return function()
+  return vim.schedule_wrap(function()
     local original_handlers = {}
 
     for k, v in pairs(debug_handlers) do
@@ -16,7 +16,7 @@ local debug_test = function(cmd, debug_handlers, callback)
     end
 
     callback()
-  end
+  end)
 end
 
 M.setup_test_debugging = function(...)
