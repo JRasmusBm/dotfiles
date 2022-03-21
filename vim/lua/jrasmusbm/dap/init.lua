@@ -5,8 +5,6 @@ packadd! nvim-dap-python
 packadd! nvim-dap-virtual-text
 packadd! debugpy.nvim
 ]]
-require "jrasmusbm.dap.python"
-
 require("nvim-dap-virtual-text").setup {
   all_frames = true,
   highlight_changed_variables = false,
