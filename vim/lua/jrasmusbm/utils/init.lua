@@ -33,4 +33,26 @@ M.for_each_file_in_directory = function(cwd, fn)
     :start()
 end
 
+M.has_line_matching = function(regex)
+  print(vim.inspect {
+    file = "/home/jrasmusbm/dotfiles/vim/lua/jrasmusbm/utils/init.lua",
+    line = 43,
+  })
+  for _, line in ipairs(vim.api.nvim_buf_get_lines(0, 0, -1, false)) do
+    print(vim.inspect {
+      file = "/home/jrasmusbm/dotfiles/vim/lua/jrasmusbm/utils/init.lua",
+      line = 51,
+    })
+    if (vim.regex(regex)):match_str(line) then
+      print(vim.inspect {
+        file = "/home/jrasmusbm/dotfiles/vim/lua/jrasmusbm/utils/init.lua",
+        line = 53,
+      })
+      return true
+    end
+  end
+
+  return false
+end
+
 return M
