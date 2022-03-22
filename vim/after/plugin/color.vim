@@ -77,6 +77,12 @@ function! DiagnosticHighlight() abort
   highlight DiagnosticSignHint guifg=pink
 endfunction
 
+function! DapHighlight() abort
+  sign define DapBreakpoint text=🔴 texthl=DapBreakpoint linehl= numhl=
+  sign define DapBreakpointCondition text=🟡 texthl=DapBreakpoint linehl= numhl=
+  sign define DapStopped text=🐛 texthl=DapBreakpoint linehl= numhl=
+endfunction
+
 function! ColorCodeHighlights() abort
   lua require'colorizer'.setup()
 endfunction
@@ -98,3 +104,4 @@ call ColorCodeHighlights()
 call CustomMarkers()
 call RulerHighlights()
 call IlluminateHighlights()
+call DapHighlight()
