@@ -78,9 +78,10 @@ function! DiagnosticHighlight() abort
 endfunction
 
 function! DapHighlight() abort
-  sign define DapBreakpoint text=🔴 texthl=DapBreakpoint linehl= numhl=
-  sign define DapBreakpointCondition text=🟡 texthl=DapBreakpoint linehl= numhl=
-  sign define DapStopped text=🐛 texthl=DapBreakpoint linehl= numhl=
+  highlight debugPC guifg=#282828 guibg=#a9b665
+  sign define DapBreakpoint text=🔴 texthl= linehl= numhl=
+  sign define DapBreakpointCondition text=🟡 texthl= linehl= numhl=
+  sign define DapStopped text=🐛 texthl= linehl=debugPC numhl=
 endfunction
 
 function! ColorCodeHighlights() abort
