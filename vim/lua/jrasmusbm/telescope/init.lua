@@ -29,22 +29,4 @@ require("telescope").setup {
 require("telescope").load_extension "fzy_native"
 require("telescope").load_extension "dap"
 
-vim.keymap.set({ "n" }, "<leader>if", function()
-  require("telescope").extensions.dap.frames {}
-end, { noremap = true })
-
-vim.keymap.set({ "n" }, "<leader>ix", function()
-  require("telescope").extensions.dap.commands {}
-end, { noremap = true })
-
-vim.keymap.set({ "n" }, "<leader>iv", function()
-  require("telescope").extensions.dap.variables {}
-end, { noremap = true })
-
-vim.keymap.set({ "n" }, "<leader>i<enter>", function()
-  require("telescope").extensions.dap.configurations {}
-end, { noremap = true })
-
-vim.keymap.set({ "n" }, "<leader>ia", function()
-  require("telescope").extensions.dap.list_breakpoints {}
-end, { noremap = true })
+require("jrasmusbm.dap.keymaps").telescope_mappings()

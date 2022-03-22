@@ -12,6 +12,8 @@ local d = ls.dynamic_node
 local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
+require "jrasmusbm.dap.python"
+
 local docstring = function()
   return fmt('"""\n{}\n"""\n{}', { i(1), i(0) })
 end
