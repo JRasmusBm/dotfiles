@@ -15,7 +15,7 @@ exec --no-startup-id copyq --start-server
 # }}}
 
 # Keyboard {{{
-exec setup-keyboard-settings
+exec --no-startup-id setup-keyboard-settings
 # }}}
 
 # Network manager {{{
@@ -23,10 +23,10 @@ exec --no-startup-id nm-applet
 # }}}
 
 # Brightness {{{
-bindsym XF86MonBrightnessUp exec brightness up
-bindsym Shift+XF86MonBrightnessUp exec brightness up 0.1
-bindsym XF86MonBrightnessDown exec brightness down
-bindsym Shift+XF86MonBrightnessDown exec brightness down 0.1
+bindsym XF86MonBrightnessUp exec --no-startup-id brightness up
+bindsym Shift+XF86MonBrightnessUp exec --no-startup-id brightness up 0.1
+bindsym XF86MonBrightnessDown exec --no-startup-id brightness down
+bindsym Shift+XF86MonBrightnessDown exec --no-startup-id brightness down 0.1
 # }}}
 
 # patcl (PulseAudio) {{{
@@ -38,13 +38,13 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 # }}}
 
 # Programs {{{
-bindsym $mod+Return exec i3-sensible-terminal
-bindsym $mod+b exec brave-browser
+bindsym $mod+Return exec --no-startup-id i3-sensible-terminal
+bindsym $mod+b exec --no-startup-id brave-browser
 bindsym $mod+d exec --no-startup-id dmenu_run
-bindsym $mod+p exec start_scratchpad
-bindsym Print exec screenshot
-bindsym Shift+Print exec screenshot --area
-bindsym Control+Print exec screenshot --window
+bindsym $mod+p exec --no-startup-id start_scratchpad
+bindsym Print exec --no-startup-id screenshot
+bindsym Shift+Print exec --no-startup-id screenshot --area
+bindsym Control+Print exec --no-startup-id screenshot --window
 # }}}
 
 # Windows {{{
@@ -152,7 +152,7 @@ bindsym $mod+0 workspace number $ws10
 
 # Session {{{
 bindsym $mod+Shift+r reload
-bindsym $mod+Shift+q exec "i3-msg exit"
+bindsym $mod+Shift+q exec --no-startup-id "i3-msg exit"
 # }}}
 
 # Status Bar {{{
