@@ -2,7 +2,6 @@
 
 set -e
 
-
 install_docker() {
   sudo apt-get remove docker docker-engine docker.io containerd runc
   sudo apt-get install -y \
@@ -13,14 +12,23 @@ install_docker() {
     software-properties-common
   curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   sudo add-apt-repository \
-   "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
+    "deb [arch=amd64] https://download.docker.com/linux/ubuntu \
    $(lsb_release -cs) \
    stable"
   sudo apt-get update
   sudo apt-get install -y docker-ce docker-ce-cli containerd.io
-  sudo usermod -aG docker ${USER}
-  sudo curl -L "https://github.com/docker/compose/releases/download/1.27.4/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
-  sudo chmod +x /usr/local/bin/docker-compose
+  sudo usermod -aG docker "${USER}"
+  sudo chmod +x /usr/local/bin/docker compose
+
+}
+
+install_docker_compose() {
+  DOCKER_CONFIG=${DOCKER_CONFIG:-$HOME/.docker}
+  mkdir -p "$DOCKER_CONFIG/cli-plugins"
+  curl -SL https://github.com/docker/compose/releases/download/v2.2.3/docker compose-linux-x86_64 -o "$DOCKER_CONFIG/cli-plugins/docker compose"
+
+  chmod +x "$DOCKER_CONFIG/cli-plugins/docker compose"
 }
 
 install_docker
+install_docker_compose

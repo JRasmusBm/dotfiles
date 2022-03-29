@@ -3,4 +3,4 @@
 set -e
 
 dcdd
-docker-compose -f docker-compose*dev.y*ml up --build "$@"
+docker compose -f docker compose*dev.y*ml up --build "$@"
