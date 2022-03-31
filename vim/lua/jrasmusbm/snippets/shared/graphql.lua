@@ -19,4 +19,15 @@ return {
   s({ trig = "qa", name = "graphql argument" }, fmt("{}: ${}{}", { i(1), rep(1), i(0) })),
 
   s({ trig = "qn", name = "__typename" }, fmt('__typename: "{}"\n{}', { i(1), i(0) })),
+  s(
+    { trig = "doc", name = "docstring" },
+    fmt(
+      [[
+"""
+{}
+"""
+]],
+      { i(0) }
+    )
+  ),
 }
