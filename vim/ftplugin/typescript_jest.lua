@@ -10,7 +10,7 @@ ls.snippets.typescript_jest = {
   s({ trig = "ds", name = "test suite" }, {
     t { 'describe("' },
     i(1),
-    t { '", async (): Promise<void> => {', "\t" },
+    t { '", (): void => {', "\t" },
     t { 'it("' },
     i(2),
     t { '", async (): Promise<void> => {', "\t\t" },
@@ -47,7 +47,7 @@ ls.snippets.typescript_jest = {
       { i(1), i(2), i(0) }
     )
   ),
-  s({ trig = "de", name = "expect (deep) equal" }, fmt("expect({}).to.deep.equal({})\n{}", { i(1), i(2), i(0) })),
+  s({ trig = "de", name = "expect equal" }, fmt("expect({}).toEqual({})\n{}", { i(1), i(2), i(0) })),
 
   s(
     { trig = "lm", name = "mock logging" },
