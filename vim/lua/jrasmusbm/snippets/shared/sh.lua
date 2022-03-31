@@ -55,7 +55,7 @@ return {
     t { 'tmux send-keys -t vim "vim -c GFiles" Enter', "" },
     t { "", "\t" },
     t { "tmux new-window -n cli", "\t" },
-    t { 'tmux send-keys -t cli "g l" Enter', "\t" },
+    t { 'tmux send-keys -t cli "g ll" Enter', "\t" },
     t { 'tmux send-keys -t cli "g" Enter', "" },
     t { "fi", "" },
     t { "", "" },
