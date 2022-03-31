@@ -93,11 +93,6 @@
   url = git@github.com:Ron89/thesaurus_query.vim.git
   branch = master
   ignore = dirty
-[submodule "vimpyter"]
-  path = vim/pack/bundle/opt/vimpyter
-  url = git@github.com:szymonmaszke/vimpyter.git
-  branch = master
-  ignore = dirty
 [submodule "loupe"]
   path = vim/pack/bundle/opt/loupe
   url = git@github.com:Wincent/loupe.git
