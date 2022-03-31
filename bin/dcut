@@ -3,4 +3,7 @@
 set -e
 
 dcdt
-docker compose -f docker compose*test.y*ml up --build "$@"
+(
+  set -x
+  docker compose -f docker-compose?test.y?ml up --build "$@"
+)

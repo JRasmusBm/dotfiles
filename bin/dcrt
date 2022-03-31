@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+dcdt
+
+if test -n "$1"; then
+  (
+    set -x
+    docker compose -f docker-compose?test.y?ml run test "$@"
+  )
+else
+  (
+    set -x
+    docker compose -f docker-compose?test.y?ml run --service-ports test /bin/bash
+  )
+fi

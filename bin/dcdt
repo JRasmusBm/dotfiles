@@ -2,5 +2,8 @@
 
 set -e
 
-docker compose -f docker compose*test.y*ml down --remove-orphans 
-docker compose -f docker compose*test.y*ml up --build "$@"
+(
+  set -x
+  docker compose -f docker-compose?test.y?ml down --remove-orphans
+  docker compose -f docker-compose?test.y?ml build
+)
