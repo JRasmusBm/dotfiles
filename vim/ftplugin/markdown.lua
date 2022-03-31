@@ -1,15 +1,14 @@
 vim.cmd [[
-setlocal tabstop=4
-setlocal shiftwidth=4
-setlocal softtabstop=4
-setlocal spell spelllang=en_us
-
-setlocal wrap
-setlocal textwidth=80
-
 execute "source $DOTFILES/vim/snippets/markdown.vim"
 
-command! PR norm gg/Ticketf[yi]/#f[v2f]p0WysaW]Wdw
-
-let b:is_markdown_file = 1
+command! PR norm gg/Ticketf[yi]/#f[v2f]p0WysaW]Wdw
 ]]
+
+vim.opt_local.tabstop = 4
+vim.opt_local.shiftwidth = 4
+vim.opt_local.softtabstop = 4
+vim.opt_local.spell = true
+vim.opt_local.spelllang = "en_us"
+vim.opt_local.wrap = true
+vim.b.is_markdown_file = true
+vim.opt_local.textwidth = 80
