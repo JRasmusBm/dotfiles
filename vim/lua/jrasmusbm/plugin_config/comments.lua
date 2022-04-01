@@ -24,7 +24,8 @@ config["prehook"] = function(context)
   if context.ctype == U.ctype.block then
     location = require("ts_context_commentstring.utils").get_cursor_location()
   elseif context.cmotion == U.cmotion.v or context.cmotion == U.cmotion.V then
-    location = require("ts_context_commentstring.utils").get_visual_start_location()
+    location =
+      require("ts_context_commentstring.utils").get_visual_start_location()
   end
 
   return require("ts_context_commentstring.internal").calculate_commentstring {

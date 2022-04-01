@@ -34,11 +34,17 @@ ls.snippets.unittest = {
     sn(3, test_case()),
     i(0),
   }),
-  s({ trig = "ds", name = "Test suite" }, { sn(1, test_class()), sn(0, test_case()) }),
+  s(
+    { trig = "ds", name = "Test suite" },
+    { sn(1, test_class()), sn(0, test_case()) }
+  ),
 
   s({ trig = "dc", name = "Test case" }, test_case()),
 
-  s({ trig = "de", name = "Expect equal" }, fmt("self.assertEqual({}, {})\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "de", name = "Expect equal" },
+    fmt("self.assertEqual({}, {})\n{}", { i(1), i(2), i(0) })
+  ),
   s(
     { trig = "der", name = "Expect raises regex" },
     fmt('with self.assertRaisesRegex({}, "{}"):\n    {}', { i(1), i(2), i(0) })
@@ -51,8 +57,16 @@ ls.snippets.unittest = {
 ]],
       {
         f(function()
-          if not require("jrasmusbm.utils").has_line_matching "\\vfrom unittest.mock import .*<patch>" then
-            vim.api.nvim_buf_set_lines(0, 2, 2, false, { "from unittest.mock import patch" })
+          if
+            not require("jrasmusbm.utils").has_line_matching "\\vfrom unittest.mock import .*<patch>"
+          then
+            vim.api.nvim_buf_set_lines(
+              0,
+              2,
+              2,
+              false,
+              { "from unittest.mock import patch" }
+            )
           end
 
           return ""

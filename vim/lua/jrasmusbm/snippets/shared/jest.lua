@@ -9,8 +9,17 @@ local s = function(context, nodes, options)
 end
 
 return {
-  s({ trig = "dp", name = "patch module" }, fmt('jest.mock("{}")\n{}', { i(1), i(0) })),
+  s(
+    { trig = "dp", name = "patch module" },
+    fmt('jest.mock("{}")\n{}', { i(1), i(0) })
+  ),
 
-  s({ trig = "dex", name = "regex match" }, fmt("expect.stringMatching(/{}/){}", { i(1), i(0) })),
-  s({ trig = "de", name = "expect" }, fmt("expect({}).{}\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "dex", name = "regex match" },
+    fmt("expect.stringMatching(/{}/){}", { i(1), i(0) })
+  ),
+  s(
+    { trig = "de", name = "expect" },
+    fmt("expect({}).{}\n{}", { i(1), i(2), i(0) })
+  ),
 }

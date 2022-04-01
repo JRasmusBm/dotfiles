@@ -15,7 +15,10 @@ ls.snippets.jsx = {
   ),
   s(
     { trig = "rc", name = "react component" },
-    fmt("const {} = ({}) => {{\n  return ({{{}}})\n}}", { i(1), i(2), i(0, "null") })
+    fmt(
+      "const {} = ({}) => {{\n  return ({{{}}})\n}}",
+      { i(1), i(2), i(0, "null") }
+    )
   ),
 }
 

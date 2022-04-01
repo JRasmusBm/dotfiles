@@ -47,7 +47,10 @@ M.cheat = function(path)
     previewer = previewers.new_termopen_previewer {
       title = "Preview",
       get_command = function(entry)
-        return vim.list_extend(vim.list_extend({ "cheat" }, current_path), { entry.value })
+        return vim.list_extend(
+          vim.list_extend({ "cheat" }, current_path),
+          { entry.value }
+        )
       end,
     },
     sorter = sorters.get_generic_fuzzy_sorter(),

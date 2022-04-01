@@ -21,7 +21,11 @@ local debug_test = function(cmd, debug_handlers, callback)
 
     callback()
 
-    state.previous = { cmd = cmd, debug_handlers = debug_handlers, callback = callback }
+    state.previous = {
+      cmd = cmd,
+      debug_handlers = debug_handlers,
+      callback = callback,
+    }
   end)
 end
 
@@ -30,13 +34,31 @@ local run_last_test = function()
     return
   end
 
-  debug_test(state.previous.cmd)(state.previous.debug_handlers, state.previous.callback)
+  debug_test(state.previous.cmd)(
+    state.previous.debug_handlers,
+    state.previous.callback
+  )
 end
 
 M.setup_test_debugging = function(...)
-  vim.keymap.set({ "n" }, "<localleader>din", debug_test("TestNearest", ...), { noremap = true, buffer = 0 })
-  vim.keymap.set({ "n" }, "<localleader>dif", debug_test("TestFile", ...), { noremap = true, buffer = 0 })
-  vim.keymap.set({ "n" }, "<localleader>dis", debug_test("TestSuite", ...), { noremap = true, buffer = 0 })
+  vim.keymap.set(
+    { "n" },
+    "<localleader>din",
+    debug_test("TestNearest", ...),
+    { noremap = true, buffer = 0 }
+  )
+  vim.keymap.set(
+    { "n" },
+    "<localleader>dif",
+    debug_test("TestFile", ...),
+    { noremap = true, buffer = 0 }
+  )
+  vim.keymap.set(
+    { "n" },
+    "<localleader>dis",
+    debug_test("TestSuite", ...),
+    { noremap = true, buffer = 0 }
+  )
   vim.keymap.set({ "n" }, "<localleader>dip", run_last_test, { noremap = true })
 end
 

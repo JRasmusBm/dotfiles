@@ -13,21 +13,42 @@ local s = function(context, nodes, options)
 end
 
 return {
-  s({ trig = "cf", name = "for each" }, fmt("for {} in {} ; do\n  {}\ndone\n\n{}", { i(1), i(2), i(3), i(0) })),
+  s(
+    { trig = "cf", name = "for each" },
+    fmt("for {} in {} ; do\n  {}\ndone\n\n{}", { i(1), i(2), i(3), i(0) })
+  ),
   s(
     { trig = "cfr", name = "for range" },
-    fmt("for {} in {{{}..{}}} ; do\n  {}\ndone\n\n{}", { i(1, "i"), i(2, "0"), i(3), i(4), i(0) })
+    fmt(
+      "for {} in {{{}..{}}} ; do\n  {}\ndone\n\n{}",
+      { i(1, "i"), i(2, "0"), i(3), i(4), i(0) }
+    )
   ),
-  s({ trig = "ci", name = "if statement" }, fmt("if {} ; then\n  {}\nfi\n\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "ci", name = "if statement" },
+    fmt("if {} ; then\n  {}\nfi\n\n{}", { i(1), i(2), i(0) })
+  ),
   s({ trig = "ce", name = "else statement" }, fmt("else\n  {}", { i(0) })),
-  s({ trig = "cei", name = "elif clause" }, fmt("elif {} ; then\n  {}\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "cei", name = "elif clause" },
+    fmt("elif {} ; then\n  {}\n{}", { i(1), i(2), i(0) })
+  ),
 
   s(
     { trig = "sf", name = "script file" },
-    { t { "#!/bin/sh", "" }, t { "", "" }, t { "set -e", "" }, t { "", "" }, i(0) }
+    {
+      t { "#!/bin/sh", "" },
+      t { "", "" },
+      t { "set -e", "" },
+      t { "", "" },
+      i(0),
+    }
   ),
 
-  s({ trig = "fd", name = "function definition" }, fmt("{}() {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "fd", name = "function definition" },
+    fmt("{}() {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
+  ),
 
   s({ trig = "tf", name = "tmux file" }, {
     t { "#!/bin/bash", "" },
@@ -65,22 +86,43 @@ return {
   }),
   s(
     { trig = "ts", name = "tmux session" },
-    fmt('tmux new-session -d -s {} -n {} -z "$(tput cols)" -y "$(tput lines)"\n\n{}', { i(1), i(2), i(0) })
+    fmt(
+      'tmux new-session -d -s {} -n {} -z "$(tput cols)" -y "$(tput lines)"\n\n{}',
+      { i(1), i(2), i(0) }
+    )
   ),
-  s({ trig = "tw", name = "tmux window" }, fmt("tmux new-window -n {}\n{}", { i(1), i(0) })),
-  s({ trig = "tc", name = "tmux command" }, fmt('tmux send-keys -t {} "{}" Enter\n{}', { i(1), i(2), i(0) })),
-  s({ trig = "tv", name = "tmux vertical split" }, fmt("tmux split-window -t {} -h\n{}", { i(1), i(0) })),
-  s({ trig = "th", name = "tmux horizontal split" }, fmt("tmux split-window -t {}\n{}", { i(1), i(0) })),
+  s(
+    { trig = "tw", name = "tmux window" },
+    fmt("tmux new-window -n {}\n{}", { i(1), i(0) })
+  ),
+  s(
+    { trig = "tc", name = "tmux command" },
+    fmt('tmux send-keys -t {} "{}" Enter\n{}', { i(1), i(2), i(0) })
+  ),
+  s(
+    { trig = "tv", name = "tmux vertical split" },
+    fmt("tmux split-window -t {} -h\n{}", { i(1), i(0) })
+  ),
+  s(
+    { trig = "th", name = "tmux horizontal split" },
+    fmt("tmux split-window -t {}\n{}", { i(1), i(0) })
+  ),
   s(
     { trig = "ti", name = "import tmux script" },
     fmt("INITIATED_EXTERNALLY=true source_tmux_script {}\n{}", { i(1), i(0) })
   ),
-  s({ trig = "ta", name = "tmux attach" }, fmt("tmux attach -t {}\n{}", { i(1), i(0) })),
+  s(
+    { trig = "ta", name = "tmux attach" },
+    fmt("tmux attach -t {}\n{}", { i(1), i(0) })
+  ),
 
   s(
     { trig = "hc", name = "handle ctrl-c" },
     fmt("trap_ctrlc() {{\n  {}\n  exit 2\n}}\n\ntrap 'trap_ctrlc' 2", { i(0) })
   ),
 
-  s({ trig = "as", name = "alias" }, fmt('alias "{}"="{}"\n{}', { i(1), i(2), i(0) })),
+  s(
+    { trig = "as", name = "alias" },
+    fmt('alias "{}"="{}"\n{}', { i(1), i(2), i(0) })
+  ),
 }

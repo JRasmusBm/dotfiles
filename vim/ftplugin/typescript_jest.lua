@@ -33,11 +33,17 @@ ls.snippets.typescript_jest = {
 
   s(
     { trig = "db", name = "test case" },
-    fmt("beforeEach(async (): Promise<void> => {{\n  {}\n}}){}\n", { i(1, 'console.log("before")'), i(0) })
+    fmt(
+      "beforeEach(async (): Promise<void> => {{\n  {}\n}}){}\n",
+      { i(1, 'console.log("before")'), i(0) }
+    )
   ),
   s(
     { trig = "dt", name = "test case" },
-    fmt("afterEach(async (): Promise<void> => {{\n  {}\n}}){}\n", { i(1, 'console.log("after")'), i(0) })
+    fmt(
+      "afterEach(async (): Promise<void> => {{\n  {}\n}}){}\n",
+      { i(1, 'console.log("after")'), i(0) }
+    )
   ),
 
   s(
@@ -47,10 +53,16 @@ ls.snippets.typescript_jest = {
       { i(1), i(2), i(0) }
     )
   ),
-  s({ trig = "de", name = "expect equal" }, fmt("expect({}).toEqual({})\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "de", name = "expect equal" },
+    fmt("expect({}).toEqual({})\n{}", { i(1), i(2), i(0) })
+  ),
 
   s(
     { trig = "lm", name = "mock logging" },
-    fmt("console.{} = jest.fn()\n{}\n;(console.{} as jest.Mock).mockClear()", { i(1), i(0), rep(1) })
+    fmt(
+      "console.{} = jest.fn()\n{}\n;(console.{} as jest.Mock).mockClear()",
+      { i(1), i(0), rep(1) }
+    )
   ),
 }

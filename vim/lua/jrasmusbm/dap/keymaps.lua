@@ -47,7 +47,7 @@ vim.keymap.set({ "n" }, "<leader>ib", function()
 end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>iB", function()
-  require("dap").toggle_breakpoint(vim.fn.input('Break on: '))
+  require("dap").toggle_breakpoint(vim.fn.input "Break on: ")
 end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>ie", function()

@@ -9,4 +9,8 @@ augroup END
 silent call jrasmusbm#ruler#source()
 ]]
 
-mappings.nmap("<Leader>sr", "<cmd>call jrasmusbm#ruler#toggle()<cr>", { noremap = true })
+mappings.nmap(
+  "<Leader>sr",
+  "<cmd>call jrasmusbm#ruler#toggle()<cr>",
+  { noremap = true }
+)

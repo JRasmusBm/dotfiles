@@ -5,19 +5,40 @@ local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 
-vim.keymap.set({ "v" }, "<localleader>tl", 'y:@"<CR>', { buffer = 0, noremap = true })
+vim.keymap.set(
+  { "v" },
+  "<localleader>tl",
+  'y:@"<CR>',
+  { buffer = 0, noremap = true }
+)
 vim.keymap.set(
   { "n" },
   "<localleader>tl",
   "^vg_y:execute @@<cr>:echo 'Sourced line.'<cr>",
   { buffer = 0, noremap = true }
 )
-vim.keymap.set({ "n" }, "<localleader>tf", "<cmd>so %<cr>", { buffer = 0, noremap = true })
-vim.keymap.set({ "n" }, "zf", vim.fn["jrasmusbm#folds#fold_selection"], { expr = true })
+vim.keymap.set(
+  { "n" },
+  "<localleader>tf",
+  "<cmd>so %<cr>",
+  { buffer = 0, noremap = true }
+)
+vim.keymap.set(
+  { "n" },
+  "zf",
+  vim.fn["jrasmusbm#folds#fold_selection"],
+  { expr = true }
+)
 
 ls.snippets.vim = {
-  s({ trig = "fm", name = "forward marker" }, fmt(":call bushels#forward_marker({})<cr>{}", { i(1), i(0) })),
-  s({ trig = "bm", name = "forward marker" }, fmt(":call bushels#forward_marker({})<cr>{}", { i(1), i(0) })),
+  s(
+    { trig = "fm", name = "forward marker" },
+    fmt(":call bushels#forward_marker({})<cr>{}", { i(1), i(0) })
+  ),
+  s(
+    { trig = "bm", name = "forward marker" },
+    fmt(":call bushels#forward_marker({})<cr>{}", { i(1), i(0) })
+  ),
 
   s(
     { trig = "fo", name = "open fold" },

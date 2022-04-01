@@ -41,13 +41,41 @@ command! -nargs=* Cheat lua require('jrasmusbm.telescope.cheat').cheat(<q-args>)
 mappings.nmap("<Leader> fc", "<cmd>Cheat<CR>", { noremap = true })
 
 -- Vim search mappings
-mappings.nmap("<leader>ff", "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({})<cr>", { noremap = true })
-mappings.nmap("<leader>fq", "<cmd>lua require('telescope.builtin').quickfix({})<cr>", { noremap = true })
-mappings.nmap("<leader>fl", "<cmd>lua require('telescope.builtin').live_grep()<cr>", { noremap = true })
-mappings.nmap("<leader>fb", "<cmd>lua require('telescope.builtin').buffers()<cr>", { noremap = true })
-mappings.nmap("<leader>f:", "<cmd>lua require('telescope.builtin').command_history()<cr>", { noremap = true })
-mappings.nmap("<leader>f/", "<cmd>lua require('telescope.builtin').search_history()<cr>", { noremap = true })
-mappings.nmap("<leader>fh", "<cmd>lua require('telescope.builtin').help_tags()<cr>", { noremap = true })
+mappings.nmap(
+  "<leader>ff",
+  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({})<cr>",
+  { noremap = true }
+)
+mappings.nmap(
+  "<leader>fq",
+  "<cmd>lua require('telescope.builtin').quickfix({})<cr>",
+  { noremap = true }
+)
+mappings.nmap(
+  "<leader>fl",
+  "<cmd>lua require('telescope.builtin').live_grep()<cr>",
+  { noremap = true }
+)
+mappings.nmap(
+  "<leader>fb",
+  "<cmd>lua require('telescope.builtin').buffers()<cr>",
+  { noremap = true }
+)
+mappings.nmap(
+  "<leader>f:",
+  "<cmd>lua require('telescope.builtin').command_history()<cr>",
+  { noremap = true }
+)
+mappings.nmap(
+  "<leader>f/",
+  "<cmd>lua require('telescope.builtin').search_history()<cr>",
+  { noremap = true }
+)
+mappings.nmap(
+  "<leader>fh",
+  "<cmd>lua require('telescope.builtin').help_tags()<cr>",
+  { noremap = true }
+)
 
 -- Git search mappings
 
@@ -59,11 +87,26 @@ mappings.nmap(
 mappings.nmap("<localleader>fd", ":VcsJump diff<Space>")
 mappings.nmap("<localleader>fg", ":VcsJump grep<Space>")
 mappings.nmap("<localleader>fm", ":VcsJump merge<Space>")
-mappings.nmap("<localleader>fc", "<cmd>lua require('jrasmusbm.telescope.git_commits').git_commits()<cr>")
-mappings.nmap("<localleader>fi", "<cmd>lua require('jrasmusbm.telescope.git_issues').git_issues()<cr>")
-mappings.nmap("<localleader>fp", "<cmd>lua require('jrasmusbm.telescope.git_pull_requests').git_pull_requests()<cr>")
-mappings.nmap("<localleader>fb", "<cmd>lua require('jrasmusbm.telescope.git_branches').git_branches()<cr>")
-mappings.nmap("<localleader>fs", "<cmd>lua require('telescope.builtin').git_status()<cr>")
+mappings.nmap(
+  "<localleader>fc",
+  "<cmd>lua require('jrasmusbm.telescope.git_commits').git_commits()<cr>"
+)
+mappings.nmap(
+  "<localleader>fi",
+  "<cmd>lua require('jrasmusbm.telescope.git_issues').git_issues()<cr>"
+)
+mappings.nmap(
+  "<localleader>fp",
+  "<cmd>lua require('jrasmusbm.telescope.git_pull_requests').git_pull_requests()<cr>"
+)
+mappings.nmap(
+  "<localleader>fb",
+  "<cmd>lua require('jrasmusbm.telescope.git_branches').git_branches()<cr>"
+)
+mappings.nmap(
+  "<localleader>fs",
+  "<cmd>lua require('telescope.builtin').git_status()<cr>"
+)
 
 -- Config files
 mappings.nmap(

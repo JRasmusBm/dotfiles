@@ -44,9 +44,23 @@ local function modified_flag()
 end
 
 local function item_group(options)
-  local hl_start = (options.highlight ~= nil and hl_identifier((options.highlight or highlights.default)[1])) or ""
-  local hl_end = (options.highlight ~= nil and hl_identifier(highlights.default[1])) or ""
-  return "" .. hl_start .. "%-" .. options.min_size .. "." .. options.max_size .. "(" .. options.value .. "%)" .. hl_end
+  local hl_start = (
+      options.highlight ~= nil
+      and hl_identifier((options.highlight or highlights.default)[1])
+    ) or ""
+  local hl_end = (
+      options.highlight ~= nil and hl_identifier(highlights.default[1])
+    ) or ""
+  return ""
+    .. hl_start
+    .. "%-"
+    .. options.min_size
+    .. "."
+    .. options.max_size
+    .. "("
+    .. options.value
+    .. "%)"
+    .. hl_end
 end
 
 local even_split = "%="
@@ -100,9 +114,17 @@ M.activeStatusLine = function()
       max_size = 8,
       highlight = { "DiagnosticSignHint" },
     }
-    .. item_group { value = vim.fn.VpmStatusline(), min_size = 0, max_size = 20 }
+    .. item_group {
+      value = vim.fn.VpmStatusline(),
+      min_size = 0,
+      max_size = 20,
+    }
     .. utils.space(1)
-    .. item_group { value = cursor_position(), min_size = 4, max_size = 20 }
+    .. item_group {
+      value = cursor_position(),
+      min_size = 4,
+      max_size = 20,
+    }
 end
 
 M.inactiveStatusLine = function()
@@ -111,7 +133,11 @@ M.inactiveStatusLine = function()
     .. utils.space(1)
     .. item_group { value = bufname(), min_size = 0, max_size = 60 }
     .. utils.space(1)
-    .. item_group { value = modified_flag(), min_size = 4, max_size = 4 }
+    .. item_group {
+      value = modified_flag(),
+      min_size = 4,
+      max_size = 4,
+    }
     .. even_split
     .. item_group {
       value = diagnostic_count {
@@ -145,7 +171,11 @@ M.inactiveStatusLine = function()
       min_size = 0,
       max_size = 8,
     }
-    .. item_group { value = vim.fn.VpmStatusline(), min_size = 0, max_size = 20 }
+    .. item_group {
+      value = vim.fn.VpmStatusline(),
+      min_size = 0,
+      max_size = 20,
+    }
     .. utils.space(11)
 end
 

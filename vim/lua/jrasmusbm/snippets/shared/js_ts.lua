@@ -13,18 +13,42 @@ local s = function(context, nodes, options)
 end
 
 return {
-  s({ trig = "id", name = "import default" }, fmt('import {} from "{}"\n{}', { i(2), i(1), i(0) })),
-  s({ trig = "ia", name = "import all" }, fmt('import * as {} from "{}"\n{}', { i(2), i(1), i(0) })),
-  s({ trig = "in", name = "import named" }, fmt('import {{ {} }} from "{}"\n{}', { i(2), i(1), i(0) })),
-  s({ trig = "im", name = "import module" }, fmt('import "{}"\n{}', { i(1), i(0) })),
+  s(
+    { trig = "id", name = "import default" },
+    fmt('import {} from "{}"\n{}', { i(2), i(1), i(0) })
+  ),
+  s(
+    { trig = "ia", name = "import all" },
+    fmt('import * as {} from "{}"\n{}', { i(2), i(1), i(0) })
+  ),
+  s(
+    { trig = "in", name = "import named" },
+    fmt('import {{ {} }} from "{}"\n{}', { i(2), i(1), i(0) })
+  ),
+  s(
+    { trig = "im", name = "import module" },
+    fmt('import "{}"\n{}', { i(1), i(0) })
+  ),
 
-  s({ trig = "en", name = "export named" }, fmt("export {{\n  {}\n}}", { i(0) })),
-  s({ trig = "ed", name = "export default" }, fmt("export default {}", { i(0) })),
+  s(
+    { trig = "en", name = "export named" },
+    fmt("export {{\n  {}\n}}", { i(0) })
+  ),
+  s(
+    { trig = "ed", name = "export default" },
+    fmt("export default {}", { i(0) })
+  ),
 
-  s({ trig = "el", name = "event listener" }, fmt('{}.eventListener("{}", {})\n{}', { i(1), i(2), i(3), i(0) })),
+  s(
+    { trig = "el", name = "event listener" },
+    fmt('{}.eventListener("{}", {})\n{}', { i(1), i(2), i(3), i(0) })
+  ),
   s(
     { trig = "ef", name = "fire event" },
-    fmt('{}.dispatchEvent(new Event("{}", {{\n  {}\n}}))\n{}', { i(1), i(2), i(3), i(0) })
+    fmt(
+      '{}.dispatchEvent(new Event("{}", {{\n  {}\n}}))\n{}',
+      { i(1), i(2), i(3), i(0) }
+    )
   ),
 
   s({ trig = "wf", name = "witchcraft file" }, {
@@ -39,15 +63,30 @@ return {
   }),
   s(
     { trig = "wb", name = "witchcraft button" },
-    fmt('addAttributes({{\n  query: "{}",\n  attributes: {{ role: "button" }},\n}})\n{}', { i(1), i(0) })
+    fmt(
+      'addAttributes({{\n  query: "{}",\n  attributes: {{ role: "button" }},\n}})\n{}',
+      { i(1), i(0) }
+    )
   ),
 
-  s({ trig = "of", name = "object field" }, fmt("{}: {}{},\n{}", { i(1), i(2), rep(1), i(0) })),
+  s(
+    { trig = "of", name = "object field" },
+    fmt("{}: {}{},\n{}", { i(1), i(2), rep(1), i(0) })
+  ),
 
-  s({ trig = "lf", name = "format string" }, fmt("JSON.stringify({}, null, 2){}", { i(1), i(0) })),
+  s(
+    { trig = "lf", name = "format string" },
+    fmt("JSON.stringify({}, null, 2){}", { i(1), i(0) })
+  ),
   s({ trig = "ll", name = "log" }, fmt("console.log({})\n{}", { i(1), i(0) })),
-  s({ trig = "le", name = "log error" }, fmt("console.error({})\n{}", { i(1), i(0) })),
-  s({ trig = "li", name = "log info" }, fmt("console.info({})\n{}", { i(1), i(0) })),
+  s(
+    { trig = "le", name = "log error" },
+    fmt("console.error({})\n{}", { i(1), i(0) })
+  ),
+  s(
+    { trig = "li", name = "log info" },
+    fmt("console.info({})\n{}", { i(1), i(0) })
+  ),
   s({ trig = "lb", name = "log breakpoint" }, {
     t { "console.dir({", "\t" },
     t 'file: "',
@@ -62,30 +101,57 @@ return {
     i(0),
   }),
 
-  s({ trig = "vl", name = "let" }, fmt("let {} = {}\n{}", { i(1), i(2), i(0) })),
-  s({ trig = "vc", name = "const" }, fmt("const {} = {}\n{}", { i(1), i(2), i(0) })),
-  s({ trig = "vd", name = "destructure" }, fmt("const {{ {} }} = {}\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "vl", name = "let" },
+    fmt("let {} = {}\n{}", { i(1), i(2), i(0) })
+  ),
+  s(
+    { trig = "vc", name = "const" },
+    fmt("const {} = {}\n{}", { i(1), i(2), i(0) })
+  ),
+  s(
+    { trig = "vd", name = "destructure" },
+    fmt("const {{ {} }} = {}\n{}", { i(1), i(2), i(0) })
+  ),
 
-  s({ trig = "fi", name = "inline function" }, fmt("({}) => {}", { i(1), i(0) })),
+  s(
+    { trig = "fi", name = "inline function" },
+    fmt("({}) => {}", { i(1), i(0) })
+  ),
   s(
     { trig = "fd", name = "function definition" },
-    fmt("function {}({}) {{\n  return ({})\n}}\n\n{}", { i(1), i(2), i(3, "null"), i(0) })
+    fmt(
+      "function {}({}) {{\n  return ({})\n}}\n\n{}",
+      { i(1), i(2), i(3, "null"), i(0) }
+    )
   ),
   s(
     { trig = "fa", name = "arrow function" },
-    fmt("const {} = ({}) => {{\n  return ({})\n}}\n\n{}", { i(1), i(2), i(3, "null"), i(0) })
+    fmt(
+      "const {} = ({}) => {{\n  return ({})\n}}\n\n{}",
+      { i(1), i(2), i(3, "null"), i(0) }
+    )
   ),
 
   s(
     { trig = "st", name = "set timeout" },
-    fmt("setTimeout(() => {{\n  {}\n}}, {})\n\n{}", { i(1), i(2, "1000"), i(0) })
+    fmt(
+      "setTimeout(() => {{\n  {}\n}}, {})\n\n{}",
+      { i(1), i(2, "1000"), i(0) }
+    )
   ),
   s(
     { trig = "si", name = "set interval" },
-    fmt("setInterval(() => {{\n  {}\n}}, {})\n\n{}", { i(1), i(2, "1000"), i(0) })
+    fmt(
+      "setInterval(() => {{\n  {}\n}}, {})\n\n{}",
+      { i(1), i(2, "1000"), i(0) }
+    )
   ),
 
-  s({ trig = "qt", name = "gql tag" }, fmt("const {} = gql```\n{}\n```\n\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "qt", name = "gql tag" },
+    fmt("const {} = gql```\n{}\n```\n\n{}", { i(1), i(2), i(0) })
+  ),
   s(
     { trig = "qr", name = "graphql resolver" },
     fmt("const {} = async ({}, {}, {}, {}) => {{\n  return ({})\n}}", {
@@ -98,21 +164,48 @@ return {
     })
   ),
 
-  s({ trig = "ci", name = "if statement" }, fmt("if ({}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })),
-  s({ trig = "cei", name = "else if statement" }, fmt("else if ({}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })),
-  s({ trig = "ce", name = "else statement" }, fmt("else {{\n  {}\n}}\n\n{}", { i(1), i(0) })),
-  s({ trig = "cw", name = "while statement" }, fmt("if ({}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "ci", name = "if statement" },
+    fmt("if ({}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
+  ),
+  s(
+    { trig = "cei", name = "else if statement" },
+    fmt("else if ({}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
+  ),
+  s(
+    { trig = "ce", name = "else statement" },
+    fmt("else {{\n  {}\n}}\n\n{}", { i(1), i(0) })
+  ),
+  s(
+    { trig = "cw", name = "while statement" },
+    fmt("if ({}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
+  ),
   s(
     { trig = "ct", name = "try / catch" },
-    fmt("try {{\n  {}\n}} catch {}{{\n  {}\n}}\n\n{}", { i(1), i(2), i(3), i(0) })
+    fmt(
+      "try {{\n  {}\n}} catch {}{{\n  {}\n}}\n\n{}",
+      { i(1), i(2), i(3), i(0) }
+    )
   ),
   s(
     { trig = "cs", name = "switch statement" },
-    fmt("switch ({}) {{\n  case {}: {{\n    {}\n    break\n  }}\n  {}\n}}\n{}", { i(1), i(2), i(3), i(4), i(0) })
+    fmt(
+      "switch ({}) {{\n  case {}: {{\n    {}\n    break\n  }}\n  {}\n}}\n{}",
+      { i(1), i(2), i(3), i(4), i(0) }
+    )
   ),
-  s({ trig = "cc", name = "switch case" }, fmt("case {}: {{\n  {}\n  break\n}}\n{}", { i(1), i(2), i(0) })),
-  s({ trig = "cd", name = "default case" }, fmt("default: {{\n  {}\n}}", { i(0) })),
-  s({ trig = "cf", name = "for each" }, fmt("for (const {} of {}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(3), i(0) })),
+  s(
+    { trig = "cc", name = "switch case" },
+    fmt("case {}: {{\n  {}\n  break\n}}\n{}", { i(1), i(2), i(0) })
+  ),
+  s(
+    { trig = "cd", name = "default case" },
+    fmt("default: {{\n  {}\n}}", { i(0) })
+  ),
+  s(
+    { trig = "cf", name = "for each" },
+    fmt("for (const {} of {}) {{\n  {}\n}}\n\n{}", { i(1), i(2), i(3), i(0) })
+  ),
   s(
     { trig = "cfr", name = "for range" },
     fmt(
@@ -121,12 +214,27 @@ return {
     )
   ),
 
-  s({ trig = "et", name = "ternary expression" }, fmt("{} ? ({}): ({}){}", { i(1), i(2), i(3), i(0) })),
+  s(
+    { trig = "et", name = "ternary expression" },
+    fmt("{} ? ({}): ({}){}", { i(1), i(2), i(3), i(0) })
+  ),
 
-  s({ trig = "tc", name = "type class" }, fmt("class {} {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "tc", name = "type class" },
+    fmt("class {} {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
+  ),
 
-  s({ trig = "jq", name = "jquery" }, fmt("$({}).{}\n\n{}", { i(1), i(2), i(0) })),
-  s({ trig = "ij", name = "import jquery" }, fmt('import $ from "jquery"\n{}', { i(0) })),
+  s(
+    { trig = "jq", name = "jquery" },
+    fmt("$({}).{}\n\n{}", { i(1), i(2), i(0) })
+  ),
+  s(
+    { trig = "ij", name = "import jquery" },
+    fmt('import $ from "jquery"\n{}', { i(0) })
+  ),
 
-  s({ trig = "an", name = "named argument" }, fmt("{} = {}{},\n{}", { i(1), i(2), rep(1), i(0) })),
+  s(
+    { trig = "an", name = "named argument" },
+    fmt("{} = {}{},\n{}", { i(1), i(2), rep(1), i(0) })
+  ),
 }

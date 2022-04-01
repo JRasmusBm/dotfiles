@@ -13,10 +13,18 @@ mappings.nmap("go", "o<Esc>S", { noremap = true })
 mappings.nmap("gO", "O<Esc>S", { noremap = true })
 
 mappings.nmap("<leader>qo", "<cmd>copen<cr>", { silent = true, noremap = true })
-mappings.nmap("<leader>qc", "<cmd>cclose<cr>", { silent = true, noremap = true })
+mappings.nmap(
+  "<leader>qc",
+  "<cmd>cclose<cr>",
+  { silent = true, noremap = true }
+)
 
 mappings.nmap("<leader>lo", "<cmd>lopen<cr>", { silent = true, noremap = true })
-mappings.nmap("<leader>lc", "<cmd>lclose<cr>", { silent = true, noremap = true })
+mappings.nmap(
+  "<leader>lc",
+  "<cmd>lclose<cr>",
+  { silent = true, noremap = true }
+)
 
 mappings.xmap("<leader>h", "<cmd>call jrasmusbm#open#github()<CR>")
 

@@ -9,9 +9,24 @@ local s = function(context, nodes, options)
 end
 
 -- TODO turn into snippets
-vim.keymap.set({ "i" }, "<leader>bn", "<Esc>?^ *- <CR>:noh<CR>yy0}PWc$", { buffer = 0 })
-vim.keymap.set({ "i" }, "<leader>cn", "<Esc>?^ *- [<CR>:noh<CR>yy0f]d$a]", { buffer = 0 })
-vim.keymap.set({ "i" }, "<leader>nn", "<Esc>?^ *[0-9]<CR>:noh<CR>yy0}P<C-A>Wc$", { buffer = 0 })
+vim.keymap.set(
+  { "i" },
+  "<leader>bn",
+  "<Esc>?^ *- <CR>:noh<CR>yy0}PWc$",
+  { buffer = 0 }
+)
+vim.keymap.set(
+  { "i" },
+  "<leader>cn",
+  "<Esc>?^ *- [<CR>:noh<CR>yy0f]d$a]",
+  { buffer = 0 }
+)
+vim.keymap.set(
+  { "i" },
+  "<leader>nn",
+  "<Esc>?^ *[0-9]<CR>:noh<CR>yy0}P<C-A>Wc$",
+  { buffer = 0 }
+)
 vim.keymap.set(
   { "i" },
   "<leader>tr",

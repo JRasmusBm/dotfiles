@@ -26,7 +26,10 @@ M.setup = vim.schedule_wrap(function()
         { "i", "c" }
       ),
       ["<Enter>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
-      ["<C-e>"] = cmp.mapping { i = cmp.mapping.abort(), c = cmp.mapping.close() },
+      ["<C-e>"] = cmp.mapping {
+        i = cmp.mapping.abort(),
+        c = cmp.mapping.close(),
+      },
     },
     sources = cmp.config.sources {
       { name = "nvim_lsp", priority = 1 },

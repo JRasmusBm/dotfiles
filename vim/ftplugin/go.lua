@@ -8,10 +8,16 @@ local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 ls.snippets.go = {
-  s({ trig = "id", name = "import default" }, fmt('import (\n	"{}"\n)\n\n{}', { i(1), i(0) })),
+  s(
+    { trig = "id", name = "import default" },
+    fmt('import (\n	"{}"\n)\n\n{}', { i(1), i(0) })
+  ),
 
   s({ trig = "gf", name = "go file" }, fmt("package {}\n\n{}", { i(1), i(0) })),
-  s({ trig = "gm", name = "go main" }, fmt("package main\n\nfunc main() {{\n	{}\n}}", { i(0) })),
+  s(
+    { trig = "gm", name = "go main" },
+    fmt("package main\n\nfunc main() {{\n	{}\n}}", { i(0) })
+  ),
 
   s(
     { trig = "fd", name = "function definition" },
@@ -217,7 +223,10 @@ fmt.Printf({})
     )
   ),
 
-  s({ trig = "lf", name = "log format" }, fmt("fmt.Sprintf({}){}", { i(1), i(0) })),
+  s(
+    { trig = "lf", name = "log format" },
+    fmt("fmt.Sprintf({}){}", { i(1), i(0) })
+  ),
 
   s(
     { trig = "ci", name = "if statement" },

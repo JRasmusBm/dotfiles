@@ -1,4 +1,5 @@
-local filetype_to_parsername = require("nvim-treesitter.parsers").filetype_to_parsername
+local filetype_to_parsername =
+  require("nvim-treesitter.parsers").filetype_to_parsername
 
 for target, sources in pairs(require "jrasmusbm.filetypes") do
   for _, source in ipairs(sources) do

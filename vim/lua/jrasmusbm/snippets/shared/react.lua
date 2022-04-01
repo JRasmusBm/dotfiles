@@ -9,7 +9,10 @@ local s = function(context, nodes, options)
 end
 
 return {
-  s({ trig = "he", name = "useEffect hook" }, fmt("useEffect(() => {{\n  {}\n}}, [{}])\n\n{}", { i(1), i(2), i(0) })),
+  s(
+    { trig = "he", name = "useEffect hook" },
+    fmt("useEffect(() => {{\n  {}\n}}, [{}])\n\n{}", { i(1), i(2), i(0) })
+  ),
   s(
     { trig = "hl", name = "useLayoutEffect hook" },
     fmt("useLayoutEffect(() => {{\n  {}\n}}, [{}])\n\n{}", { i(1), i(2), i(0) })

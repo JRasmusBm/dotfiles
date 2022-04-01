@@ -28,4 +28,8 @@ highlight! Normal ctermbg=NONE guibg=NONE
 highlight! NonText ctermbg=NONE guibg=NONE guifg=NONE ctermfg=NONE
 ]]
 
-mappings.nmap("<silent><Leader>ww", ":syntax sync fromstart<CR>", { noremap = true })
+mappings.nmap(
+  "<silent><Leader>ww",
+  ":syntax sync fromstart<CR>",
+  { noremap = true }
+)

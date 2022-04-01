@@ -24,4 +24,4 @@ require("dapui").setup {
   },
 }
 
-require("jrasmusbm.dap.keymaps")
+require "jrasmusbm.dap.keymaps"

@@ -12,16 +12,24 @@ function M.on_attach(client, bufnr)
   vim.keymap.set({ "n" }, "g?", vim.diagnostic.open_float, opts)
 
   vim.keymap.set({ "n" }, "[v", function()
-    vim.diagnostic.goto_prev { severity = { min = vim.diagnostic.severity.ERROR } }
+    vim.diagnostic.goto_prev {
+      severity = { min = vim.diagnostic.severity.ERROR },
+    }
   end, opts)
   vim.keymap.set({ "n" }, "]v", function()
-    vim.diagnostic.goto_next { severity = { min = vim.diagnostic.severity.ERROR } }
+    vim.diagnostic.goto_next {
+      severity = { min = vim.diagnostic.severity.ERROR },
+    }
   end, opts)
   vim.keymap.set({ "n" }, "[V", function()
-    vim.diagnostic.goto_prev { severity = { max = vim.diagnostic.severity.WARN } }
+    vim.diagnostic.goto_prev {
+      severity = { max = vim.diagnostic.severity.WARN },
+    }
   end, opts)
   vim.keymap.set({ "n" }, "]V", function()
-    vim.diagnostic.goto_next { severity = { max = vim.diagnostic.severity.WARN } }
+    vim.diagnostic.goto_next {
+      severity = { max = vim.diagnostic.severity.WARN },
+    }
   end, opts)
 
   vim.keymap.set({ "n" }, "<localleader>q", function()
@@ -30,7 +38,12 @@ function M.on_attach(client, bufnr)
 
   for _, capability in ipairs(require "jrasmusbm.lsp.capabilities") do
     if client.resolved_capabilities[capability.name] then
-      vim.keymap.set(capability.modes or { "n" }, capability.mapping, capability.handler, opts)
+      vim.keymap.set(
+        capability.modes or { "n" },
+        capability.mapping,
+        capability.handler,
+        opts
+      )
     end
   end
 
