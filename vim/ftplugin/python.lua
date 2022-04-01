@@ -5,45 +5,47 @@ match BadWhitespace /\s\+$/
 local ls = require "luasnip"
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
-local sn = ls.snippet_node
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
 local d = ls.dynamic_node
-local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 require "jrasmusbm.dap.python"
 
-local docstring = function()
-  return fmt('"""\n{}\n"""\n{}', { i(1), i(0) })
-end
-
-local import_logging = function()
-  return {
-    t { "import logging", "" },
-    t { "logger = logging.getLogger(__name__)", "" },
-    i(0),
-  }
-end
-
-local main_function = function()
-  return {
-    t { "def main():", "\t" },
-    i(1),
-    t { "", "" },
-    t { "", "" },
-    t { 'if __name__ == "__main__":' },
-    i(0),
-    t { "", "\t" },
-    t { "main()" },
-  }
-end
-
 ls.snippets.python = {
-  s({ trig = "doc", name = "docstring" }, docstring()),
+  s(
+    { trig = "doc", name = "docstring" },
+    fmt(
+      [[
+"""
+{}
+"""
+{}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
   s(
     { trig = "pf", name = "python (main) file" },
-    { sn(1, docstring()), sn(2, import_logging()), sn(3, main_function()) }
+    fmt(
+      [[
+"""
+{}
+"""
+import logging
+logger = logging.getLogger(__name__)
+def main():
+  """
+  {}
+  """
+  {}
+
+if __name__ == "__main__":
+    main()
+  ]],
+      { i(1), i(2), i(0) }
+    )
   ),
 
   s({ trig = "fd", name = "function definition" }, fmt("def {}({}):\n    {}\n\n{}", { i(1), i(2), i(3), i(0) })),
@@ -63,19 +65,20 @@ ls.snippets.python = {
   s({ trig = "le", name = "log error" }, fmt("logger.error({})\n{}", { i(1), i(0) })),
   s({ trig = "lc", name = "log critical" }, fmt("logger.critical({})\n{}", { i(1), i(0) })),
   s({ trig = "ll", name = "print" }, fmt("print({})\n{}", { i(1), i(0) })),
-  s({ trig = "lb", name = "log breakpoint" }, {
-    t { "print(dict(", "\t" },
-    t 'file = "',
-    d(1, ls_utils.file_path, {}),
-    t { '",', "\t" },
-    t "line = ",
-    d(2, ls_utils.line_number, {}),
-    t { ",", "\t" },
-    i(3),
-    t { "", "" },
-    t { "))", "" },
-    i(0),
-  }),
+  s(
+    { trig = "lb", name = "log breakpoint" },
+    fmt(
+      [[
+print(dict(
+    file = "{}",
+    line = {},
+    {}
+))
+{}
+  ]],
+      { d(1, ls_utils.file_path, {}), d(2, ls_utils.line_number, {}), i(3), i(0) }
+    )
+  ),
 
   s({ trig = "an", name = "named argument" }, fmt("{} = {}{},\n{}", { i(1), i(2), rep(1), i(0) })),
   s({ trig = "at", name = "typed argument" }, fmt("{}: {},\n{}", { i(1), i(2), i(0) })),
