@@ -19,6 +19,7 @@ set tabstop=2
 " }}}
 
 " Other settings {{{
+set path+=**
 set background=dark
 set mouse=a
 set encoding=utf-8
