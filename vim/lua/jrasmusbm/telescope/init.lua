@@ -26,7 +26,9 @@ require("telescope").setup {
   extensions = { fzy_native = { override_file_sorter = true } },
 }
 
-require("telescope").load_extension "fzy_native"
+if not require("jrasmusbm.compat").in_termux() then
+  require("telescope").load_extension "fzy_native"
+end
 require("telescope").load_extension "dap"
 
 require("jrasmusbm.dap.keymaps").telescope_mappings()
