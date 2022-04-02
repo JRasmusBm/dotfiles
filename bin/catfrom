@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+start_on="$1"
+
+if test -n "$2"; then
+  _file_name="$2"
+else
+  read -r _file_name
+fi
+
+tail -n "$(echo "$(wc -l <"$_file_name") - $start_on + 1" | bc)" <"$_file_name"
