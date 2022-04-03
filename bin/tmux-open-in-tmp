@@ -1,9 +1,6 @@
 #!/bin/sh
 
-set -e
+set -ex
 
-temp="$(mktemp)"
 tmux send -X copy-selection-and-cancel
-tmux showb > "$temp"
-
-nr --remote "$temp"
+tmux showb | nr -o -

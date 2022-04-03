@@ -5,5 +5,4 @@ set -e
 unique_prompt_symbol='›'
 
 tmux send -X start-of-line
-tmux send -X search-forward-text "$unique_prompt_symbol"
-tmux send -X -N 2 search-reverse
+tmux send -X search-backward-text "$unique_prompt_symbol"
