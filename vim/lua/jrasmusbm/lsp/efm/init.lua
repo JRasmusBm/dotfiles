@@ -9,6 +9,7 @@ local file_names = require("plenary.path"):new(vim.fn.getenv "DOTFILES")
   / "filetypes"
 
 local lspconfig = require "lspconfig"
+
 local setup_efm = vim.schedule_wrap(function(options)
   lspconfig.efm.setup {
     capabilities = options.capabilities,
@@ -18,6 +19,10 @@ local setup_efm = vim.schedule_wrap(function(options)
 
       local filetype = vim.fn.getbufvar(bufnr, "&ft")
       local file_config = options.languages[vim.split(filetype, ".", true)[1]]
+
+      if file_config == nil then
+        return
+      end
 
       for _, v in ipairs(file_config) do
         if v.formatCommand then
@@ -53,6 +58,7 @@ M.setup = function(options)
             table.insert(filetypes, filetype)
           end
         end
+
         setup_efm {
           languages = languages,
           filetypes = filetypes,
