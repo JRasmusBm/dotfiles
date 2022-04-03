@@ -3,4 +3,4 @@
 set -e
 
 
-go get github.com/mattn/efm-langserver
+go install github.com/mattn/efm-langserver@latest
