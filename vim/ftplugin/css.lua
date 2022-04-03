@@ -1,6 +1,6 @@
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils"
 
-ls.snippets.css = {}
+ls.add_snippets("css", {})
 
-ls_utils.load_shared(ls.snippets.css, "css")
+ls_utils.load_shared({filetype = "css", shared = "css"})

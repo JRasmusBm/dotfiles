@@ -7,7 +7,7 @@ local d = ls.dynamic_node
 local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
-ls.snippets.go = {
+ls.add_snippets("go", {
   s(
     { trig = "id", name = "import default" },
     fmt('import (\n	"{}"\n)\n\n{}', { i(1), i(0) })
@@ -424,4 +424,4 @@ const {}
       { i(1), i(0) }
     )
   ),
-}
+})

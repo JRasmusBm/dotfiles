@@ -5,6 +5,6 @@ vim.opt.spelllang = { "en_us" }
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 
-ls.snippets.git = {}
+ls.add_snippets("git", {})
 
-ls_utils.load_shared(ls.snippets.git, "markdown")
+ls_utils.load_shared({filetype = "git", shared = "markdown"})

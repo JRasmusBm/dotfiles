@@ -27,7 +27,7 @@ local test_case = function()
   return fmt("def test_{}(self) -> None:\n    {}\n\n{}", { i(1), i(2), i(0) })
 end
 
-ls.snippets.unittest = {
+ls.add_snippets("unittest", {
   s({ trig = "df", name = "Test file" }, {
     sn(1, fmt("import unittest\n\n{}", { i(0) })),
     sn(2, test_class()),
@@ -76,4 +76,4 @@ ls.snippets.unittest = {
       }
     )
   ),
-}
+})

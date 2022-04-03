@@ -24,7 +24,7 @@ local test_case = function()
   return fmt("def test_{}(self) -> None:\n    {}\n\n{}", { i(1), i(2), i(0) })
 end
 
-ls.snippets.unittest = {
+ls.add_snippets("unittest", {
   s(
     { trig = "df", name = "Test file" },
     { sn(1, test_class()), sn(2, test_case()), i(0) }
@@ -45,4 +45,4 @@ ls.snippets.unittest = {
       { i(1), i(2), i(3), i(4), i(0) }
     )
   ),
-}
+})

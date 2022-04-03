@@ -16,14 +16,18 @@ M.file_name = function(_, _)
   return sn(0, { t(vim.fn.expand "%:p:h") })
 end
 
-M.load_shared = function(snippets, file)
-  local module_name = "jrasmusbm.snippets.shared." .. file
+M.load_shared = function(options)
+  local module_name = "jrasmusbm.snippets.shared." .. options.shared
 
   require("plenary.reload").reload_module(module_name)
+
+  local snippets = {}
 
   for _, snippet in pairs(require(module_name)) do
     table.insert(snippets, snippet())
   end
+
+  ls.add_snippets(options.filetype, snippets)
 end
 
 return M

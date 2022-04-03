@@ -12,7 +12,7 @@ local rep = require("luasnip.extras").rep
 
 require "jrasmusbm.dap.python"
 
-ls.snippets.python = {
+ls.add_snippets("python", {
   s(
     { trig = "doc", name = "docstring" },
     fmt(
@@ -209,4 +209,4 @@ print(dict(
       { rep(2), i(4), i(2), i(1), rep(2), i(3), i(0) }
     )
   ),
-}
+})

@@ -8,6 +8,6 @@ vim.keymap.set(
   { expr = true }
 )
 
-ls.snippets.zsh = {}
+ls.add_snippets("zsh", {})
 
-ls_utils.load_shared(ls.snippets.zsh, "sh")
+ls_utils.load_shared({filetype = "zsh", shared = "sh"})

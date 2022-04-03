@@ -7,6 +7,6 @@ vim.keymap.set({ "i" }, "<Leader>c", require("jrasmusbm.mappings").finish_file)
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 
-ls.snippets.gitcommit = {}
+ls.add_snippets("gitcommit", {})
 
-ls_utils.load_shared(ls.snippets.gitcommit, "markdown")
+ls_utils.load_shared({filetype = "gitcommit", shared = "markdown"})

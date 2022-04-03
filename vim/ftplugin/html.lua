@@ -5,7 +5,7 @@ end
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 
-ls.snippets.html = {}
+ls.add_snippets("html", {})
 
-ls_utils.load_shared(ls.snippets.html, "html")
-ls_utils.load_shared(ls.snippets.html, "css")
+ls_utils.load_shared({filetype = "html", shared = "html"})
+ls_utils.load_shared({filetype = "html", shared = "css"})

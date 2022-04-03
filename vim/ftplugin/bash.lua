@@ -8,6 +8,6 @@ vim.keymap.set(
   { expr = true }
 )
 
-ls.snippets.bash = {}
+ls.add_snippets("bash", {})
 
-ls_utils.load_shared(ls.snippets.bash, "sh")
+ls_utils.load_shared({filetype = "bash", shared = "sh"})

@@ -5,7 +5,7 @@ local i = ls.insert_node
 local rep = require("luasnip.extras").rep
 local ls_utils = require "jrasmusbm.snippets.utils"
 
-ls.snippets.jsx = {
+ls.add_snippets("jsx", {
   s(
     { trig = "rf", name = "react file" },
     fmt(
@@ -20,9 +20,9 @@ ls.snippets.jsx = {
       { i(1), i(2), i(0, "null") }
     )
   ),
-}
+})
 
-ls_utils.load_shared(ls.snippets.jsx, "html")
-ls_utils.load_shared(ls.snippets.jsx, "css")
-ls_utils.load_shared(ls.snippets.jsx, "graphql")
-ls_utils.load_shared(ls.snippets.jsx, "react")
+ls_utils.load_shared { filetype = "jsx", shared = "html" }
+ls_utils.load_shared { filetype = "jsx", shared = "css" }
+ls_utils.load_shared { filetype = "jsx", shared = "graphql" }
+ls_utils.load_shared { filetype = "jsx", shared = "react" }

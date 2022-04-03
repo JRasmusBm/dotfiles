@@ -5,7 +5,7 @@ local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 local t = ls.text_node
 
-ls.snippets.jest = {
+ls.add_snippets("jest", {
   s({ trig = "ds", name = "test suite" }, {
     t { 'describe("' },
     i(1),
@@ -29,6 +29,6 @@ ls.snippets.jest = {
     t { "", "" },
     t { "})" },
   }),
-}
+})
 
-ls_utils.load_shared(ls.snippets.jest, "jest")
+ls_utils.load_shared { filetype = "jest", shared = "jest" }

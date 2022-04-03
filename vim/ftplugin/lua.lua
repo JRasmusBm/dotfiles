@@ -14,7 +14,7 @@ local d = ls.dynamic_node
 local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
-ls.snippets.lua = {
+ls.add_snippets("lua", {
   s(
     { trig = "im", name = "import module" },
     fmt("local {} = require('{}')\n{}", { i(1), rep(1), i(0) })
@@ -98,19 +98,22 @@ ls.snippets.lua = {
       { i(1), i(2), i(3), i(0) }
     )
   ),
-  s({ trig = "snf", name = "snippet file" }, {
-    t { 'local ls = require("luasnip")', "" },
-    t { "local s = ls.s", "" },
-    t { 'local fmt = require("luasnip.extras.fmt").fmt', "" },
-    t { 'local ls_utils = require("jrasmusbm.snippets.utils.init")', "" },
-    t { "local i = ls.insert_node", "" },
-    t { "local d = ls.dynamic_node", "" },
-    t { "local t = ls.text_node", "" },
-    t { 'local rep = require("luasnip.extras").rep', "" },
-    t { "", "" },
-    t "ls.snippets.",
-    i(0),
-  }),
+
+  s({ trig="snf", name="snippet file" }, fmt([[
+local ls = require "luasnip"
+local s = ls.s
+local fmt = require("luasnip.extras.fmt").fmt
+local ls_utils = require "jrasmusbm.snippets.utils.init"
+local i = ls.insert_node
+local d = ls.dynamic_node
+local t = ls.text_node
+local rep = require("luasnip.extras").rep
+
+ls.add_snippets("{}", {{
+  {}
+}})  
+  ]], { i(1), i(0) })),
+
   s(
     { trig = "st", name = "text node" },
     fmt('t {{"{}", "{}"}},\n{}', { i(1), i(2), i(0) })
@@ -153,4 +156,4 @@ ls.snippets.lua = {
       { i(1), i(2), i(3), i(4), i(0) }
     )
   ),
-}
+})

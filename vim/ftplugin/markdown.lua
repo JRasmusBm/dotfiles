@@ -14,6 +14,6 @@ vim.opt_local.textwidth = 80
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 
-ls.snippets.markdown = {}
+ls.add_snippets("markdown", {})
 
-ls_utils.load_shared(ls.snippets.markdown, "markdown")
+ls_utils.load_shared({filetype = "markdown", shared = "markdown"})

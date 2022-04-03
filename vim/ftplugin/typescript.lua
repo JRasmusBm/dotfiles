@@ -4,7 +4,7 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local ls_utils = require "jrasmusbm.snippets.utils"
 
-ls.snippets.typescript = {
+ls.add_snippets("typescript", {
   s(
     { trig = "at", name = "typed argument" },
     fmt("{}: {},\n{}", { i(1), i(2), i(0) })
@@ -18,6 +18,6 @@ ls.snippets.typescript = {
     { trig = "ta", name = "type" },
     fmt("type {} = {}\n{}", { i(1), i(2), i(0) })
   ),
-}
+})
 
-ls_utils.load_shared(ls.snippets.typescript, "js_ts")
+ls_utils.load_shared({filetype = "typescript", shared = "js_ts"})

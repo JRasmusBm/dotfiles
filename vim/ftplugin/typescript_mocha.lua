@@ -4,7 +4,7 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local t = ls.text_node
 
-ls.snippets.typescript_mocha = {
+ls.add_snippets("typescript_mocha", {
   s(
     { trig = "is", name = "import sinon" },
     fmt('import * as sinon from "sinon"\n{}', { i(0) })
@@ -65,4 +65,4 @@ ls.snippets.typescript_mocha = {
     { trig = "lm", name = "mock logging" },
     fmt('sinon.replace(console, "{}", sinon.fake())\n{}', { i(1), i(0) })
   ),
-}
+})

@@ -6,7 +6,7 @@ local i = ls.insert_node
 local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
-ls.snippets.typescript_jest = {
+ls.add_snippets("typescript_jest", {
   s({ trig = "ds", name = "test suite" }, {
     t { 'describe("' },
     i(1),
@@ -65,4 +65,4 @@ ls.snippets.typescript_jest = {
       { i(1), i(0), rep(1) }
     )
   ),
-}
+})

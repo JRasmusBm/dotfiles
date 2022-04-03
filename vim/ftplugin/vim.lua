@@ -30,7 +30,7 @@ vim.keymap.set(
   { expr = true }
 )
 
-ls.snippets.vim = {
+ls.add_snippets("vim", {
   s(
     { trig = "fm", name = "forward marker" },
     fmt(":call bushels#forward_marker({})<cr>{}", { i(1), i(0) })
@@ -129,4 +129,4 @@ endfunction
       { i(1), i(2), i(0) }
     )
   ),
-}
+})

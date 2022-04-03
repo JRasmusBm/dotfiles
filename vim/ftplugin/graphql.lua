@@ -1,6 +1,6 @@
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils"
 
-ls.snippets.graphql = {}
+ls.add_snippets("graphql", {})
 
-ls_utils.load_shared(ls.snippets.graphql, "graphql")
+ls_utils.load_shared({filetype = "graphql", shared = "graphql"})
