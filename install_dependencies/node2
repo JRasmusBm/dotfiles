@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+_path="$HOME/.programs"
+
+_install_node_debug2() {
+  mkdir -p "$_path"
+  cd "$_path"
+
+  git clone https://github.com/microsoft/vscode-node-debug2.git 
+  cd vscode-node-debug2
+
+  npm install
+  npm run build
+}
+
+_install_node_debug2 "$@"
