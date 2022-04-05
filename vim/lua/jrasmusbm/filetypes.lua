@@ -20,6 +20,7 @@ M.typescript = {
   "typescript.tsx",
   "typescript.tsx.remix",
   "typescript.typescript_jest",
+  "typescript.typescript_mocha",
   "typescript.express.typescript_mocha",
 }
 M.tsx = { "typescript.tsx", "typescriptreact", "javascript.jsx" }
