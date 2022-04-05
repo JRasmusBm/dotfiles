@@ -13,7 +13,29 @@ vim.opt_local.textwidth = 80
 
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
+local i = ls.insert_node
+local s = ls.snippet
+local fmt = require("luasnip.extras.fmt").fmt
+local rep = require("luasnip.extras").rep
 
-ls.add_snippets("markdown", {})
+ls.add_snippets("markdown", {
+  s(
+    { trig = "nf", name = "notes file" },
+    fmt(
+      [[
+---
+title: "{}"
+tags:
+  - "{}"
+---
 
-ls_utils.load_shared({filetype = "markdown", shared = "markdown"})
+# {}
+
+{}
+]],
+      { i(1), i(2), rep(1), i(0) }
+    )
+  ),
+})
+
+ls_utils.load_shared { filetype = "markdown", shared = "markdown" }
