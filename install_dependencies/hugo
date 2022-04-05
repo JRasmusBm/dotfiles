@@ -11,7 +11,7 @@ _install_hugo() {
   cd hugo
   go mod download github.com/yuin/goldmark
   go get github.com/gohugoio/hugo/common/herrors
-  go install
+  go install --tags extended
   rm -rf "$temp"
 }
 
