@@ -45,7 +45,7 @@
   ignore = dirty
 [submodule "vim/pack/hardtime/vim-hardtime"]
   path = vim/pack/bundle/opt/vim-hardtime
-  url = git@github.com:takac/vim-hardtime.git
+  url = git@github.com:jrasmusbm/vim-hardtime.git
   branch = master
   ignore = dirty
 [submodule "ghcmod-vim"]
