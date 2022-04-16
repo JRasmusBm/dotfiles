@@ -24,7 +24,16 @@ M.setup = vim.schedule_wrap(function()
         },
         { "i", "c" }
       ),
+      ["<C-n>"] = cmp.mapping.select_next_item(
+        { behavior = cmp.SelectBehavior.Insert },
+        { "i", "c" }
+      ),
+      ["<C-p>"] = cmp.mapping.select_prev_item(
+        { behavior = cmp.SelectBehavior.Insert },
+        { "i", "c" }
+      ),
       ["<Enter>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
+      ["<c-y>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
       ["<C-e>"] = cmp.mapping {
         i = cmp.mapping.abort(),
         c = cmp.mapping.close(),
