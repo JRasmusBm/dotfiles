@@ -10,6 +10,7 @@ augroup ChangeFiletype
   autocmd BufNew,BufNewFile,BufRead .sequelizerc set filetype=javascript
   autocmd BufNew,BufNewFile,BufRead *.graphql set filetype=graphql
   autocmd BufNew,BufNewFile,BufRead gitconfig set filetype=gitconfig
+  autocmd BufNew,BufNewFile,BufRead .rgignore,.ignore set filetype=gitignore
   autocmd BufNew,BufNewFile,BufRead *.toml set filetype=toml
   autocmd BufNew,BufNewFile,BufRead *.scm set filetype=query
   autocmd BufNew,BufNewFile,BufRead Dockerfile* set filetype=dockerfile
