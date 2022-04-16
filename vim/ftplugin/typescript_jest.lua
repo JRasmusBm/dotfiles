@@ -6,6 +6,8 @@ local i = ls.insert_node
 local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
+vim.g["test#javascript#runner"] = "jest"
+
 ls.add_snippets("typescript_jest", {
   s({ trig = "ds", name = "test suite" }, {
     t { 'describe("' },

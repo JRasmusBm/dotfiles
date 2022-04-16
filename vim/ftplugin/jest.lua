@@ -4,6 +4,7 @@ local i = ls.insert_node
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 local t = ls.text_node
+vim.g["test#javascript#runner"] = "jest"
 
 ls.add_snippets("jest", {
   s({ trig = "ds", name = "test suite" }, {

@@ -4,6 +4,8 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local t = ls.text_node
 
+vim.g["test#javascript#runner"] = "jest"
+
 ls.add_snippets("typescript_mocha", {
   s(
     { trig = "is", name = "import sinon" },
