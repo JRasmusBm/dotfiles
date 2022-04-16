@@ -10,7 +10,7 @@ for target, sources in pairs(require "jrasmusbm.filetypes") do
 end
 
 require("nvim-treesitter.configs").setup {
-  ensure_installed = "maintained",
+  ensure_installed = "all",
   highlight = { enable = true, disable = { "markdown" } },
   playground = require("jrasmusbm.treesitter.playground").playground,
   query_linter = require("jrasmusbm.treesitter.query_linter").query_linter,
