@@ -5,9 +5,8 @@ M.setup = vim.schedule_wrap(function()
 
   cmp.setup {
     snippet = {
-      -- REQUIRED - you must specify a snippet engine
       expand = function(args)
-        vim.fn["vsnip#anonymous"](args.body)
+        require("luasnip").lsp_expand(args.body)
       end,
     },
     mapping = {
@@ -25,29 +24,46 @@ M.setup = vim.schedule_wrap(function()
         },
         { "i", "c" }
       ),
+      ["<C-n>"] = cmp.mapping.select_next_item(
+        { behavior = cmp.SelectBehavior.Insert },
+        { "i", "c" }
+      ),
+      ["<C-p>"] = cmp.mapping.select_prev_item(
+        { behavior = cmp.SelectBehavior.Insert },
+        { "i", "c" }
+      ),
       ["<Enter>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
+      ["<c-y>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
       ["<C-e>"] = cmp.mapping {
         i = cmp.mapping.abort(),
         c = cmp.mapping.close(),
       },
     },
     sources = cmp.config.sources {
-      { name = "nvim_lsp", priority = 1 },
+      { name = "luasnip", priority = 1, max_item_count = 3 },
+      { name = "nvim_lsp", priority = 2, max_item_count = 20 },
       {
         name = "buffer",
         get_bufnrs = function()
           return vim.api.nvim_list_bufs()
         end,
-        priority = 2,
+        priority = 3,
+        max_item_count = 20,
       },
-      { name = "path", priority = 3 },
+      { name = "path", priority = 4, max_item_count = 20 },
     },
   }
 
-  cmp.setup.cmdline("/", { sources = { { name = "buffer" } } })
+  cmp.setup.cmdline(
+    "/",
+    { sources = { { name = "buffer", max_item_count = 20 } } }
+  )
 
   cmp.setup.cmdline(":", {
-    sources = cmp.config.sources { { name = "path" }, { name = "cmdline" } },
+    sources = cmp.config.sources {
+      { name = "path", max_item_count = 20 },
+      { name = "cmdline", max_item_count = 20 },
+    },
   })
 end)
 

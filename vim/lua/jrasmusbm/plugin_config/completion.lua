@@ -6,7 +6,7 @@ packadd! cmp-nvim-lsp
 packadd! cmp-path
 packadd! cmp-buffer
 packadd! cmp-cmdline
-packadd! vim-vsnip
+packadd! cmp_luasnip
 ]]
 
 vim.opt.completeopt = { "menu", "menuone", "noselect" }
