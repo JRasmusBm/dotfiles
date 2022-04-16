@@ -31,22 +31,29 @@ M.setup = vim.schedule_wrap(function()
       },
     },
     sources = cmp.config.sources {
-      { name = "nvim_lsp", priority = 1 },
+      { name = "nvim_lsp", priority = 1, max_item_count = 20 },
       {
         name = "buffer",
         get_bufnrs = function()
           return vim.api.nvim_list_bufs()
         end,
         priority = 2,
+        max_item_count = 20,
       },
-      { name = "path", priority = 3 },
+      { name = "path", priority = 3, max_item_count = 20 },
     },
   }
 
-  cmp.setup.cmdline("/", { sources = { { name = "buffer" } } })
+  cmp.setup.cmdline(
+    "/",
+    { sources = { { name = "buffer", max_item_count = 20 } } }
+  )
 
   cmp.setup.cmdline(":", {
-    sources = cmp.config.sources { { name = "path" }, { name = "cmdline" } },
+    sources = cmp.config.sources {
+      { name = "path", max_item_count = 20 },
+      { name = "cmdline", max_item_count = 20 },
+    },
   })
 end)
 
