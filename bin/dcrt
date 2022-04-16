@@ -2,16 +2,19 @@
 
 set -e
 
-dcdt
+if test "$1" = "b"; then
+  dcdt
+  shift
+fi
 
 if test -n "$1"; then
   (
     set -x
-    docker compose -f docker-compose?test.y?ml run test "$@"
+    docker compose -f docker-compose?test.y?ml run "$@"
   )
 else
   (
     set -x
-    docker compose -f docker-compose?test.y?ml run --service-ports test /bin/bash
+    docker compose -f docker-compose?test.y?ml run --publish test /bin/bash
   )
 fi
