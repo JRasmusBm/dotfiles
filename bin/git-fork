@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+_git_update_remote_due_to_fork() {
+  upstream="$(git remote -v | grep 'origin.*(fetch)' | awk '{ print $2 }')"
+  github_user="$1"
+
+  if test -z "$github_user"; then
+    github_user="$(gh auth status 2>&1 | grep -Po 'github.com as (\w+)' | grep -Po '\w+$')"
+  fi
+
+  new_origin="$(echo "$upstream" | sed -E "s/:\w+/:$github_user/")"
+
+  (
+    set -x
+    git remote remove origin
+    git remote add origin "$new_origin"
+    git remote add upstream "$upstream"
+
+    g fetch
+  )
+}
+
+_git_update_remote_due_to_fork "$@"
