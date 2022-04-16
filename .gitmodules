@@ -368,77 +368,82 @@
   branch = master
   ignore = dirty
 [submodule "shell/yarn-run"]
-	path = shell/yarn-run
-	url = git@github.com:Flydiverny/yarn-run.git
+  path = shell/yarn-run
+  url = git@github.com:Flydiverny/yarn-run.git
   branch = master
   ignore = dirty
 [submodule "nvim-cmp"]
-	path = vim/pack/bundle/opt/nvim-cmp
-	url = git@github.com:hrsh7th/nvim-cmp.git
+  path = vim/pack/bundle/opt/nvim-cmp
+  url = git@github.com:hrsh7th/nvim-cmp.git
   branch = main
   ignore = dirty
 [submodule "cmp-nvim-lsp"]
-	path = vim/pack/bundle/opt/cmp-nvim-lsp
-	url = git@github.com:hrsh7th/cmp-nvim-lsp.git
+  path = vim/pack/bundle/opt/cmp-nvim-lsp
+  url = git@github.com:hrsh7th/cmp-nvim-lsp.git
   branch = main
   ignore = dirty
 [submodule "cmp-buffer"]
-	path = vim/pack/bundle/opt/cmp-buffer
-	url = git@github.com:hrsh7th/cmp-buffer.git
+  path = vim/pack/bundle/opt/cmp-buffer
+  url = git@github.com:hrsh7th/cmp-buffer.git
   branch = main
   ignore = dirty
 [submodule "cmp-path"]
-	path = vim/pack/bundle/opt/cmp-path
-	url = git@github.com:hrsh7th/cmp-path.git
+  path = vim/pack/bundle/opt/cmp-path
+  url = git@github.com:hrsh7th/cmp-path.git
   branch = main
   ignore = dirty
 [submodule "cmp-cmdline"]
-	path = vim/pack/bundle/opt/cmp-cmdline
-	url = git@github.com:hrsh7th/cmp-cmdline.git
+  path = vim/pack/bundle/opt/cmp-cmdline
+  url = git@github.com:hrsh7th/cmp-cmdline.git
   branch = main
   ignore = dirty
 [submodule "firenvim"]
-	path = vim/pack/bundle/opt/firenvim
-	url = git@github.com:glacambre/firenvim.git
+  path = vim/pack/bundle/opt/firenvim
+  url = git@github.com:glacambre/firenvim.git
   branch = master
   ignore = dirty
 [submodule "impatient.nvim"]
-	path = vim/pack/bundle/opt/impatient.nvim
-	url = git@github.com:lewis6991/impatient.nvim.git
+  path = vim/pack/bundle/opt/impatient.nvim
+  url = git@github.com:lewis6991/impatient.nvim.git
   branch = main
   ignore = dirty
 [submodule "Comment.nvim"]
-	path = vim/pack/bundle/opt/Comment.nvim
-	url = git@github.com:numToStr/Comment.nvim.git
+  path = vim/pack/bundle/opt/Comment.nvim
+  url = git@github.com:numToStr/Comment.nvim.git
   branch = master
   ignore = dirty
 [submodule "nvim-ts-context-commentstring"]
-	path = vim/pack/bundle/opt/nvim-ts-context-commentstring
-	url = git@github.com:JoosepAlviste/nvim-ts-context-commentstring.git
+  path = vim/pack/bundle/opt/nvim-ts-context-commentstring
+  url = git@github.com:JoosepAlviste/nvim-ts-context-commentstring.git
   branch = main
   ignore = dirty
 [submodule "nvim-dap-virtual-text"]
-	path = vim/pack/bundle/opt/nvim-dap-virtual-text
-	url = git@github.com:theHamsta/nvim-dap-virtual-text.git
+  path = vim/pack/bundle/opt/nvim-dap-virtual-text
+  url = git@github.com:theHamsta/nvim-dap-virtual-text.git
   branch = master
   ignore = dirty
 [submodule "telescope-dap.nvim"]
-	path = vim/pack/bundle/opt/telescope-dap.nvim
-	url = git@github.com:nvim-telescope/telescope-dap.nvim.git
+  path = vim/pack/bundle/opt/telescope-dap.nvim
+  url = git@github.com:nvim-telescope/telescope-dap.nvim.git
   branch = master
   ignore = dirty
 [submodule "debugpy.nvim"]
-	path = vim/pack/bundle/opt/debugpy.nvim
+  path = vim/pack/bundle/opt/debugpy.nvim
   url = git@github.com:JRasmusBm/debugpy.nvim.git
   branch = master
   ignore = dirty
 [submodule "LuaSnip"]
   branch = master
   ignore = dirty
-	path = vim/pack/bundle/opt/LuaSnip
-	url = git@github.com:L3MON4D3/LuaSnip.git
+  path = vim/pack/bundle/opt/LuaSnip
+  url = git@github.com:L3MON4D3/LuaSnip.git
 [submodule "nvim-dap-ui"]
   branch = master
   ignore = dirty
   path = vim/pack/bundle/opt/nvim-dap-ui
   url = git@github.com:rcarriga/nvim-dap-ui.git
+[submodule "cmp_luasnip"]
+  path = vim/pack/bundle/opt/cmp_luasnip
+  url = git@github.com:saadparwaiz1/cmp_luasnip.git
+  branch = master
+  ignore = dirty
