@@ -1,3 +1,3 @@
 setlocal foldmethod=marker
 
-execute "source $DOTFILES/vim/snippets/query.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/query.vim"

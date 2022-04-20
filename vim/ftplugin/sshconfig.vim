@@ -1,3 +1,3 @@
 setlocal foldmethod=marker
 
-execute "source $DOTFILES/vim/snippets/sshconfig.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/sshconfig.vim"

@@ -1,6 +1,6 @@
 vim.cmd [[
-execute "source $DOTFILES/vim/snippets/sql.vim"
-execute "source $DOTFILES/vim/snippets/vue.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/sql.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/vue.vim"
 ]]
 
 vim.b.is_markdown_file = false

@@ -126,7 +126,7 @@ mappings.nmap(
 )
 mappings.nmap(
   "<leader>es",
-  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Snippet Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/snippets/' })<CR>",
+  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Snippet Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/lua/jrasmusbm/snippets/shared/' })<CR>",
   { noremap = true }
 )
 mappings.nmap(

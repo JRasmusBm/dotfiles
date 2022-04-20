@@ -1,5 +1,5 @@
 vim.cmd [[
-execute "source $DOTFILES/vim/snippets/sql.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/sql.vim"
 ]]
 
 vim.fn.setreg("n", "dt,nvgnpdf @n")

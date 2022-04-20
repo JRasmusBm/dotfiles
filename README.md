@@ -88,7 +88,7 @@ a non-comprehensive list of where you can find things:
   - [plugin_config](./vim/plugin_config) - Any configuration related to plugins that are still
     sourced in vimscript.
   - [queries](./vim/queries) - Treesitter queries
-  - [snippets](./vim/snippets) - My snippets by language
+  - [snippets](./vim/lua/jrasmusbm/snippets/shared) - My snippets by language
 - [window_manager](./window_manager) - WM config (I use i3)
 - [witchcraft](./witchcraft) - Browser scripting (used to have these public but they've
   started becoming more private so I moved them to a private repository)

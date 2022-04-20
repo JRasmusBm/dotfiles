@@ -1,4 +1,4 @@
-execute "source $DOTFILES/vim/snippets/yaml.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/yaml.vim"
 
 function! RunFile() abort
   w

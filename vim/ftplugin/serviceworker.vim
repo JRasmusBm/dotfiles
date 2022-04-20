@@ -1,1 +1,1 @@
-execute "source $DOTFILES/vim/snippets/serviceworker.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/serviceworker.vim"

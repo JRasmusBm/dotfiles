@@ -10,4 +10,4 @@ match BadWhitespace /\s\+$/
 
 setlocal spell spelllang=en_us
 
-execute "source $DOTFILES/vim/snippets/latex.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/latex.vim"

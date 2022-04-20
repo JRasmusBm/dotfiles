@@ -1,5 +1,5 @@
 vim.cmd [[
-execute "source $DOTFILES/vim/snippets/conf.vim"
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/conf.vim"
 ]]
 
 vim.opt_local.foldmethod = "marker"
