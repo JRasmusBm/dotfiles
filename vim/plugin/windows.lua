@@ -4,10 +4,6 @@ vim.opt.splitright = true
 
 mappings.nmap("<leader>bd", "<cmd>bp! <BAR> bd #<CR>", {})
 
-mappings.nmap("<C-j>", "<C-w>j", { noremap = true })
-mappings.nmap("<C-k>", "<C-w>k", { noremap = true })
-mappings.nmap("<C-h>", "<C-w>h", { noremap = true })
-mappings.nmap("<C-l>", "<C-w>l", { noremap = true })
 mappings.nmap("c<C-j>", "<cmd>bel sp %<cr>", { noremap = true })
 mappings.nmap("c<C-k>", "<cmd>abo sp %<cr>", { noremap = true })
 mappings.nmap("c<C-h>", "<cmd>lefta vsp %<cr>", { noremap = true })
