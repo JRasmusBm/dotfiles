@@ -9,25 +9,32 @@ packadd! loupe
 packadd! vcs-jump
 ]]
 
+require "jrasmusbm.telescope"
+
 vim.g.LoupeCaseSettingsAlways = 1
 
-M.set_search_as_x = function()
+local set_search_as_x = function()
   vim.cmd [[
     let @x = @/[4:-3]
   ]]
 end
 
 mappings.nmap("gs", ':%s/<c-r>=expand("<cword>")<cr>/')
-mappings.nmap(
-  "*",
-  "<Plug>(LoupeStar)<cmd>call require('jrasmusbm.plugin_config.search').set_search_as_x()<CR>",
-  { silent = true }
-)
-mappings.nmap(
-  "#",
-  "<Plug>(LoupeOctothorpe)<cmd>call require('jrasmusbm.plugin_config.search').set_search_as_x()<CR>",
-  { silent = true }
-)
+
+vim.keymap.set({ "n" }, "*", function()
+  vim.cmd [[
+  norm <Plug>(LoupeStar)
+  ]]
+  set_search_as_x()
+end
+, { silent = true })
+
+vim.keymap.set({ "n" }, "#", function()
+  vim.cmd [[
+  norm <Plug>(LoupeOctothorpe)
+  ]]
+  set_search_as_x()
+end, { silent = true })
 
 vim.cmd [[
 command! GFiles lua require('jrasmusbm.telescope.git_files').git_files()
@@ -128,11 +135,6 @@ mappings.nmap(
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>ep",
-  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Plugin Config Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/lua/jrasmusbm/plugin_config/' })<CR>",
-  { noremap = true }
-)
-mappings.nmap(
   "<leader>eb",
   "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Filetype Config Files', cwd = vim.fn.getenv('DOTFILES') .. '/bin' })<CR>",
   { noremap = true }
@@ -153,8 +155,8 @@ mappings.nmap(
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>eo",
-  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Other Config Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/plugin/' })<CR>",
+  "<leader>ep",
+  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ prompt_title = 'Plugin Files', cwd = vim.fn.getenv('DOTFILES') .. '/vim/plugin/' })<CR>",
   { noremap = true }
 )
 mappings.nmap(

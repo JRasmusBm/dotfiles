@@ -1,5 +1,9 @@
 local M = {}
 
+vim.cmd [[
+packadd vim-presentation-mode
+]]
+
 local utils = require "jrasmusbm.utils"
 
 local highlights = {

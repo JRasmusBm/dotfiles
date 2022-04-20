@@ -1,8 +1,8 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! vim-tmux-navigator
-packadd! vim-tmux-runner
+packadd vim-tmux-navigator
+packadd vim-tmux-runner
 ]]
 
 vim.g.vtr_filetype_runner_overrides = {

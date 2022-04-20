@@ -2,7 +2,7 @@ local M = {}
 
 vim.cmd [[
 packadd! vim-emoji
-command! Emojify lua require("jrasmusbm.plugin_config.emoji").emojify()
+command! Emojify lua require("jrasmusbm.emoji").emojify()
 ]]
 
 vim.opt.completefunc = "emoji#complete"

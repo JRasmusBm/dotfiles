@@ -1,5 +1,3 @@
-local M = {}
-
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
@@ -30,7 +28,7 @@ local remap = function()
   end
 end
 
-M.check_file = function()
+local check_file = function()
   if vim.o.spell == 0 then
     vim.fn["spelunker#check"]()
   end
@@ -38,7 +36,7 @@ M.check_file = function()
   remap()
 end
 
-M.check_displayed_words = function()
+local check_displayed_words = function()
   if vim.o.spell == 0 then
     vim.fn["spelunker#check_displayed_words"]()
   end
@@ -46,12 +44,14 @@ M.check_displayed_words = function()
   remap()
 end
 
-vim.cmd [[
-augroup spelunker
-  autocmd!
-  autocmd BufWinEnter,BufWritePost * lua require("jrasmusbm.plugin_config.spell").check_file()
-  autocmd CursorHold * lua require("jrasmusbm.plugin_config.spell").check_displayed_words()
-augroup END
-]]
+local augroup = vim.api.nvim_create_augroup("spelunker", { clear = true })
 
-return M
+vim.api.nvim_create_autocmd({ "BufWinEnter", "BufWritePost" }, {
+  pattern = { "*" },
+  callback = check_file,
+})
+
+vim.api.nvim_create_autocmd({ "CursorHold" }, {
+  pattern = { "*" },
+  callback = check_displayed_words,
+})
