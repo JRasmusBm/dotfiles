@@ -2,7 +2,7 @@ vim.cmd [[
 packadd! fugitive-gitlab.vim
 packadd! vim-gitgutter
 packadd! vim-rhubarb
-packadd! vim-fugitive
+packadd vim-fugitive
 packadd! nvim-web-devicons
 packadd! diffview.nvim
 
