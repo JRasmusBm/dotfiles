@@ -43,7 +43,7 @@
   url = git@github.com:jparise/vim-graphql.git
   branch = master
   ignore = dirty
-[submodule "vim/pack/hardtime/vim-hardtime"]
+[submodule "vim-hardtime"]
   path = vim/pack/bundle/opt/vim-hardtime
   url = git@github.com:jrasmusbm/vim-hardtime.git
   branch = master
