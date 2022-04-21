@@ -209,4 +209,17 @@ print(dict(
       { rep(2), i(4), i(2), i(1), rep(2), i(3), i(0) }
     )
   ),
+
+  s(
+    { trig = "fr", name = "read file" },
+    fmt(
+      [[
+with open("{}") as f:
+  contents = f.read()
+
+{}
+]],
+      { i(1), i(0) }
+    )
+  ),
 })
