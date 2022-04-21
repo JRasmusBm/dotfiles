@@ -109,7 +109,7 @@ inoremap <buffer> <leader>{} {}
     { trig = "pl", name = "plugin" },
     fmt(
       [[
-packadd! {}
+packadd {}
 {}
 ]],
       { i(1), i(0) }

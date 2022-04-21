@@ -1,7 +1,7 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! thesaurus_query.vim
+packadd thesaurus_query.vim
 ]]
 
 vim.g.tq_map_keys = 0

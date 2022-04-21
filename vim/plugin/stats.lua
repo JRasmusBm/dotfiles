@@ -1,7 +1,7 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! vim-vmath
+packadd vim-vmath
 ]]
 
 mappings.nmap("<leader>st", ":call VMATH_Analyse()<CR>", { noremap = true })

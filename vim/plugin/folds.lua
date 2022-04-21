@@ -1,5 +1,5 @@
 vim.cmd [[
-packadd! SimpylFold
+packadd SimpylFold
 ]]
 
 local mappings = require "jrasmusbm.utils.mappings"

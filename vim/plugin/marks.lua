@@ -1,5 +1,5 @@
 vim.cmd [[
-packadd! vim-signature
+packadd vim-signature
 ]]
 
 vim.g.SignatureMarkTextHL = "Function"

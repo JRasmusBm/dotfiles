@@ -1,6 +1,6 @@
 vim.cmd [[
-packadd! LuaSnip
-packadd! vim-bushels
+packadd LuaSnip
+packadd vim-bushels
 ]]
 
 local ls = require "luasnip"

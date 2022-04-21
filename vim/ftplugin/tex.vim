@@ -1,4 +1,4 @@
-packadd! Latex-Text-Formatter
+packadd Latex-Text-Formatter
 
 nnoremap <buffer> <Leader>p <ESC>:call FormatLatexPar(0)<CR>
 vnoremap <buffer> <Leader>p <ESC>:call FormatLatexPar(0)<CR>

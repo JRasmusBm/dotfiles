@@ -1,7 +1,7 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! vim-hardtime
+packadd vim-hardtime
 
 command! VBG packadd vim-be-good | VimBeGood
 ]]

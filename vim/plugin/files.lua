@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-eunuch
+packadd vim-eunuch
 ]]

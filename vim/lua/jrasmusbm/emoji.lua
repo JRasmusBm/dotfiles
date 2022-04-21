@@ -1,7 +1,7 @@
 local M = {}
 
 vim.cmd [[
-packadd! vim-emoji
+packadd vim-emoji
 command! Emojify lua require("jrasmusbm.emoji").emojify()
 ]]
 

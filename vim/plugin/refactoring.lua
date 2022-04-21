@@ -1,7 +1,7 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! refactoring.nvim
+packadd refactoring.nvim
 ]]
 
 mappings.vmap(

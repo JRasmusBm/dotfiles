@@ -1,5 +1,5 @@
 vim.cmd [[
-packadd! gruvbox-material
-packadd! nvim-colorizer.lua
-packadd! pinnacle
+packadd gruvbox-material
+packadd nvim-colorizer.lua
+packadd pinnacle
 ]]

@@ -1,4 +1,4 @@
-packadd! vim-wasm
+packadd vim-wasm
 
 set softtabstop=0
 set expandtab

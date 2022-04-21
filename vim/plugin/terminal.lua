@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! terminus
+packadd terminus
 ]]

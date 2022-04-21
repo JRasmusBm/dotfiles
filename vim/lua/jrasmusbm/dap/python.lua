@@ -1,7 +1,7 @@
 local M = {}
 
 vim.cmd [[
-packadd! debugpy.nvim
+packadd debugpy.nvim
 ]]
 
 local dap = require "dap"

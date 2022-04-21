@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-illuminate
+packadd vim-illuminate
 ]]

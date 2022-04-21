@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-graphql
+packadd vim-graphql
 ]]

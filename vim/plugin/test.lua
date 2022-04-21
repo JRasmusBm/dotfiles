@@ -1,7 +1,7 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! vim-test
+packadd vim-test
 
 let test#python#project_root = "./tests"
 let test#strategy = "vtr"

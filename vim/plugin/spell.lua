@@ -1,8 +1,8 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! spelunker.vim
-packadd! popup-menu.nvim
+packadd spelunker.vim
+packadd popup-menu.nvim
 ]]
 
 vim.g.spelunker_target_min_char_len = 4

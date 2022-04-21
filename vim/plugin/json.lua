@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-json
+packadd vim-json
 ]]

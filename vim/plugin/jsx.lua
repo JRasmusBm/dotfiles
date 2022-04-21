@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-jsx
+packadd vim-jsx
 ]]

@@ -1,8 +1,8 @@
 vim.cmd [[
-packadd! nvim-treesitter
-packadd! nvim-treesitter-textobjects
-packadd! nvim-treesitter-playground
-packadd! indent-blankline.nvim
+packadd nvim-treesitter
+packadd nvim-treesitter-textobjects
+packadd nvim-treesitter-playground
+packadd indent-blankline.nvim
 ]]
 
 vim.g.indent_blankline_use_treesitter = true

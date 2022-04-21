@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! plenary.nvim
+packadd plenary.nvim
 ]]

@@ -1,12 +1,12 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! popup.nvim
-packadd! plenary.nvim
-packadd! telescope.nvim
-packadd! telescope-fzy-native.nvim
-packadd! loupe
-packadd! vcs-jump
+packadd popup.nvim
+packadd plenary.nvim
+packadd telescope.nvim
+packadd telescope-fzy-native.nvim
+packadd loupe
+packadd vcs-jump
 ]]
 
 require "jrasmusbm.telescope"

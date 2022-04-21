@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-stay
+packadd vim-stay
 ]]

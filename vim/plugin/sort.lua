@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-sort-motion
+packadd vim-sort-motion
 ]]

@@ -1,8 +1,8 @@
 local filetypes = require "jrasmusbm.filetypes"
 
 vim.cmd [[
-packadd! nvim-ts-context-commentstring
-packadd! Comment.nvim
+packadd nvim-ts-context-commentstring
+packadd Comment.nvim
 ]]
 
 local config = {}

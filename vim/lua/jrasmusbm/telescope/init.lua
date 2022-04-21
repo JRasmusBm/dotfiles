@@ -1,5 +1,5 @@
 vim.cmd [[
-packadd! telescope-dap.nvim
+packadd telescope-dap.nvim
 ]]
 
 local actions = require "telescope.actions"

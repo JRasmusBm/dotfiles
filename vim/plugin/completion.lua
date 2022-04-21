@@ -1,12 +1,12 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! nvim-cmp
-packadd! cmp-nvim-lsp
-packadd! cmp-path
-packadd! cmp-buffer
-packadd! cmp-cmdline
-packadd! cmp_luasnip
+packadd nvim-cmp
+packadd cmp-nvim-lsp
+packadd cmp-path
+packadd cmp-buffer
+packadd cmp-cmdline
+packadd cmp_luasnip
 ]]
 
 vim.opt.completeopt = { "menu", "menuone", "noselect" }

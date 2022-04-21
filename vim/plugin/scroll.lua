@@ -1,5 +1,5 @@
 vim.cmd [[
-packadd! vim-smoothie
+packadd vim-smoothie
 ]]
 
 vim.g.smoothie_update_interval = 20

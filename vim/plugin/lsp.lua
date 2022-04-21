@@ -1,5 +1,5 @@
 vim.cmd [[
-packadd! nvim-lspconfig
+packadd nvim-lspconfig
 
 sign define DiagnosticErrorSign text=✗ texthl=DiagnosticError
 sign define DiagnosticWarningSign text=⚠ texthl=DiagnosticWarning

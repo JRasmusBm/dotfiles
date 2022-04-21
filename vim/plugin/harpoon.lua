@@ -1,7 +1,7 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
-packadd! harpoon
+packadd harpoon
 ]]
 
 mappings.nmap(

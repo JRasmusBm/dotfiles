@@ -1,6 +1,6 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
-vim.cmd [[ packadd! vim-caser ]]
+vim.cmd [[ packadd vim-caser ]]
 
 vim.g.caser_no_mappings = 1
 

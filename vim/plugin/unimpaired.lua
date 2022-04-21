@@ -1,3 +1,3 @@
 vim.cmd [[
-packadd! vim-unimpaired
+packadd vim-unimpaired
 ]]
