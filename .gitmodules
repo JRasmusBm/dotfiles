@@ -447,3 +447,6 @@
   url = git@github.com:saadparwaiz1/cmp_luasnip.git
   branch = master
   ignore = dirty
+[submodule "vim-startuptime"]
+	path = vim/pack/bundle/opt/vim-startuptime
+	url = git@github.com:dstein64/vim-startuptime.git
