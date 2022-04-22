@@ -13,35 +13,18 @@ require "jrasmusbm.telescope"
 
 vim.g.LoupeCaseSettingsAlways = 1
 
-local set_search_as_x = function()
-  vim.cmd [[
-    let @x = @/[4:-3]
-  ]]
-end
-
 mappings.nmap("gs", ':%s/<c-r>=expand("<cword>")<cr>/')
 
-vim.keymap.set({ "n" }, "*", function()
-  vim.cmd [[
-  norm <Plug>(LoupeStar)
-  ]]
-  set_search_as_x()
-end
-, { silent = true })
-
-vim.keymap.set({ "n" }, "#", function()
-  vim.cmd [[
-  norm <Plug>(LoupeOctothorpe)
-  ]]
-  set_search_as_x()
-end, { silent = true })
-
-vim.cmd [[
-command! GFiles lua require('jrasmusbm.telescope.git_files').git_files()
-command! Reg Telescope registers
-
-command! -nargs=* Cheat lua require('jrasmusbm.telescope.cheat').cheat(<q-args>)
-]]
+mappings.nmap(
+  "*",
+  "<Plug>(LoupeStar)<cmd>lua require('jrasmusbm.search').set_search_as_x()<CR>",
+  { silent = true }
+)
+mappings.nmap(
+  "#",
+  "<Plug>(LoupeOctothorpe)<cmd>lua require('jrasmusbm.search').set_search_as_x()<CR>",
+  { silent = true }
+)
 
 mappings.nmap("<Leader> fc", "<cmd>Cheat<CR>", { noremap = true })
 
