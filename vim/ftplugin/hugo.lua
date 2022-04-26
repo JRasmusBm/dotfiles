@@ -21,3 +21,5 @@ ls.add_snippets("hugo", {
     )
   ),
 })
+
+vim.keymap.set({ "n" }, "==", "<cmd>%!pret --parser=go-template<cr>", {})
