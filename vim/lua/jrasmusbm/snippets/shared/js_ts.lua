@@ -1,3 +1,5 @@
+require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+
 local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
 local ls_utils = require "jrasmusbm.snippets.utils.init"

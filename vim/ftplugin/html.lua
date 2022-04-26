@@ -1,3 +1,5 @@
+require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+
 if vim.b.is_markdown_file then
   return
 end

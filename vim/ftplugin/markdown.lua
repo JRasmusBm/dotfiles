@@ -11,6 +11,8 @@ vim.opt_local.wrap = true
 vim.b.is_markdown_file = true
 vim.opt_local.textwidth = 80
 
+require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node

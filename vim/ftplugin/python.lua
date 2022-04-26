@@ -1,3 +1,5 @@
+require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+
 vim.cmd [[
 match BadWhitespace /\s\+$/
 ]]

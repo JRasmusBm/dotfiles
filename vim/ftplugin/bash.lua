@@ -1,3 +1,5 @@
+require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 
@@ -10,4 +12,4 @@ vim.keymap.set(
 
 ls.add_snippets("bash", {})
 
-ls_utils.load_shared({filetype = "bash", shared = "sh"})
+ls_utils.load_shared { filetype = "bash", shared = "sh" }

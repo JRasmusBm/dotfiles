@@ -1,3 +1,5 @@
+require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+
 vim.opt.textwidth = 72
 vim.opt.spell = true
 vim.opt.spelllang = { "en_us" }

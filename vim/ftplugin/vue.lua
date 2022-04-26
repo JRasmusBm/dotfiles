@@ -1,3 +1,5 @@
+require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+
 vim.cmd [[
 execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/sql.vim"
 execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/vue.vim"
