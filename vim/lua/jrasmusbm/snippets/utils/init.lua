@@ -12,6 +12,14 @@ M.file_path = function(_, _)
   return sn(0, { t(vim.fn.expand "%") })
 end
 
+M.date = function(_, _)
+  return sn(0, { t(os.date "%Y-%m-%d") })
+end
+
+M.time = function(_, _)
+  return sn(0, { t(os.date "%H:%M") })
+end
+
 M.file_name = function(_, _)
   return sn(0, { t(vim.fn.expand "%:p:h") })
 end

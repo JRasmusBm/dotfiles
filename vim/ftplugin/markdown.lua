@@ -16,6 +16,7 @@ require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
+local d = ls.dynamic_node
 local s = ls.snippet
 local fmt = require("luasnip.extras.fmt").fmt
 local rep = require("luasnip.extras").rep
@@ -36,6 +37,36 @@ tags:
 {}
 ]],
       { i(1), i(2), rep(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "para", name = "para" },
+    fmt(
+      [[
+{} Took Paracetamol around {}.{}
+  ]],
+      { d(1, ls_utils.date, {}), d(2, ls_utils.time, {}), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "para2", name = "para2" },
+    fmt(
+      [[
+Took Paracetamol around {}.{}
+  ]],
+      { d(1, ls_utils.time, {}), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "suma", name = "suma" },
+    fmt(
+      [[
+Took Sumatriptan around {}.{}
+  ]],
+      { d(1, ls_utils.time, {}), i(0) }
     )
   ),
 })
