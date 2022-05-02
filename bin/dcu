@@ -2,9 +2,14 @@
 
 set -e
 
-dcd
+dcd "$@"
+
+if test "$1" = "b"; then
+  dcb
+  shift
+fi
 
 (
   set -x
-  docker compose up --remove-orphans --build "$@"
+  docker compose up --remove-orphans "$@"
 )

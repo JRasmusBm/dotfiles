@@ -2,5 +2,14 @@
 
 set -e
 
-dcdd
-docker compose -f docker compose*dev.y*ml up --build "$@"
+dcdd "$@"
+
+if test "$1" = "b"; then
+  dcbd
+  shift
+fi
+
+(
+  set -x
+  docker compose -f docker-compose?dev.y?ml up "$@"
+)

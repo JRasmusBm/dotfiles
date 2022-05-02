@@ -3,6 +3,12 @@
 set -e
 
 dcdt
+
+if test "$1" = "b"; then
+  dcbt
+  shift
+fi
+
 (
   set -x
   docker compose -f docker-compose?test.y?ml up --build "$@"
