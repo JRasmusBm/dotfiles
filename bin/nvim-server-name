@@ -2,7 +2,7 @@
 
 set -e
 
-if ! type tmux ; then
+if ! type tmux > /dev/null ; then
   printf "/tmp/nvim-server-%s" "$(basename "$(pwd)")"
   exit 0
 fi

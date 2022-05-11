@@ -12,15 +12,17 @@ fi
 tmux select-window -t vim
 tmux select-pane -t 0
 
+_server_name="$(nvim-server-name)" 
+
 if test "$(echo "$1" | cut -c1-1)" = ":"; then
   (
     set -x
-    nvr --servername "$(nvim-server-name)" --remote-send "$*"
+    nvr --servername "$_server_name" --remote-send "$*"
   )
   exit 0
 fi
 
 (
   set -x
-  nvr --servername "$(nvim-server-name)" "$@"
+  nvr --servername "$_server_name" "$@"
 )
