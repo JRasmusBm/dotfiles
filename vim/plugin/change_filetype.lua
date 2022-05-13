@@ -21,5 +21,6 @@ augroup END
 augroup ChangeTypeScriptFiletypes
   autocmd!
   autocmd BufNew,BufNewFile,BufRead *.tsx set filetype=typescript.tsx
+  autocmd BufNew,BufNewFile,BufRead *.test.tsx set filetype=typescript.tsx.typescript_jest
 augroup END
 ]]
