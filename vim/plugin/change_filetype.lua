@@ -5,7 +5,6 @@ augroup ChangeFiletype
   autocmd BufNew,BufNewFile,BufRead .eslintrc,.babelrc,.stylelintrc,.swcrc,.prettierrc set filetype=json
   autocmd BufNew,BufNewFile,BufRead .pylintrc,.coveragerc,.flake8 set filetype=dosini
   autocmd BufNew,BufNewFile,BufRead .tmux,.tmux-default,.env* set filetype=sh
-  autocmd BufNew,BufNewFile,BufRead *.tsx set filetype=typescript.tsx
   autocmd BufNew,BufNewFile,BufRead *.jsx set filetype=javascript.jsx
   autocmd BufNew,BufNewFile,BufRead .sequelizerc set filetype=javascript
   autocmd BufNew,BufNewFile,BufRead *.graphql set filetype=graphql
@@ -17,5 +16,10 @@ augroup ChangeFiletype
   autocmd BufNew,BufNewFile,BufRead serviceworker.ts set filetype=typescript.serviceworker
   autocmd BufNew,BufNewFile,BufRead serviceworker.js set filetype=javascript.serviceworker
   autocmd BufNew,BufNewFile,BufRead .tmux-speeddial set filetype=speeddial
+augroup END
+
+augroup ChangeTypeScriptFiletypes
+  autocmd!
+  autocmd BufNew,BufNewFile,BufRead *.tsx set filetype=typescript.tsx
 augroup END
 ]]
