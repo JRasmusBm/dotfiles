@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+dcdd
+
+if test "$1" = "b"; then
+  dcbd
+  shift
+fi
+
+if test -n "$1"; then
+  (
+    set -x
+    docker compose -f docker-compose?dev.y?ml run "$@"
+  )
+else
+  (
+    set -x
+    docker compose -f docker-compose?dev.y?ml run --publish test /bin/bash
+  )
+fi

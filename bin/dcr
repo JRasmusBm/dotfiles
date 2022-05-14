@@ -1,0 +1,21 @@
+#!/bin/sh
+set -e
+
+dcd
+
+if test "$1" = "b"; then
+  dcb
+  shift
+fi
+
+if test -n "$1"; then
+  (
+    set -x
+    docker compose run "$@"
+  )
+else
+  (
+    set -x
+    docker compose run --publish test /bin/bash
+  )
+fi
