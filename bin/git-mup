@@ -22,6 +22,8 @@ git_update_main() {
       g stash pop
       echo "Applied autostash."
     fi
+
+    g suu
   )
 }
 
