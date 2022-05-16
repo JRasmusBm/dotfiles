@@ -148,6 +148,9 @@ bindsym $mod+8 workspace number $ws8
 bindsym $mod+9 workspace number $ws9
 bindsym $mod+0 workspace number $ws10
 # }}}
+# Default Workspaces {{{
+assign [title="spotify"] $ws10
+# }}}
 # }}}
 
 # Session {{{
