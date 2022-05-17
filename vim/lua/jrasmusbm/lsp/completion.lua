@@ -32,7 +32,6 @@ M.setup = vim.schedule_wrap(function()
         { behavior = cmp.SelectBehavior.Insert },
         { "i", "c" }
       ),
-      ["<Enter>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
       ["<c-y>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
       ["<C-e>"] = cmp.mapping {
         i = cmp.mapping.abort(),
