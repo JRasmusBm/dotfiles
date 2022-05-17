@@ -3,9 +3,6 @@ import:
   - /home/jrasmusbm/.config/alacritty/fonts.yml
   - /home/jrasmusbm/.config/alacritty/fsize.yml
 
-env:
-  TERM: screen-256color
-
 window:
   # Don't show title bars and frame
   decorations: none
