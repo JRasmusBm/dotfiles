@@ -1,0 +1,67 @@
+# Base16 iA Dark 256 - alacritty color config
+# iA Inc. (modified by aramisgithub)
+colors:
+  # Default colors
+  primary:
+    background: '#32302f'
+    foreground: '#d4be98'
+
+  # Normal colors
+  normal:
+    black:   '#32302f'
+    red:     '#ea6962'
+    green:   '#a9b665'
+    yellow:  '#d8a657'
+    blue:    '#7daea3'
+    magenta: '#d3869b'
+    cyan:    '#89b482'
+    white:   '#d4be98'
+
+  indexed_colors:
+    - { index: 223, color: '#d4be98' }
+    - { index: 223, color: '#ddc7a1' }
+    - { index: 167, color: '#ea6962' }
+    - { index: 208, color: '#e78a4e' }
+    - { index: 214, color: '#d8a657' }
+    - { index: 142, color: '#a9b665' }
+    - { index: 108, color: '#89b482' }
+    - { index: 109, color: '#7daea3' }
+    - { index: 175, color: '#d3869b' }
+    - { index: 167, color: '#ea6962' }
+    - { index: 142, color: '#a9b665' }
+    - { index: 214, color: '#d8a657' }
+    - { index: 236, color: '#32302f' }
+    - { index: 237, color: '#3c3836' }
+    - { index: 237, color: '#3c3836' }
+    - { index: 239, color: '#504945' }
+    - { index: 239, color: '#504945' }
+    - { index: 241, color: '#665c54' }
+    - { index: 237, color: '#3c3836' }
+    - { index: 237, color: '#46413e' }
+    - { index: 241, color: '#5b534d' }
+    - { index: 22, color: '#3d4220' }
+    - { index: 22, color: '#424a3e' }
+    - { index: 52, color: '#472322' }
+    - { index: 52, color: '#543937' }
+    - { index: 17, color: '#0f3a42' }
+    - { index: 17, color: '#404946' }
+    - { index: 94, color: '#574833' }
+    - { index: 238, color: '#45403d' }
+
+font:
+  normal:
+      family: "JetBrainsMonoNL Nerd Font Mono"
+      style: Regular
+
+  bold:
+      family: "JetBrainsMonoNL Nerd Font Mono"
+      style: Bold
+
+  italic:
+      family: "JetBrainsMonoNL Nerd Font Mono"
+      style: Italic
+
+  bold_italic:
+      family: "JetBrainsMonoNL Nerd Font Mono"
+      style: Italic
+
