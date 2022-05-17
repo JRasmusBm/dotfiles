@@ -4,12 +4,7 @@ set -e
 
 
 install_alacritty() {
-  TEMP_DEB="$(mktemp)"
-  wget -O $TEMP_DEB https://github.com/alacritty/alacritty/releases/download/v0.4.1/Alacritty-v0.4.1-ubuntu_18_04_amd64.deb 
-  sudo dpkg -i $TEMP_DEB
-  rm -f $TEMP_DEB
-  sudo update-alternatives --install "$(which x-terminal-emulator)" x-terminal-emulator "$(which alacritty)" 50
-  sudo update-alternatives --set x-terminal-emulator $(which alacritty)
+  cargo install alacritty
 }
 
 install_alacritty
