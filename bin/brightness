@@ -24,7 +24,7 @@ def main(command, step):
             brightness = float(f.read())
 
     if command == "up":
-        brightness = min(brightness + step, 1.0)
+        brightness = min(brightness + step, 2.0)
     if command == "down":
         brightness = max(brightness - step, 0.0)
     if command == "current":
