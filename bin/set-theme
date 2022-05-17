@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -ex
+
+ALACRITTY_CONFIG="$HOME/.config/alacritty/colorscheme.yml"
+
+_set_alacritty_theme() {
+  cat "$DOTFILES/terminal/themes/$1.yml" > "$ALACRITTY_CONFIG"
+  touch "$DOTFILES/terminal/alacritty.yml"
+}
+
+_set_theme() {
+  if test "$1" != 'light' -a "$1" != 'dark'; then
+    echo "Usage: _set_theme (light|dark)"
+    exit 1
+  fi
+
+  _set_alacritty_theme "$1"
+  nr --stay -c "silent lua vim.opt.background = \"$1\""
+  dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
+}
+
+_set_theme "$@"

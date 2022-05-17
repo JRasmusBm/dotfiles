@@ -9,7 +9,11 @@ if ! (pip list 2>/dev/null | grep -q neovim-remote); then
   pip install neovim-remote
 fi
 
-tmux select-window -t vim
+if test "$1" = '--stay' ; then
+  shift 1
+else
+  tmux select-window -t vim
+fi
 tmux select-pane -t 0
 
 _server_name="$(nvim-server-name)" 
