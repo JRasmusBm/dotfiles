@@ -50,7 +50,9 @@ return {
   },
   {
     name = "document_formatting",
-    handler = vim.lsp.buf.formatting,
+    handler = function()
+      vim.lsp.buf.format { async = true }
+    end,
     mapping = "==",
   },
   {
