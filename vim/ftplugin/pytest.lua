@@ -7,6 +7,12 @@ local i = ls.insert_node
 vim.g["test#python#runner"] = "pytest"
 vim.g["test#python#pytest#executable"] = "python -m pytest"
 
+vim.g["test#python#pytest#options"] = {
+   nearest= '-vv --no-cov',
+   file=    '-vv --no-cov',
+   suite=   '-vv',
+}
+
 require("jrasmusbm.dap.test").setup_test_debugging(
   {
     ["test#python#pytest#executable"] = "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m pytest",
@@ -21,10 +27,10 @@ local test_class = function()
 end
 
 local test_case = function()
-  return fmt("def test_{}(self) -> None:\n    {}\n\n{}", { i(1), i(2), i(0) })
+  return fmt("def test_{}():\n    {}\n\n{}", { i(1), i(2), i(0) })
 end
 
-ls.add_snippets("unittest", {
+ls.add_snippets("pytest", {
   s(
     { trig = "df", name = "Test file" },
     { sn(1, test_class()), sn(2, test_case()), i(0) }
