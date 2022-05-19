@@ -14,8 +14,8 @@ local setup_efm = vim.schedule_wrap(function(options)
   lspconfig.efm.setup {
     capabilities = options.capabilities,
     on_attach = function(client, bufnr)
-      client.resolved_capabilities.document_formatting = false
-      client.resolved_capabilities.publish_diagnostics = false
+      client.server_capabilities.documentFormattingProvider = false
+      client.server_capabilities.publishDiagnosticsProvider = false
 
       local filetype = vim.fn.getbufvar(bufnr, "&ft")
       local file_config = options.languages[vim.split(filetype, ".", true)[1]]
@@ -26,11 +26,11 @@ local setup_efm = vim.schedule_wrap(function(options)
 
       for _, v in ipairs(file_config) do
         if v.formatCommand then
-          client.resolved_capabilities.document_formatting = true
+          client.server_capabilities.documentFormattingProvider = true
         end
 
         if v.lintCommand then
-          client.resolved_capabilities.publish_diagnostics = true
+          client.server_capabilities.publishDiagnosticsProvider = true
         end
       end
 

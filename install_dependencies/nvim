@@ -19,7 +19,7 @@ install_nvim() {
   temp_file="$(mktemp -d)"
   git clone git@github.com:neovim/neovim.git "$temp_file"
   cd "$temp_file" || return 1
-  git switch -d b08cf73be959397b5715395f1465fb76a76a6a05
+  git switch -d 95580f31b384fddd162e0e1f6b7ed69b3e483ea1
   sudo make CMAKE_BUILD_TYPE=RelWithDebInfo
   sudo make install
   cd "$current" || return 1
