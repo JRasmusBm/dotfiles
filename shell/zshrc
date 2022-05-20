@@ -190,3 +190,15 @@ export NVM_DIR="$HOME/.nvm"
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 
 test -n "$(type zodide)" && eval "$(zoxide init zsh)"
+
+# Speed-dial
+bindkey -s "1" 'tmux-speeddial 1'
+bindkey -s "2" 'tmux-speeddial 2'
+bindkey -s "3" 'tmux-speeddial 3'
+bindkey -s "4" 'tmux-speeddial 4'
+bindkey -s "5" 'tmux-speeddial 5'
+bindkey -s "6" 'tmux-speeddial 6'
+bindkey -s "7" 'tmux-speeddial 7'
+bindkey -s "8" 'tmux-speeddial 8'
+bindkey -s "9" 'tmux-speeddial 9'
+bindkey -s "0" 'tmux-speeddial 10'
