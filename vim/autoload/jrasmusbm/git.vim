@@ -8,7 +8,7 @@ endfunction
 
 function! jrasmusbm#git#list_tree(num_lines = 1000) abort
   if &ft == "git-commit-tree"
-    exec "%!git --no-pager log --oneline --decorate --graph --all -" .. a:num_lines
+    exec "%!git --no-pager log --oneline --decorate --graph " .. get(g:, "jrasmusbm#git#log_excludes", "") .. " --all -" .. a:num_lines
     w
   endif
 endfunction
