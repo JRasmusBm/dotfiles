@@ -18,14 +18,12 @@ _tmux_attach() {
   filtered_sessions=$(echo "$all_sessions" | grep -vP "$speeddial_sessions")
 
   if test "$1" = 'all'; then
-    target_session="$(echo "$all_sessions" | fzf --reverse | xargs)"
+    _attach_to_session "$(echo "$all_sessions" | fzf --reverse | xargs)"
   elif test -n "$1"; then
-    target_session="$1"
+    _attach_to_session "$1"
   else
-    target_session="$(echo "$filtered_sessions" | fzf --reverse | xargs)"
+    _attach_to_session "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
   fi
-
-  _attach_to_session "$target_session"
 }
 
 _tmux_attach "$@"
