@@ -10,19 +10,27 @@ _attach_to_session() {
   fi
 }
 
-_tmux_attach() {
+_all_sessions() {
   all_sessions=$(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^"$(tmux display-message -p "#S")"\$\")
+  _attach_to_session "$(echo "$all_sessions" | fzf --reverse | xargs)"
+}
+
+_open_and_filtered_sessions() {
   speeddial_sessions=$(head -10 <"$HOME/.tmux-speeddial" | tr "\n " "|" | tr -s '|')
   speeddial_sessions=${speeddial_sessions%?}
   speeddial_sessions="($speeddial_sessions)"
   filtered_sessions=$(echo "$all_sessions" | grep -vP "$speeddial_sessions")
 
-  if test "$1" = 'all'; then
-    _attach_to_session "$(echo "$all_sessions" | fzf --reverse | xargs)"
+  _open_and_filtered_sessions "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
+}
+
+_tmux_attach() {
+  if test "$1" ='all'; then
+    _all_sessions
   elif test -n "$1"; then
     _attach_to_session "$1"
   else
-    _attach_to_session "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
+    _open_and_filtered_sessions "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
   fi
 }
 
