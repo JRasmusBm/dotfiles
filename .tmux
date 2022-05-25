@@ -17,7 +17,7 @@ if ! tmux has-session -t=dotfiles 2> /dev/null; then
 fi
 
 if test ! "$INITIATED_EXTERNALLY" = 'true'; then
-  ta dotfiles:vim
+  tmux-attach-to-session dotfiles:vim
 fi
 
 cd "$previous_dir"

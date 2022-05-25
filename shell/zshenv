@@ -14,31 +14,34 @@ alias "da"="deactivate"
 
 alias ssh="ssh -R 127.0.0.1:2222:127.0.0.1:22"
 
-function scpb(){
-    scp -r -P2222 "$1" rasmus@127.0.0.1:"$2"
+function scpb() {
+  scp -r -P2222 "$1" rasmus@127.0.0.1:"$2"
 }
 
 function b {
-    f=$(mktemp)
-    (
-  set +e
-  broot --outcmd "$f" "$@"
-  code=$?
-  if [ "$code" != 0 ]; then
-      rm -f "$f"
-      exit "$code"
-  fi
-    )
+  f=$(mktemp)
+  (
+    set +e
+    broot --outcmd "$f" "$@"
     code=$?
     if [ "$code" != 0 ]; then
-  return "$code"
+      rm -f "$f"
+      exit "$code"
     fi
-    d=$(<"$f")
-    rm -f "$f"
-    eval "$d"
+  )
+  code=$?
+  if [ "$code" != 0 ]; then
+    return "$code"
+  fi
+  d=$(<"$f")
+  rm -f "$f"
+  eval "$d"
 }
 
 source ~/.paths.sh
+if test -e "$HOME/.config/jrasmusbm/projects.sh"; then
+  . "$HOME/.config/jrasmusbm/projects.sh"
+fi
 
 if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
   source "${VIRTUAL_ENV}/bin/activate"

@@ -59,8 +59,7 @@ return {
     t { 'folder_path="' },
     d(1, ls_utils.file_name, {}),
     t { '"', "" },
-    t { 'folder_name="${folder_path##*/}"', "" },
-    t { 'session_name="${folder_name//./_}"', "" },
+    t { 'session_name="$(tmux-session-name-from-path "$folder_path")"', "" },
     t { "", "" },
     t { 'cd "$folder_path"', "" },
     t { "", "" },
@@ -82,7 +81,7 @@ return {
     t { "fi", "" },
     t { "", "" },
     t { "if test ! \"$INITIATED_EXTERNALLY\" = 'true' ; then", "\t" },
-    t { 'ta "$session_name:vim"', "" },
+    t { 'tmux-attach-to-session "$session_name:vim"', "" },
     t { "fi" },
   }),
   s(
