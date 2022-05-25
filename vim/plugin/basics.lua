@@ -1,5 +1,6 @@
 vim.g.name = "Rasmus Bergström"
-vim.opt.background = "dark"
+
+vim.opt.background = require("jrasmusbm.theme").get_current_theme()
 vim.opt.termguicolors = true
 vim.opt.mouse = "a"
 vim.opt.encoding = "utf-8"

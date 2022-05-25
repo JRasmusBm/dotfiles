@@ -94,15 +94,28 @@ endfunction
 
 lua require("jrasmusbm.statusline").setup()
 
-call RespectAlacrittyColorscheme()
-call DiffHighlights()
-call FoldHighlights()
-call ErrorHighlights()
-call SearchHighlights()
-call SpellingHighlights()
-call DiagnosticHighlight()
-call ColorCodeHighlights()
-call CustomMarkers()
-call RulerHighlights()
-call IlluminateHighlights()
-call DapHighlight()
+function! UpdateHighlights() abort
+  call RespectAlacrittyColorscheme()
+  call DiffHighlights()
+  call FoldHighlights()
+  call ErrorHighlights()
+  call SearchHighlights()
+  call SpellingHighlights()
+  call DiagnosticHighlight()
+  call ColorCodeHighlights()
+  call CustomMarkers()
+  call RulerHighlights()
+  call IlluminateHighlights()
+  call DapHighlight()
+
+  lua vim.opt.background=require("jrasmusbm.theme").get_current_theme()
+endfunction
+
+call UpdateHighlights()
+augroup UpdateJRasmusBmTheme
+  autocmd!
+  autocmd FocusGained * call UpdateHighlights()
+augroup END
+
+
+
