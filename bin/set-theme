@@ -18,6 +18,7 @@ _set_theme() {
   _set_alacritty_theme "$1"
   nr --stay -c "silent lua vim.opt.background = \"$1\""
   dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
+  echo "$1" > "$HOME/.config/jrasmusbm/theme"
 }
 
 _set_theme "$@"
