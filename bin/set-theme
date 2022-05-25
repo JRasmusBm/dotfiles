@@ -1,12 +1,28 @@
 #!/bin/sh
 
-set -ex
-
-ALACRITTY_CONFIG="$HOME/.config/alacritty/colorscheme.yml"
+set -e
 
 _set_alacritty_theme() {
-  cat "$DOTFILES/terminal/themes/$1.yml" > "$ALACRITTY_CONFIG"
+  cat "$DOTFILES/terminal/themes/$1.yml" >"$HOME/.config/alacritty/colorscheme.yml"
   touch "$DOTFILES/terminal/alacritty.yml"
+}
+
+_set_vscode_theme() {
+  if test "$1" = 'dark'; then
+    sed -Ei 's/Gruvbox Material Light/Gruvbox Material Dark/' "$DOTFILES/vscode/settings.json"
+  else
+    sed -Ei 's/Gruvbox Material Dark/Gruvbox Material Light/' "$DOTFILES/vscode/settings.json"
+  fi
+
+  touch "$DOTFILES/vscode/settings.json"
+}
+
+_set_system_theme() {
+  dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
+}
+
+_persist_theme() {
+  echo "$1" >"$HOME/.config/jrasmusbm/theme"
 }
 
 _set_theme() {
@@ -16,9 +32,9 @@ _set_theme() {
   fi
 
   _set_alacritty_theme "$1"
-  nr --stay -c "silent lua vim.opt.background = \"$1\""
-  dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
-  echo "$1" > "$HOME/.config/jrasmusbm/theme"
+  _set_system_theme "$1"
+  _set_vscode_theme "$1"
+  _persist_theme "$1"
 }
 
 _set_theme "$@"
