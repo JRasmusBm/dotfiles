@@ -3,8 +3,8 @@
 set -e
 
 _start_project() {
-  if test "$(basename "$1")" = '.tmux'; then
-    . "$1"
+  if test -e "$1/.tmux"; then
+    . "$1/.tmux"
   elif _active_sessions | grep -q "$(tmux-session-name-from-path "$1")"; then
     tmux-attach-to-session "$(tmux-session-name-from-path "$1")"
   else
@@ -28,16 +28,34 @@ _all_sessions() {
   _possible_sessions="$(echo "$JRASMUSBM_PROJECTS" | while read -r _folder; do
     if test -d "$_folder"; then
       for _project in "$_folder"/*; do
-        if test -e "$_project/.tmux"; then
-          echo "$_project/.tmux"
-        elif test -d "$_project"; then
-          echo "$_project"
-        fi
+        echo "$_project"
       done
     fi
   done)"
 
-  _start_project "$(echo "$_possible_sessions" | fzf --reverse | xargs)"
+  tmux_session_names="$(echo "$_possible_sessions\n$(_active_sessions)" | xargs -n 1 tmux-session-name-from-path)"
+  selected_session="$(echo "$tmux_session_names" | sort -u | fzf --reverse | xargs)"
+
+  selected_session_path=""
+  for _path in $_possible_sessions; do
+    _derived_session_name="$(tmux-session-name-from-path "$_path")"
+    if test "$_derived_session_name" = "$selected_session"; then
+      if test -n "$selected_session_path"; then
+        selected_session_path="$selected_session_path\n"
+      fi
+
+      selected_session_path="$selected_session_path$_path"
+    fi
+  done
+
+  if test "$(echo "$selected_session_path" | wc -l)" != '1' ; then
+    echo 'FOUND DUPLICATES:'
+    echo "$selected_session_path"
+  fi
+
+  selected_session_path="$(echo "$selected_session_path" | head -1)"
+
+  _start_project "$selected_session_path"
 }
 
 _open_and_filtered_sessions() {
