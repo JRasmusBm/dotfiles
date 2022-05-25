@@ -1,0 +1,11 @@
+#!/bin/bash
+
+set -e
+
+_session_name_from_path() {
+  folder_path="${1:-$(pwd)}"
+  folder_name="${folder_path##*/}"
+  echo "${folder_name//./_}"
+}
+
+_session_name_from_path "$@"

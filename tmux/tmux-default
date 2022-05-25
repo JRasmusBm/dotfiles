@@ -2,18 +2,16 @@
 
 set -e
 
-current_dir=$(echo "${PWD##*/}" | tr '.' '_')
+session_name="$(tmux-session-name-from-path)"
 
-if ! tmux has-session -t="$current_dir" 2>/dev/null; then
-  tmux new-session -d -s "$current_dir" -n run -x "$(tput cols)" -y "$(tput lines)"
+if ! tmux has-session -t="$session_name" 2>/dev/null; then
+  tmux new-session -d -s "$session_name" -n run -x "$(tput cols)" -y "$(tput lines)"
 
-  tmux new-window -n vim
-  tmux send-keys -t vim "v -c GFiles" Enter
+  tmux new-window -t "$session_name" -n vim
+  tmux send-keys -t "$session_name" "v -c GFiles" Enter
 
-  tmux new-window -n cli
-  tmux send-keys -t cli "g" Enter
+  tmux new-window -t "$session_name" -n cli
+  tmux send-keys -t "$session_name" "g" Enter
 fi
 
-if test ! "$INITIATED_EXTERNALLY" = 'true'; then
-  ta "$current_dir":vim
-fi
+tmux-attach-to-session "$session_name:vim"

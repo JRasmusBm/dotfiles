@@ -2,35 +2,60 @@
 
 set -e
 
-_attach_to_session() {
-  if [ -z "$TMUX" ]; then
-    tmux attach -t "$1"
+_start_project() {
+  if test "$(basename "$1")" = '.tmux'; then
+    . "$1"
+  elif _active_sessions | grep -q "$(tmux-session-name-from-path "$1")"; then
+    tmux-attach-to-session "$(tmux-session-name-from-path "$1")"
   else
-    tmux switch-client -t "$1"
+    cd "$1"
+    my-tmux
   fi
 }
 
+_active_sessions() {
+  tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^"$(tmux display-message -p "#S")"\$\"
+}
+
 _all_sessions() {
-  all_sessions=$(tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^"$(tmux display-message -p "#S")"\$\")
-  _attach_to_session "$(echo "$all_sessions" | fzf --reverse | xargs)"
+  if test -z "$JRASMUSBM_PROJECTS"; then
+    echo '$JRASMUSBM_PROJECTS must be set'
+    exit 1
+  fi
+
+  _possible_sessions=""
+
+  _possible_sessions="$(echo "$JRASMUSBM_PROJECTS" | while read -r _folder; do
+    if test -d "$_folder"; then
+      for _project in "$_folder"/*; do
+        if test -e "$_project/.tmux"; then
+          echo "$_project/.tmux"
+        elif test -d "$_project"; then
+          echo "$_project"
+        fi
+      done
+    fi
+  done)"
+
+  _start_project "$(echo "$_possible_sessions" | fzf --reverse | xargs)"
 }
 
 _open_and_filtered_sessions() {
   speeddial_sessions=$(head -10 <"$HOME/.tmux-speeddial" | tr "\n " "|" | tr -s '|')
   speeddial_sessions=${speeddial_sessions%?}
   speeddial_sessions="($speeddial_sessions)"
-  filtered_sessions=$(echo "$all_sessions" | grep -vP "$speeddial_sessions")
+  filtered_sessions=$(_active_sessions | grep -vP "$speeddial_sessions")
 
-  _open_and_filtered_sessions "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
+  tmux-attach-to-session "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
 }
 
 _tmux_attach() {
-  if test "$1" ='all'; then
+  if test "$1" = 'all'; then
     _all_sessions
   elif test -n "$1"; then
-    _attach_to_session "$1"
+    tmux-attach-to-session "$1"
   else
-    _open_and_filtered_sessions "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
+    _open_and_filtered_sessions
   fi
 }
 
