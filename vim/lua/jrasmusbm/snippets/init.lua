@@ -4,6 +4,7 @@ packadd vim-bushels
 ]]
 
 local ls = require "luasnip"
+require "jrasmusbm.snippets.shared.all"
 
 vim.keymap.set({ "i", "s", "n" }, "<leader>s", function()
   if ls.expandable() then
