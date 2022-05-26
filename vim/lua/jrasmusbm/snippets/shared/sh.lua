@@ -16,8 +16,18 @@ end
 return {
   s(
     { trig = "cf", name = "for each" },
-    fmt("for {} in {} ; do\n  {}\ndone\n\n{}", { i(1), i(2), i(3), i(0) })
+    fmt(
+      [[
+for {} in {} ; do
+  {} 
+done
+
+{}
+ ]],
+      { i(1), i(2), i(3), i(0) }
+    )
   ),
+
   s(
     { trig = "cfr", name = "for range" },
     fmt(
@@ -26,64 +36,60 @@ return {
     )
   ),
   s(
-    { trig = "ci", name = "if statement" },
-    fmt("if {} ; then\n  {}\nfi\n\n{}", { i(1), i(2), i(0) })
-  ),
-  s({ trig = "ce", name = "else statement" }, fmt("else\n  {}", { i(0) })),
-  s(
-    { trig = "cei", name = "elif clause" },
-    fmt("elif {} ; then\n  {}\n{}", { i(1), i(2), i(0) })
+    { trig = "cfr", name = "for range" },
+    fmt(
+      [[
+for i in {{0..{}}} ; do
+  {}  
+done
+
+{}
+]],
+      { i(1), i(2), i(0) }
+    )
   ),
 
   s(
-    { trig = "sf", name = "script file" },
-    {
-      t { "#!/bin/sh", "" },
-      t { "", "" },
-      t { "set -e", "" },
-      t { "", "" },
-      i(0),
-    }
+    { trig = "ci", name = "if statement" },
+    fmt(
+      [[
+if {} ; then
+  {} 
+fi
+
+{}
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s({ trig = "ce", name = "else statement" }, fmt("else\n  {}", { i(0) })),
+
+  s(
+    { trig = "ci", name = "if statement" },
+    fmt(
+      [[
+elif {} ; then
+  {} 
+]],
+      { i(1), i(0) }
+    )
   ),
 
   s(
     { trig = "fd", name = "function definition" },
-    fmt("{}() {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
+    fmt(
+      [[
+{}() {{
+  {} 
+}}
+
+{}
+  ]],
+      { i(1), i(2), i(0) }
+    )
   ),
 
-  s({ trig = "tf", name = "tmux file" }, {
-    t { "#!/bin/bash", "" },
-    t { "", "" },
-    t { "set -e", "" },
-    t { "", "" },
-    t { 'folder_path="' },
-    d(1, ls_utils.file_name, {}),
-    t { '"', "" },
-    t { 'session_name="$(tmux-session-name-from-path "$folder_path")"', "" },
-    t { "", "" },
-    t { 'cd "$folder_path"', "" },
-    t { "", "" },
-    t { 'if ! tmux has-session -t="$session_name" 2> /dev/null ; then', "\t" },
-    t {
-      'tmux new-session -d -s "$session_name" -n run -x "$(tput cols)" -y "$(tput lines)"',
-      "",
-    },
-    t { "", "\t" },
-    i(2),
-    t { "", "" },
-    t { "", "\t" },
-    t { "tmux new-window -n vim", "\t" },
-    t { 'tmux send-keys -t vim "vim -c GFiles" Enter', "" },
-    t { "", "\t" },
-    t { "tmux new-window -n cli", "\t" },
-    t { 'tmux send-keys -t cli "g ll" Enter', "\t" },
-    t { 'tmux send-keys -t cli "g" Enter', "" },
-    t { "fi", "" },
-    t { "", "" },
-    t { "if test ! \"$INITIATED_EXTERNALLY\" = 'true' ; then", "\t" },
-    t { 'tmux-attach-to-session "$session_name:vim"', "" },
-    t { "fi" },
-  }),
   s(
     { trig = "ts", name = "tmux session" },
     fmt(
@@ -93,19 +99,19 @@ return {
   ),
   s(
     { trig = "tw", name = "tmux window" },
-    fmt("tmux new-window -n {}\n{}", { i(1), i(0) })
+    fmt('tmux new-window -t "$session_name" -n {}\n{}', { i(1), i(0) })
   ),
   s(
     { trig = "tc", name = "tmux command" },
-    fmt('tmux send-keys -t {} "{}" Enter\n{}', { i(1), i(2), i(0) })
+    fmt('tmux send-keys -t "$session_name" "{}" Enter\n{}', { i(1), i(0) })
   ),
   s(
     { trig = "tv", name = "tmux vertical split" },
-    fmt("tmux split-window -t {} -h\n{}", { i(1), i(0) })
+    fmt('tmux split-window -t "$session_name" -h\n{}', { i(0) })
   ),
   s(
     { trig = "th", name = "tmux horizontal split" },
-    fmt("tmux split-window -t {}\n{}", { i(1), i(0) })
+    fmt('tmux split-window -t "$session_name" \n{}', { i(0) })
   ),
   s(
     { trig = "ti", name = "import tmux script" },
@@ -113,7 +119,7 @@ return {
   ),
   s(
     { trig = "ta", name = "tmux attach" },
-    fmt("tmux attach -t {}\n{}", { i(1), i(0) })
+    fmt("tmux-attach-to-session -t {}\n{}", { i(1), i(0) })
   ),
 
   s(
