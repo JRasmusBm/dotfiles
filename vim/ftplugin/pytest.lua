@@ -8,8 +8,8 @@ vim.g["test#python#runner"] = "pytest"
 vim.g["test#python#pytest#executable"] = "python -m pytest"
 
 vim.g["test#python#pytest#options"] = {
-   nearest= '-vv --no-cov',
-   file=    '-vv --no-cov',
+   nearest= '--log-level WARNING --no-cov --disable-warnings',
+   file=    '--log-level WARNING --no-cov --disable-warnings',
    suite=   '-vv',
 }
 
@@ -18,7 +18,9 @@ require("jrasmusbm.dap.test").setup_test_debugging(
     ["test#python#pytest#executable"] = "python -m debugpy --listen 0.0.0.0:5678 --wait-for-client -m pytest",
   },
   vim.schedule_wrap(function()
-    vim.cmd "Debugpy attach 0.0.0.0 5678"
+    vim.defer_fn(function()
+      vim.cmd "Debugpy attach 0.0.0.0 5678"
+    end, 500)
   end)
 )
 
