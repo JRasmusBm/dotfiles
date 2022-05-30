@@ -4,4 +4,4 @@ set -e
 
 g pup
 
-gh pr create "$@"
+(set -x ; gh pr create "$@")
