@@ -15,3 +15,4 @@ temp*
 .python-version
 *.pyc
 __pycache__/
+.coverage
