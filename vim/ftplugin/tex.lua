@@ -1,5 +1,7 @@
 vim.cmd [[
 match BadWhitespace /\s\+$/
+
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/latex.vim"
 ]]
 
 vim.opt.textwidth = 60
