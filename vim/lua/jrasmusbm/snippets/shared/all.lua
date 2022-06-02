@@ -82,4 +82,42 @@ fi
     )
   ),
 
+  s(
+    { trig = "!tex", name = "latex file" },
+    fmt(
+      [[
+\documentclass{{article}}
+
+\usepackage[utf8]{{inputenc}}
+
+\title{{{}}}
+\date{{\today}}
+
+\author{{{}~\thanks{{{}}}}}
+
+\begin{{document}}
+
+\maketitle{{}}
+
+\newpage{{}}
+
+{}
+
+\end{{document}}
+]],
+      { i(1), i(2), i(3), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "!texmod", name = "latex module" },
+    fmt(
+      [[
+% !TEX root = .{}/main.tex
+%
+{}
+]],
+      { i(1), i(0) }
+    )
+  ),
 })

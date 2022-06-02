@@ -63,11 +63,6 @@
   url = git@github.com:elzr/vim-json.git
   branch = master
   ignore = dirty
-[submodule "Latex-Text-Formatter"]
-  path = vim/pack/bundle/opt/Latex-Text-Formatter
-  url = git@github.com:jrasmusbm/Latex-Text-Formatter.git
-  branch = master
-  ignore = dirty
 [submodule "vim-peculiar"]
   path = vim/pack/bundle/opt/vim-peculiar
   url = git@github.com:jrasmusbm/vim-peculiar.git
