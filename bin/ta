@@ -5,16 +5,12 @@ set -e
 _start_project() {
   if test -e "$1/.tmux"; then
     . "$1/.tmux"
-  elif _active_sessions | grep -q "$(tmux-session-name-from-path "$1")"; then
+  elif tmux-active-sessions | grep -q "$(tmux-session-name-from-path "$1")"; then
     tmux-attach-to-session "$(tmux-session-name-from-path "$1")"
   else
     cd "$1"
     my-tmux
   fi
-}
-
-_active_sessions() {
-  tmux list-sessions | sed -E "s/:.*$//" | grep -v \"^"$(tmux display-message -p "#S")"\$\"
 }
 
 _all_sessions() {
@@ -33,7 +29,7 @@ _all_sessions() {
     fi
   done)"
 
-  tmux_session_names="$(echo "$_possible_sessions\n$(_active_sessions)" | xargs -n 1 tmux-session-name-from-path)"
+  tmux_session_names="$(echo "$_possible_sessions\n$(tmux-active-sessions)" | xargs -n 1 tmux-session-name-from-path)"
   selected_session="$(echo "$tmux_session_names" | sort -u | fzf --reverse | xargs)"
 
   selected_session_path=""
@@ -62,7 +58,7 @@ _open_and_filtered_sessions() {
   speeddial_sessions=$(head -10 <"$HOME/.tmux-speeddial" | tr "\n " "|" | tr -s '|')
   speeddial_sessions=${speeddial_sessions%?}
   speeddial_sessions="($speeddial_sessions)"
-  filtered_sessions=$(_active_sessions | grep -vP "$speeddial_sessions")
+  filtered_sessions=$(tmux-active-sessions | grep -vP "$speeddial_sessions")
 
   tmux-attach-to-session "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
 }
