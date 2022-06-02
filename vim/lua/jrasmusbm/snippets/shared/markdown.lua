@@ -18,7 +18,7 @@ vim.keymap.set(
 vim.keymap.set(
   { "i" },
   "<leader>cn",
-  "<Esc>?^ *- [<CR>:noh<CR>yy0f]d$a]",
+  "<Esc>?^ *- [<CR>:noh<CR>yyp0f]d$a] ",
   { buffer = 0 }
 )
 vim.keymap.set(
