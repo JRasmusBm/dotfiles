@@ -1,0 +1,30 @@
+#!/bin/sh
+
+set -e
+
+_matches_option() {
+  _matcher="$1"
+  _value_to_check="$2"
+
+  matches="$(
+    echo "$_matcher" \
+      | tr -d '()' \
+      | tr -s '|' '\n' \
+      | grep -E "^$_value_to_check$" || true
+  )"
+
+  test -n "$matches"
+}
+
+_set_layout() {
+  _supported_layouts='(laptop|home)'
+  _layout="$1"
+
+  if ! _matches_option "$_supported_layouts" "$_layout"; then
+    printf 'Usage: set-layout %s\n' "$_supported_layouts"
+    exit 1
+  fi
+
+}
+
+_set_layout "$@"
