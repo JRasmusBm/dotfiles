@@ -5,7 +5,10 @@ local fmt = require("luasnip.extras.fmt").fmt
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
 local d = ls.dynamic_node
+local f = ls.function_node
 local t = ls.text_node
+local s = ls.s
+local rep = require("luasnip.extras").rep
 
 local s = function(context, nodes, options)
   return function()
@@ -13,16 +16,24 @@ local s = function(context, nodes, options)
   end
 end
 
+local input_in_snake_case = function(input_position)
+  return f(function(inputs)
+    return string.lower(
+      vim.fn.substitute(inputs[1][1], "[^a-zA-Z0-9]", "_", "g")
+    )
+  end, { input_position })
+end
+
 return {
   s(
     { trig = "bl", name = "bullet list" },
     fmt(
       [[
-\begin{itemize}
+\begin{{itemize}}
   \item {}
 
   {}
-\end{itemize}
+\end{{itemize}}
 
 {}
 ]],
@@ -46,11 +57,11 @@ return {
     { trig = "nl", name = "numbered list" },
     fmt(
       [[
-\begin{enumerate}
+\begin{{enumerate}}
 \item {}
 
 {}
-\end{enumerate}
+\end{{enumerate}}
 
 {}
 ]],
@@ -84,7 +95,7 @@ return {
 
 {}
 ]],
-      { i(1), i(2), i(0) }
+      { i(1), input_in_snake_case(1), i(0) }
     )
   ),
 
@@ -96,7 +107,7 @@ return {
 
 {}
 ]],
-      { i(1), i(2), i(0) }
+      { i(1), input_in_snake_case(1), i(0) }
     )
   ),
 
@@ -108,7 +119,7 @@ return {
 
 {}
 ]],
-      { i(1), i(2), i(0) }
+      { i(1), input_in_snake_case(1), i(0) }
     )
   ),
 
@@ -133,7 +144,7 @@ return {
 \begin{{table}}
 \centering
 \caption{{\label{{tab:{}}} {}}}
-\vspace{1em}
+\vspace{{1em}}
 \begin{{tabular}}{{ l }}
 {} \\ \toprule
 {} \\
@@ -143,7 +154,7 @@ return {
 
 {}
 ]],
-      { i(1), i(2), i(3), i(4), i(5), i(0) }
+      { input_in_snake_case(1), i(1), i(2), i(3), i(4), i(0) }
     )
   ),
 
@@ -190,7 +201,7 @@ return {
     { trig = "bi", name = "bibitem" },
     fmt(
       [[
-\bibitem{}
+\bibitem {}
   {}
 
 {}
@@ -203,7 +214,7 @@ return {
 
   s(
     { trig = "ci", name = "code inline" },
-    fmt("mintinline{{{}}}{{{}}} {}", {})
+    fmt("mintinline{{{}}}{{{}}} {}", { i(1), i(2), i(0) })
   ),
   s(
     { trig = "cb", name = "code block" },
@@ -219,7 +230,168 @@ return {
 
 {}
 ]],
-      { i(1), i(2), i(3), i(4), i(0) }
+      { i(1), i(2), input_in_snake_case(3), i(3), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "im", name = "image" },
+    fmt(
+      [[
+\begin{{figure}}
+  \centering
+  \includegraphics[width=\textwidth]{{{}}}
+  \caption{{\label{{fig:{}}} {}}}
+\end{{figure}}
+
+{}
+  ]],
+      { i(1), input_in_snake_case(2), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "id", name = "import default" },
+    fmt(
+      [[
+\usepackage{{{}}}
+{}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "rf", name = "ref" },
+    fmt(
+      [[
+~\ref{{{}}}{}
+]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "rr", name = "ref range" },
+    fmt(
+      [[
+~\ref{{{}}}~--~\ref{{{}}}{}
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "lb", name = "label" },
+    fmt(
+      [[
+\label{{{}:{}}} {}
+]],
+      { i(1, "sec"), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ei", name = "equation inline" },
+    fmt(
+      [[
+${}$ {}
+]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "eq", name = "single equation" },
+    fmt(
+      [[
+\begin{{equation}}\label{{eq:{}}}
+  {}
+\end{{equation}}
+
+{}
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "eb", name = "equation block" },
+    fmt(
+      [[
+\begin{{align*}}\label{{eq:{}}}
+  {}
+  \addtocounter{{equation}}{{1}}\tag{{\theequation}}
+\end{{align*}}
+
+{}
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ec", name = "chemistry equation" },
+    fmt(
+      [[
+\begin{{equation}}\label{{eq:{}}}
+  \ch{{{} -> {}}}
+\end{{equation}}
+
+{}
+]],
+      { i(1), i(2), i(3), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ecn", name = "chemistry node" },
+    fmt(
+      [[
+  \ch{{{}}} {}
+]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ed", name = "division operator" },
+    fmt(
+      [[
+\frac{{{}}}{{{}}} {}
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "eo", name = "oxidation operator" },
+    fmt(
+      [[
+  \ox{{{},{}}} {}
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "if", name = "import file" },
+    fmt(
+      [[
+\input{{{}}}
+{}
+]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "co", name = "text color" },
+    fmt(
+      [[
+\textcolor{{{}}}{{{}}}{}
+]],
+      { i(1), i(2), i(0) }
     )
   ),
 }
