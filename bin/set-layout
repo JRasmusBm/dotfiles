@@ -2,6 +2,7 @@
 
 set -e
 
+
 _matches_option() {
   _matcher="$1"
   _value_to_check="$2"
@@ -17,9 +18,16 @@ _matches_option() {
 }
 
 _set_layout() {
+  _config_file="$HOME/.config/jrasmusbm/layout"
+
+  if test "$1" = 'show' ; then
+    cat "$_config_file"
+    return 0 
+  fi
+
   _supported_layouts='(laptop|home)'
   _layout="$1"
-
+  
   if ! _matches_option "$_supported_layouts" "$_layout"; then
     printf 'Usage: set-layout %s\n' "$_supported_layouts"
     exit 1
