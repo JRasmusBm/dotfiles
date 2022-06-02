@@ -15,7 +15,9 @@ ls.add_snippets("all", {
 set -e
 
 _{}() {{
+  (
     {}
+  )
 }}
 
 _{} "$@"
@@ -33,7 +35,9 @@ _{} "$@"
 set -e
 
 _{}() {{
+  (
     {}
+  )
 }}
 
 _{} "$@"
@@ -69,7 +73,9 @@ if ! tmux has-session -t="$session_name" 2> /dev/null ; then
 fi
 
 if test ! "$INITIATED_EXTERNALLY" = 'true' ; then
-  tmux-attach-to-session "$session_name:vim"
+  (
+    tmux-attach-to-session "$session_name:vim"
+  )
 fi
   ]],
       { i(0) }
