@@ -26,6 +26,11 @@ _persist_theme() {
 }
 
 _set_theme() {
+  if test "$1" = 'show'; then
+    cat "$HOME/.config/jrasmusbm/theme"
+    return 0
+  fi
+
   if test "$1" != 'light' -a "$1" != 'dark'; then
     echo "Usage: _set_theme (light|dark)"
     exit 1
