@@ -1,0 +1,53 @@
+#!/bin/sh
+
+set -e
+
+_update_screenkey() {
+  if tmux-has-session 'screenkey'; then
+    tmux send-keys -t 'screenkey' "C-c" Enter
+    tmux send-keys -t 'screenkey' "scripts/$1" Enter
+  fi
+}
+
+_persist_layout() {
+  (
+    mkdir -p "$(dirname "$_config_file")"
+    echo "$_layout" >"$_config_file"
+  )
+}
+
+_matches_option() {
+  _matcher="$1"
+  _value_to_check="$2"
+
+  matches="$(
+    echo "$_matcher" \
+      | tr -d '()' \
+      | tr -s '|' '\n' \
+      | grep -E "^$_value_to_check$" || true
+  )"
+
+  test -n "$matches"
+}
+
+_set_layout() {
+  _config_file="$HOME/.config/jrasmusbm/layout"
+
+  if test "$1" = 'show'; then
+    cat "$_config_file"
+    return 0
+  fi
+
+  _supported_layouts='(laptop|home)'
+  _layout="$1"
+
+  if ! _matches_option "$_supported_layouts" "$_layout"; then
+    printf 'Usage: set-layout %s\n' "$_supported_layouts"
+    exit 1
+  fi
+
+  _persist_layout "$_layout"
+  _update_screenkey "$_layout"
+}
+
+_set_layout "$@"
