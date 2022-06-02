@@ -18,8 +18,10 @@ ls.add_snippets("gitcommit", {
     fmt(
       [[
 feat({})!: {}
+
+{}
   ]],
-      { i(1), i(0) }
+      { i(1), i(2), i(0) }
     )
   ),
 
@@ -28,8 +30,10 @@ feat({})!: {}
     fmt(
       [[
 feat({}): {}
+
+{}
   ]],
-      { i(1), i(0) }
+      { i(1), i(2), i(0) }
     )
   ),
 
@@ -38,8 +42,10 @@ feat({}): {}
     fmt(
       [[
 fix({}): {}
+
+{}
   ]],
-      { i(1), i(0) }
+      { i(1), i(2), i(0) }
     )
   ),
 
@@ -48,8 +54,10 @@ fix({}): {}
     fmt(
       [[
 docs({}): {}
+
+{}
   ]],
-      { i(1), i(0) }
+      { i(1), i(2), i(0) }
     )
   ),
 
@@ -58,8 +66,10 @@ docs({}): {}
     fmt(
       [[
 style({}): {}
+
+{}
   ]],
-      { i(1), i(0) }
+      { i(1), i(2), i(0) }
     )
   ),
 
@@ -68,8 +78,10 @@ style({}): {}
     fmt(
       [[
 refactor({}): {}
+
+{}
     ]],
-      { i(1), i(0) }
+      { i(1), i(2), i(0) }
     )
   ),
 
@@ -78,8 +90,10 @@ refactor({}): {}
     fmt(
       [[
 test({}): {}
+
+{}
     ]],
-      { i(1), i(0) }
+      { i(1), i(2), i(0) }
     )
   ),
 
@@ -88,22 +102,90 @@ test({}): {}
     fmt(
       [[
 chore({}): {}
+
+{}
     ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ca", name = "Co-authored-by" },
+    fmt(
+      [[
+Co-authored-by: {} <{}>
+  ]],
       { i(1), i(0) }
     )
   ),
 
-  s({ trig="ca", name="Co-authored-by" }, fmt([[
-Co-authored-by: {} <{}>
-  ]], { i(1), i(0) })),
-
-  s({ trig="ci", name="Closes issue" }, fmt([[
+  s(
+    { trig = "ci", name = "Closes issue" },
+    fmt(
+      [[
 Closes: #{}
-  ]], { i(0) })),
+  ]],
+      { i(0) }
+    )
+  ),
 
-  s({ trig="ct", name="Closes ticket" }, fmt([[
+  s(
+    { trig = "ct", name = "Closes ticket" },
+    fmt(
+      [[
 Ticket: {}
-  ]], { i(0) })),
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "w", name = "why" },
+    fmt(
+      [[
+**Why** is the change needed?
+
+{}
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "h", name = "how" },
+    fmt(
+      [[
+**How** is the need addressed?
+
+{}
+]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "con", name = "concerns" },
+    fmt(
+      [[
+**How** is the need addressed?
+
+{}
+]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "con", name = "concerns" },
+    fmt(
+      [[
+Concerns / side-effects of the changes:
+
+{}
+]],
+      { i(0) }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "gitcommit", shared = "markdown" }
