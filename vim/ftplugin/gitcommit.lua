@@ -92,6 +92,18 @@ chore({}): {}
       { i(1), i(0) }
     )
   ),
+
+  s({ trig="ca", name="Co-authored-by" }, fmt([[
+Co-authored-by: {} <{}>
+  ]], { i(1), i(0) })),
+
+  s({ trig="ci", name="Closes issue" }, fmt([[
+Closes: #{}
+  ]], { i(0) })),
+
+  s({ trig="ct", name="Closes ticket" }, fmt([[
+Ticket: {}
+  ]], { i(0) })),
 })
 
 ls_utils.load_shared { filetype = "gitcommit", shared = "markdown" }
