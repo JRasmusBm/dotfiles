@@ -18,7 +18,7 @@ _set_vscode_theme() {
 }
 
 _set_system_theme() {
-  dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
+  type dconf > /dev/null && dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
 }
 
 _persist_theme() {
