@@ -2,10 +2,7 @@ require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
 
 local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
-local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
-local d = ls.dynamic_node
-local t = ls.text_node
 
 local s = function(context, nodes, options)
   return function()
@@ -19,7 +16,9 @@ return {
     fmt(
       [[
 for {} in {} ; do
-  {} 
+  (
+    {} 
+  )
 done
 
 {}
@@ -40,7 +39,9 @@ done
     fmt(
       [[
 for i in {{0..{}}} ; do
-  {}  
+  (
+    {}  
+  )
 done
 
 {}
@@ -54,7 +55,9 @@ done
     fmt(
       [[
 if {} ; then
-  {} 
+  (
+    {} 
+  )
 fi
 
 {}
@@ -63,14 +66,27 @@ fi
     )
   ),
 
-  s({ trig = "ce", name = "else statement" }, fmt("else\n  {}", { i(0) })),
+  s(
+    { trig = "ce", name = "else statement" },
+    fmt(
+      [[
+else
+  (
+    {}
+  )
+]],
+      { i(0) }
+    )
+  ),
 
   s(
     { trig = "ci", name = "if statement" },
     fmt(
       [[
 elif {} ; then
-  {} 
+  (
+    {} 
+  )
 ]],
       { i(1), i(0) }
     )
@@ -81,7 +97,9 @@ elif {} ; then
     fmt(
       [[
 {}() {{
-  {} 
+  (
+    {} 
+  )
 }}
 
 {}
