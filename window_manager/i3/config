@@ -39,7 +39,7 @@ bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOU
 
 # Programs {{{
 bindsym $mod+Return exec --no-startup-id alacritty
-bindsym $mod+b exec --no-startup-id brave-browser
+bindsym $mod+b exec --no-startup-id brave-browser-beta
 bindsym $mod+d exec --no-startup-id dmenu_run
 bindsym $mod+p exec --no-startup-id start_scratchpad
 bindsym Print exec --no-startup-id screenshot
