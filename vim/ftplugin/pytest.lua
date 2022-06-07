@@ -8,8 +8,8 @@ vim.g["test#python#runner"] = "pytest"
 vim.g["test#python#pytest#executable"] = "python -m pytest"
 
 vim.g["test#python#pytest#options"] = {
-   nearest= '--log-level WARNING --no-cov --disable-warnings',
-   file=    '--log-level WARNING --no-cov --disable-warnings',
+   nearest= '--log-level WARNING --no-cov --disable-warnings -vv',
+   file=    '--log-level WARNING --no-cov --disable-warnings -vv',
    suite=   '-vv',
 }
 
