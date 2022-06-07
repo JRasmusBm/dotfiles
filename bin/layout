@@ -16,6 +16,22 @@ _persist_layout() {
   )
 }
 
+_update_xrandr() {
+  if test "$1" = 'home'; then
+    xrandr --output 'HDMI-1' --auto --right-of eDP-1
+  elif test "$1" = 'laptop'; then
+    xrandr --output 'HDMI-1' --off
+  fi
+}
+
+_update_fsize() {
+  if test "$1" = 'home'; then
+    fsize 11
+  elif test "$1" = 'laptop'; then
+    fsize 14
+  fi
+}
+
 _matches_option() {
   _matcher="$1"
   _value_to_check="$2"
@@ -48,6 +64,8 @@ _set_layout() {
 
   _persist_layout "$_layout"
   _update_screenkey "$_layout"
+  _update_xrandr "$_layout"
+  _update_fsize "$_layout"
 }
 
 _set_layout "$@"

@@ -6,6 +6,11 @@ ALACRITTY_FSIZE_FILE="$HOME/.config/alacritty/fsize.yml"
 ALACRITTY_CONFIG="$HOME/.config/alacritty/alacritty.yml"
 
 _set_font_size() {
+  if test "$1" = 'show'; then
+    cat "$ALACRITTY_FSIZE_FILE" | grep -oP '\d+'
+    return 0
+  fi
+
   if test -z "$1"; then
     echo 'Usage: fzize <number>'
     exit 1
