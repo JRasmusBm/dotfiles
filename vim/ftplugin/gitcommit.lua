@@ -167,18 +167,6 @@ Ticket: {}
     { trig = "con", name = "concerns" },
     fmt(
       [[
-**How** is the need addressed?
-
-{}
-]],
-      { i(0) }
-    )
-  ),
-
-  s(
-    { trig = "con", name = "concerns" },
-    fmt(
-      [[
 Concerns / side-effects of the changes:
 
 {}
