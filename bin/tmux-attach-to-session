@@ -3,15 +3,17 @@
 set -e
 
 _attach_to_session() {
+  session_name="$(echo "$1" | grep -oP '\S+(?=:)')"
+
   if [ -z "$TMUX" ]; then
     (
       set -x
-      tmux attach -t "$1"
+      tmux attach -t "$session_name"
     )
   else
     (
       set -x
-      tmux switch-client -t "$1"
+      tmux switch-client -t "$session_name"
     )
   fi
 }
