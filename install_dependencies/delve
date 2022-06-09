@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+_install_delve() {
+  go install github.com/go-delve/delve/cmd/dlv@latest
+}
+
+_install_delve "$@"
