@@ -11,16 +11,13 @@ require("nvim-dap-virtual-text").setup {
 }
 
 require("dapui").setup {
-  sidebar = {
+  tray = {
     elements = {
-      { id = "stacks", size = 0.25 },
-      {
-        id = "scopes",
-        size = 0.25, -- Can be float or integer > 1
-      },
       { id = "watches", size = 00.25 },
-      { id = "breakpoints", size = 0.25 },
     },
+  },
+  sidebar = {
+    elements = {},
   },
 }
 
