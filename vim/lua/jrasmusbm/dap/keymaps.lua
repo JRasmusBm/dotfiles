@@ -47,6 +47,10 @@ vim.keymap.set({ "n" }, "<leader>ib", function()
 end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>iB", function()
+  require("dap").list_breakpoints(true)
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>im", function() -- Maybe break
   require("dap").toggle_breakpoint(vim.fn.input "Break on: ")
 end, { noremap = true })
 
@@ -54,8 +58,12 @@ vim.keymap.set({ "n" }, "<leader>ie", function()
   require("dap").set_exception_breakpoints "default"
 end, { noremap = true })
 
-vim.keymap.set({ "n" }, "<leader>iu", function()
+vim.keymap.set({ "n" }, "<leader>iw", function()
   require("dapui").toggle()
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>id", function() -- Details
+  require("dapui").eval()
 end, { noremap = true })
 
 local M = {}
@@ -77,9 +85,6 @@ M.telescope_mappings = function()
     require("telescope").extensions.dap.configurations {}
   end, { noremap = true })
 
-  vim.keymap.set({ "n" }, "<leader>ia", function()
-    require("telescope").extensions.dap.list_breakpoints {}
-  end, { noremap = true })
 end
 
 return M
