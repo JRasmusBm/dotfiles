@@ -3,7 +3,7 @@
 set -e
 
 _attach_to_session() {
-  session_name="$(echo "$1" | grep -oP '\S+(?=:)')"
+  session_name="$(echo "$1" | grep -oP '(\S+(?=:)|^\S+$)')"
 
   if [ -z "$TMUX" ]; then
     (
