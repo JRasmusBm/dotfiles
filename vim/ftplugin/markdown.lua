@@ -61,6 +61,16 @@ Took Paracetamol around {}.{}
   ),
 
   s(
+    { trig = "ome", name = "ome" },
+    fmt(
+      [[
+Took Omeprazole around {}.{}
+  ]],
+      { d(1, ls_utils.time, {}), i(0) }
+    )
+  ),
+
+  s(
     { trig = "suma", name = "suma" },
     fmt(
       [[
