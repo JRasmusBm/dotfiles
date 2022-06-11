@@ -2,6 +2,7 @@
 
 export FZF_DEFAULT_OPTS="--preview 'preview {}'"
 export DOTFILES="$HOME/dotfiles"
+export XDG_CONFIG_HOME="$HOME/.config"
 
 # Aliases
 alias "q"="exit"
