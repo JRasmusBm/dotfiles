@@ -101,7 +101,10 @@ ls.add_snippets("lua", {
     )
   ),
 
-  s({ trig="snf", name="snippet file" }, fmt([[
+  s(
+    { trig = "snf", name = "snippet file" },
+    fmt(
+      [[
 local ls = require "luasnip"
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
@@ -114,7 +117,10 @@ local rep = require("luasnip.extras").rep
 ls.add_snippets("{}", {{
   {}
 }})  
-  ]], { i(1), i(0) })),
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 
   s(
     { trig = "st", name = "text node" },
@@ -156,6 +162,34 @@ ls.add_snippets("{}", {{
     fmt(
       'vim.keymap.set({{ "{}" }}, "{}", {}, {{ {} }})\n{}',
       { i(1), i(2), i(3), i(4), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "vim-test-options", name = "vim-test-options" },
+    fmt(
+      [[
+vim.g["test#{}#runner"] = "{}"
+vim.g["test#{}#{}#executable"] = "{}"
+
+vim.g["test#{}#{}#options"] = {{
+   nearest= '{}',
+   file=    '{}',
+   suite=   '{}',
+}}
+]],
+      {
+        i(1, "python"),
+        i(2, "pytest"),
+        rep(1),
+        rep(2),
+        i(3, "python -m pytest"),
+        rep(1),
+        rep(2),
+        i(4),
+        i(5),
+        i(0),
+      }
     )
   ),
 })
