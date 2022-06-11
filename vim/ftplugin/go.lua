@@ -4,6 +4,33 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local rep = require("luasnip.extras").rep
 
+local dapHost = "127.0.0.1"
+local dapPort = 38697
+require("dap").adapters.go = {
+  type = "server",
+  host = dapHost,
+  port = dapPort,
+  mode = "remote",
+}
+vim.g["test#go#delve#executable"] =
+  'dlv --headless test -l 127.0.0.1:38697'
+vim.g["test#go#delve#options"] = ""
+
+require("jrasmusbm.dap.test").setup_test_debugging(
+  {
+    ["test#go#runner"] = "delve",
+  },
+  vim.schedule_wrap(function()
+    vim.defer_fn(function()
+      require("dap").run {
+        type = "go",
+        request = "attach",
+        mode = "remote",
+      }
+    end, 500)
+  end)
+)
+
 ls.add_snippets("go", {
   s(
     { trig = "id", name = "import default" },
