@@ -16,3 +16,4 @@ temp*
 *.pyc
 __pycache__/
 .coverage
+debug.test
