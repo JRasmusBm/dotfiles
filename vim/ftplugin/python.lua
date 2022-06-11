@@ -14,6 +14,12 @@ local rep = require("luasnip.extras").rep
 
 require "jrasmusbm.dap.python"
 
+vim.keymap.set({ "n" }, "<localleader>tf", function()
+  current_path = vim.fn.expand("%:.:r"):gsub("/", "."):gsub("^src.", "")
+  module_path = current_path
+  vim.cmd("VtrSendCommandToRunner python -m " .. module_path)
+end, { buffer = 0 })
+
 ls.add_snippets("python", {
   s(
     { trig = "doc", name = "docstring" },
