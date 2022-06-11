@@ -50,3 +50,5 @@ fi
 
 test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
 test -f "$HOME/.rover/env" && . "/home/jrasmusbm/.rover/env"
+
+ssh-add -k 2> /dev/null
