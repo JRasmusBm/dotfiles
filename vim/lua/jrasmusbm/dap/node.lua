@@ -47,15 +47,4 @@ M.default_configurations = {
   M.configuration_factory { name = "Connect to 9000", port = 9000 },
 }
 
-M.setup_configurations = function(configs)
-  dap.configurations = {}
-  for ft, _ in pairs(filetypes) do
-    dap.configurations[ft] = {}
-
-    for _, c in ipairs(configs) do
-      table.insert(dap.configurations[ft], c)
-    end
-  end
-end
-
 return M
