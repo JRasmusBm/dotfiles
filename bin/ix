@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+_has_url_prefix() {
+  grep -qP 'ix\.io/'
+}
+
+_pastebin() {
+  (
+    if echo "$1" | _has_url_prefix; then
+      exec curl -s "$1"
+    elif test -n "$1"; then
+      exec curl -s "ix.io/$1"
+    fi
+
+    _input="$(cat)"
+    url="$(echo "$_input" | curl -s -F 'f:1=<-' http://ix.io)"
+    echo "$url" | xclip -sel c
+    echo "$_input"
+  )
+}
+
+_pastebin "$@"
