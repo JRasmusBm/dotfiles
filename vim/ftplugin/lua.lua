@@ -1,7 +1,7 @@
 require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
 
 vim.cmd [[
-nnoremap <buffer> <localleader>tf :luafile %
+nnoremap <buffer> <localleader>tf :luafile %<CR>
 
 nmap <buffer> <leader>me Imappings.f xys$)lysE"f r,lys])"$i, {}
 nmap <buffer> <leader>mr 0f.2l4x$F{a noremap=true,<Space>
