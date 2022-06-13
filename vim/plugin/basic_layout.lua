@@ -5,7 +5,7 @@ vim.opt.number = true
 vim.opt.showcmd = true
 vim.opt.emoji = false
 vim.opt.list = true
-vim.opt.listchars = "tab:>-"
+vim.opt.listchars = { tab = "▷ ", trail = "·" }
 vim.opt.signcolumn = "auto"
 vim.opt.ruler = true
 vim.opt.laststatus = 2

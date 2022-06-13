@@ -10,7 +10,7 @@ filetype plugin indent on
 set relativenumber
 set number
 set list
-set listchars=tab:>-
+set listchars=tab:▶\ ,trail:·
 set ruler
 set wrap
 set textwidth=79
