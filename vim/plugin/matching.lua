@@ -6,3 +6,4 @@ packadd vim-surround
 ]]
 
 vim.g.AutoPairsMoveCharacter = ""
+vim.g.AutoPairsMultilineClose = 0
