@@ -45,6 +45,7 @@ tags:
     fmt(
       [[
 {} Took Paracetamol around {}.{}
+
   ]],
       { d(1, ls_utils.date, {}), d(2, ls_utils.time, {}), i(0) }
     )
