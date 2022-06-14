@@ -177,19 +177,34 @@ vim.g["test#{}#{}#options"] = {{
    file=    '{}',
    suite=   '{}',
 }}
-]],
-      {
-        i(1, "python"),
-        i(2, "pytest"),
-        rep(1),
-        rep(2),
-        i(3, "python -m pytest"),
-        rep(1),
-        rep(2),
-        i(4),
-        i(5),
-        i(0),
-      }
-    )
-  ),
-})
+
+require("jrasmusbm.dap.test").setup_test_debugging(
+  {{
+    ["test#{}#{}#executable"] = "{}",
+  }},
+  vim.schedule_wrap(function()
+    vim.defer_fn(function()
+      {}
+      end, 500)
+    end)
+  )
+      ]],
+{
+  i(1, "python"),
+  i(2, "pytest"),
+  rep(1),
+  rep(2),
+  i(3, "python -m pytest"),
+  rep(1),
+  rep(2),
+  i(4),
+  i(5),
+  i(6),
+  rep(1),
+  rep(2),
+  i(7),
+  i(8),
+}
+)
+),
+  })
