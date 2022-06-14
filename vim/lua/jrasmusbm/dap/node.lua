@@ -13,17 +13,23 @@ end
 M.configuration_factory = function(options)
   local result = {
     type = "node2",
+    name = "default",
     request = "attach",
+    sourceMaps = true,
     restart = true,
     address = "localhost",
-    port = options.port,
+    port = 9229,
     localRoot = "${workspaceFolder}",
-    remoteRoot = "/home",
+    remoteRoot = "${workspaceFolder}/output",
     protocol = "inspector",
     skipFiles = {
       "<node_internals>/**",
       "${workspaceFolder}/node_modules/**/*.js",
     },
+    cwd = vim.fn.getcwd()
+    -- ["sourceMapPathOverrides"] = {
+    --   ["*"] = "${webRoot}/*",
+    -- },
   }
 
   for key, value in pairs(options) do
