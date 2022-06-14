@@ -7,6 +7,24 @@ local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 vim.g["test#javascript#runner"] = "jest"
+vim.g["test#javascript#jest#executable"] = "./node_modules/.bin/jest"
+
+vim.g["test#javascript#jest#options"] = {
+  nearest = "--forceExit --verbose --no-coverage",
+  file = "--forceExit --verbose",
+  suite = "--forceExit --verbose",
+}
+
+require("jrasmusbm.dap.test").setup_test_debugging(
+  {
+    ["test#javascript#jest#executable"] = "node --inspect-brk ./node_modules/.bin/jest",
+  },
+  vim.schedule_wrap(function()
+    vim.defer_fn(function()
+      require("dap").run(require("jrasmusbm.dap.node").configuration_factory {})
+    end, 500)
+  end)
+)
 
 ls.add_snippets("typescript_jest", {
   s({ trig = "ds", name = "test suite" }, {
