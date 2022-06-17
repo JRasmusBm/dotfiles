@@ -54,7 +54,7 @@ _{} "$@"
 
 set -e
 
-folder_path="/home/jrasmusbm/dotfiles"
+folder_path="$(dirname "$(realpath "$0")")"
 session_name="$(tmux-session-name-from-path "$folder_path")"
 
 cd "$folder_path"
@@ -77,6 +77,8 @@ if test ! "$INITIATED_EXTERNALLY" = 'true' ; then
     tmux-attach-to-session "$session_name:vim"
   )
 fi
+
+cd -
   ]],
       { i(0) }
     )
