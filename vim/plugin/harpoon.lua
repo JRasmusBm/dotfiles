@@ -15,52 +15,52 @@ mappings.nmap(
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m1",
+  "<leader>1",
   ':lua require("harpoon.ui").nav_file(1)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m2",
+  "<leader>2",
   ':lua require("harpoon.ui").nav_file(2)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m3",
+  "<leader>3",
   ':lua require("harpoon.ui").nav_file(3)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m4",
+  "<leader>4",
   ':lua require("harpoon.ui").nav_file(4)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m5",
+  "<leader>5",
   ':lua require("harpoon.ui").nav_file(5)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m6",
+  "<leader>6",
   ':lua require("harpoon.ui").nav_file(6)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m7",
+  "<leader>7",
   ':lua require("harpoon.ui").nav_file(7)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m8",
+  "<leader>8",
   ':lua require("harpoon.ui").nav_file(8)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m9",
+  "<leader>9",
   ':lua require("harpoon.ui").nav_file(9)<CR>',
   { noremap = true }
 )
 mappings.nmap(
-  "<leader>m0",
+  "<leader>0",
   ':lua require("harpoon.ui").nav_file(10)<CR>',
   { noremap = true }
 )
