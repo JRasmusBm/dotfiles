@@ -9,7 +9,7 @@ source $HOME/.autosrc.zsh
 source $HOME/.zsh/antigen.zsh
 
 # Load the oh-my-zsh's library.
- antigen use oh-my-zsh
+antigen use oh-my-zsh
 
 # # Bundles from the default repo (robbyrussell's oh-my-zsh).
 antigen bundle heroku
@@ -34,8 +34,8 @@ antigen apply
 # Base16 Shell
 BASE16_SHELL="$HOME/.config/base16-shell/"
 [ -n "$PS1" ] && \
-    [ -s "$BASE16_SHELL/profile_helper.sh" ] && \
-        eval "$("$BASE16_SHELL/profile_helper.sh")"
+  [ -s "$BASE16_SHELL/profile_helper.sh" ] && \
+  eval "$("$BASE16_SHELL/profile_helper.sh")"
 
 # Vim mode
 bindkey -v
@@ -87,9 +87,9 @@ zstyle ':completion:*:kill:*' command 'ps -u $USER -o pid,%cpu,tty,cputime,cmd'
 bindkey '^ ' autosuggest-accept
 
 export MANPAGER="/bin/sh -c \"unset PAGER;col -b -x | \
-    v -R -c 'set ft=man nomod nolist' -c 'map q :q<CR>' \
-    -c 'map <SPACE> <C-D>' -c 'map b <C-U>' \
-    -c 'nmap K :Man <C-R>=expand(\\\"<cword>\\\")<CR><CR>' -\""
+  v -R -c 'set ft=man nomod nolist' -c 'map q :q<CR>' \
+  -c 'map <SPACE> <C-D>' -c 'map b <C-U>' \
+  -c 'nmap K :Man <C-R>=expand(\\\"<cword>\\\")<CR><CR>' -\""
 
 export GOPATH="${HOME}/go"
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/lib
@@ -104,7 +104,6 @@ if [ -f $HOME/.local/bin/virtualenvwrapper.sh ]
 then 
   source $HOME/.local/bin/virtualenvwrapper.sh
 fi
-
 
 # fzf
 [ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
@@ -185,6 +184,17 @@ fi
 export NVM_DIR="$HOME/.nvm"
 [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
 [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+_graphite_yargs_completions()
+{
+  si=$IFS
+  IFS=$'
+  ' reply=($(COMP_CWORD="$((CURRENT-1))" COMP_LINE="$BUFFER" COMP_POINT="$CURSOR" graphite --get-yargs-completions "${words[@]}"))
+  IFS="$si"
+  _describe 'values' reply
+}
+compdef _graphite_yargs_completions graphite
+compdef _graphite_yargs_completions gt
 
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
