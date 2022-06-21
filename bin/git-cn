@@ -2,4 +2,10 @@
 
 set -e
 
-gt commit "$@"
+if test "$1" = '-a'; then
+  shift
+  gt commit amend "$@"
+  exit 0
+fi
+
+gt commit create "$@"
