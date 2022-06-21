@@ -295,7 +295,7 @@ case {}:
   ),
 
   s(
-    { trig = "cw", name = "select statement" },
+    { trig = "cw", name = "select (wait) statement" },
     fmt(
       [[
 select {} {{
