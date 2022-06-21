@@ -2,5 +2,19 @@
 
 set -e
 
+if test "$1" = 'unstable'; then
+  (
+    # Create an empty go.mod file, only for tracking requirements.
+    cd "$(mktemp -d)"
+    go mod init gopls-unstable
 
-GO111MODULE=on go get golang.org/x/tools/gopls@latest
+    # Use 'go get' to add requirements and to ensure they work together.
+    go get -d golang.org/x/tools/gopls@master golang.org/x/tools@master
+
+    go install golang.org/x/tools/gopls
+  )
+
+  exit 0
+fi
+
+go get golang.org/x/tools/gopls@latest
