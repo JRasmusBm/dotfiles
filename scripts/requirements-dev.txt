@@ -1,4 +1,0 @@
-pytest
-requests
-beautifulsoup4
-rich
