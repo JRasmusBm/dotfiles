@@ -1,0 +1,14 @@
+#!/bin/sh
+
+set -e
+
+_gt_track_current() {
+  (
+    _current_branch="$(git branch --show-current)"
+    g s "$(git local-main-branch)"
+    gt branch track "$_current_branch"
+    g s "$_current_branch"
+  )
+}
+
+_gt_track_current "$@"
