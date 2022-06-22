@@ -2,7 +2,6 @@ is_dir,source,target
 False,spotify/config.toml,.config/ncspot/config.toml
 False,vim/vimrc,.vimrc
 False,terminal/alacritty.yml,.config/alacritty/alacritty.yml
-False,terminal/base16-shell,.config/base16-shell
 False,vscode/settings.json,.config/Code/User/settings.json
 True,vim,.config/nvim
 False,git/gitconfig,.gitconfig
@@ -24,8 +23,6 @@ False,tmux/tmux-default,.tmux-default
 False,window_manager/i3/config,.config/i3/config
 False,shell/paths.sh,.paths.sh
 False,window_manager/i3/i3status.conf,.config/i3status/config
-False,lsp/efm-langserver.yaml,.config/efm-langserver/config.yaml
-False,lua-format.yaml,.lua-format.yaml
 True,shell/zsh_completions,.zsh_completions
 False,python/poetry-config.toml,.config/pypoetry/config.toml
 False,db/pgcli.conf,.config/pgcli/config

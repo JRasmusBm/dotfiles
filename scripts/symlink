@@ -1,0 +1,64 @@
+#!/bin/sh
+
+set -e
+
+_scripts="$(realpath "$(dirname "$0")")"
+
+_config_entries() {
+  (
+    _config_file="$_scripts/../files.csv"
+    awk -F ',' '
+  BEGIN {
+  ORS="\n"
+}
+NR != 1 { print $1,$2,$3 }
+' <"$_config_file"
+  )
+}
+
+_link_file() {
+  (
+    _is_dir="$_scripts/../$1"
+    _from_path="$_scripts/../$2"
+    _to_path="$HOME/$3"
+    _backup_path="$HOME/.backup_dotfiles/$2"
+
+    if test ! -e "$_from_path"; then
+      echo "WARNING: $_from_path does not exist"
+      return 0
+    fi
+
+    if test -e "$_to_path" -a ! -L "$_to_path"; then
+      echo "Backing up $_to_path to $_backup_path" >/dev/stderr
+      mkdir -p "$(dirname "$_backup_path")"
+      cp -r "$_to_path" "$_backup_path"
+    fi
+
+    if test "$_is_dir" != 'True' ; then
+      mkdir -p "$(dirname "$_to_path")"
+    fi
+
+    ln -sfT "$(realpath "$_from_path")" "$_to_path"
+  )
+}
+
+_symlink_dotfiles() {
+  (
+    _entry_type=0
+    for entry in $(_config_entries); do
+      if test "$_entry_type" = '0'; then
+        _is_dir="$entry"
+      elif test "$_entry_type" = '1'; then
+        _from_path="$entry"
+      elif test "$_entry_type" = '2'; then
+        _to_path="$entry"
+
+        _link_file  "$_is_dir" "$_from_path" "$_to_path"
+      fi
+
+      _entry_type="$(echo "($_entry_type + 1) % 3" | bc)"
+    done
+  )
+}
+
+_symlink_dotfiles "$@"
