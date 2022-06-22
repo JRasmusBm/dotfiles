@@ -8,7 +8,7 @@ install_sshd
 install_blas
 install_python_37
 install_virtualenvwrapper
-python3.7 ./scripts/symlink.py
+sh scripts/symlink
 install_node
 install_zsh
 install_tmux

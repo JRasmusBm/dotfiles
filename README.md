@@ -48,7 +48,7 @@ I consider a bare minimum on a new system.
 
 In order to install my dotfiles, one would first install Python and the
 dependencies listed in [requirements-dev.txt](./scripts/requirements-dev.txt).
-One would then run `python scripts/symlink.py` from the root of the project.
+One would then run `sh scripts/symlink` from the root of the project.
 This will attempt to symlink the files into their correct locations, copying all
 the files replaced into a ~/.backup_dotfiles folder.
 
@@ -71,7 +71,7 @@ a non-comprehensive list of where you can find things:
   - Note that any script prefixed `git-` (i.e. `git-first`) can be used as
     a git command (i.e. `git first`). I find this superior to aliases cause it
     leaves room for adding extra code and configuration for each command.
-- [files.csv](./files.csv) - The list of files linked by [scripts/symlink.py](./scripts/symlink.py) 
+- [files.csv](./files.csv) - The list of files linked by [scripts/symlink](./scripts/symlink) 
 - [git](./git) - Git-related configuration (as noted above I use scripts instead of
   aliases, and those can be found in the [bin](./bin) folder)
 - [install_dependencies](./install_dependencies) - Scripts that can be used with `idep <script>` to
