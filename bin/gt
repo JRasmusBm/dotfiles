@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_graphite_cli() {
+  (
+    cd "$HOME/projects/graphite-cli/"
+    npm run cli -- "$@"
+  )
+}
+
+_graphite_cli "$@"
