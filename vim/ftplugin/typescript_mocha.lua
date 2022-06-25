@@ -4,7 +4,18 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local t = ls.text_node
 
-vim.g["test#javascript#runner"] = "jest"
+vim.g["test#javascript#runner"] = "mocha"
+
+require("jrasmusbm.dap.test").setup_test_debugging(
+  {
+    ["test#javascript#mocha#executable"] = "node --inspect-brk ./node_modules/.bin/mocha",
+  },
+  vim.schedule_wrap(function()
+    vim.defer_fn(function()
+      require("dap").run(require("jrasmusbm.dap.node").configuration_factory {})
+    end, 500)
+  end)
+)
 
 ls.add_snippets("typescript_mocha", {
   s(
