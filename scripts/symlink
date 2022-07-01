@@ -56,7 +56,7 @@ _symlink_dotfiles() {
         _link_file  "$_is_dir" "$_from_path" "$_to_path"
       fi
 
-      _entry_type="$(echo "($_entry_type + 1) % 3" | bc)"
+      _entry_type="$((($_entry_type + 1) % 3))"
     done
   )
 }
