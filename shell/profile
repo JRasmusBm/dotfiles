@@ -27,8 +27,14 @@ fi
 
 export D8_PATH=$HOME/.cache/v8/v8/out/x64.release/
 
-xmodmap -e "keysym Caps_Lock = Escape"
-xmodmap -e "clear lock"
-xset r rate 150 25
+if type xmodmap 2> /dev/null ; then
+  xmodmap -e "keysym Caps_Lock = Escape"
+  xmodmap -e "clear lock"
+fi
+
+if type xset 2> /dev/null ; then
+  xset r rate 150 25
+fi
+
 test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
 test -f "$HOME/.rover/env" && . "$HOME/.rover/env"

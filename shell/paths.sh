@@ -1,15 +1,21 @@
 #!/bin/sh
 
-PATH='/usr/local/sbin'
-PATH="$PATH:/usr/local/bin"
-PATH="$PATH:/usr/sbin"
-PATH="$PATH:/usr/bin"
+_usr='/usr'
+
+if echo "$HOME" | grep -q 'com.termux' ; then
+  _usr="$(realpath "$HOME/../usr")"
+fi
+
+PATH="$_usr/local/sbin"
+PATH="$PATH:$_usr/local/bin"
+PATH="$PATH:$_usr/sbin"
+PATH="$PATH:$_usr/bin"
 PATH="$PATH:/sbin"
 PATH="$PATH:/bin"
 PATH="$PATH:/snap/bin"
-PATH="$PATH:/usr/local/go/bin"
-PATH="$PATH:/usr/games"
-PATH="$PATH:/usr/local/games"
+PATH="$PATH:$_usr/local/go/bin"
+PATH="$PATH:$_usr/games"
+PATH="$PATH:$_usr/local/games"
 PATH="$PATH:$HOME/go/bin"
 PATH="$PATH:$HOME/.cargo/bin"
 PATH="$PATH:$HOME/.cargo/bin"
