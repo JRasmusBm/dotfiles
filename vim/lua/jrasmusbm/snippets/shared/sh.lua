@@ -149,4 +149,14 @@ elif {} ; then
     { trig = "as", name = "alias" },
     fmt('alias "{}"="{}"\n{}', { i(1), i(2), i(0) })
   ),
+
+  s(
+    { trig = "lb", name = "log breakpoint" },
+    fmt(
+      [[
+echo "$0: {}"
+]],
+      { i(0) }
+    )
+  ),
 }
