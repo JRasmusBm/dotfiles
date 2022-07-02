@@ -122,4 +122,6 @@ cd -
       { i(1), i(0) }
     )
   ),
+
+  s({ trig = "!gop", name = "go package" }, fmt("package {}\n\n{}", { i(1), i(0) })),
 })

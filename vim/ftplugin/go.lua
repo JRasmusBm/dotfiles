@@ -37,7 +37,6 @@ ls.add_snippets("go", {
     fmt('import (\n	"{}"\n)\n\n{}', { i(1), i(0) })
   ),
 
-  s({ trig = "gf", name = "go file" }, fmt("package {}\n\n{}", { i(1), i(0) })),
   s(
     { trig = "gm", name = "go main" },
     fmt("package main\n\nfunc main() {{\n	{}\n}}", { i(0) })
