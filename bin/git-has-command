@@ -1,0 +1,15 @@
+#!/bin/sh
+
+set -e
+
+_git_has_command() {
+  (
+    if test "$1" = '--no-pager'; then
+      return 0
+    fi
+
+    git --list-cmds='builtins,main,others,nohelpers,alias,config' | grep "^$1\$" -q
+  )
+}
+
+_git_has_command "$@"
