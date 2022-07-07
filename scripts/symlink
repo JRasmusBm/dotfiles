@@ -21,7 +21,7 @@ _link_file() {
     _is_dir="$_scripts/../$1"
     _from_path="$_scripts/../$2"
     _to_path="$HOME/$3"
-    _backup_path="$HOME/.backup_dotfiles/$2"
+    _backup_path="$HOME/.backup_dotfiles/$3"
 
     if test ! -e "$_from_path"; then
       echo "WARNING: $_from_path does not exist"
