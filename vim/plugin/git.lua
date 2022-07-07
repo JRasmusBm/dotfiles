@@ -18,5 +18,6 @@ vim.g.diffopt = require("jrasmusbm.utils.options").list {
   "internal",
   "hiddenoff",
 }
+vim.g.fugitive_git_executable = "g"
 
 vim.g.fugitive_gitlab_domains = {}

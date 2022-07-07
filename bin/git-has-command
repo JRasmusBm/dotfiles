@@ -2,9 +2,38 @@
 
 set -e
 
+_GIT_OPTIONS='
+--version
+--help
+-C
+-c
+--config-env
+--exec-path
+--html-path
+--man-path
+--info-path
+-p
+--paginate
+-P
+--no-pager
+--git-dir
+--work-tree
+--namespace
+--super-prefix
+--bare
+--no-replace-objects
+--literal-pathspecs
+--glob-pathspecs
+--noglob-pathspecs
+--icase-pathspecs
+--no-optional-locks
+--list-cmds
+'
+
 _git_has_command() {
   (
-    if test "$1" = '--no-pager'; then
+    _matching_portion="$(echo "$1" | awk -F'[ =]' '{print $1}')"
+    if echo "$_GIT_OPTIONS" | grep -qP "^$_matching_portion$"; then
       return 0
     fi
 
