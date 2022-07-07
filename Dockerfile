@@ -19,4 +19,4 @@ FROM install-container
 
 COPY . .
 
-RUN ./setup.sh
+RUN sh scripts/symlink
