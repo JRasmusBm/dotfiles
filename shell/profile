@@ -3,7 +3,6 @@
 # exists.
 # see /usr/share/doc/bash/examples/startup-files for examples.
 # the files are located in the bash-doc package.
-
 # the default umask is set in /etc/profile; for setting the umask
 # for ssh logins, install and configure the libpam-umask package.
 #umask 022
@@ -13,7 +12,6 @@ unset QT_IM_MODULES
 
 export DOTFILES="$HOME/dotfiles"
 export PIP_REQUIRE_VIRTUALENV=true # use --isolated to bypass
-
 
 # if running bash
 if [ -n "$BASH_VERSION" ]; then
@@ -27,14 +25,19 @@ fi
 
 export D8_PATH=$HOME/.cache/v8/v8/out/x64.release/
 
-if type xmodmap 2> /dev/null ; then
+if type xmodmap >/dev/null; then
   xmodmap -e "keysym Caps_Lock = Escape"
   xmodmap -e "clear lock"
 fi
 
-if type xset 2> /dev/null ; then
+if type xset >/dev/null; then
   xset r rate 150 25
 fi
 
-test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
-test -f "$HOME/.rover/env" && . "$HOME/.rover/env"
+if test -f "$HOME/.cargo/env"; then
+  . "$HOME/.cargo/env"
+fi
+
+if test -f "$HOME/.rover/env"; then
+  . "$HOME/.rover/env"
+fi
