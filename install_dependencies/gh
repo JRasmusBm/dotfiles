@@ -3,6 +3,12 @@
 set -e
 
 _install_git_cli() {
+  sudo apt install wget -y
+
+  if ! type git > /dev/null ; then
+    idep git
+  fi
+
   TEMP_DEB="$(mktemp)"
   GH_VERSION="$(gh release --repo cli/cli list | awk 'NR==1 {print $3}')"
   wget -O "$TEMP_DEB" https://github.com/cli/cli/releases/download/v"$GH_VERSION"/gh_"$GH_VERSION"_linux_amd64.deb

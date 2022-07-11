@@ -1,0 +1,16 @@
+#!/bin/sh
+
+set -e
+
+_verify_installation() {
+  . "$HOME/.profile"
+  echo "$INSTALL_COMMAND"
+
+  if test -n "$INSTALL_COMMAND"; then
+    $INSTALL_COMMAND
+  fi
+
+  $VERIFY_COMMAND
+}
+
+_verify_installation "$@"

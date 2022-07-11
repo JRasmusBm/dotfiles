@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 as install-container
+FROM ubuntu:20.04 as new-user
 
 RUN apt-get update && \
       apt-get -y install sudo
@@ -11,12 +11,15 @@ RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN adduser --disabled-password --gecos '' docker
 RUN adduser docker sudo
 RUN echo '%sudo ALL=(ALL) NOPASSWD:ALL' >> /etc/sudoers
-RUN su - docker
 
+
+FROM new-user as symlinked
+
+USER docker
 WORKDIR /home/docker/dotfiles
-
-FROM install-container
 
 COPY . .
 
 RUN sh scripts/symlink
+
+CMD ["./scripts/verify_installation"]

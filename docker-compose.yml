@@ -1,11 +1,19 @@
 version: "3"
 
 services:
-
-  install_all:
-    container_name: install-test-workstation
+  has_idep:
     build: .
-    image: install-test
-    command:
-        sh -c "python --version"
+    environment:
+      - VERIFY_COMMAND=type idep
 
+  has_git:
+    build: .
+    environment:
+      - VERIFY_COMMAND=type git
+      - INSTALL_COMMAND=idep git
+
+  has_gh:
+    build: .
+    environment:
+      - VERIFY_COMMAND=test "$(gh --version)" = "gh release --repo cli/cli list | awk 'NR==1 {print $3}'" 
+      - INSTALL_COMMAND=idep gh
