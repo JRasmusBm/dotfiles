@@ -37,6 +37,13 @@ bindsym XF86AudioMute exec --no-startup-id pactl set-sink-mute @DEFAULT_SINK@ to
 bindsym XF86AudioMicMute exec --no-startup-id pactl set-source-mute @DEFAULT_SOURCE@ toggle && $refresh_i3status
 # }}}
 
+bindsym Mod1+p exec --no-startup-id xdotool key --clearmodifiers --window "$(xdotool getactivewindow)" aring
+bindsym Mod1+Shift+p exec --no-startup-id xdotool key --clearmodifiers --window "$(xdotool getactivewindow)" Aring
+bindsym $mod+semicolon exec --no-startup-id xdotool key --clearmodifiers odiaeresis
+bindsym $mod+colon exec --no-startup-id xdotool key --clearmodifiers Odiaeresis
+bindsym Mod1+apostrophe exec --no-startup-id xdotool key --clearmodifiers adiaresis
+bindsym Mod1+quotedbl exec --no-startup-id xdotool key --clearmodifiers adiaresis
+
 # Programs {{{
 bindsym $mod+Return exec --no-startup-id alacritty
 bindsym $mod+b exec --no-startup-id brave-browser
@@ -182,7 +189,7 @@ bindsym $mod+0 workspace number $ws10
 # }}}
 
 # Session {{{
-bindsym $mod+Shift+r reload
+bindsym $mod+Shift+r reload ; restart
 bindsym $mod+Shift+q exec --no-startup-id "i3-msg exit"
 # }}}
 
