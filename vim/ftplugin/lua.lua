@@ -189,22 +189,62 @@ require("jrasmusbm.dap.test").setup_test_debugging(
     end)
   )
       ]],
-{
-  i(1, "python"),
-  i(2, "pytest"),
-  rep(1),
-  rep(2),
-  i(3, "python -m pytest"),
-  rep(1),
-  rep(2),
-  i(4),
-  i(5),
-  i(6),
-  rep(1),
-  rep(2),
-  i(7),
-  i(8),
-}
-)
-),
-  })
+      {
+        i(1, "python"),
+        i(2, "pytest"),
+        rep(1),
+        rep(2),
+        i(3, "python -m pytest"),
+        rep(1),
+        rep(2),
+        i(4),
+        i(5),
+        i(6),
+        rep(1),
+        rep(2),
+        i(7),
+        i(8),
+      }
+    )
+  ),
+
+  s(
+    { trig = "ag", name = "augroup" },
+    fmt(
+      [[
+local {}_augroup = vim.api.nvim_create_augroup("{}", {{ clear=true }}) 
+{}
+]],
+      { i(1), rep(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ac", name = "autocmd" },
+    fmt(
+      [[
+vim.api.nvim_create_autocmd({{"{}"}}, {{
+      group={},
+      pattern={{{}}},
+      callback=function()
+        {}
+      end,
+}})
+]],
+      { i(2), i(1), i(3), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ab", name = "<abuf>" },
+    fmt([[vim.fn.expand("<abuf>"){}]], { i(0) })
+  ),
+  s(
+    { trig = "af", name = "<afile>" },
+    fmt([[vim.fn.expand("<afile>"){}]], { i(0) })
+  ),
+  s(
+    { trig = "am", name = "<amatch>" },
+    fmt([[vim.fn.expand("<amatch>"){}]], { i(0) })
+  ),
+})
