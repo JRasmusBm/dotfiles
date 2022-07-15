@@ -31,7 +31,12 @@ mappings.nmap("<Leader> fc", "<cmd>Cheat<CR>", { noremap = true })
 -- Vim search mappings
 mappings.nmap(
   "<leader>ff",
-  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({})<cr>",
+  "<cmd>lua require('jrasmusbm.telescope.git_files').git_files({ show_untracked = true })<cr>",
+  { noremap = true }
+)
+mappings.nmap(
+  "<leader>fg",
+  "<cmd>lua require('jrasmusbm.telescope.find_files').find_files({ hidden=true, no_ignore=true })<cr>",
   { noremap = true }
 )
 mappings.nmap(
@@ -67,11 +72,6 @@ mappings.nmap(
 
 -- Git search mappings
 
-mappings.nmap(
-  "<localleader>ff",
-  "<cmd>lua require('jrasmusbm.telescope.git_files').git_files({ show_untracked = true })<cr>",
-  { noremap = true }
-)
 vim.cmd [[
 command! GFiles lua require('jrasmusbm.telescope.git_files').git_files({ show_untracked = true })
 ]]
