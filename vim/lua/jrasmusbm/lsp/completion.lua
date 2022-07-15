@@ -39,23 +39,23 @@ M.setup = vim.schedule_wrap(function()
       },
     },
     sources = cmp.config.sources {
-      { name = "nvim_lsp", priority = 4, max_item_count = 20 },
+      { name = "nvim_lsp", priority = 4, max_item_count = 5 },
       { name = "luasnip", priority = 3, max_item_count = 3 },
-      { name = "path", priority = 2, max_item_count = 20 },
+      { name = "path", priority = 2, max_item_count = 3 },
       {
         name = "buffer",
         get_bufnrs = function()
           return vim.api.nvim_list_bufs()
         end,
         priority = 1,
-        max_item_count = 20,
+        max_item_count = 5,
       },
     },
   }
 
   cmp.setup.cmdline(
     "/",
-    { sources = { { name = "buffer", max_item_count = 20 } } }
+    { sources = { { name = "buffer", max_item_count = 10 } } }
   )
 
   cmp.setup.cmdline(":", {
