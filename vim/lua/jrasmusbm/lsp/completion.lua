@@ -14,7 +14,7 @@ M.setup = vim.schedule_wrap(function()
       ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
       ["<C-Space>"] = cmp.mapping(
         cmp.mapping.complete {
-          reason = cmp.ContextReason.Auto,
+config  ={          reason = cmp.ContextReason.Auto,}
         },
         { "i", "c" }
       ),
