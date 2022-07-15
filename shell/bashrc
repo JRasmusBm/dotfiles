@@ -71,3 +71,4 @@ test -f "$HOME/.config/broot/launcher/bash/br" && source "$HOME/.config/broot/la
 test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
 
 test -f "$HOME/.rover/env" && source "$HOME/.rover/env"
+test -n "$(type zoxide)" && eval "$(zoxide init bash)"
