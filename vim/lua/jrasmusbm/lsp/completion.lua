@@ -14,7 +14,7 @@ M.setup = vim.schedule_wrap(function()
       ["<C-u>"] = cmp.mapping(cmp.mapping.scroll_docs(4), { "i", "c" }),
       ["<C-Space>"] = cmp.mapping(
         cmp.mapping.complete {
-config  ={          reason = cmp.ContextReason.Auto,}
+          config = { reason = cmp.ContextReason.Auto },
         },
         { "i", "c" }
       ),
@@ -39,17 +39,17 @@ config  ={          reason = cmp.ContextReason.Auto,}
       },
     },
     sources = cmp.config.sources {
-      { name = "luasnip", priority = 1, max_item_count = 3 },
-      { name = "nvim_lsp", priority = 2, max_item_count = 20 },
+      { name = "nvim_lsp", priority = 4, max_item_count = 20 },
+      { name = "luasnip", priority = 3, max_item_count = 3 },
+      { name = "path", priority = 2, max_item_count = 20 },
       {
         name = "buffer",
         get_bufnrs = function()
           return vim.api.nvim_list_bufs()
         end,
-        priority = 3,
+        priority = 1,
         max_item_count = 20,
       },
-      { name = "path", priority = 4, max_item_count = 20 },
     },
   }
 
