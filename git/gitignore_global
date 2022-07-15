@@ -18,3 +18,4 @@ __pycache__/
 .coverage
 debug.test
 .vscode
+.ignore

@@ -6,7 +6,7 @@ False,vscode/settings.json,.config/Code/User/settings.json
 True,vim,.config/nvim
 False,git/gitconfig,.gitconfig
 False,git/gitmessage,.gitmessage
-False,git/gitignore_global,.gitignore_global
+False,git/gitignore_global,.ignore
 True,git/global_hooks,.config/git/global_hooks
 False,tmux/tmux.conf,.tmux.conf
 False,shell/bashrc,.bashrc
