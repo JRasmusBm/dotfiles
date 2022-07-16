@@ -8,6 +8,7 @@
   excludesfile = "~/.ignore"
   hooksPath = "~/.config/git/global_hooks"
   preloadindex = true
+  mergeoptions = --no-edit
 [init]
   defaultBranch = main
 [diff]
