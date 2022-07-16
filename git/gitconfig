@@ -7,6 +7,7 @@
   whitespace = blank-at-eol,tab-in-indent
   excludesfile = "~/.ignore"
   hooksPath = "~/.config/git/global_hooks"
+  preloadindex = true
 [init]
   defaultBranch = main
 [diff]
