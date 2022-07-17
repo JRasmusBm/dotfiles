@@ -21,6 +21,7 @@ alias ac="source ./.venv/bin/activate"
 alias ls="my-ls"
 alias grep='my-grep'
 alias da="deactivate"
+alias cdr='cd `cd-root`'
 
 # History {{{
 shopt -s histappend

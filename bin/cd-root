@@ -1,0 +1,34 @@
+#!/bin/sh
+
+set -e
+
+_cd_repo_root() {
+  (
+  _dir="$(pwd)" 
+
+  if test -d "$_dir/.git" -o "$_dir" = "$HOME" ; then
+    echo "$_dir"
+    return 0
+  fi
+
+  cd ..
+
+  _cd_repo_root
+)
+}
+
+_cd_tmux_root() {
+  (
+  : 
+)
+}
+
+_cd_root() {
+  if test -n "$TMUX" ; then
+    _cd_tmux_root
+  else
+    _cd_repo_root
+  fi
+}
+
+_cd_root "$@"

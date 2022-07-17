@@ -12,6 +12,7 @@ alias "ac"="source ./.venv/bin/activate"
 alias "ls"="my-ls"
 alias "grep"='my-grep'
 alias "da"="deactivate"
+alias "cdr"='cd `cd-root`'
 
 alias ssh="ssh -R 127.0.0.1:2222:127.0.0.1:22"
 
