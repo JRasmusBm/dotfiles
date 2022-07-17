@@ -2,8 +2,13 @@
 
 set -e
 
+_line="$1"
+if test "$_line" = '0' ; then
+ _line='10'
+fi
+
 file_name=$HOME/.tmux-speeddial
-session_name=$(head -"$1" <"$file_name" | tail -1)
+session_name=$(head -"$_line" <"$file_name" | tail -1)
 
 if ! (tmux list-sessions | grep -q "$session_name") ; then
   root_folder="$(echo "$session_name" | xargs zoxide query)"
