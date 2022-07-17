@@ -12,8 +12,7 @@ require("dap").adapters.go = {
   port = dapPort,
   mode = "remote",
 }
-vim.g["test#go#delve#executable"] =
-  'dlv --headless test -l 127.0.0.1:38697'
+vim.g["test#go#delve#executable"] = "dlv --headless test -l 127.0.0.1:38697"
 vim.g["test#go#delve#options"] = ""
 
 require("jrasmusbm.dap.test").setup_test_debugging(
@@ -262,6 +261,20 @@ if {} {{
 {}
 ]],
       { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ch", name = "handle error" },
+    fmt(
+      [[
+if err != nil {{
+    return nil, err
+}}
+
+{}
+]],
+      { i(0) }
     )
   ),
 
