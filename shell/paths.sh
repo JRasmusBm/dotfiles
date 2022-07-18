@@ -2,7 +2,7 @@
 
 _usr='/usr'
 
-if echo "$HOME" | grep -q 'com.termux' ; then
+if echo "$HOME" | \grep -q 'com.termux' ; then
   _usr="$(realpath "$HOME/../usr")"
 fi
 
