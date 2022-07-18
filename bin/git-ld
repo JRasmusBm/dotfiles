@@ -1,0 +1,20 @@
+#!/bin/sh
+
+set -e
+
+_log_day() {
+  _days_before="${1:-0}"
+  _days_after=${2:-$(($_days_before + 1))}
+
+  _log="$(git --no-pager log \
+  --no-merges \
+  --pretty=format:'%C(bold)%s%C(reset)  %cd, %h' \
+  --date=local \
+  --after="$_days_after days ago" \
+  --before="$_days_before days ago" \
+  --author="$(git config user.name)")"
+
+   printf '%s\n' "$_log"
+}
+
+_log_day "$@"
