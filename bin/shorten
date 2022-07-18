@@ -4,7 +4,7 @@ set -e
 
 _shorten() {
   full_string="$1"
-  desired_length="$(echo "$2" - 1 | bc)"
+  desired_length="$(($2 - 1))"
 
   if test -z "$desired_length" || test "${#full_string}" -lt "$desired_length"; then
     echo "$full_string"
