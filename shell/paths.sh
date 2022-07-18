@@ -35,5 +35,6 @@ PATH="$PATH:$HOME/.poetry/bin"
 PATH="$PATH:$DOTFILES/bin"
 PATH="$PATH:$HOME/.pyenv/bin"
 PATH="$PATH:$HOME/.rover/bin"
+PATH="$PATH:$FLYCTL_INSTALL/bin"
 
 export PATH=$PATH
