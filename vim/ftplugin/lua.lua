@@ -236,6 +236,34 @@ vim.api.nvim_create_autocmd({{"{}"}}, {{
   ),
 
   s(
+    { trig = "acll", name = "auto command line length" },
+    fmt(
+      [[
+local project_files_augroup = vim.api.nvim_create_augroup("project_files", {{ clear = true }})
+
+vim.api.nvim_create_autocmd({{ "BufNew", "BufNewFile", "BufRead" }}, {{
+	group = project_files_augroup,
+	pattern = {{ "*" }},
+	callback = function()
+		if vim.o.filetype == "gitcommit" then
+		  return
+		end
+
+		vim.opt.textwidth = {}
+	end,
+}})
+
+{}
+]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "acr", name = "on read" },
+    fmt([["BufNew", "BufNewFile", "BufRead"{}]], { i(0) })
+  ),
+  s(
     { trig = "ab", name = "<abuf>" },
     fmt([[vim.fn.expand("<abuf>"){}]], { i(0) })
   ),
