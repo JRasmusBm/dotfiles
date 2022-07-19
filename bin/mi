@@ -1,0 +1,26 @@
+#!/bin/sh
+
+set -e
+
+git_merge_into_branch() {
+  _current_branch="$(git branch --show-current)"
+  selected_branch_ref=${1:-$(git branch --all --format='%(refname)' | fzf --reverse)}
+  selected_branch_ref_prefix=${selected_branch_ref#*/}
+  selected_branch_source=${selected_branch_ref_prefix%%/*}
+
+  if test "$selected_branch_source" = 'remotes'; then
+    branch_with_remote=${selected_branch_ref#refs/remotes/}
+    _target_branch="${branch_with_remote#*/}"
+  else
+    _target_branch="${selected_branch_ref#refs/heads/}"
+  fi
+
+  (
+    set -x
+    git switch "$_target_branch"
+    git merge --no-ff "$_current_branch"
+    git branch -d "$_current_branch"
+  )
+}
+
+git_merge_into_branch "$@"
