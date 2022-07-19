@@ -3,7 +3,13 @@
 set -e
 
 _my_git() {
-  g clone "git@github.com:jrasmusbm/$1.git"
+  _repo_name="${1:-"$(gh repo list -L 100000 | awk -F'[/ \t]' '{ print $2 }' | fzf)"}"
+
+  if test -z "$_repo_name" ; then
+    return 1
+  fi
+
+  g clone "git@github.com:jrasmusbm/$_repo_name.git"
 }
 
 _my_git "$@"
