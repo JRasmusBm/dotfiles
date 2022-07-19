@@ -124,6 +124,17 @@ elif {} ; then
     fmt('tmux send-keys -t "$session_name" "{}" Enter\n{}', { i(1), i(0) })
   ),
   s(
+    { trig = "tcp", name = "(python) venv tmux command" },
+    fmt('tmux send-keys -t "$session_name" "ac" Enter\n{}', { i(0) })
+  ),
+  s(
+    { trig = "tcn", name = "(node) nvm tmux command" },
+    fmt(
+      'tmux send-keys -t "$session_name" "nvm use --latest-npm {}" Enter\n{}',
+      { i(1, "16"), i(0) }
+    )
+  ),
+  s(
     { trig = "tv", name = "tmux vertical split" },
     fmt('tmux split-window -t "$session_name" -h\n{}', { i(0) })
   ),
