@@ -445,3 +445,6 @@
 [submodule "vim-startuptime"]
 	path = vim/pack/bundle/opt/vim-startuptime
 	url = git@github.com:dstein64/vim-startuptime.git
+[submodule "telescope-ui-select.nvim"]
+	path = vim/pack/bundle/opt/telescope-ui-select.nvim
+	url = git@github.com:nvim-telescope/telescope-ui-select.nvim.git
