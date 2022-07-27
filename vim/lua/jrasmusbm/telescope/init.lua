@@ -1,5 +1,6 @@
 vim.cmd [[
 packadd telescope-dap.nvim
+packadd telescope-ui-select.nvim
 ]]
 
 local actions = require "telescope.actions"
@@ -23,12 +24,20 @@ require("telescope").setup {
       },
     },
   },
-  extensions = { fzy_native = { override_file_sorter = true } },
+  extensions = {
+    fzy_native = { override_file_sorter = true },
+    ["ui-select"] = {
+      require("telescope.themes").get_dropdown {
+        -- even more opts
+      },
+    },
+  },
 }
 
 if not require("jrasmusbm.compat").in_termux() then
   require("telescope").load_extension "fzy_native"
 end
 require("telescope").load_extension "dap"
+require("telescope").load_extension "ui-select"
 
 require("jrasmusbm.dap.keymaps").telescope_mappings()
