@@ -22,10 +22,6 @@ ls.add_snippets("lua", {
     fmt("local {} = require('{}')\n{}", { i(1), rep(1), i(0) })
   ),
 
-  s(
-    { trig = "lf", name = "lua file" },
-    fmt("local M = {{}}\n\n{}\n\nreturn M{}", { i(1), i(0) })
-  ),
   s({ trig = "lb", name = "log breakpoint" }, {
     t { "print(", "\t" },
     t { "vim.inspect({", "\t\t" },

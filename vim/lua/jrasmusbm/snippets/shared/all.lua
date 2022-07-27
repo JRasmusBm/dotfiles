@@ -82,7 +82,7 @@ fi
 
 cd -
   ]],
-      {d(1, ls_utils.file_name, {}) , i(0) }
+      { d(1, ls_utils.file_name, {}), i(0) }
     )
   ),
 
@@ -125,5 +125,13 @@ cd -
     )
   ),
 
-  s({ trig = "!gop", name = "go package" }, fmt("package {}\n\n{}", { i(1), i(0) })),
+  s(
+    { trig = "!gop", name = "go package" },
+    fmt("package {}\n\n{}", { i(1), i(0) })
+  ),
+
+  s(
+    { trig = "!lua", name = "lua file" },
+    fmt("local M = {{}}\n\n{}\n\nreturn M{}", { i(1), i(0) })
+  ),
 })
