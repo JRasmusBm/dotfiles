@@ -17,7 +17,9 @@ _persist_layout() {
 }
 
 _update_xrandr() {
-  if test "$1" = 'home'; then
+  if test "$1" = 'stream'; then
+    xrandr --output 'HDMI-1' --auto --right-of eDP-1
+  elif test "$1" = 'home'; then
     xrandr --output 'HDMI-1' --auto --right-of eDP-1
   elif test "$1" = 'laptop'; then
     xrandr --output 'HDMI-1' --off
@@ -25,7 +27,9 @@ _update_xrandr() {
 }
 
 _update_fsize() {
-  if test "$1" = 'home'; then
+  if test "$1" = 'stream'; then
+    fsize 20
+  elif test "$1" = 'home'; then
     fsize 11
   elif test "$1" = 'laptop'; then
     fsize 14
@@ -54,7 +58,7 @@ _set_layout() {
     return 0
   fi
 
-  _supported_layouts='(laptop|home)'
+  _supported_layouts='(laptop|home|stream)'
   _layout="$1"
 
   if ! _matches_option "$_supported_layouts" "$_layout"; then
