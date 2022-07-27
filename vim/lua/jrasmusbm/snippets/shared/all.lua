@@ -1,8 +1,10 @@
 local ls = require "luasnip"
 
+local ls_utils = require "jrasmusbm.snippets.utils"
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
+local d = ls.dynamic_node
 local rep = require("luasnip.extras").rep
 
 ls.add_snippets("all", {
@@ -54,7 +56,7 @@ _{} "$@"
 
 set -e
 
-folder_path="$(dirname "$(realpath "$0")")"
+folder_path="{}"
 session_name="$(tmux-session-name-from-path "$folder_path")"
 
 cd "$folder_path"
@@ -80,7 +82,7 @@ fi
 
 cd -
   ]],
-      { i(0) }
+      {d(1, ls_utils.file_name, {}) , i(0) }
     )
   ),
 
