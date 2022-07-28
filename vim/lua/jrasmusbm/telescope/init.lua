@@ -5,6 +5,7 @@ packadd telescope-ui-select.nvim
 
 local actions = require "telescope.actions"
 local custom_actions = require "jrasmusbm.telescope.custom_actions"
+local feedkeys = require("jrasmusbm.utils.mappings").feedkeys
 
 require("telescope").setup {
   defaults = {
@@ -21,12 +22,12 @@ require("telescope").setup {
       i = {
         ["<C-x>"] = false,
         ["<C-q>"] = actions.send_to_qflist,
-        ["<c-i>"] = custom_actions.paste,
+        ["<c-\\>"] = custom_actions.insert_selection,
       },
       n = {
         ["<c-r>"] = require("jrasmusbm.telescope.refresh").refresh,
         ["<C-q>"] = actions.send_to_qflist,
-        ["<c-i>"] = custom_actions.paste,
+        ["<c-\\>"] = custom_actions.insert_selection,
       },
     },
   },
@@ -39,6 +40,17 @@ require("telescope").setup {
     },
   },
 }
+
+vim.api.nvim_create_user_command("T", function(opts)
+  local command = opts.fargs[1]
+  if command[1] ~= ";" then
+    command = "<localleader>" .. command
+  end
+
+  feedkeys(command)
+end, { nargs = 1 })
+
+vim.keymap.set({ "i" }, "<C-\\>", ":T ", {})
 
 if not require("jrasmusbm.compat").in_termux() then
   require("telescope").load_extension "fzy_native"

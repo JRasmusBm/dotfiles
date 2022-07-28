@@ -33,4 +33,12 @@ M.xmap = function(left, right, opts)
   map_wrapper("x", left, right, opts)
 end
 
+M.feedkeys = function(keys)
+  vim.api.nvim_feedkeys(
+    vim.api.nvim_replace_termcodes(keys, true, false, true),
+    "",
+    false
+  )
+end
+
 return M
