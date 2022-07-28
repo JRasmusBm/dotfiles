@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+_make_new_gh_repo() {
+  if test -n "$1" ; then
+    mkdir "$1"
+    cd "$1"
+  fi
+
+  g init
+  g first --no-verify
+  gh repo create --source . --remote origin --private
+  g pup --no-verify
+  g repo
+}
+
+_make_new_gh_repo "$@"
