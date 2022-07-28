@@ -8,7 +8,17 @@ local extract_value_to_insert = function(selection)
     return selection[1]
   end
 
-  return selection.insert_as or selection.id or selection.name
+  local value = selection.insert_as
+    or selection.id
+    or selection.name
+    or selection.display
+
+  if value == nil then
+    print(vim.inspect(selection))
+    error "Could not extract_value_to_insert! See selection above"
+  end
+
+  return value
 end
 
 local inject_substring = function(original, substring, index)
@@ -48,8 +58,9 @@ end
 -- The value to insert is determined in the following order:
 --   1. If the selection is a string, insert that string
 --   2. The `insert_as` field, if set.
---   2. The `id` field, if set.
+--   3. The `id` field, if set.
 --   4. The `name` field, if set.
+--   5. The `display` field, if set.
 M.insert_selection = function(prompt_bufnr)
   actions.close(prompt_bufnr)
 
