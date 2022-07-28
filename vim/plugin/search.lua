@@ -152,6 +152,22 @@ mappings.nmap(
   { noremap = true }
 )
 
+vim.keymap.set({ "i" }, "<C-\\><C-I>", function()
+  require("jrasmusbm.telescope.git_issues").git_issues()
+end, {})
+
+vim.keymap.set({ "i" }, "<C-\\><C-P>", function()
+  require("jrasmusbm.telescope.git_pull_requests").git_pull_requests()
+end, {})
+
+vim.keymap.set({ "i" }, "<C-\\><C-F>", function()
+  require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }
+end, {})
+
+vim.keymap.set({ "i" }, "<C-\\><C-H>", function()
+  require("telescope.builtin").help_tags()
+end, {})
+
 mappings.nmap("<C-O>", "<C-O>zz", { noremap = true })
 mappings.nmap("<C-I>", "<C-I>zz", { noremap = true })
 

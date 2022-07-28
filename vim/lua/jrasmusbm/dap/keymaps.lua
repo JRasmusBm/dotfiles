@@ -84,7 +84,6 @@ M.telescope_mappings = function()
   vim.keymap.set({ "n" }, "<leader>i<enter>", function()
     require("telescope").extensions.dap.configurations {}
   end, { noremap = true })
-
 end
 
 return M

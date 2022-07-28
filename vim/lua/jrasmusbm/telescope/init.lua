@@ -41,17 +41,6 @@ require("telescope").setup {
   },
 }
 
-vim.api.nvim_create_user_command("T", function(opts)
-  local command = opts.fargs[1]
-  if command[1] ~= ";" then
-    command = "<localleader>" .. command
-  end
-
-  feedkeys(command)
-end, { nargs = 1 })
-
-vim.keymap.set({ "i" }, "<C-\\>", ":T ", {})
-
 if not require("jrasmusbm.compat").in_termux() then
   require("telescope").load_extension "fzy_native"
 end
