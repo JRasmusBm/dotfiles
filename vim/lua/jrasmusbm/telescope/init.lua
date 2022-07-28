@@ -4,6 +4,7 @@ packadd telescope-ui-select.nvim
 ]]
 
 local actions = require "telescope.actions"
+local custom_actions = require "jrasmusbm.telescope.custom_actions"
 
 require("telescope").setup {
   defaults = {
@@ -17,10 +18,15 @@ require("telescope").setup {
       preview_cutoff = 120,
     },
     mappings = {
-      i = { ["<C-x>"] = false, ["<C-q>"] = actions.send_to_qflist },
+      i = {
+        ["<C-x>"] = false,
+        ["<C-q>"] = actions.send_to_qflist,
+        ["<c-i>"] = custom_actions.paste,
+      },
       n = {
         ["<c-r>"] = require("jrasmusbm.telescope.refresh").refresh,
         ["<C-q>"] = actions.send_to_qflist,
+        ["<c-i>"] = custom_actions.paste,
       },
     },
   },
