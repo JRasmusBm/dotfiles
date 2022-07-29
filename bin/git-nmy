@@ -8,8 +8,11 @@ _make_new_gh_repo() {
     cd "$1"
   fi
 
-  g init
-  g first --no-verify
+  if ! test -d './.git' ; then
+    g init
+    g first --no-verify
+  fi
+  
   gh repo create --source . --remote origin --private
   g pup --no-verify
   g repo
