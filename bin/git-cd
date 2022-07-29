@@ -4,12 +4,17 @@ set -e
 
 _git_clone() {
   (
-    _repo_name="${1#*/}" 
+    _url="$(g hu "$1")"
+
+    _repo_name="${_url#*/}" 
     _repo_name="${_repo_name%.*}" 
 
-    git clone "$@"
 
+    set -x
+    git clone "$_url"
     cd "$_repo_name"
+    set +x
+
     my-tmux
   )
 }
