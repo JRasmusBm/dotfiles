@@ -3,9 +3,10 @@
 set -e
 
 git_submodule_add() {
+    _url="$(g hu "$1")"
   (
     set -x
-    g submodule add "$@"
+    g submodule add "$_url"
   )
 }
 
