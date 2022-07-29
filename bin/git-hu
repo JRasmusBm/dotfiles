@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+_github_url() {
+  _url="$1"
+
+  if echo "$_url" | grep -qPv "\.git$" ; then
+    _url="$_url.git"
+  fi
+
+  if echo "$_url" | grep -qPv "@" ; then
+    _url="git@github.com:$_url"
+  fi
+  
+  echo "$_url"
+}
+
+_github_url "$@"

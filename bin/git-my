@@ -9,7 +9,7 @@ _my_git() {
     return 1
   fi
 
-  g clone "git@github.com:jrasmusbm/$_repo_name.git"
+  g cd "git@github.com:jrasmusbm/$_repo_name.git"
 }
 
 _my_git "$@"
