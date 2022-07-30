@@ -1,11 +1,20 @@
 #!/bin/sh
 
-set -e
+set -ex
 
 git_wip_everything() {
+  if test "$1" = 'c'; then
+    shift
+  else
+    (
+      set -x
+      git add --all
+    )
+  fi
+
   (
     set -x
-    git add --all && git commit --no-verify -m "WIP" "$@"
+    git commit --no-verify -m "WIP" "$@"
   )
 }
 
