@@ -59,6 +59,26 @@ ADD COLUMN {},
   ),
 
   s(
+    { trig = "bac", name = "alter column" },
+    fmt(
+      [[
+ALTER COLUMN {},
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "bact", name = "alter column type" },
+    fmt(
+      [[
+ALTER COLUMN {} SET TYPE {} USING {},
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
     { trig = "be", name = "new enum" },
     fmt(
       [[
@@ -181,7 +201,7 @@ BOOLEAN{}
 FOREIGN KEY ({}) REFERENCES {} ({}),
 {}
 ]],
-      {i(1), i(2), i(3), i(0)}
+      { i(1), i(2), i(3), i(0) }
     )
   ),
 
@@ -192,7 +212,7 @@ FOREIGN KEY ({}) REFERENCES {} ({}),
 CONSTRAINT {} PRIMARY KEY ({}),
 {}
 ]],
-      {i(1), i(2), i(0)}
+      { i(1), i(2), i(0) }
     )
   ),
 
