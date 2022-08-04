@@ -271,4 +271,15 @@ vim.api.nvim_create_autocmd({{ "BufNew", "BufNewFile", "BufRead" }}, {{
     { trig = "am", name = "<amatch>" },
     fmt([[vim.fn.expand("<amatch>"){}]], { i(0) })
   ),
+
+  s(
+    { trig = "igb", name = "ignore git branch" },
+    fmt(
+      [[
+vim.g["jrasmusbm#git#log_excludes"] = "--exclude=refs/remotes/origin/{}"
+{}
+]],
+      { i(1), i(0) }
+    )
+  ),
 })
