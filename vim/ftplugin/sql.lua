@@ -257,6 +257,16 @@ SELECT {} FROM {};
   ),
 
   s(
+    { trig = "bd", name = "delete" },
+    fmt(
+      [[
+DELETE FROM {} WHERE {};
+]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
     { trig = "bw", name = "where" },
     fmt(
       [[
