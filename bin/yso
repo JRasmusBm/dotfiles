@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+_yank_standard_out() {
+  "$@" 2> /dev/null | xclip -sel c
+}
+
+_yank_standard_out "$@"
