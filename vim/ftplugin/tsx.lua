@@ -18,8 +18,8 @@ ls.add_snippets("tsx", {
   s(
     { trig = "rc", name = "react component" },
     fmt(
-      "interface {}Props {{\n  {}\n}}\n\nconst {}: React.FC<{}Props> = ({{{}}}) => {{\n  return ({})\n}}",
-      { rep(1), i(2), i(1), rep(1), i(3), i(0, "null") }
+      "interface {}Props {{\n  {}\n}}\n\nfunction {}({{{}}}: {}Props) {{\n  return ({})\n}}",
+      { rep(1), i(2), i(1), i(3), rep(1), i(0, "null") }
     )
   ),
 })
