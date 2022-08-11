@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_git_amend_fixup() {
+  (
+    set -x
+    git commit --amend --no-edit
+  )
+}
+
+_git_amend_fixup "$@"
