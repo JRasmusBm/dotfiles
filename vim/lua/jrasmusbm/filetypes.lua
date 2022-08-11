@@ -1,6 +1,6 @@
 local M = {}
 
-M.css = { "css" }
+M.css = { "css", "scss" }
 M.go = { "go" }
 M.html = { "html" }
 M.javascript = { "javascript" }
