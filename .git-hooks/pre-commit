@@ -1,4 +1,12 @@
 #!/bin/sh
 
-g status --porcelain | grep -P '^(M|A).*\.lua$' | awk '{ print $2 }' | xargs -n 1 stylua
-g status --porcelain | grep -P '^(M|A).*\.lua$' | awk '{ print $2 }' | xargs git add
+set -e
+
+(
+  _file_names="$(g status --porcelain | grep -P '^(M|A).*\.lua$' | awk '{ print $2 }')"
+
+  if test -n "$_file_names"; then
+    echo "$_file_names" | xargs -n 1 stylua
+    echo "$_file_names" | xargs git add
+  fi
+)
