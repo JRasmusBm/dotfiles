@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_generate_uuid() {
+  (
+    n=${1:-1}
+    curl "uuid4.com/?count=$n" 2> /dev/null
+  )
+}
+
+_generate_uuid "$@"
