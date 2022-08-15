@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+_fza() {
+  data="$(cat)"
+
+  if test "$1" = '--filter-command'; then
+    data="$(echo "$data" | grep -v "$($2)")"
+    shift 2
+  fi
+
+  selection="$(printf '%s\nq' "$data" | fzf "$@")"
+
+  if test "$selection" = 'q'; then
+    exit 0
+  fi
+
+  echo "$selection" >/dev/stdout
+  echo "$data" | grep -v "$selection" | _fza "$@"
+}
+
+_fza "$@"
