@@ -44,7 +44,7 @@ _all_sessions() {
     fi
   done
 
-  if test "$(echo "$selected_session_path" | wc -l)" != '1' ; then
+  if test "$(echo "$selected_session_path" | wc -l)" != '1'; then
     echo 'FOUND DUPLICATES:'
     echo "$selected_session_path"
   fi
@@ -52,6 +52,48 @@ _all_sessions() {
   selected_session_path="$(echo "$selected_session_path" | head -1)"
 
   _start_project "$selected_session_path"
+}
+
+_multiple_sessions() {
+  if test -z "$JRASMUSBM_PROJECTS"; then
+    echo '$JRASMUSBM_PROJECTS must be set'
+    exit 1
+  fi
+
+  _possible_sessions=""
+
+  _possible_sessions="$(echo "$JRASMUSBM_PROJECTS" | while read -r _folder; do
+    if test -d "$_folder"; then
+      for _project in "$_folder"/*; do
+        echo "$_project"
+      done
+    fi
+  done)"
+
+  tmux_session_names="$(echo "$_possible_sessions\n$(tmux-active-sessions)" | xargs -n 1 tmux-session-name-from-path)"
+
+  echo "$tmux_session_names" | sort -u | fza --filter-command 'tmux-active-sessions' --reverse --preview 'tmux-active-sessions' | while read -r _selected_session; do
+    selected_session_path=""
+    for _path in $_possible_sessions; do
+      _derived_session_name="$(tmux-session-name-from-path "$_path")"
+      if test "$_derived_session_name" = "$_selected_session"; then
+        if test -n "$selected_session_path"; then
+          selected_session_path="$selected_session_path\n"
+        fi
+
+        selected_session_path="$selected_session_path$_path"
+      fi
+    done
+
+    if test "$(echo "$selected_session_path" | wc -l)" != '1'; then
+      echo 'FOUND DUPLICATES:'
+      echo "$selected_session_path"
+    fi
+
+    selected_session_path="$(echo "$selected_session_path" | head -1)"
+
+    INITIATED_EXTERNALLY=true _start_project "$selected_session_path"
+  done
 }
 
 _open_and_filtered_sessions() {
@@ -67,6 +109,8 @@ _open_and_filtered_sessions() {
 _tmux_attach() {
   if test "$1" = 'all'; then
     _all_sessions
+  elif test "$1" = 'x' -o "$1" = 'multiple'; then
+    _multiple_sessions
   elif test -n "$1"; then
     tmux-attach-to-session "$1"
   else
