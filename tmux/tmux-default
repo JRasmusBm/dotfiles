@@ -14,4 +14,6 @@ if ! tmux has-session -t="$session_name" 2>/dev/null; then
   tmux send-keys -t "$session_name" "g" Enter
 fi
 
-tmux-attach-to-session "$session_name:vim"
+if test "$INITIATED_EXTERNALLY" != 'true'; then
+  tmux-attach-to-session "$session_name:vim"
+fi

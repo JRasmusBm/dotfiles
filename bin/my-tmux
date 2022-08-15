@@ -18,5 +18,5 @@ fi
 if [[ -n "$@" ]]; then
   env SSH_AUTH_SOCK=$SOCK_SYMLINK tmux "$@"
 else
-  INITIATED_EXTERNALLY=false source_tmux_script "$(pwd)/.tmux"
+  INITIATED_EXTERNALLY=${INITIATED_EXTERNALLY:-false} source_tmux_script "$(pwd)/.tmux"
 fi

@@ -39,7 +39,7 @@ source_tmux_script() {
     return
   fi
 
-  default_tmux_session
+  INITIATED_EXTERNALLY="$INITIATED_EXTERNALLY" default_tmux_session
 }
 
 source_tmux_script "$@"
