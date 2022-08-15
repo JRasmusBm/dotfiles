@@ -17,4 +17,4 @@ if ! (tmux list-sessions | grep -q "$session_name") ; then
   return 0
 fi
 
-ta "$session_name:vim" || ta "$session_name" || true
+tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
