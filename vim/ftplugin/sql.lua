@@ -267,6 +267,18 @@ DELETE FROM {} WHERE {};
   ),
 
   s(
+    { trig = "bu", name = "update" },
+    fmt(
+      [[
+UPDATE {}
+  SET {}
+  WHERE {};
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
     { trig = "bw", name = "where" },
     fmt(
       [[
