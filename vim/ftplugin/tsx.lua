@@ -1,3 +1,7 @@
+vim.cmd [[
+execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/react.vim"
+]]
+
 require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
 
 local ls = require "luasnip"
@@ -24,7 +28,7 @@ ls.add_snippets("tsx", {
   ),
 })
 
-ls_utils.load_shared({filetype = "tsx", shared = "html"})
-ls_utils.load_shared({filetype = "tsx", shared = "css"})
-ls_utils.load_shared({filetype = "tsx", shared = "graphql"})
-ls_utils.load_shared({filetype = "tsx", shared = "react"})
+ls_utils.load_shared { filetype = "tsx", shared = "html" }
+ls_utils.load_shared { filetype = "tsx", shared = "css" }
+ls_utils.load_shared { filetype = "tsx", shared = "graphql" }
+ls_utils.load_shared { filetype = "tsx", shared = "react" }
