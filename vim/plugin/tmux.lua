@@ -10,6 +10,8 @@ vim.g.vtr_filetype_runner_overrides = {
   go = "go run {file}",
 }
 
+mappings.nmap("<localleader>tQ", ":VtrSendCtrlD<CR>")
+mappings.nmap("<localleader>tq", ":VtrSendCtrlC<CR>")
 mappings.nmap("<localleader>tc", ":VtrSendCommandToRunner<Space>")
 mappings.nmap("<localleader>ta", ":VtrAttach<Space>")
 mappings.nmap("<localleader>to", ":VtrOpenRunner<CR>")
