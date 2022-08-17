@@ -21,8 +21,11 @@ _update_xrandr() {
     xrandr --output 'HDMI-1' --auto --right-of eDP-1
   elif test "$1" = 'home'; then
     xrandr --output 'HDMI-1' --auto --right-of eDP-1
+  elif test "$1" = 'doktor'; then
+    xrandr --output 'DP-1-1' --auto --right-of eDP-1
   elif test "$1" = 'laptop'; then
     xrandr --output 'HDMI-1' --off
+    xrandr --output 'DP-1-1' --off
   fi
 }
 
@@ -31,6 +34,8 @@ _update_fsize() {
     fsize 20
   elif test "$1" = 'home'; then
     fsize 11
+  elif test "$1" = 'doktor'; then
+    fsize 12
   elif test "$1" = 'laptop'; then
     fsize 14
   fi
@@ -58,7 +63,7 @@ _set_layout() {
     return 0
   fi
 
-  _supported_layouts='(laptop|home|stream)'
+  _supported_layouts='(laptop|home|stream|doktor)'
   _layout="$1"
 
   if ! _matches_option "$_supported_layouts" "$_layout"; then
