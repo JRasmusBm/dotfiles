@@ -104,6 +104,18 @@ return {
   }),
 
   s(
+    { trig = "doc", name = "jsdoc" },
+    fmt(
+      [[
+/**
+ * {}
+ */
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
     { trig = "vl", name = "let" },
     fmt("let {} = {}\n{}", { i(1), i(2), i(0) })
   ),
