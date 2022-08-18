@@ -1,0 +1,46 @@
+#!/bin/sh
+
+set -e
+
+_git_restack_all() {
+  (
+    branches_to_restack="$(gt log short -c | awk '/needs restack/ { print $3 }')"
+
+    if test -z "$branches_to_restack"; then
+      echo "No branches to restack! ✅" >/dev/stderr
+      exit 0
+    fi
+
+    original_branch="$(git branch --show-current)"
+    needs_stash=$(git is-clean || echo "yes")
+
+    if test -n "$needs_stash"; then
+      (
+        set -x
+        git stash push -u
+      )
+    fi
+
+    echo "$branches_to_restack" | while read -r stack; do
+      (
+        set -x
+        git switch "$stack"
+        gt stack restack
+      )
+    done
+
+    (
+      set -x
+      git switch "$original_branch"
+    )
+    if test -n "$needs_stash"; then
+      echo "Applying autostash." >>/dev/stderr
+      (
+        set -x
+        git stash pop
+      )
+    fi
+  )
+}
+
+_git_restack_all "$@"
