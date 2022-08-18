@@ -1,5 +1,6 @@
 local M = {}
 
+local edit_utils = require "jrasmusbm.utils.edit"
 local actions = require "telescope.actions"
 local action_state = require "telescope.actions.state"
 
@@ -34,14 +35,6 @@ local inject_substring = function(original, substring, index)
     .. string.sub(original, index + 1, #original + 2)
 end
 
-local feedkeys = function(keys)
-  vim.api.nvim_feedkeys(
-    vim.api.nvim_replace_termcodes(keys, true, false, true),
-    "",
-    false
-  )
-end
-
 local move_cursor_in_insert_mode = function(row, col, column_steps)
   local new_column = col + column_steps
 
@@ -51,9 +44,8 @@ local move_cursor_in_insert_mode = function(row, col, column_steps)
 
   vim.api.nvim_win_set_cursor(0, { row, new_column })
 
-  feedkeys "<Esc>a"
+  edit_utils.feedkeys "<Esc>a"
 end
-
 -- Enters insert mode and inserts the current selection.
 -- The value to insert is determined in the following order:
 --   1. If the selection is a string, insert that string
