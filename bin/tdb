@@ -1,0 +1,22 @@
+#!/bin/sh
+
+set -e
+
+_run_temp_db() {
+  (
+    session_name="$(tmux-session-name-from-path)"
+
+    tmux split-window -t "$session_name"
+    tmux select-pane -U
+    tmux swap-pane -D
+    
+    tmux send-keys -t "$session_name" "$(echo "./temp_db" "$@")" Enter
+
+    tmux select-pane -U
+    tmux send-keys -t "$session_name" "nvim -c 'VtrAttach 1' temp.sql" Enter
+
+
+  )
+}
+
+_run_temp_db "$@"
