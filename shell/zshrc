@@ -214,5 +214,6 @@ bindkey -s "7" 'tmux-speeddial 7'
 bindkey -s "8" 'tmux-speeddial 8'
 bindkey -s "9" 'tmux-speeddial 9'
 bindkey -s "0" 'tmux-speeddial 10'
+bindkey -s "" 'ta'
 bindkey -s "" 'ta all'
 bindkey -s "" 'tk'
