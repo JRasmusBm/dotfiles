@@ -4,14 +4,6 @@ set -e
 
 _git_restack_all() {
   (
-    branches_to_restack="$(gt log short -c | awk '/needs restack/ { print $3 }')"
-
-    if test -z "$branches_to_restack"; then
-      echo "No branches to restack! ✅" >/dev/stderr
-      exit 0
-    fi
-
-    original_branch="$(git branch --show-current)"
     needs_stash=$(git is-clean || echo "yes")
 
     if test -n "$needs_stash"; then
@@ -21,11 +13,34 @@ _git_restack_all() {
       )
     fi
 
+    (
+      set -x
+      gt repo sync
+    )
+    branches_to_restack="$(gt log short -c | awk '/needs restack/ { print $3 }')"
+
+    if test -z "$branches_to_restack"; then
+      echo "No branches to restack! ✅" >/dev/stderr
+
+      if test -n "$needs_stash"; then
+        echo "Applying autostash." >>/dev/stderr
+        (
+          set -x
+          git stash pop
+        )
+      fi
+
+      exit 0
+    fi
+
+    original_branch="$(git branch --show-current)"
+
     echo "$branches_to_restack" | while read -r stack; do
       (
         set -x
         git switch "$stack"
         gt stack restack
+        git push -uf origin "$(git rev-parse --abbrev-ref HEAD)" "$@"
       )
     done
 
@@ -33,6 +48,7 @@ _git_restack_all() {
       set -x
       git switch "$original_branch"
     )
+
     if test -n "$needs_stash"; then
       echo "Applying autostash." >>/dev/stderr
       (
