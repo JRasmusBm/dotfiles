@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+_git_why() {
+  (
+    git extract-section "$@" \
+      '/^\*\*Why\*\* is the change needed\?/' \
+      '### Why is the change needed?'
+  )
+}
+
+_git_why "$@"

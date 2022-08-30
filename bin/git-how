@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+_git_how() {
+  (
+    git extract-section "$@" \
+      '/^\*\*How\*\* is the need addressed\?/' \
+      '### How is the need addressed?'
+  )
+}
+
+_git_how "$@"
