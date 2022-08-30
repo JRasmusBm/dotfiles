@@ -53,7 +53,7 @@ _git_restack_all() {
         set -x
         git switch "$stack"
         gt stack restack
-        git push -uf origin "$(git rev-parse --abbrev-ref HEAD)" "$@"
+        gt stack submit --update-only
       )
     done
 
