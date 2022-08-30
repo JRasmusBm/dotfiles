@@ -1,0 +1,47 @@
+#!/bin/sh
+
+set -e
+
+_git_extract_section() {
+  (
+    if test "$1" = 'raw' -o "$1" = 'r'; then
+      shift
+      _raw='true'
+    fi
+
+    if test "$1" = 'print' -o "$1" = 'p'; then
+      shift
+      _print='true'
+    fi
+
+    _heading_matcher="$1"
+    _new_heading="$2"
+
+    if test "$_raw" != 'true'; then
+      _optionally_print_heading="; print \"$_new_heading\" \"\\n\""
+    fi
+
+    _awk_code="
+  BEGIN {
+    start=999999
+    end=999999
+  }
+
+  $_heading_matcher { start = NR + 1 $_optionally_print_heading }
+
+  /$(git headings-matcher)/ && start < NR { stop = 1 }
+
+  start < NR && stop != 1 { print \$0 }
+"
+
+    _section="$(git --no-pager log --format="%b" -1 | awk "$_awk_code" | perl -pe 'chomp if eof')"
+
+    if test "$_print" = 'true'; then
+      printf "%s" "$_section"
+    else
+      printf "%s" "$_section" | xclip -sel c
+    fi
+  )
+}
+
+_git_extract_section "$@"

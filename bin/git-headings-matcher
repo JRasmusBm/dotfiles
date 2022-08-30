@@ -1,0 +1,24 @@
+#!/bin/sh
+
+set -e
+
+_git_headings_matcher() {
+  (
+    git_template="$(
+      cat "$(
+        git config --global commit.template \
+          | sed -E "s;~;$HOME;"
+      )"
+    )"
+
+    git_headings="$(
+      echo "$git_template" \
+        | grep -vP '(^#|^$|^<\+\+>)' \
+        | sed -E 's;<\+\+>;[^ ]+;g'
+    )"
+
+    echo "$git_headings" | tr -s '\n' '|' | sed 's/.$// ; s/[*?/]/\\\0/g'
+  )
+}
+
+_git_headings_matcher "$@"

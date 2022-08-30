@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+_git_con() {
+  (
+    git extract-section "$@" \
+      '/^Concerns \/ side-effects of the changes:/' \
+      '### Concerns / side-effects of the changes:'
+  )
+}
+
+_git_con "$@"
