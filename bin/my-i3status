@@ -4,5 +4,5 @@ set -e
 
 i3status | while :; do
   read -r line
-  echo "$(pomo_status) | 🔦 $(brightness current) | $line" || exit 1
+  echo "$(theme emoji) $(layout show) | $(pomo_status) | 🔦 $(brightness current) | $line" || exit 1
 done

@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_layout() {
+  if test "$1" = 'supported'; then
+    xrandr | grep -q 'HDMI-1 connected'
+    exit $?
+  fi
+}
+
+_layout "$@"

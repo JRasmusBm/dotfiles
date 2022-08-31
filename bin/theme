@@ -18,7 +18,7 @@ _set_vscode_theme() {
 }
 
 _set_system_theme() {
-  type dconf > /dev/null && dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
+  type dconf >/dev/null && dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
 }
 
 _persist_theme() {
@@ -31,15 +31,42 @@ _set_theme() {
     return 0
   fi
 
-  if test "$1" != 'light' -a "$1" != 'dark'; then
+  if test "$1" = 'emoji'; then
+    _current_theme="$(cat "$HOME/.config/jrasmusbm/theme")"
+
+    if test "$_current_theme" = 'dark'; then
+      printf '🌚'
+    elif test "$_current_theme" = 'light'; then
+      printf '🔆'
+    else
+      printf '%s' "$_current_theme"
+    fi
+
+    return 0
+  fi
+
+  if test "$1" != 'light' -a "$1" != 'dark' -a "$1" != 'toggle'; then
     echo "Usage: _set_theme (light|dark)"
     exit 1
   fi
 
-  _set_alacritty_theme "$1"
-  _set_system_theme "$1"
-  _set_vscode_theme "$1"
-  _persist_theme "$1"
+  if test "$1" = 'toggle'; then
+    _old_theme="$(cat "$HOME/.config/jrasmusbm/theme")"
+    if test "$_old_theme" = 'dark'; then
+      _new_theme='light'
+    elif test "$_old_theme" = 'light'; then
+      _new_theme='dark'
+    fi
+  else
+    _new_theme="$1"
+  fi
+
+  _set_alacritty_theme "$_new_theme"
+  _set_system_theme "$_new_theme"
+  _set_vscode_theme "$_new_theme"
+  _persist_theme "$_new_theme"
+
+  refresh-i3status
 }
 
 _set_theme "$@"

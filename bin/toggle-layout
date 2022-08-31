@@ -1,0 +1,37 @@
+#!/bin/sh
+
+set -e
+
+_toggle_layout() {
+  (
+
+    _current_layout="$(layout show)"
+    echo "Current layout is: $_current_layout" >/dev/stderr
+
+    _supported_layouts="$(layout supported | tr -d "()" | tr -s '|' '\n')"
+    echo "Current layouts are: $_supported_layouts" >/dev/stderr
+
+    _n_layouts="$(echo "$_supported_layouts" | wc -l)"
+    echo "$_n_layouts"
+
+    _current_layout_position="$(echo "$_supported_layouts" | awk "/$_current_layout/ { print NR }")"
+    if test -z "$_current_layout_position"; then
+      _current_layout_position=0
+    fi
+    echo "Current layout position is: $_current_layout_position" >/dev/stderr
+
+    _next_layout_position="$(((_current_layout_position + 1) % (_n_layouts + 1)))"
+    if test "$_next_layout_position" = '0'; then
+      _next_layout_position=1
+    fi
+
+    echo "Next layout position is: $_next_layout_position" >/dev/stderr
+
+    _next_layout="$(echo "$_supported_layouts" | awk "NR == $_next_layout_position { print $1 }")"
+    
+    echo "$_next_layout" > /dev/stderr
+    layout "$_next_layout"
+  )
+}
+
+_toggle_layout "$@"
