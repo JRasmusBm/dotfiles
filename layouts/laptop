@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+_layout() {
+  if test "$1" = 'supported'; then
+    return 0
+  fi
+}
+
+_layout "$@"

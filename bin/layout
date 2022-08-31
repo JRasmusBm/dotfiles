@@ -24,8 +24,8 @@ _update_xrandr() {
   elif test "$1" = 'doktor'; then
     xrandr --output 'DP-1-1' --auto --right-of eDP-1
   elif test "$1" = 'laptop'; then
-    xrandr --output 'HDMI-1' --off
-    xrandr --output 'DP-1-1' --off
+    xrandr --output 'HDMI-1' --off 2>/dev/null || true
+    xrandr --output 'DP-1-1' --off 2>/dev/null || true
   fi
 }
 
@@ -55,6 +55,14 @@ _matches_option() {
   test -n "$matches"
 }
 
+_get_supported_layouts() {
+  for _path in "$DOTFILES/layouts/"*; do
+    if "$_path" 'supported'; then
+      echo "${_path##*/}"
+    fi
+  done
+}
+
 _set_layout() {
   _config_file="$HOME/.config/jrasmusbm/layout"
 
@@ -63,18 +71,25 @@ _set_layout() {
     return 0
   fi
 
-  _supported_layouts='(laptop|home|stream|doktor)'
+  _supported_layouts="($(_get_supported_layouts | tr -s '\n' '|' | sed -E 's/.$//'))"
+
+  if test "$1" = 'supported'; then
+    echo "$_supported_layouts"
+    return 0
+  fi
+
   _layout="$1"
 
   if ! _matches_option "$_supported_layouts" "$_layout"; then
-    printf 'Usage: set-layout %s\n' "$_supported_layouts"
-    exit 1
+    printf 'Usage: set-layout %s\n' "$_supported_layouts" exit 1
   fi
 
   _persist_layout "$_layout"
   _update_screenkey "$_layout"
   _update_xrandr "$_layout"
   _update_fsize "$_layout"
+
+  refresh-i3status
 }
 
 _set_layout "$@"
