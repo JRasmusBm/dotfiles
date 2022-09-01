@@ -1,1 +1,3 @@
+vim.cmd [[
 let comment=';'
+]]
