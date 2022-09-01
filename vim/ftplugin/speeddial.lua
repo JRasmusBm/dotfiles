@@ -1,3 +1,4 @@
+vim.cmd [[
 setlocal norelativenumber
 setlocal number
 
@@ -7,3 +8,4 @@ augroup Speeddial
 augroup END
 
 nnoremap <silent> <buffer>  :wq
+]]
