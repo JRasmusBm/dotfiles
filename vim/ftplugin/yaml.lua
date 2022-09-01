@@ -1,3 +1,4 @@
+vim.cmd[[
 execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/yaml.vim"
 
 function! RunFile() abort
@@ -8,3 +9,4 @@ function! RunFile() abort
 endfunction
 
 nnoremap <buffer> <leader>c :call RunFile()
+]]
