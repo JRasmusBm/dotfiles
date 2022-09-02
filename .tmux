@@ -2,22 +2,26 @@
 
 set -e
 
-previous_dir=$(pwd)
-cd "$DOTFILES"
+folder_path="$DOTFILES"
+session_name="$(tmux-session-name-from-path "$folder_path")"
 
-if ! tmux has-session -t=dotfiles 2> /dev/null; then
-    tmux new-session -d -s dotfiles -n run -x "$(tput cols)" -y "$(tput lines)"
+cd "$folder_path"
 
-    tmux new-window -n vim
-    tmux send-keys -t vim "v -c GFiles" Enter
+if ! tmux has-session -t="$session_name" 2> /dev/null ; then
+  tmux new-session -d -s "$session_name" -n run -x "$(tput cols)" -y "$(tput lines)"
 
-    tmux new-window -n cli
-    tmux send-keys -t cli "g" Enter
-    tmux send-keys -t cli "g li" Enter
+  tmux new-window -t "$session_name" -n vim
+  tmux send-keys -t "$session_name" "vim -c GFiles" Enter
+
+  tmux new-window -t "$session_name" -n cli
+  tmux send-keys -t "$session_name" "g" Enter
+  tmux send-keys -t "$session_name" "g li" Enter
 fi
 
-if test ! "$INITIATED_EXTERNALLY" = 'true'; then
-  tmux-attach-to-session dotfiles:vim
+if test ! "$INITIATED_EXTERNALLY" = 'true' ; then
+  (
+    tmux-attach-to-session "$session_name:vim"
+  )
 fi
 
-cd "$previous_dir"
+cd -
