@@ -2,6 +2,7 @@ local M = {}
 
 local ls = require "luasnip"
 local sn = ls.snippet_node
+local d = ls.dynamic_node
 local t = ls.text_node
 
 M.line_number = function(_, _)
@@ -22,6 +23,12 @@ end
 
 M.file_name = function(_, _)
   return sn(0, { t(vim.fn.expand "%:p:h") })
+end
+
+M.capitalize = function(pos, pos_to_capitalize)
+  return d(pos, function(args)
+    return sn(1, { t((args[1][1]:gsub("^%l", string.upper))) })
+  end, { pos_to_capitalize }, {})
 end
 
 M.load_shared = function(options)
