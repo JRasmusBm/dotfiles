@@ -1,7 +1,3 @@
-vim.cmd [[
-execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/react.vim"
-]]
-
 require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
 
 local ls = require "luasnip"
