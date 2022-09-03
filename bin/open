@@ -20,7 +20,12 @@ def main():
         run(["git-open", path.split(":")[1][:-4]])
         return
 
-    run(["nr", "--remote", path])
+    path_components = path.split(":")
+    if len(path_components) > 1:
+        run(["nr", f"+{path_components[1]}", "--remote", path_components[0]])
+        return
+
+    run(["nr", "--remote", path_components[0]])
 
 
 if __name__ == "__main__":
