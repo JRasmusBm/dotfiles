@@ -2,29 +2,40 @@
 
 set -e
 
-_cd_repo_root() {
-  (
-  _dir="$(pwd)" 
-
-  if test -d "$_dir/.git" -o "$_dir" = "$HOME" ; then
-    echo "$_dir"
-    return 0
-  fi
-
-  cd ..
-
-  _cd_repo_root
-)
-}
-
 _cd_tmux_root() {
   (
-  : 
-)
+    _dir="$(pwd)"
+
+    if
+      test -e "$_dir/.tmux" -o "$(tmux-session-name-from-path "$_dir")" = "$(tmux-session-name)"
+    then
+      echo "$_dir"
+      return 0
+    fi
+
+    cd ..
+
+    _cd_tmux_root
+  )
+}
+
+_cd_repo_root() {
+  (
+    _dir="$(pwd)"
+
+    if test -d "$_dir/.git" -o "$_dir" = "$HOME"; then
+      echo "$_dir"
+      return 0
+    fi
+
+    cd ..
+
+    _cd_repo_root
+  )
 }
 
 _cd_root() {
-  if test -n "$TMUX" ; then
+  if test -n "$TMUX"; then
     _cd_tmux_root
   else
     _cd_repo_root
