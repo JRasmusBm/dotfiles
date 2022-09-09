@@ -19,3 +19,5 @@ require("nvim-treesitter.configs").setup {
     move = require("jrasmusbm.treesitter.move").move,
   },
 }
+
+require("jrasmusbm.treesitter.context").setup()
