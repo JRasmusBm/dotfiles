@@ -1,4 +1,5 @@
 require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+local utils = require "telescope.utils"
 
 vim.opt.textwidth = 72
 vim.opt_local.spell = true
@@ -11,6 +12,7 @@ local ls_utils = require "jrasmusbm.snippets.utils.init"
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
+local f = ls.function_node
 
 ls.add_snippets("gitcommit", {
   s(
@@ -123,9 +125,20 @@ Co-authored-by: {} <{}>
     { trig = "ci", name = "Closes issue" },
     fmt(
       [[
-Closes: #{}
+Closes: #{}{}
   ]],
-      { i(0) }
+      {
+        f(function()
+          local branch_name = utils.get_os_command_output({
+            "git",
+            "branch",
+            "--show-current",
+          })[1]
+
+          return string.match(branch_name, "^[0-9]+")
+        end, {}, {}),
+        i(0),
+      }
     )
   ),
 
