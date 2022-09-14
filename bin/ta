@@ -52,6 +52,7 @@ _all_sessions() {
   selected_session_path="$(echo "$selected_session_path" | head -1)"
 
   _start_project "$selected_session_path"
+  tmux-attach-to-session "$(tmux-session-name-from-path "$selected_session_path")"
 }
 
 _multiple_sessions() {
