@@ -16,6 +16,7 @@ augroup ChangeFiletype
   autocmd BufNew,BufNewFile,BufRead Dockerfile* set filetype=dockerfile
   autocmd BufNew,BufNewFile,BufRead serviceworker.ts set filetype=typescript.serviceworker
   autocmd BufNew,BufNewFile,BufRead serviceworker.js set filetype=javascript.serviceworker
+  autocmd BufNew,BufNewFile,BufRead *.cy.ts set filetype=typescript.typescript_cypress
   autocmd BufNew,BufNewFile,BufRead .tmux-speeddial set filetype=speeddial
   autocmd BufNew,BufNewFile,BufRead EDIT_DESCRIPTION set filetype=gitcommit
 augroup END

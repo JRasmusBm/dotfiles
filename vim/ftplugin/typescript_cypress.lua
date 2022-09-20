@@ -40,6 +40,7 @@ ls.add_snippets("typescript_cypress", {
       { i(1, 'console.log("before")'), i(0) }
     )
   ),
+
   s(
     { trig = "dt", name = "test case" },
     fmt(
@@ -57,7 +58,7 @@ ls.add_snippets("typescript_cypress", {
   ),
   s(
     { trig = "de", name = "expect equal" },
-    fmt("expect({}).toEqual({})\n{}", { i(1), i(2), i(0) })
+    fmt("expect({}).to.equal({})\n{}", { i(1), i(2), i(0) })
   ),
 
   s(
