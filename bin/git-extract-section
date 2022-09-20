@@ -27,14 +27,14 @@ _git_extract_section() {
     end=999999
   }
 
-  $_heading_matcher { start = NR + 1 $_optionally_print_heading }
+  $_heading_matcher { stop=0 ; start = NR + 1 $_optionally_print_heading }
 
   /$(git headings-matcher)/ && start < NR { stop = 1 }
 
   start < NR && stop != 1 { print \$0 }
 "
 
-    _section="$(git --no-pager log --format="%b" -1 | awk "$_awk_code" | perl -pe 'chomp if eof')"
+    _section="$(git --no-pager log --reverse --format="%b" "$(git local-main-branch)..HEAD" | awk "$_awk_code" | perl -pe 'chomp if eof')"
 
     if test "$_print" = 'true'; then
       printf "%s" "$_section"
