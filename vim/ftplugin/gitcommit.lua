@@ -14,6 +14,24 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local f = ls.function_node
 
+local fill_git_section = function(section_tag)
+  return fmt(
+    [[
+{}
+]],
+    {
+      f(function()
+        return utils.get_os_command_output {
+          "git",
+          section_tag,
+          "r",
+          "p",
+        }
+      end, {}, {}),
+    }
+  )
+end
+
 ls.add_snippets("gitcommit", {
   s(
     { trig = "!f", name = "breaking feature" },
@@ -187,6 +205,10 @@ Concerns / side-effects of the changes:
       { i(0) }
     )
   ),
+
+  s({ trig = "fw", name = "fill why" }, fill_git_section "why"),
+  s({ trig = "fh", name = "fill how" }, fill_git_section "how"),
+  s({ trig = "fc", name = "fill con" }, fill_git_section "con"),
 })
 
 ls_utils.load_shared { filetype = "gitcommit", shared = "markdown" }
