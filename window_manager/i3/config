@@ -158,6 +158,7 @@ workspace $ws7 output HDMI-1  DP-1-1 DP-1 DP-2 DP-3 eDP-1
 set $ws8 "8"
 workspace $ws8 output HDMI-1  DP-1-1 DP-1 DP-2 DP-3 eDP-1
 set $ws9 "9"
+assign [class="Cypress"] $ws9
 workspace $ws9 output HDMI-1  DP-1-1 DP-1 DP-2 DP-3 eDP-1
 
 set $ws10 "10: Music"

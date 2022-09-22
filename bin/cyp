@@ -1,0 +1,8 @@
+#!/bin/sh
+
+_browser=$(which firefox)
+
+(
+  set -x
+  npx cypress open --e2e -b "$_browser"
+)
