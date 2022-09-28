@@ -80,6 +80,90 @@ Took Sumatriptan around {}.{}
       { d(1, ls_utils.time, {}), i(0) }
     )
   ),
+
+  s(
+    { trig = "acea", name = "" },
+    fmt(
+      [[
+## Analysis
+
+### What is the purpose of your document?
+
+{}
+
+### Who is your audience?
+
+{}
+
+#### What do they know?
+
+{}
+
+#### What do they need to know?
+
+{}
+
+### What are the right facts for the document?
+
+{}
+]],
+      {
+        i(
+          1,
+          "<!-- What do you want this document to accomplish? (Dig deep!) -->"
+        ),
+        i(2),
+        i(3),
+        i(4),
+        i(0),
+      }
+    )
+  ),
+
+  s(
+    { trig = "acec", name = "craft" },
+    fmt(
+      [[
+## Craft
+
+### Transcribe Your Purpose Statement
+
+<!-- This comes from your handwritten analysis phase notes onto your draft page -->
+
+{}
+
+### Craft the Body
+
+<!--
+1.  Transcribe the relevant facts for your document that you selected in the analysis phase.
+2.  Craft the body with the first words that come to mind; you’ll edit later.
+3.  Hold off on detail work. However, do highlight or note incomplete or troublesome sections.
+-->
+
+{}
+
+### Craft the Conclusion
+
+<!--
+- The conclusion should be simple but specific:
+  1.  The conclusion should review the main points of the document.
+  2.  The conclusion should tell the reader "now what."
+-->
+
+{}
+
+### Craft the Introduction
+
+<!--
+1.  The introduction should contain the purpose statement.
+2.  The introduction should also provide a preview of what the document will do/contain.
+!-->
+
+{}
+]],
+      { i(1), i(2), i(3), i(0) }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "markdown", shared = "markdown" }
