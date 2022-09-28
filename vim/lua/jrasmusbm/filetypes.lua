@@ -20,12 +20,18 @@ M.typescript = {
   "typescript.typescript_cypress",
   "typescript.tsx",
   "typescript.tsx.typescript_cypress",
+  "typescript.tsx.typescript_reactscripts",
   "typescript.tsx.remix",
+  "typescript.tsx.typescript_jest",
   "typescript.typescript_jest",
   "typescript.typescript_mocha",
   "typescript.express.typescript_mocha",
 }
-M.tsx = { "typescript.tsx", "typescriptreact", "javascript.jsx" }
+M.tsx = {
+  "typescript.tsx",
+  "typescriptreact",
+  "javascript.jsx",
+}
 M.zsh = { "zsh" }
 
 return M
