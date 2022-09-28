@@ -251,4 +251,29 @@ return {
     { trig = "an", name = "named argument" },
     fmt("{} = {}{},\n{}", { i(1), i(2), rep(1), i(0) })
   ),
+
+  s(
+    { trig = "d3u", name = "d3 update" },
+    fmt(
+      [[
+function update(data) {{
+  // Update scales (if dependent on the data)
+  {}
+
+  // Join updated data to elements
+  {}
+
+  // Remove unwanted shapes (using the exit selection)
+  {}
+
+  // Update existing shapes in the DOM
+  {}
+
+  // Append the enter selection to the DOM
+  {}
+}}
+  ]],
+      { i(1), i(2), i(3), i(4), i(0) }
+    )
+  ),
 }
