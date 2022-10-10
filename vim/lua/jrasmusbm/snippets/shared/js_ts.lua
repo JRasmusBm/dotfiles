@@ -276,4 +276,20 @@ function update(data) {{
       { i(1), i(2), i(3), i(4), i(0) }
     )
   ),
+
+  s(
+    { trig = "d3t", name = "d3 tween" },
+    fmt(
+      [[
+function {}(_d: unknown) {{
+  const i = d3.interpolate(0, x.bandwidth());
+
+  return function tick(t: number) {{
+    return i(t);
+  }};
+}}
+  ]],
+      { i(0) }
+    )
+  ),
 }
