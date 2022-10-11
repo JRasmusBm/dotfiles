@@ -2,7 +2,7 @@ vim.cmd [[
 augroup ChangeFiletype
   autocmd!
   autocmd BufNew,BufNewFile,BufRead *.j set filetype=jasmin
-  autocmd BufNew,BufNewFile,BufRead .eslintrc,.babelrc,.stylelintrc,.swcrc,.prettierrc set filetype=json
+  autocmd BufNew,BufNewFile,BufRead .eslintrc,.babelrc,.stylelintrc,.swcrc,.prettierrc,.graphite_cache_persist set filetype=json
   autocmd BufNew,BufNewFile,BufRead .pylintrc,.coveragerc,.flake8 set filetype=dosini
   autocmd BufNew,BufNewFile,BufRead .tmux,.tmux-default,.env* set filetype=sh
   autocmd BufNew,BufNewFile,BufRead *.jsx set filetype=javascript.jsx

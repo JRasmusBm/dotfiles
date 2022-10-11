@@ -1,8 +1,11 @@
 local M = {}
 
+local utils = require "telescope.utils"
 local ls = require "luasnip"
 local sn = ls.snippet_node
 local d = ls.dynamic_node
+local f = ls.function_node
+local fmt = require("luasnip.extras.fmt").fmt
 local t = ls.text_node
 
 M.line_number = function(_, _)
@@ -43,6 +46,19 @@ M.load_shared = function(options)
   end
 
   ls.add_snippets(options.filetype, snippets)
+end
+
+M.fill_command = function(cmd)
+  return fmt(
+    [[
+{}
+]],
+    {
+      f(function()
+        return utils.get_os_command_output(cmd)
+      end, {}, {}),
+    }
+  )
 end
 
 return M

@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+_raw_names() {
+  git --no-pager log --reverse --format="%s" "$(git local-main-branch)..HEAD"
+}
+
+_git_commit_names() {
+  (
+    if test "$1" = 'raw'; then
+      _raw_names
+    elif test "$1" = 'no' -o "$1" = 'no-metadata'; then
+      _raw_names | sed -E 's/^([^(]+)\(([^)]+)\)\!?: (.*)$/\u\3/'
+    else
+      _raw_names | sed -E 's/^([^(]+)\(([^)]+)\)\!?: (.*)$/[\u\1][\u\2] \u\3/'
+    fi
+
+  )
+
+}
+
+_git_commit_names "$@"
