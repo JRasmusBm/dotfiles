@@ -1,0 +1,63 @@
+#!/usr/bin/env python3.10
+
+import argparse
+import json
+import subprocess
+import pathlib
+from typing import TypedDict
+
+
+def get(cmd) -> str:
+    return subprocess.run(cmd, capture_output=True).stdout.decode("utf-8").strip()
+
+
+def graphite_config_file():
+    current_git_repo = get(["git", "rev-parse", "--show-toplevel"])
+
+    return pathlib.Path(current_git_repo) / ".git" / ".graphite_cache_persist"
+
+
+class PRInfo(TypedDict):
+    title: str
+    body: str
+
+
+def write_pr_info(pr_info: PRInfo):
+    with open(graphite_config_file(), "r") as f:
+        config = json.load(f)
+
+    current_branch = get(["git", "branch", "--show-current"])
+
+    for branch_name, branch_config in config["branches"]:
+        if branch_name == current_branch:
+
+            if branch_config["prInfo"].get("url"):
+                print("PR already created, aborting!")
+                exit(1)
+
+            if "prInfo" not in branch_config:
+                branch_config["prInfo"] = {}
+
+            if pr_info.get("title") is not None:
+                branch_config["prInfo"]["title"] = pr_info["title"]
+            if pr_info.get("body") is not None:
+                branch_config["prInfo"]["body"] = pr_info["body"]
+
+    with open(graphite_config_file(), "w") as f:
+        json.dump(config, f, indent=2)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Process some integers.")
+    parser.add_argument("--title", "-t", type=str)
+    parser.add_argument("--body", "-b", type=str)
+
+    args = parser.parse_args()
+
+    pr_info = PRInfo(title=args.title, body=args.body)
+
+    write_pr_info(pr_info=pr_info)
+
+
+if __name__ == "__main__":
+    main()
