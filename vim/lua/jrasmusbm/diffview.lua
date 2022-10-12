@@ -1,9 +1,13 @@
+vim.cmd [[
+packadd! diffview.nvim
+
+cabbr DO DiffviewOpen
+cabbr DC DiffviewClose
+]]
+
 local cb = require("diffview.config").diffview_callback
 
 require("diffview").setup {
-  diff_binaries = false, -- Show diffs for binaries
-  file_panel = { width = 35 },
-  use_icons = true,
   key_bindings = {
     view = {
       ["R"] = cb "refresh_files",
