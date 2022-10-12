@@ -1,20 +1,17 @@
-let &t_8f = "\<Esc>[38;2;%lu;%lu;%lum"
-let &t_8b = "\<Esc>[40;2;%lu;%lu;%lum"
-
 let g:gruvbox_material_palette = 'material'
 colorscheme gruvbox-material
 
 function! CustomMarkers() abort
-  highlight SnippetMarker guifg=yellow guibg=NONE
-  highlight TODOMarker guifg=#FF87AF guibg=NONE
   match TODOMarker /TODO/
   match SnippetMarker /<++>/
+  highlight SnippetMarker guifg=yellow guibg=NONE
+  highlight TODOMarker guifg=#FF87AF guibg=NONE
 endfunction
 
 function! RulerHighlights() abort
-  highlight CursorColumn guibg=#3a3a00
-  highlight CursorLine guibg=#3a3a00
-  highlight ColorColumn guibg=#472322
+  highlight CursorColumn guibg=#303000
+  highlight CursorLine guibg=#303000 " TODO
+  highlight ColorColumn guibg=#301810
 endfunction
 
 function! RespectAlacrittyColorscheme() abort
@@ -37,10 +34,10 @@ function! SearchHighlights() abort
 endfunction
 
 function! DiffHighlights() abort
-  highlight DiffAdd guifg=None guibg=#003300
-  highlight DiffChange guifg=None guibg=#002020
-  highlight DiffText guifg=None guibg=#353500
-  highlight DiffDelete guifg=None guibg=#500000
+  highlight DiffAdd guifg=None guibg='#1f5816'
+  highlight DiffChange guifg=None guibg=None
+  highlight DiffText guifg=None guibg='#353500'
+  highlight DiffDelete guifg=None guibg='#440000'
 endfunction
 
 function! SpellingHighlights() abort
@@ -95,8 +92,9 @@ endfunction
 lua require("jrasmusbm.statusline").setup()
 
 function! UpdateHighlights() abort
+  lua vim.opt.background=require("jrasmusbm.theme").get_current_theme()
+
   call RespectAlacrittyColorscheme()
-  call DiffHighlights()
   call FoldHighlights()
   call ErrorHighlights()
   call SearchHighlights()
@@ -107,8 +105,7 @@ function! UpdateHighlights() abort
   call RulerHighlights()
   call IlluminateHighlights()
   call DapHighlight()
-
-  lua vim.opt.background=require("jrasmusbm.theme").get_current_theme()
+  call DiffHighlights()
 endfunction
 
 call UpdateHighlights()

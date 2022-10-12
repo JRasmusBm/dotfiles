@@ -69,6 +69,10 @@ end, { noremap = true })
 local M = {}
 
 M.telescope_mappings = function()
+  vim.cmd [[
+  cabbr THL Telescope highlights
+  ]]
+
   vim.keymap.set({ "n" }, "<leader>if", function()
     require("telescope").extensions.dap.frames {}
   end, { noremap = true })

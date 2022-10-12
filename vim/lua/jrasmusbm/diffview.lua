@@ -8,7 +8,10 @@ cabbr DFH DiffviewFileHistory
 
 local cb = require("diffview.config").diffview_callback
 
+vim.opt.fillchars = { diff = "╱" }
+
 require("diffview").setup {
+  enhanced_diff_hl = true,
   key_bindings = {
     view = {
       ["R"] = cb "refresh_files",
