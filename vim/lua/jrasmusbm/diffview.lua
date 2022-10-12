@@ -3,6 +3,7 @@ packadd! diffview.nvim
 
 cabbr DO DiffviewOpen
 cabbr DC DiffviewClose
+cabbr DFH DiffviewFileHistory
 ]]
 
 local cb = require("diffview.config").diffview_callback
