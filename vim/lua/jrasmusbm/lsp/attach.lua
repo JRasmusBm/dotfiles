@@ -72,8 +72,7 @@ function M.on_attach(client, bufnr)
   end
 
   if client.supports_method "textDocument/codeAction" then
-    vim.keymap.set({ "n" }, ";af", vim.lsp.buf.code_action)
-    vim.keymap.set({ "v" }, ";af", vim.lsp.buf.range_code_action)
+    vim.keymap.set({ "n", "v" }, ";af", vim.lsp.buf.code_action)
   end
 
   if client.supports_method "workspace/symbol" then
@@ -97,7 +96,7 @@ function M.on_attach(client, bufnr)
   end
 
   if client.supports_method "textDocument/document_range_formatting" then
-    vim.keymap.set({ "v" }, "==", vim.lsp.buf.range_formatting)
+    vim.keymap.set({ "v" }, "==", vim.lsp.buf.format)
   end
 
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
