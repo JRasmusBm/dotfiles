@@ -2,9 +2,6 @@ local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
-local d = ls.dynamic_node
-local sn = ls.snippet_node
-local t = ls.text_node
 
 local s = function(context, nodes, options)
   return function()
