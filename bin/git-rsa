@@ -2,20 +2,9 @@
 
 set -e
 
-_git_is_clean() {
-  if test -z "$1"; then
-    test -z "$(git status --porcelain)"
-  elif test "$1" = 'staged'; then
-    git status --porcelain | grep -Pq '^[MAD]' && return 1 || return 0
-  elif test "$1" = 'unstaged'; then
-    git status --porcelain | grep -Pq '^ +[?MAD]' && return 1 || return 0
-  fi
-}
-
 _git_restack_all() {
   (
-    needs_stash="$(_git_is_clean || echo "yes")"
-
+    needs_stash="$(git status --porcelain)"
     if test -n "$needs_stash"; then
       printf "\e[0;33mStashing changes.\n\e[0;37m" >>/dev/stderr
       (
@@ -24,11 +13,6 @@ _git_restack_all() {
       )
     fi
 
-    printf "\e[0;33mSyncing with remote.\n\e[0;37m" >>/dev/stderr
-    (
-      set -x
-      gt repo sync
-    )
     branches_to_restack="$(gt log short -c | awk '/needs restack/ { print $3 }')"
 
     if test -z "$branches_to_restack"; then

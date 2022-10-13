@@ -23,6 +23,7 @@ git_update_main() {
       echo "Applied autostash."
     fi
 
+    g rsa
     g suu
   )
 }
