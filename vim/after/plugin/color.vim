@@ -33,13 +33,6 @@ function! SearchHighlights() abort
   highlight Search guifg=yellow guibg=NONE
 endfunction
 
-function! DiffHighlights() abort
-  highlight DiffAdd guifg=None guibg='#1f5816'
-  highlight DiffChange guifg=None guibg=None
-  highlight DiffText guifg=None guibg='#353500'
-  highlight DiffDelete guifg=None guibg='#440000'
-endfunction
-
 function! SpellingHighlights() abort
   highlight SpellBad guifg=teal guibg=NONE 
   highlight SpellCap guifg=teal guibg=NONE 
@@ -105,7 +98,6 @@ function! UpdateHighlights() abort
   call RulerHighlights()
   call IlluminateHighlights()
   call DapHighlight()
-  call DiffHighlights()
 endfunction
 
 call UpdateHighlights()
