@@ -164,6 +164,14 @@ Took Sumatriptan around {}.{}
       { i(1), i(2), i(3), i(0) }
     )
   ),
+
+  s(
+    { trig = "toc", name = "Table of Contents" },
+    ls_utils.fill_command {
+      "mdtoc",
+      vim.fn.expand "%",
+    }
+  ),
 })
 
 ls_utils.load_shared { filetype = "markdown", shared = "markdown" }

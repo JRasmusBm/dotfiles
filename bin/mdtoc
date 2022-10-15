@@ -1,0 +1,67 @@
+#!/bin/env python3
+
+from typing import List, Tuple
+import sys
+import argparse
+import subprocess
+
+INDENT = 2
+
+
+def run_shell(cmd) -> str:
+    return subprocess.run(cmd, capture_output=True).stdout.decode("utf-8").strip()
+
+
+def find_headings(contents: List[str], level: int):
+    return [
+        (heading_level(line), line.lstrip("#").strip())
+        for line in contents
+        if line.startswith("#") and not line.startswith((level + 1) * "#")
+    ]
+
+
+def heading_level(heading: str):
+    result = 0
+
+    for char in heading:
+        if char == "#":
+            result += 1
+        else:
+            return result
+
+
+def build_toc(headings: List[Tuple[int, str]]):
+    if not headings:
+        return []
+
+    result = []
+
+    initial_indent = headings[0][0]
+
+    for level, heading in headings:
+        link = f'[{heading}](#{heading.lower().replace(" ", "-")})'
+        result.append(((level - initial_indent) * INDENT * " ") + "- " + link)
+
+    return "  \n".join(result)
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Create ToC from Markdown")
+
+    parser.add_argument("--level", "-l", type=int, default=6)
+    parser.add_argument("file", type=str, nargs="?", default="-")
+
+    args = parser.parse_args()
+
+    if args.file == "-":
+        contents = sys.stdin.readlines()
+    else:
+        with open(args.file) as f:
+            contents = f.readlines()
+
+    headings = find_headings(contents, args.level)
+    print(build_toc(headings))
+
+
+if __name__ == "__main__":
+    main()

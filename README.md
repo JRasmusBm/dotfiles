@@ -1,4 +1,4 @@
- Dotfiles
+# Dotfiles
 
 > Author: JRasmusBm
 
@@ -16,9 +16,9 @@ the very opposite of stable.
 
 - [Inspiration](#inspiration)
 - [Installation](#installation)
+  - [Software](#software)
+  - [Symlinks](#symlinks)
 - [Folder Structure](#folder-structure)
-
-> Work in progress
 
 ## Inspiration
 
@@ -44,7 +44,7 @@ often I would create collection scripts in
 [install_dependencies](./install_dependencies) with the collections of programs
 I consider a bare minimum on a new system.
 
-### Dotfiles
+### Symlinks
 
 In order to install my dotfiles, one would first install Python and the
 dependencies listed in [requirements-dev.txt](./scripts/requirements-dev.txt).
@@ -71,19 +71,19 @@ a non-comprehensive list of where you can find things:
   - Note that any script prefixed `git-` (i.e. `git-first`) can be used as
     a git command (i.e. `git first`). I find this superior to aliases cause it
     leaves room for adding extra code and configuration for each command.
-- [files.csv](./files.csv) - The list of files linked by [scripts/symlink](./scripts/symlink) 
+- [files.csv](./files.csv) - The list of files linked by [scripts/symlink](./scripts/symlink)
 - [git](./git) - Git-related configuration (as noted above I use scripts instead of
   aliases, and those can be found in the [bin](./bin) folder)
 - [install_dependencies](./install_dependencies) - Scripts that can be used with `idep <script>` to
   install things onto my system.
 - [lsp](./lsp) - LSP-configuration that does not feel editor-specific
 - [scripts](./scripts) - Installation scripts, will probably be phased out in favor of
- [install_dependencies](./vim/install_dependencies) 
+  [install_dependencies](./vim/install_dependencies)
 - [shell](./shell) - Shell configuration. I try to use scripts instead of aliases
   whenever possible.
 - [terminal](./terminal) - Terminal configuration
 - [tmux](./tmux) - Tmux configuration
-- [vim](./vim) 
+- [vim](./vim)
   - Vim configuration according to the default folder structure other_config
   - [plugin_config](./vim/plugin_config) - Any configuration related to plugins that are still
     sourced in vimscript.

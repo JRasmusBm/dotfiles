@@ -54,9 +54,9 @@ M.fill_command = function(cmd)
 {}
 ]],
     {
-      f(function()
+      f(function(_args, _parent, cmd)
         return utils.get_os_command_output(cmd)
-      end, {}, {}),
+      end, {}, { user_args = { cmd } }),
     }
   )
 end
