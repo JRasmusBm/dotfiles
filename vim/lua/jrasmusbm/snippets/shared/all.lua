@@ -134,4 +134,28 @@ cd -
     { trig = "!lua", name = "lua file" },
     fmt("local M = {{}}\n\n{}\n\nreturn M{}", { i(1), i(0) })
   ),
+
+  s(
+    { trig = "!py", name = "python (script) file" },
+    fmt(
+      [[
+#!/bin/env python3.10
+
+import argparse
+import subprocess
+
+def run_shell(cmd) -> str:
+    return subprocess.run(cmd, capture_output=True).stdout.decode("utf-8").strip()
+
+def main():
+    parser = argparse.ArgumentParser(description="{}")
+
+    {}
+
+if __name__ == "__main__":
+    main()
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 })

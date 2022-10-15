@@ -35,28 +35,6 @@ ls.add_snippets("python", {
   ),
 
   s(
-    { trig = "pf", name = "python (main) file" },
-    fmt(
-      [[
-"""
-{}
-"""
-import logging
-logger = logging.getLogger(__name__)
-def main():
-  """
-  {}
-  """
-  {}
-
-if __name__ == "__main__":
-    main()
-  ]],
-      { i(1), i(2), i(0) }
-    )
-  ),
-
-  s(
     { trig = "fd", name = "function definition" },
     fmt("def {}({}):\n    {}\n\n{}", { i(1), i(2), i(3), i(0) })
   ),
