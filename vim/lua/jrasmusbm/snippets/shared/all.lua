@@ -150,6 +150,16 @@ def run_shell(cmd) -> str:
 def main():
     parser = argparse.ArgumentParser(description="{}")
 
+    parser.add_argument("file", type=str, nargs="?", default="-")
+
+    args = parser.parse_args()
+
+    if not args.file or args.file == "-":
+        contents = sys.stdin.readlines()
+    else:
+        with open(args.file) as f:
+            contents = f.readlines()
+
     {}
 
 if __name__ == "__main__":
