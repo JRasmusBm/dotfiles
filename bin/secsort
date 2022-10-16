@@ -1,0 +1,75 @@
+#!/bin/env python3
+
+from typing import List
+
+import operator
+import sys
+from itertools import chain
+import argparse
+import re
+
+
+def gather_preamble(contents: List[str], field_separator: str):
+    result = []
+    pattern = re.compile(field_separator)
+
+    for line in contents:
+        if pattern.search(line):
+            break
+
+        result.append(line)
+
+    return result
+
+
+def gather_sections(contents: List[str], field_separator: str):
+    result = []
+    pattern = re.compile(field_separator)
+
+    for line in contents:
+        if pattern.search(line):
+            result.append([])
+
+        if len(result) == 0:
+            continue
+
+        result[-1].append(line)
+
+    return result
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Reverse sections")
+
+    parser.add_argument("-F", "-f", "--field-separator", type=str, default="^# ")
+    parser.add_argument(
+        "-m", "--mode", type=str, choices=("az", "za", "rev"), default="rev"
+    )
+    parser.add_argument("file", type=str, nargs="?", default="-")
+
+    args = parser.parse_args()
+
+    if not args.file or args.file == "-":
+        contents = sys.stdin.readlines()
+    else:
+        with open(args.file) as f:
+            contents = f.readlines()
+
+    preamble = gather_preamble(contents, args.field_separator)
+    sections = gather_sections(contents, args.field_separator)
+
+    if args.mode == "rev":
+        sorted_sections = reversed(sections)
+    elif args.mode == "az":
+        sorted_sections = sorted(sections, key=operator.itemgetter(0))
+    elif args.mode == "za":
+        sorted_sections = sorted(sections, key=operator.itemgetter(0), reverse=True)
+    else:
+        print("Unsupported mode!")
+        exit(1)
+
+    print("".join(chain(preamble, *sorted_sections)))
+
+
+if __name__ == "__main__":
+    main()
