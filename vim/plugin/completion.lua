@@ -7,9 +7,11 @@ packadd cmp-cmdline
 packadd cmp_luasnip
 ]]
 
+local list = require("jrasmusbm.utils.options").list 
+
 vim.opt.completeopt = { "menu", "menuone", "noselect" }
 
-vim.opt.complete = require("jrasmusbm.utils.options").list {
+vim.opt.complete = list {
   ".",
   "w",
   "b",
@@ -18,7 +20,7 @@ vim.opt.complete = require("jrasmusbm.utils.options").list {
   "i",
 }
 
-vim.opt.isfname = require("jrasmusbm.utils.options").list {
+vim.opt.isfname = list {
   "@",
   "48-57",
   "/",
