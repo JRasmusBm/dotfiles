@@ -3,6 +3,9 @@ local on_attach = require("jrasmusbm.lsp.attach").on_attach
 local completion = require "jrasmusbm.lsp.completion"
 completion.setup()
 
+
+local capabilities = require("cmp_nvim_lsp").update_capabilities(vim.lsp.protocol.make_client_capabilities())
+
 local filetype_path = require("plenary.path"):new(vim.fn.getenv "DOTFILES")
   / "vim"
   / "lua"
@@ -12,7 +15,7 @@ local filetype_path = require("plenary.path"):new(vim.fn.getenv "DOTFILES")
 
 require("jrasmusbm.lsp.efm").setup {
   on_attach = on_attach,
-  capabilities = completion.capabilities,
+  capabilities = capabilities,
 }
 
 require("plenary.job")
@@ -24,7 +27,7 @@ require("plenary.job")
         local filetype = vim.split(file, ".", true)[1]
         require("jrasmusbm.lsp.filetypes." .. filetype).setup {
           on_attach = on_attach,
-          capabilities = completion.capabilities,
+          capabilities = capabilities,
         }
       end
     end),
