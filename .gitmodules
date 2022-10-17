@@ -68,11 +68,6 @@
   url = git@github.com:jrasmusbm/vim-peculiar.git
   branch = main
   ignore = dirty
-[submodule "pinnacle"]
-  path = vim/pack/bundle/opt/pinnacle
-  url = git@github.com:wincent/pinnacle.git
-  branch = main
-  ignore = dirty
 [submodule "vim-polyglot"]
   path = vim/pack/bundle/opt/vim-polyglot
   url = git@github.com:sheerun/vim-polyglot.git

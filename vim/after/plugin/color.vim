@@ -78,10 +78,6 @@ function! ColorCodeHighlights() abort
   lua require'colorizer'.setup()
 endfunction
 
-function! CommentHighlights() abort
-  execute 'highlight Comment ' . pinnacle#italicize('Comment')
-endfunction
-
 lua require("jrasmusbm.statusline").setup()
 
 function! UpdateHighlights() abort
