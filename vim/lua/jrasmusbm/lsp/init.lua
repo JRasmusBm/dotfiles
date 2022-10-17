@@ -1,9 +1,5 @@
 local on_attach = require("jrasmusbm.lsp.attach").on_attach
 
-local completion = require "jrasmusbm.lsp.completion"
-completion.setup()
-
-
 local capabilities = require("cmp_nvim_lsp").update_capabilities(vim.lsp.protocol.make_client_capabilities())
 
 local filetype_path = require("plenary.path"):new(vim.fn.getenv "DOTFILES")
