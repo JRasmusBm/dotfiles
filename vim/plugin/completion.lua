@@ -7,19 +7,11 @@ packadd cmp-cmdline
 packadd cmp_luasnip
 ]]
 
-local list = require("jrasmusbm.utils.options").list 
+local list = require("jrasmusbm.utils.options").list
 
 vim.opt.completeopt = { "menu", "menuone", "noselect" }
 
-vim.opt.complete = list {
-  ".",
-  "w",
-  "b",
-  "u",
-  "kspell",
-  "i",
-}
-
+vim.opt.complete = list { ".", "w", "b", "u", "kspell", "i" }
 vim.opt.isfname = list {
   "@",
   "48-57",
@@ -59,12 +51,12 @@ cmp.setup {
       },
       { "i", "c" }
     ),
-    ["<C-n>"] = cmp.mapping.select_next_item(
-      { behavior = cmp.SelectBehavior.Insert },
+    ["<C-n>"] = cmp.mapping(
+      cmp.mapping.select_next_item { behavior = cmp.SelectBehavior.Insert },
       { "i", "c" }
     ),
-    ["<C-p>"] = cmp.mapping.select_prev_item(
-      { behavior = cmp.SelectBehavior.Insert },
+    ["<C-p>"] = cmp.mapping(
+      cmp.mapping.select_prev_item { behavior = cmp.SelectBehavior.Insert },
       { "i", "c" }
     ),
     ["<c-y>"] = cmp.mapping(cmp.mapping.confirm(), { "i", "c" }),
