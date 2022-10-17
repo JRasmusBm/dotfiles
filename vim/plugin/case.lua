@@ -1,60 +1,72 @@
-local mappings = require "jrasmusbm.utils.mappings"
+local state = {
+  loaded = false,
+}
 
-vim.cmd [[ packadd vim-caser ]]
+local ensure_loaded_and_run = function()
+  if not state.loaded then
+    vim.cmd [[ packadd vim-caser ]]
+  end
+end
 
 vim.g.caser_no_mappings = 1
 
+local nmap = function(binding, command)
+  vim.keymap.set({ "n" }, binding, function()
+    ensure_loaded_and_run()
+
+    require("jrasmusbm.utils.edit").feedkeys(command)
+  end, {})
+end
+
+local vmap = function(binding, command)
+  vim.keymap.set({ "v" }, binding, function()
+    ensure_loaded_and_run()
+
+    require("jrasmusbm.utils.edit").feedkeys(command)
+  end, {})
+end
+
 local function case_pascal()
-  mappings.nmap("<localleader>cp", "<Plug>CaserMixedCase")
-  mappings.vmap("<localleader>cp", "<Plug>CaserVMixedCase")
+  nmap("<localleader>cp", "<Plug>CaserMixedCase")
+  vmap("<localleader>cp", "<Plug>CaserVMixedCase")
 end
 
 local function case_camel()
-  mappings.nmap("<localleader>cc", "<Plug>CaserCamelCase")
-  mappings.vmap("<localleader>cc", "<Plug>CaserVCamelCase")
+  nmap("<localleader>cc", "<Plug>CaserCamelCase")
+  vmap("<localleader>cc", "<Plug>CaserVCamelCase")
 end
 
 local function case_snake()
-  mappings.nmap("<localleader>cs", "<Plug>CaserSnakeCase")
-  mappings.vmap("<localleader>cs", "<Plug>CaserVSnakeCase")
+  nmap("<localleader>cs", "<Plug>CaserSnakeCase")
+  vmap("<localleader>cs", "<Plug>CaserVSnakeCase")
 end
 
-local function case_upper()
-  mappings.nmap("<localleader>cu", "<Plug>CaserUpperCase")
-  mappings.vmap("<localleader>cu", "<Plug>CaserVUpperCase")
-end
-
-local function case_words_title()
-  mappings.nmap("<localleader>cwt", "<Plug>CaserTitleCase")
-  mappings.vmap("<localleader>cwt", "<Plug>CaserVTitleCase")
+local function case_title()
+  nmap("<localleader>ct", "<Plug>CaserTitleCase")
+  vmap("<localleader>ct", "<Plug>CaserVTitleCase")
 end
 
 local function case_words_sentence()
-  mappings.nmap("<localleader>cws", "<Plug>CaserSentenceCase")
-  mappings.vmap("<localleader>cws", "<Plug>CaserVSentenceCase")
+  nmap("<localleader>cw", "<Plug>CaserSentenceCase")
+  vmap("<localleader>cw", "<Plug>CaserVSentenceCase")
 end
 
-local function case_kebab_lower()
-  mappings.nmap("<localleader>ckl", "<Plug>CaserKebabCase")
-  mappings.vmap("<localleader>ckl", "<Plug>CaserVKebabCase")
-end
-
-local function case_kebab_title()
-  mappings.nmap("<localleader>ckt", "<Plug>CaserTitleKebabCase")
-  mappings.vmap("<localleader>ckt", "<Plug>CaserVTitleKebabCase")
+local function case_kebab()
+  nmap("<localleader>ck", "<Plug>CaserKebabCase")
+  vmap("<localleader>ck", "<Plug>CaserVKebabCase")
+  nmap("<localleader>cK", "<Plug>CaserTitleKebabCase")
+  vmap("<localleader>cK", "<Plug>CaserVTitleKebabCase")
 end
 
 local function case_dot()
-  mappings.nmap("<localleader>cd", "<Plug>CaserDotCase")
-  mappings.vmap("<localleader>cd", "<Plug>CaserVDotCase")
+  nmap("<localleader>c.", "<Plug>CaserDotCase")
+  vmap("<localleader>c.", "<Plug>CaserVDotCase")
 end
 
 case_pascal()
 case_camel()
 case_snake()
-case_upper()
-case_words_title()
+case_title()
 case_words_sentence()
-case_kebab_lower()
-case_kebab_title()
+case_kebab()
 case_dot()
