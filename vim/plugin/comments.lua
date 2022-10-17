@@ -15,13 +15,13 @@ config["prehook"] = function(context)
   local U = require "Comment.utils"
 
   local comment_type = {
-    [U.ctype.line] = "__default",
-    [U.ctype.block] = "__multiline",
+    [U.ctype.linewise] = "__default",
+    [U.ctype.blockwise] = "__multiline",
   }
 
   -- Determine the location where to calculate commentstring from
   local location = nil
-  if context.ctype == U.ctype.block then
+  if context.ctype == U.ctype.blockwise then
     location = require("ts_context_commentstring.utils").get_cursor_location()
   elseif context.cmotion == U.cmotion.v or context.cmotion == U.cmotion.V then
     location =
