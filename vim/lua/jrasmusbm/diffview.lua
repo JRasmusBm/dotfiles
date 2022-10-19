@@ -1,11 +1,22 @@
+local M = {is_setup=false}
+
+M.ensure_setup = function ()
+  if M.is_setup then
+    return
+  end
+
+  setup()   
+end
+
+local setup = function ()
 vim.cmd [[
-packadd! diffview.nvim
+packadd diffview.nvim
 
 cabbr DO DiffviewOpen
 cabbr DC DiffviewClose
 cabbr DFH DiffviewFileHistory
 ]]
-
+  
 local cb = require("diffview.config").diffview_callback
 
 require("diffview").setup {
@@ -25,3 +36,8 @@ require("diffview").setup {
     },
   },
 }
+end
+
+
+
+return M
