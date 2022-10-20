@@ -13,11 +13,6 @@
   url = git@github.com:tpope/vim-eunuch.git
   branch = master
   ignore = dirty
-[submodule "SimpylFold"]
-  path = vim/pack/bundle/opt/SimpylFold
-  url = git@github.com:tmhedberg/SimpylFold.git
-  branch = master
-  ignore = dirty
 [submodule "fzf"]
   path = vim/pack/bundle/opt/fzf
   url = git@github.com:junegunn/fzf.git

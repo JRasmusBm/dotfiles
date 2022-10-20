@@ -1,10 +1,9 @@
-vim.cmd [[
-packadd SimpylFold
-]]
-
 local mappings = require "jrasmusbm.utils.mappings"
 
 vim.cmd [[
+set foldmethod=expr
+set foldexpr=nvim_treesitter#foldexpr()
+
 augroup CustomFoldlevel
   autocmd BufRead *.test.* setlocal foldlevel=1
 augroup END
