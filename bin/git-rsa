@@ -37,8 +37,11 @@ _git_restack_all() {
         set -x
         git switch "$stack"
         gt stack restack
-        gt stack submit --update-only
+        if ! gt stack submit --update-only; then
+          git push -f
+        fi
       )
+
     done
 
     (
