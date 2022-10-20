@@ -5,7 +5,7 @@ set -e
 _git_amend_fixup() {
   (
     set -x
-    git commit --amend --no-edit
+    git commit --amend --no-edit "$@"
   )
 }
 
