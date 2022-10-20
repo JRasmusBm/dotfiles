@@ -1,0 +1,3 @@
+#!/bin/sh
+
+test "$(git rev-parse "$(git branch --show-current)")" = "$(git rev-parse "$(git branch --show-current)@{u}" 2>/dev/null)" >/dev/null
