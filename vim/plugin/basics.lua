@@ -17,6 +17,4 @@ vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.incsearch = true
 vim.opt.splitbelow = true
-vim.opt.timeoutlen = 350
-vim.opt.ttimeoutlen = 0
 vim.opt.lazyredraw = true
