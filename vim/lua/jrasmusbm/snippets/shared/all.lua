@@ -168,4 +168,24 @@ if __name__ == "__main__":
       { i(1), i(0) }
     )
   ),
+
+s({ trig="!dc", name="compose file" }, fmt([[
+version: "3"
+
+services:
+  
+  {}
+]], { i(0) })),
+
+s({ trig="!vpm", name="vpm fie" }, fmt([[
+file_list:
+  - edit {}
+highlights:
+  {}:
+    - ranges:
+      - - {}
+        - {}
+      cursorLine: {}
+]], { i(1), i(2), i(3), i(4), i(0) })),
+
 })
