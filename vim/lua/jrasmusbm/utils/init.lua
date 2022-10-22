@@ -55,4 +55,15 @@ M.has_line_matching = function(regex)
   return false
 end
 
+local loaded_plugins = {}
+
+M.ensure_loaded = function (plugin_name)
+  if loaded_plugins[plugin_name] ~= true then
+    loaded_plugins[plugin_name] = true
+    return
+  end
+
+  vim.cmd "packadd" .. plugin_name  
+end
+
 return M
