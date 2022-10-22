@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -e
+
+_delete_upsteam_branch() {
+  (
+    if test -n "$1"; then
+      _remote="${1%%/*}"
+      _ref="${1#*/}"
+      (
+        set -x
+        git push -d "$_remote" "$_ref"
+      )
+    else
+      echo "No upstream to delete"
+    fi
+
+  )
+}
+
+_switch_and_delete_current_branch() {
+  (
+    _current_branch="$(git branch --show-current)"
+    _current_upstream_branch="$(git rev-parse --abbrev-ref "$(git branch --show-current)@{u}" || true)"
+
+    if test "$1" = 'p' -o "$1" = 'push'; then
+      shift 1
+      _delete_upsteam_branch "$_current_upstream_branch"
+    fi
+
+    (
+      set -x
+      git switch "$1"
+      git branch -D "$_current_branch"
+    )
+  )
+
+}
+
+_switch_and_delete_current_branch "$@"
