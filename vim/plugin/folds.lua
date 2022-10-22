@@ -1,5 +1,3 @@
-local mappings = require "jrasmusbm.utils.mappings"
-
 vim.cmd [[
 set foldmethod=expr
 set foldexpr=nvim_treesitter#foldexpr()
@@ -9,14 +7,30 @@ augroup CustomFoldlevel
 augroup END
 ]]
 
-mappings.nmap(
+vim.keymap.set(
+  { "n" },
   "<leader>zs",
   "<cmd>setlocal foldmethod=syntax<cmd>",
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set(
+  { "n" },
   "<leader>zm",
   "<cmd>setlocal foldmethod=marker<cmd>",
+  { noremap = true }
+)
+
+vim.keymap.set(
+  { "n" },
+  "<leader>ze",
+  "<cmd>setlocal foldmethod=expr<cmd>",
+  { noremap = true }
+)
+
+vim.keymap.set(
+  { "n" },
+  "za",
+  "<cmd>call jrasmusbm#folds#toggle_foldopen()<cr>",
   { noremap = true }
 )
 
@@ -33,9 +47,3 @@ vim.opt.foldopen = require("jrasmusbm.utils.options").list {
 }
 
 vim.opt.foldclose = ""
-
-mappings.nmap(
-  "za",
-  "<cmd>call jrasmusbm#folds#toggle_foldopen()<cr>",
-  { noremap = true }
-)
