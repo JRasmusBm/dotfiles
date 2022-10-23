@@ -1,11 +1,37 @@
-vim.cmd [[
-command! -buffer -nargs=* G call jrasmusbm#git#run_and_refresh(match(<q-args>, "^\ *$") >= 0 ? "e .git/index" : ("Git " . <q-args>))
+local git_commit_tree_augroup = vim.api.nvim_create_augroup(
+  "git_commit_tree",
+  { clear = true }
+)
+vim.api.nvim_create_autocmd({ "BufEnter" }, {
+  group = git_commit_tree_augroup,
+  pattern = { "temp_git_tree" },
+  callback = vim.fn["jrasmusbm#git#list_tree"],
+})
 
-augroup GitCommitTreeRefresh
-  autocmd! * <buffer>
-  autocmd BufEnter <buffer> silent call jrasmusbm#git#list_tree()
-augroup END
-   
-nmap <buffer> L :silent call jrasmusbm#git#list_tree()<CR>
-nmap <buffer> H :silent e .git/index<CR>
-]]
+local switch_to_git_status = function()
+  local buf = vim.api.nvim_get_current_buf()
+  vim.cmd [[ Git ]]
+  vim.api.nvim_buf_delete(buf, { unload = true })
+end
+
+vim.api.nvim_buf_create_user_command(0, "G", function(options)
+  require("jrasmusbm.utils").ensure_loaded "fugitive-gitlab.vim"
+  require("jrasmusbm.utils").ensure_loaded "vim-fugitive"
+
+  if #options.fargs == 0 then
+    switch_to_git_status()
+    return
+  end
+
+  vim.cmd("Git " .. options.args)
+  vim.fn["jrasmusbm#git#list_tree"]()
+end, { nargs = "*" })
+
+vim.keymap.set({ "n" }, "H", function()
+  require("jrasmusbm.utils").ensure_loaded "fugitive-gitlab.vim"
+  require("jrasmusbm.utils").ensure_loaded "vim-fugitive"
+  switch_to_git_status()
+end, { buffer = true })
+vim.keymap.set({ "n" }, "L", function()
+  vim.fn["jrasmusbm#git#list_tree"]()
+end, { buffer = true })

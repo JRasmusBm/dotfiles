@@ -13,22 +13,6 @@ function! jrasmusbm#git#list_tree(num_lines = 1000) abort
   endif
 endfunction
 
-function! jrasmusbm#git#G_command(...) abort
-  let arguments = join(a:000, " ")
-
-  if arguments == "" || arguments == " "
-    silent e .git/index
-    return "silent e .git/index"
-  endif
-
-  return "Git " . arguments
-endfunction
-
-function! jrasmusbm#git#run_and_refresh(command) abort
-  exec a:command
-  silent call jrasmusbm#git#list_tree()
-endfunction
-
 function! jrasmusbm#git#push_all() abort
   wa!
   G wip

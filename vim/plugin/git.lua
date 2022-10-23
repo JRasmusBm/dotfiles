@@ -2,7 +2,6 @@ vim.cmd [[
 packadd fugitive-gitlab.vim
 packadd vim-gitgutter
 packadd vim-rhubarb
-packadd vim-fugitive
 packadd nvim-web-devicons
 
 command! -nargs=? L silent call jrasmusbm#git#open_tree(<f-args>)
@@ -20,3 +19,10 @@ vim.g.diffopt = require("jrasmusbm.utils.options").list {
 vim.g.fugitive_git_executable = "g"
 
 vim.g.fugitive_gitlab_domains = {}
+
+vim.api.nvim_create_user_command("G", function(options)
+  require("jrasmusbm.utils").ensure_loaded "fugitive-gitlab.vim"
+  require("jrasmusbm.utils").ensure_loaded "vim-fugitive"
+
+  vim.cmd("Git " .. options.args)
+end, { nargs = "*" })
