@@ -1,66 +1,120 @@
-local mappings = require "jrasmusbm.utils.mappings"
-
-vim.cmd [[
-packadd harpoon
-]]
-
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>mf",
-  ':lua require("harpoon.mark").add_file()<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.mark").add_file()
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>mm",
-  ':lua require("harpoon.ui").toggle_quick_menu()<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").toggle_quick_menu()
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>1",
-  ':lua require("harpoon.ui").nav_file(1)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(1)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>2",
-  ':lua require("harpoon.ui").nav_file(2)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(2)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>3",
-  ':lua require("harpoon.ui").nav_file(3)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(3)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>4",
-  ':lua require("harpoon.ui").nav_file(4)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(4)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>5",
-  ':lua require("harpoon.ui").nav_file(5)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(5)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>6",
-  ':lua require("harpoon.ui").nav_file(6)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(6)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>7",
-  ':lua require("harpoon.ui").nav_file(7)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(7)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>8",
-  ':lua require("harpoon.ui").nav_file(8)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(8)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>9",
-  ':lua require("harpoon.ui").nav_file(9)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(9)
+  end
+
+  ,
   { noremap = true }
 )
-mappings.nmap(
+vim.keymap.set({"n"},
   "<leader>0",
-  ':lua require("harpoon.ui").nav_file(10)<CR>',
+  function ()
+    require"jrasmusbm.utils".ensure_loaded"harpoon"
+    require("harpoon.ui").nav_file(10)
+  end
+
+  ,
   { noremap = true }
 )
