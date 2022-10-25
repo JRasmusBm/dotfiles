@@ -25,3 +25,15 @@ vim.api.nvim_create_user_command("G", function(options)
 
   vim.cmd("Git " .. options.args)
 end, { nargs = "*" })
+
+vim.api.nvim_create_user_command("GBrowse", function(options)
+  require("jrasmusbm.utils").ensure_loaded "vim-rhubarb"
+  require("jrasmusbm.utils").ensure_loaded "fugitive-gitlab.vim"
+  require("jrasmusbm.utils").ensure_loaded "vim-fugitive"
+
+  if options.bang then
+  vim.cmd("GBrowse! " .. options.args)
+  else 
+  vim.cmd("GBrowse " .. options.args)
+  end
+end, {bang=true, nargs = "*" })
