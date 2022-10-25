@@ -59,11 +59,12 @@ local loaded_plugins = {}
 
 M.ensure_loaded = function(plugin_name)
   if loaded_plugins[plugin_name] == true then
-    return
+    return false
   end
 
-  loaded_plugins[plugin_name] = true
   vim.cmd("packadd " .. plugin_name)
+  loaded_plugins[plugin_name] = true
+  return true
 end
 
 return M
