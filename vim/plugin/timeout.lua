@@ -1,6 +1,20 @@
+ vim.opt.ttimeoutlen = 0
+
+ local slow = 1500
+ local fast = 350
+
 if require("jrasmusbm.compat").in_termux() then
-  vim.opt.timeoutlen = 2000
-else
-  vim.opt.timeoutlen = 350
+ vim.opt.timeoutlen = slow
+ else
+ vim.opt.timeoutlen = fast
 end
-vim.opt.ttimeoutlen = 0
+
+vim.api.nvim_create_user_command("Fast", function()
+ vim.opt.timeoutlen = fast
+  end
+, { nargs = 0 })
+
+vim.api.nvim_create_user_command("Slow", function()
+ vim.opt.timeoutlen = slow
+  end
+, { nargs = 0 })
