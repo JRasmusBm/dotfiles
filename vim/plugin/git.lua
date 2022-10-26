@@ -19,17 +19,17 @@ vim.g.fugitive_git_executable = "g"
 vim.g.fugitive_gitlab_domains = {}
 
 vim.api.nvim_create_user_command("G", function(options)
-  require("jrasmusbm.utils").ensure_loaded "vim-rhubarb"
-  require("jrasmusbm.utils").ensure_loaded "fugitive-gitlab.vim"
-  require("jrasmusbm.utils").ensure_loaded "vim-fugitive"
+  require("jrasmusbm.utils").ensure_setup "vim-rhubarb"
+  require("jrasmusbm.utils").ensure_setup "fugitive-gitlab.vim"
+  require("jrasmusbm.utils").ensure_setup "vim-fugitive"
 
   vim.cmd("Git " .. options.args)
 end, { nargs = "*" })
 
 vim.api.nvim_create_user_command("GBrowse", function(options)
-  require("jrasmusbm.utils").ensure_loaded "vim-rhubarb"
-  require("jrasmusbm.utils").ensure_loaded "fugitive-gitlab.vim"
-  require("jrasmusbm.utils").ensure_loaded "vim-fugitive"
+  require("jrasmusbm.utils").ensure_setup "vim-rhubarb"
+  require("jrasmusbm.utils").ensure_setup "fugitive-gitlab.vim"
+  require("jrasmusbm.utils").ensure_setup "vim-fugitive"
 
   if options.bang then
     vim.cmd("GBrowse! " .. options.args)

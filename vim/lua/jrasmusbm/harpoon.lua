@@ -1,7 +1,7 @@
 local M = {}
 
 M.ensure_setup = function()
-  if not require("jrasmusbm.utils").ensure_loaded "harpoon" then
+  if not require("jrasmusbm.utils").ensure_setup "harpoon" then
     return false
   end
 

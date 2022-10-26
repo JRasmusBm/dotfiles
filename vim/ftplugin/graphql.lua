@@ -1,5 +1,5 @@
 require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
-require("jrasmusbm.utils").ensure_loaded "vim-graphql"
+require("jrasmusbm.utils").ensure_setup "vim-graphql"
 
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils"
