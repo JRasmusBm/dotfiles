@@ -338,7 +338,7 @@
   branch = master
   ignore = dirty
 [submodule "vim-illuminate"]
-	path = vim/pack/bundle/stařt/vim-illuminate
+  path = vim/pack/bundle/opt/vim-illuminate
   url = git@github.com:RRethy/vim-illuminate.git
   branch = master
   ignore = dirty
