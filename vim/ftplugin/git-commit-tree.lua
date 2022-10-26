@@ -5,7 +5,9 @@ local git_commit_tree_augroup = vim.api.nvim_create_augroup(
 vim.api.nvim_create_autocmd({ "BufEnter" }, {
   group = git_commit_tree_augroup,
   pattern = { "temp_git_tree" },
-  callback = vim.fn["jrasmusbm#git#list_tree"],
+  callback = function()
+    vim.fn["jrasmusbm#git#list_tree"]()
+  end,
 })
 
 local switch_to_git_status = function()
