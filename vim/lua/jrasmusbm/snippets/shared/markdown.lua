@@ -197,12 +197,17 @@ Industry: {}
     )
   ),
 
-  s({ trig="cb", name="code block" }, fmt([[
+  s(
+    { trig = "cb", name = "code block" },
+    fmt(
+      [[
 ```{}
 {}
 ```
 
 {}
-  ]], { i(1), i(2), i(0) })),
-  
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
 }

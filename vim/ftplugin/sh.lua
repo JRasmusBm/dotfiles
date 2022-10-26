@@ -12,4 +12,4 @@ vim.keymap.set(
 
 ls.add_snippets("sh", {})
 
-ls_utils.load_shared({filetype = "sh", shared = "sh"})
+ls_utils.load_shared { filetype = "sh", shared = "sh" }

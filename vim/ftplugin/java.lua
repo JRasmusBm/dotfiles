@@ -12,21 +12,37 @@ local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 ls.add_snippets("java", {
-  s({ trig="cd", name="class definitiom" }, fmt([[
+  s(
+    { trig = "cd", name = "class definitiom" },
+    fmt(
+      [[
 public class {} {{
   {}
 }}
-  ]], { i(1), i(0) })),
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 
-s({ trig="pkg", name="package" }, fmt([[
+  s(
+    { trig = "pkg", name = "package" },
+    fmt(
+      [[
 package {};
 {}
-]], { i(1), i(0) })),
+]],
+      { i(1), i(0) }
+    )
+  ),
 
-s({ trig="id", name="import default" }, fmt([[
+  s(
+    { trig = "id", name = "import default" },
+    fmt(
+      [[
 import {};
 {}
-]], { i(1), i(0) })),
-
-  
-})  
+]],
+      { i(1), i(0) }
+    )
+  ),
+})

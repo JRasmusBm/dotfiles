@@ -22,4 +22,4 @@ ls.add_snippets("typescript", {
   ),
 })
 
-ls_utils.load_shared({filetype = "typescript", shared = "js_ts"})
+ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }

@@ -9,4 +9,4 @@ local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 ls.add_snippets("git", {})
 
-ls_utils.load_shared({filetype = "git", shared = "markdown"})
+ls_utils.load_shared { filetype = "git", shared = "markdown" }

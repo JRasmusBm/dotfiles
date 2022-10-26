@@ -1,4 +1,4 @@
-vim.cmd[[
+vim.cmd [[
 packadd vim-wasm
 
 set softtabstop=0

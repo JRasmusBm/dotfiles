@@ -9,6 +9,6 @@ local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 ls.add_snippets("html", {})
 
-ls_utils.load_shared({filetype = "html", shared = "html"})
-ls_utils.load_shared({filetype = "html", shared = "css"})
-ls_utils.load_shared({filetype = "html", shared = "js_ts"})
+ls_utils.load_shared { filetype = "html", shared = "html" }
+ls_utils.load_shared { filetype = "html", shared = "css" }
+ls_utils.load_shared { filetype = "html", shared = "js_ts" }

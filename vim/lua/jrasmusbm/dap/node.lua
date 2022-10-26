@@ -26,7 +26,7 @@ M.configuration_factory = function(options)
       "<node_internals>/**",
       "${workspaceFolder}/node_modules/**/*.js",
     },
-    cwd = vim.fn.getcwd()
+    cwd = vim.fn.getcwd(),
     -- ["sourceMapPathOverrides"] = {
     --   ["*"] = "${webRoot}/*",
     -- },

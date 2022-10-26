@@ -32,8 +32,8 @@ vim.api.nvim_create_user_command("GBrowse", function(options)
   require("jrasmusbm.utils").ensure_loaded "vim-fugitive"
 
   if options.bang then
-  vim.cmd("GBrowse! " .. options.args)
-  else 
-  vim.cmd("GBrowse " .. options.args)
+    vim.cmd("GBrowse! " .. options.args)
+  else
+    vim.cmd("GBrowse " .. options.args)
   end
-end, {bang=true, nargs = "*" })
+end, { bang = true, nargs = "*" })

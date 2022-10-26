@@ -12,4 +12,4 @@ vim.keymap.set(
 
 ls.add_snippets("zsh", {})
 
-ls_utils.load_shared({filetype = "zsh", shared = "sh"})
+ls_utils.load_shared { filetype = "zsh", shared = "sh" }

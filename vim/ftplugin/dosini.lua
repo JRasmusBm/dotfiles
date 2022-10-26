@@ -11,11 +11,16 @@ local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 ls.add_snippets("dosini", {
-s({ trig="pi", name="mypy ignore" }, fmt([[
+  s(
+    { trig = "pi", name = "mypy ignore" },
+    fmt(
+      [[
 [mypy-{}]
 ignore_missing_imports=True
 
 {}
-]], { i(1), i(0) })),
-  
-})  
+]],
+      { i(1), i(0) }
+    )
+  ),
+})

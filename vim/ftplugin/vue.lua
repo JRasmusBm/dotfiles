@@ -11,4 +11,4 @@ local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 ls.add_snippets("vue", {})
 
-ls_utils.load_shared({filetype = "vue", shared = "html"})
+ls_utils.load_shared { filetype = "vue", shared = "html" }

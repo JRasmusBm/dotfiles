@@ -169,15 +169,24 @@ if __name__ == "__main__":
     )
   ),
 
-s({ trig="!dc", name="compose file" }, fmt([[
+  s(
+    { trig = "!dc", name = "compose file" },
+    fmt(
+      [[
 version: "3"
 
 services:
   
   {}
-]], { i(0) })),
+]],
+      { i(0) }
+    )
+  ),
 
-s({ trig="!vpm", name="vpm fie" }, fmt([[
+  s(
+    { trig = "!vpm", name = "vpm fie" },
+    fmt(
+      [[
 file_list:
   - edit {}
 highlights:
@@ -186,6 +195,8 @@ highlights:
       - - {}
         - {}
       cursorLine: {}
-]], { i(1), i(2), i(3), i(4), i(0) })),
-
+]],
+      { i(1), i(2), i(3), i(4), i(0) }
+    )
+  ),
 })
