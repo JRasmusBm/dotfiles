@@ -1,6 +1,4 @@
-vim.cmd[[
-execute "source $DOTFILES/vim/lua/jrasmusbm/snippets/shared/yaml.vim"
-
+vim.cmd [[
 function! RunFile() abort
   w
   let path = shellescape(@%, 1)
@@ -21,12 +19,16 @@ local t = ls.text_node
 local rep = require("luasnip.extras").rep
 
 ls.add_snippets("yaml", {
-    s({ trig="vx", name="vpm next file" }, fmt([[
+  s(
+    { trig = "vx", name = "vpm next file" },
+    fmt(
+      [[
 - ranges:
   - - {}
     - {}
   cursorLine: {}
-]], { i(1), i(2), i(0) })),
-    
-  
-})  
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+})
