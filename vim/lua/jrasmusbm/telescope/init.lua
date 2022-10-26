@@ -1,29 +1,15 @@
 local M = {}
 
 M.ensure_setup = function()
-  print(
-    vim.inspect({
-      file = "vim/lua/jrasmusbm/telescope/init.lua",
-      line = 10,
-      
-    })
-  )
-  if not require("jrasmusbm.utils").ensure_loaded "telescope.nvim" then
+  if not require("jrasmusbm.utils").ensure_setup "telescope.nvim" then
     return
   end
 
-  print(
-    vim.inspect({
-      file = "/home/jrasmusbm/dotfiles/vim/lua/jrasmusbm/telescope/init.lua",
-      line = 14,
-      
-    })
-  )
-  require("jrasmusbm.utils").ensure_loaded "popup.nvim"
-  require("jrasmusbm.utils").ensure_loaded "plenary.nvim"
-  require("jrasmusbm.utils").ensure_loaded "telescope-dap.nvim"
-  require("jrasmusbm.utils").ensure_loaded "telescope-ui-select.nvim"
-  require("jrasmusbm.utils").ensure_loaded "telescope-fzy-native.nvim"
+  require("jrasmusbm.utils").ensure_setup "popup.nvim"
+  require("jrasmusbm.utils").ensure_setup "plenary.nvim"
+  require("jrasmusbm.utils").ensure_setup "telescope-dap.nvim"
+  require("jrasmusbm.utils").ensure_setup "telescope-ui-select.nvim"
+  require("jrasmusbm.utils").ensure_setup "telescope-fzy-native.nvim"
 
   local actions = require "telescope.actions"
   local custom_actions = require "jrasmusbm.telescope.custom_actions"

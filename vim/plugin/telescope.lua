@@ -15,7 +15,7 @@ end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>fq", function()
   ensure_setup()
-  require("telescope.builtin").quickfix {}
+  require("telescope.builtin").quickfix()
 end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>fl", function()
@@ -50,35 +50,30 @@ vim.api.nvim_create_user_command("GFiles", function()
   require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }
 end, { nargs = "*" })
 
-vim.keymap.set(
-  { "n" },
-  "<localleader>fc",
-  "<cmd>lua require('jrasmusbm.telescope.git_commits').git_commits()<cr>"
-)
+vim.keymap.set({ "n" }, "<localleader>fc", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_commits").git_commits()
+end)
 
-vim.keymap.set(
-  { "n" },
-  "<localleader>fi",
-  "<cmd>lua require('jrasmusbm.telescope.git_issues').git_issues()<cr>"
-)
+vim.keymap.set({ "n" }, "<localleader>fi", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_issues").git_issues()
+end)
 
-vim.keymap.set(
-  { "n" },
-  "<localleader>fp",
-  "<cmd>lua require('jrasmusbm.telescope.git_pull_requests').git_pull_requests()<cr>"
-)
+vim.keymap.set({ "n" }, "<localleader>fp", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_pull_requests").git_pull_requests()
+end)
 
-vim.keymap.set(
-  { "n" },
-  "<localleader>fb",
-  "<cmd>lua require('jrasmusbm.telescope.git_branches').git_branches()<cr>"
-)
+vim.keymap.set({ "n" }, "<localleader>fb", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_branches").git_branches()
+end)
 
-vim.keymap.set(
-  { "n" },
-  "<localleader>fs",
-  "<cmd>lua require('telescope.builtin').git_status()<cr>"
-)
+vim.keymap.set({ "n" }, "<localleader>fs", function()
+  ensure_setup()
+  require("telescope.builtin").git_status()
+end)
 
 -- Config files
 

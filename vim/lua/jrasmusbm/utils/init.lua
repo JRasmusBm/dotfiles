@@ -57,7 +57,7 @@ end
 
 local loaded_plugins = {}
 
-M.ensure_loaded = function(plugin_name)
+M.ensure_setup = function(plugin_name)
   if loaded_plugins[plugin_name] == true then
     return false
   end
