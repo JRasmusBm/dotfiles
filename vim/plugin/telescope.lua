@@ -1,5 +1,10 @@
 local ensure_setup = require("jrasmusbm.telescope").ensure_setup
 
+vim.api.nvim_create_user_command("THL", function()
+  ensure_setup()
+  vim.cmd [[ Telescope highlights ]]
+end, { nargs = "*" })
+
 vim.keymap.set({ "n" }, "<leader>ff", function()
   ensure_setup()
   require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }

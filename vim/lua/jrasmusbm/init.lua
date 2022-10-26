@@ -20,7 +20,6 @@ vim.cmd [[ packadd! plenary.nvim ]]
 
 vim.opt.secure = true
 
-require "jrasmusbm.dap"
 require "jrasmusbm.lsp"
 require "jrasmusbm.treesitter"
 require "jrasmusbm.snippets"
