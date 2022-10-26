@@ -53,8 +53,6 @@ M.ensure_setup = function()
   end
   require("telescope").load_extension "dap"
   require("telescope").load_extension "ui-select"
-
-  require("jrasmusbm.dap.keymaps").telescope_mappings()
 end
 
 return M

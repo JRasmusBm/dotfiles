@@ -1,22 +1,30 @@
-vim.cmd [[
-packadd nvim-dap
-packadd nvim-dap-ui
-packadd nvim-dap-python
-packadd nvim-dap-virtual-text
-packadd debugpy.nvim
-]]
-require("nvim-dap-virtual-text").setup {
-  all_frames = true,
-  highlight_changed_variables = false,
-}
+local M = {}
 
-require("dapui").setup {
-  layouts = {
-    elements = {
-      { id = "watches", size = 00.25 },
+M.ensure_setup = function()
+  if not require("jrasmusbm.utils").ensure_setup "nvim-dap" then
+    return false
+  end
+
+  require("jrasmusbm.utils").ensure_setup "nvim-dap-ui"
+  require("jrasmusbm.utils").ensure_setup "nvim-dap-python"
+  require("jrasmusbm.utils").ensure_setup "nvim-dap-virtual-text"
+  require("jrasmusbm.utils").ensure_setup "debugpy.nvim"
+
+  require("nvim-dap-virtual-text").setup {
+    all_frames = true,
+    highlight_changed_variables = false,
+  }
+
+  require("dapui").setup {
+    layouts = {
+      elements = {
+        { id = "watches", size = 00.25 },
+      },
+      position = "bottom",
     },
-    position = "bottom",
-  },
-}
+  }
 
-require "jrasmusbm.dap.keymaps"
+  return true
+end
+
+return M
