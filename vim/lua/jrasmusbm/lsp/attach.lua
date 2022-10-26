@@ -4,8 +4,6 @@ function M.on_attach(client, bufnr)
   bufnr = bufnr or 0
   vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
 
-  require("illuminate").on_attach(client)
-
   -- Mappings.
   local opts = { noremap = true, silent = true, buffer = bufnr }
 
