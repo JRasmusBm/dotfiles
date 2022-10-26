@@ -1,14 +1,18 @@
-  (parameters
-    (_) @argument.inner
-  )
+(function_definition
+  body: (block) @function.inner
+) @function.outer
 
-  (table_constructor
-    (_) @argument.inner
-  )
+(parameters
+  (_) @argument.inner
+)
 
-  (arguments
-    (_) @argument.inner
-  )
+(table_constructor
+  (_) @argument.inner
+)
+
+(arguments
+  (_) @argument.inner
+)
 
 [
  (variable_declaration)

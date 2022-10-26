@@ -306,4 +306,18 @@ vim.g["jrasmusbm#git#log_excludes"] = "--exclude=refs/remotes/origin/{}"
       { i(1), i(0) }
     )
   ),
+
+  s(
+    { trig = "vcc", name = "create user command" },
+    fmt(
+      [[
+vim.api.nvim_create_user_command("{}", function(options)
+  require("jrasmusbm.{}").ensure_setup()
+
+  {}
+end, {{ nargs = "*" }})
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
 })

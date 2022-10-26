@@ -1,0 +1,183 @@
+local ensure_setup = require("jrasmusbm.telescope").ensure_setup
+
+vim.keymap.set({ "n" }, "<leader>ff", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>fg", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    hidden = true,
+    no_ignore = true,
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>fq", function()
+  ensure_setup()
+  require("telescope.builtin").quickfix {}
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>fl", function()
+  ensure_setup()
+  require("telescope.builtin").live_grep()
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>fb", function()
+  ensure_setup()
+  require("telescope.builtin").buffers()
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>f:", function()
+  ensure_setup()
+  require("telescope.builtin").command_history()
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>f/", function()
+  ensure_setup()
+  require("telescope.builtin").search_history()
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>fh", function()
+  ensure_setup()
+  require("telescope.builtin").help_tags()
+end, { noremap = true })
+
+-- Git search mappings
+vim.api.nvim_create_user_command("GFiles", function()
+  ensure_setup()
+
+  require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }
+end, { nargs = "*" })
+
+vim.keymap.set(
+  { "n" },
+  "<localleader>fc",
+  "<cmd>lua require('jrasmusbm.telescope.git_commits').git_commits()<cr>"
+)
+
+vim.keymap.set(
+  { "n" },
+  "<localleader>fi",
+  "<cmd>lua require('jrasmusbm.telescope.git_issues').git_issues()<cr>"
+)
+
+vim.keymap.set(
+  { "n" },
+  "<localleader>fp",
+  "<cmd>lua require('jrasmusbm.telescope.git_pull_requests').git_pull_requests()<cr>"
+)
+
+vim.keymap.set(
+  { "n" },
+  "<localleader>fb",
+  "<cmd>lua require('jrasmusbm.telescope.git_branches').git_branches()<cr>"
+)
+
+vim.keymap.set(
+  { "n" },
+  "<localleader>fs",
+  "<cmd>lua require('telescope.builtin').git_status()<cr>"
+)
+
+-- Config files
+
+vim.keymap.set({ "n" }, "<leader>ea", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "All Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/after/",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>eu", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Autoload Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/autoload/",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>el", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Lua Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/lua/",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>es", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Snippet Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/lua/jrasmusbm/snippets/shared/",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>eb", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Filetype Config Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/bin",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>ec", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Zsh Completion Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/shell/zsh_completions",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>ei", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Install Dependencies",
+    cwd = vim.fn.getenv "DOTFILES" .. "/install_dependencies",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>ef", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Filetype Config Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/ftplugin/",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>ep", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Plugin Files",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/plugin/",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>et", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Treesitter Queries",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/queries/",
+  }
+end, { noremap = true })
+
+vim.keymap.set({ "i" }, "<C-\\><C-I>", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_issues").git_issues()
+end, {})
+
+vim.keymap.set({ "i" }, "<C-\\><C-P>", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_pull_requests").git_pull_requests()
+end, {})
+
+vim.keymap.set({ "i" }, "<C-\\><C-F>", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }
+end, {})
+
+vim.keymap.set({ "i" }, "<C-\\><C-H>", function()
+  ensure_setup()
+  require("telescope.builtin").help_tags()
+end, {})
