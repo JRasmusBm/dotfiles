@@ -1,18 +1,17 @@
-local mappings = require "jrasmusbm.utils.mappings"
+vim.keymap.set({ "n", "o" }, "az", function()
+  vim.keymap.del({ "n", "o" }, "az")
 
-vim.cmd [[
-packadd vim-textobj-user
-packadd vim-textobj-between
-packadd vim-textobj-entire
-packadd vim-textobj-line
-packadd vim-textobj-underscore
-packadd vim-textobj-fold
-]]
+  require("jrasmusbm.utils").ensure_setup "vim-textobj-user"
+  require("jrasmusbm.utils").ensure_setup "vim-textobj-fold"
 
-vim.g.textobj_between_no_default_key_mappings = 0
+  require("jrasmusbm.utils.mappings").feedkeys "<Plug>(textobj-fold-a)"
+end, {})
 
-mappings.omap("ao", "<Plug>(textobj-between-a)")
-mappings.vmap("ao", "<Plug>(textobj-between-a)")
+vim.keymap.set({ "n", "o" }, "iz", function()
+  vim.keymap.del({ "n", "o" }, "iz")
 
-mappings.omap("io", "<Plug>(textobj-between-i)")
-mappings.vmap("io", "<Plug>(textobj-between-i)")
+  require("jrasmusbm.utils").ensure_setup "vim-textobj-user"
+  require("jrasmusbm.utils").ensure_setup "vim-textobj-fold"
+
+  require("jrasmusbm.utils.mappings").feedkeys "<Plug>(textobj-fold-i)"
+end, {})
