@@ -320,4 +320,9 @@ end, {{ nargs = "*" }})
       { i(1), i(2), i(0) }
     )
   ),
+
+  s({ trig="es", name="ensure setup" }, fmt([[
+require("jrasmusbm.utils").ensure_setup("{}")
+  ]], { i(0) })),
+  
 })
