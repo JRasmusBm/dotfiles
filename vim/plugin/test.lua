@@ -1,17 +1,29 @@
-local mappings = require "jrasmusbm.utils.mappings"
+vim.keymap.set({ "n" }, "<localleader>dn", function()
+  require("jrasmusbm.utils").ensure_setup "vim-tmux-runner"
+  require("jrasmusbm.test").ensure_setup()
+  vim.cmd [[ TestNearest ]]
+end, { noremap = true })
 
-vim.cmd [[
-packadd vim-test
+vim.keymap.set({ "n" }, "<localleader>df", function()
+  require("jrasmusbm.utils").ensure_setup "vim-tmux-runner"
+  require("jrasmusbm.test").ensure_setup()
+  vim.cmd [[ TestFile ]]
+end, { noremap = true })
 
-let test#python#project_root = "./tests"
-let test#strategy = "vtr"
+vim.keymap.set({ "n" }, "<localleader>ds", function()
+  require("jrasmusbm.utils").ensure_setup "vim-tmux-runner"
+  require("jrasmusbm.test").ensure_setup()
+  vim.cmd [[ TestSuite ]]
+end, { noremap = true })
 
-let test#go#gotest#options = "-cover"
-let test#javascript#reactscripts#options = "--coverage --watchAll=false"
-]]
+vim.keymap.set({ "n" }, "<localleader>dp", function()
+  require("jrasmusbm.utils").ensure_setup "vim-tmux-runner"
+  require("jrasmusbm.test").ensure_setup()
+  vim.cmd [[ TestLast ]]
+end, { noremap = true })
 
-mappings.nmap("<localleader>dn", ":TestNearest<CR>", { noremap = true })
-mappings.nmap("<localleader>df", ":TestFile<CR>", { noremap = true })
-mappings.nmap("<localleader>ds", ":TestSuite<CR>", { noremap = true })
-mappings.nmap("<localleader>dp", ":TestLast<CR>", { noremap = true })
-mappings.nmap("<localleader>dv", ":TestVisit<CR>", { noremap = true })
+vim.keymap.set({ "n" }, "<localleader>dv", function()
+  require("jrasmusbm.utils").ensure_setup "vim-tmux-runner"
+  require("jrasmusbm.test").ensure_setup()
+  vim.cmd [[ TestVisit ]]
+end, { noremap = true })
