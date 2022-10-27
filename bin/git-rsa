@@ -13,39 +13,15 @@ _git_restack_all() {
       )
     fi
 
-    branches_to_restack="$(gt log short -c | awk '/needs restack/ { print $3 }')"
-
-    if test -z "$branches_to_restack"; then
-      printf "\e[0;32mNo branches to restack! ✅\n\e[0;37m" >/dev/stderr
-
-      if test -n "$needs_stash"; then
-        printf "\e[0;33mPopping stash.\n\e[0;37m" >>/dev/stderr
-        (
-          set -x
-          git stash pop
-        )
-      fi
-
-      exit 0
-    fi
-
     original_branch="$(git branch --show-current)"
-
-    echo "$branches_to_restack" | while read -r stack; do
-      printf "\e[0;33mRestacking %s.\n\e[0;37m" "$stack" >>/dev/stderr
-      (
-        set -x
-        git switch "$stack"
-        gt stack restack
-        if ! gt stack submit --update-only; then
-          git push -f
-        fi
-      )
-
-    done
+    main_branch="$(git local-main-branch)"
 
     (
       set -x
+      git switch "$main_branch"
+      gt stack restack
+      gt stack test 'git pup -f'
+      gt stack submit -u
       git switch "$original_branch"
     )
 
