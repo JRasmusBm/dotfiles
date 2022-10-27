@@ -1,6 +1,6 @@
 vim.cmd [[
-inoremap <buffer> <leader>c :call jrasmusbm#scratchpad#exit()
-nnoremap <buffer> <leader>C :call jrasmusbm#scratchpad#exit()
+inoremap <buffer> <leader>c :call jrasmusbm#scratchpad#exit()<CR>
+nnoremap <buffer> <leader>C :call jrasmusbm#scratchpad#exit()<CR>
 
 setlocal textwidth=0
 setlocal wrap
