@@ -1,6 +1,17 @@
 local M = {}
 
-M.playground = {
+M.ensure_setup = function ()
+  require("jrasmusbm.treesitter").ensure_setup()  
+
+  if require("jrasmusbm.utils").ensure_setup("nvim-treesitter-playground") then
+    return
+  end
+
+  require("jrasmusbm.treesitter").ensure_setup()  
+
+  require("nvim-treesitter.configs").define_modules({
+      playground={
+
   enable = true,
   disable = {},
   updatetime = 25, -- Debounced time for highlighting nodes in the playground from source code
@@ -17,6 +28,9 @@ M.playground = {
     goto_node = "<cr>",
     show_help = "?",
   },
-}
+      }
+    })
+end
+
 
 return M
