@@ -1,6 +1,6 @@
  vim.opt.ttimeoutlen = 0
 
- local slow = 1500
+ local slow = 2000
  local fast = 350
 
 if require("jrasmusbm.compat").in_termux() then
