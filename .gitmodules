@@ -342,11 +342,6 @@
   url = git@github.com:RRethy/vim-illuminate.git
   branch = master
   ignore = dirty
-[submodule "spelunker.vim"]
-  path = vim/pack/bundle/opt/spelunker.vim
-  url = git@github.com:kamykn/spelunker.vim.git
-  branch = master
-  ignore = dirty
 [submodule "popup-menu.nvim"]
   path = vim/pack/bundle/opt/popup-menu.nvim
   url = git@github.com:kamykn/popup-menu.nvim.git
