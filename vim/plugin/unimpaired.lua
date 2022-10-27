@@ -1,3 +1,1 @@
-vim.cmd [[
-packadd vim-unimpaired
-]]
+require("jrasmusbm.utils").ensure_setup("vim-unimpaired")
