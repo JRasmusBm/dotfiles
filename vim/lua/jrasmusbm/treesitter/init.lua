@@ -11,7 +11,6 @@ end
 
 require("nvim-treesitter.configs").setup {
   highlight = { enable = true, disable = { "markdown" } },
-  playground = require("jrasmusbm.treesitter.playground").playground,
   query_linter = require("jrasmusbm.treesitter.query_linter").query_linter,
   textobjects = {
     select = require("jrasmusbm.treesitter.select").select,
