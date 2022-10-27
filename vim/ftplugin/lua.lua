@@ -321,8 +321,23 @@ end, {{ nargs = "*" }})
     )
   ),
 
-  s({ trig="es", name="ensure setup" }, fmt([[
+  s(
+    { trig = "es", name = "ensure setup" },
+    fmt(
+      [[
 require("jrasmusbm.utils").ensure_setup("{}")
-  ]], { i(0) })),
-  
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "fk", name = "feedkeys" },
+    fmt(
+      [[
+require("jrasmusbm.utils.mappings").feedkeys "{}"
+]],
+      { i(0) }
+    )
+  ),
 })
