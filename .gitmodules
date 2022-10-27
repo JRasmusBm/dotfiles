@@ -48,11 +48,6 @@
   url = git@github.com:eagletmt/ghcmod-vim.git
   branch = master
   ignore = dirty
-[submodule "vim-jsx"]
-  path = vim/pack/bundle/opt/vim-jsx
-  url = git@github.com:mxw/vim-jsx.git
-  branch = master
-  ignore = dirty
 [submodule "vim-json"]
   path = vim/pack/bundle/opt/vim-json
   url = git@github.com:elzr/vim-json.git
