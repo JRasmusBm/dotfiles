@@ -6,7 +6,6 @@ M.ensure_setup = function()
   end
 
   require("jrasmusbm.utils").ensure_setup "nvim-dap-ui"
-  require("jrasmusbm.utils").ensure_setup "nvim-dap-python"
   require("jrasmusbm.utils").ensure_setup "nvim-dap-virtual-text"
   require("jrasmusbm.utils").ensure_setup "debugpy.nvim"
 

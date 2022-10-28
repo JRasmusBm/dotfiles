@@ -1,8 +1,7 @@
 local M = {}
 
-vim.cmd [[
-packadd debugpy.nvim
-]]
+require("jrasmusbm.utils").ensure_setup "nvim-dap-python"
+require("jrasmusbm.utils").ensure_setup "debugpy.nvim"
 
 local dap = require "dap"
 
