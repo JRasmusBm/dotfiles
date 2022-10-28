@@ -3,6 +3,18 @@
 set -e
 
 git_switch() {
+   if test -z "$1" ; then
+
+     _target_branch="$(git local-main-branch)"
+     (
+     set -x
+     git switch "$_target_branch"
+
+   )
+   return 0
+   fi
+
+   
   (
     set -x
     g switch "$@"

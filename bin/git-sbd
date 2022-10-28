@@ -28,10 +28,24 @@ _switch_and_delete_current_branch() {
       _delete_upsteam_branch "$_current_upstream_branch"
     fi
 
-    _target_branch="${1:-"$(git local-main-branch)"}"
+   if test -n "$1" ; then
+(
+     set -x
+     git switch "$@"
+     )
+
+   else
+    _target_branch="$(git local-main-branch)"
+(
+     set -x
+     git switch "$_target_branch"
+     
+     )
+   fi
+
+   
     (
       set -x
-      git switch "$_target_branch"
       git branch -D "$_current_branch"
     )
   )
