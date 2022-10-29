@@ -1,10 +1,11 @@
 local M = {}
 
-vim.cmd [[
-packadd! nvim-treesitter-context
-]]
+M.ensure_setup = function()
+  if not require("jrasmusbm.utils").ensure_setup("nvim-treesitter-context") then
+    return
+  end
 
-M.setup = function()
+  
   require("treesitter-context").setup {
     max_lines = 0,
     trim_scope = "outer",
