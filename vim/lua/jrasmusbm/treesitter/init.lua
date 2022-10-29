@@ -34,7 +34,7 @@ require("nvim-treesitter.configs").setup {
   },
 }
 
-require("jrasmusbm.treesitter.context").setup()
+require("jrasmusbm.treesitter.context").ensure_setup()
 
 end
 
