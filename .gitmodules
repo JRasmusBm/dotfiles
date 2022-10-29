@@ -113,29 +113,9 @@
   url = git@github.com:JRasmusBm/vim-test.git 
   branch = master
   ignore = dirty
-[submodule "vim-textobj-entire"]
-  path = vim/pack/bundle/opt/vim-textobj-entire
-  url = git@github.com:kana/vim-textobj-entire.git
-  branch = master
-  ignore = dirty
-[submodule "vim-textobj-line"]
-  path = vim/pack/bundle/opt/vim-textobj-line
-  url = git@github.com:kana/vim-textobj-line.git
-  branch = master
-  ignore = dirty
 [submodule "vim-textobj-user"]
   path = vim/pack/bundle/opt/vim-textobj-user
   url = git@github.com:kana/vim-textobj-user.git
-  branch = master
-  ignore = dirty
-[submodule "vim-textobj-underscore"]
-  path = vim/pack/bundle/opt/vim-textobj-underscore
-  url = git@github.com:lucapette/vim-textobj-underscore.git
-  branch = master
-  ignore = dirty
-[submodule "vim-textobj-between"]
-  path = vim/pack/bundle/opt/vim-textobj-between
-  url = git@github.com:thinca/vim-textobj-between.git
   branch = master
   ignore = dirty
 [submodule "vim-tmux-navigator"]
