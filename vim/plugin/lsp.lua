@@ -1,6 +1,6 @@
-vim.cmd [[
-packadd nvim-lspconfig
+require("jrasmusbm.lsp").ensure_setup()
 
+vim.cmd [[
 sign define DiagnosticErrorSign text=✗ texthl=DiagnosticError
 sign define DiagnosticWarningSign text=⚠ texthl=DiagnosticWarning
 sign define DiagnosticInformationSign text=i texthl=DiagnosticInformation
