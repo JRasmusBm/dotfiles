@@ -1,10 +1,9 @@
-vim.cmd [[
-packadd nvim-treesitter
-packadd nvim-treesitter-textobjects
-packadd nvim-treesitter-playground
-packadd indent-blankline.nvim
-]]
+require("jrasmusbm.treesitter").ensure_setup()
 
-vim.g.indent_blankline_use_treesitter = true
-vim.g.indent_blankline_show_current_context = true
-vim.g.indent_blankline_char = "│"
+vim.api.nvim_create_user_command("TSP", function()
+  require("jrasmusbm.treesitter.playground").ensure_setup()
+
+ vim.cmd ("TSPlaygroundToggle")
+
+  
+end, { nargs = 0})
