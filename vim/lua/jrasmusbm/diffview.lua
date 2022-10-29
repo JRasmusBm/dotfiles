@@ -1,10 +1,9 @@
 local M = {}
 
-
 M.ensure_setup = function()
-if require("jrasmusbm.utils").ensure_setup("diffview.nvim") then
- return 
-end
+  if require("jrasmusbm.utils").ensure_setup "diffview.nvim" then
+    return
+  end
 
   vim.api.nvim_create_user_command("DC", function(_, fargs)
     vim.cmd { cmd = "DiffviewClose", args = fargs }
@@ -29,7 +28,6 @@ end
       },
     },
   }
-  
 end
 
 return M

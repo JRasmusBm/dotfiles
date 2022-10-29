@@ -67,7 +67,6 @@ M.ensure_setup = function(plugin_name, is_startup)
     maybe_bang = "!"
   end
 
-  
   vim.cmd("packadd" .. maybe_bang .. " " .. plugin_name)
   loaded_plugins[plugin_name] = true
   return true

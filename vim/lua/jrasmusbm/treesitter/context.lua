@@ -1,11 +1,10 @@
 local M = {}
 
 M.ensure_setup = function()
-  if not require("jrasmusbm.utils").ensure_setup("nvim-treesitter-context") then
+  if not require("jrasmusbm.utils").ensure_setup "nvim-treesitter-context" then
     return
   end
 
-  
   require("treesitter-context").setup {
     max_lines = 0,
     trim_scope = "outer",

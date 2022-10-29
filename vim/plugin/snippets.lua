@@ -1,7 +1,7 @@
 vim.keymap.set({ "i", "s" }, "<leader>s", function()
-require("jrasmusbm.snippets").ensure_setup()
+  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
-local ls = require "luasnip"
+  local ls = require "luasnip"
   if ls.expandable() then
     ls.expand()
     edit_utils.feedkeys("<esc>a", "i")
@@ -10,9 +10,9 @@ local ls = require "luasnip"
 end, { silent = true })
 
 vim.keymap.set({ "n" }, "<leader>s", function()
-require("jrasmusbm.snippets").ensure_setup()
+  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
-local ls = require "luasnip"
+  local ls = require "luasnip"
   if ls.expandable() then
     edit_utils.add_undo_breakpoint()
     ls.expand()
@@ -20,21 +20,16 @@ local ls = require "luasnip"
   end
 end, { silent = true })
 
-vim.keymap.set(
-  { "i", "s", "n" },
-  "<leader>S",
-  function ()
-require("jrasmusbm.snippets").ensure_setup()
-local ls = require "luasnip"
+vim.keymap.set({ "i", "s", "n" }, "<leader>S", function()
+  require("jrasmusbm.snippets").ensure_setup()
+  local ls = require "luasnip"
   ls.unlink_current()
-  end,
-  { silent = true }
-)
+end, { silent = true })
 
 vim.keymap.set({ "i", "n" }, "<leader>g", function()
-require("jrasmusbm.snippets").ensure_setup()
+  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
-local ls = require "luasnip"
+  local ls = require "luasnip"
   if ls.jumpable(1) then
     edit_utils.add_undo_breakpoint()
     ls.jump(1)
@@ -45,7 +40,7 @@ local ls = require "luasnip"
 end, { silent = true })
 
 vim.keymap.set({ "i", "n" }, "<leader>G", function()
-require("jrasmusbm.snippets").ensure_setup()
+  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
   if ls.jumpable(-1) then
     edit_utils.add_undo_breakpoint()
@@ -57,4 +52,3 @@ require("jrasmusbm.snippets").ensure_setup()
 end, { silent = true })
 
 vim.keymap.set({ "i" }, "<leader><leader>", "<++>")
-

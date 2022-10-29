@@ -1,4 +1,4 @@
-require("jrasmusbm.utils").ensure_setup("vim-wasm")
+require("jrasmusbm.utils").ensure_setup "vim-wasm"
 
 vim.cmd [[
 set softtabstop=0

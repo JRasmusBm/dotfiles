@@ -1,7 +1,7 @@
 local M = {}
 
-M.ensure_setup = function ()
-  if require("jrasmusbm.utils").ensure_setup("nvim-lspconfig") then
+M.ensure_setup = function()
+  if require("jrasmusbm.utils").ensure_setup "nvim-lspconfig" then
     return false
   end
 
@@ -38,10 +38,8 @@ M.ensure_setup = function ()
       end),
     })
     :start()
-  
+
   return true
 end
-
-
 
 return M

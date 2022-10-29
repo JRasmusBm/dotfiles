@@ -1,11 +1,11 @@
 local M = {}
 
-M.ensure_setup = function ()
-  if require("jrasmusbm.utils").ensure_setup("LuaSnip") then
+M.ensure_setup = function()
+  if require("jrasmusbm.utils").ensure_setup "LuaSnip" then
     return false
   end
-  
-  require("jrasmusbm.utils").ensure_setup("vim-bushels")
+
+  require("jrasmusbm.utils").ensure_setup "vim-bushels"
 
   local edit_utils = require "jrasmusbm.utils.edit"
   local ls = require "luasnip"
