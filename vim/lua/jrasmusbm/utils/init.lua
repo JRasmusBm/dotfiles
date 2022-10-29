@@ -57,12 +57,18 @@ end
 
 local loaded_plugins = {}
 
-M.ensure_setup = function(plugin_name)
+M.ensure_setup = function(plugin_name, is_startup)
   if loaded_plugins[plugin_name] == true then
     return false
   end
 
-  vim.cmd("packadd " .. plugin_name)
+  maybe_bang = ""
+  if is_startup == true then
+    maybe_bang = "!"
+  end
+
+  
+  vim.cmd("packadd" .. maybe_bang .. " " .. plugin_name)
   loaded_plugins[plugin_name] = true
   return true
 end
