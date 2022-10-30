@@ -1,10 +1,4 @@
-local mappings = require "jrasmusbm.utils.mappings"
-
-vim.cmd [[
-packadd refactoring.nvim
-]]
-
-mappings.vmap(
+vim.keymap.set({ "v" },
   "<leader>rf",
   ":lua require('jrasmusbm.telescope.refactoring').refactors()<CR>",
   { noremap = true, silent = true }

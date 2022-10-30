@@ -1,7 +1,5 @@
 M = {}
 
-require("refactoring").setup()
-
 local function refactor(prompt_bufnr)
   local content = require("telescope.actions.state").get_selected_entry(
     prompt_bufnr
@@ -11,6 +9,15 @@ local function refactor(prompt_bufnr)
 end
 
 M.refactors = function()
+  require("jrasmusbm.telescope").ensure_setup()
+  if require("jrasmusbm.utils").ensure_setup("refactoring.nvim") then
+    
+  require("refactoring").setup()
+  end
+
+  
+
+
   local opts = require("telescope.themes").get_cursor() -- set personal telescope options
   require("telescope.pickers").new(opts, {
     prompt_title = "refactors",
