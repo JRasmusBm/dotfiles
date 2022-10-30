@@ -1,3 +1,1 @@
-vim.cmd [[
-packadd terminus
-]]
+require("jrasmusbm.utils").ensure_setup("terminus")

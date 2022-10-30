@@ -1,3 +1,1 @@
-vim.cmd [[
-packadd vim-repeat
-]]
+require("jrasmusbm.utils").ensure_setup("vim-repeat")

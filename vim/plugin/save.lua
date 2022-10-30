@@ -1,3 +1,1 @@
-vim.cmd [[
-packadd vim-stay
-]]
+require("jrasmusbm.utils").ensure_setup("vim-stay")

@@ -1,6 +1,4 @@
-vim.cmd [[
-packadd vim-smoothie
-]]
+require("jrasmusbm.utils").ensure_setup("vim-smoothie")
 
 vim.g.smoothie_update_interval = 20
 vim.g.smoothie_speed_constant_factor = 20

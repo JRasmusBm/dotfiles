@@ -1,9 +1,5 @@
 require("jrasmusbm.utils").ensure_setup "vim-tmux-navigator"
 
-vim.cmd [[
-packadd vim-tmux-navigator
-]]
-
 vim.keymap.set({ "n" }, "<localleader>td", function()
   require("jrasmusbm.tmux").ensure_setup()
   vim.cmd "VtrSendCtrlD"
