@@ -1,7 +1,7 @@
 local M = {}
 
 M.ensure_setup = function()
-  if require("jrasmusbm.utils").ensure_setup "nvim-lspconfig" then
+  if not require("jrasmusbm.utils").ensure_setup "nvim-lspconfig" then
     return false
   end
 
