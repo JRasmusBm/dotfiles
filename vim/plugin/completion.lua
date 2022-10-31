@@ -1,11 +1,9 @@
-vim.cmd [[
-packadd nvim-cmp
-packadd cmp-nvim-lsp
-packadd cmp-path
-packadd cmp-buffer
-packadd cmp-cmdline
-packadd cmp_luasnip
-]]
+require("jrasmusbm.utils").ensure_setup("nvim-cmp")
+require("jrasmusbm.utils").ensure_setup("cmp-nvim-lsp")
+require("jrasmusbm.utils").ensure_setup("cmp-path")
+require("jrasmusbm.utils").ensure_setup("cmp-buffer")
+require("jrasmusbm.utils").ensure_setup("cmp-cmdline")
+require("jrasmusbm.utils").ensure_setup("cmp_luasnip")
 
 local list = require("jrasmusbm.utils.options").list
 

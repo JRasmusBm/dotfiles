@@ -1,10 +1,17 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
-vim.cmd [[
-packadd vim-hardtime
+require("jrasmusbm.utils").ensure_setup(" vim-hardtime")
 
-command! VBG packadd vim-be-good | VimBeGood
-]]
+vim.api.nvim_create_user_command("VBG", function(options)
+  require("jrasmusbm.utils").ensure_setup("vim-be-good")
+
+  
+  vim.cmd[[
+  VimBeGood
+  ]]
+
+  
+end, { nargs = "*" })
 
 vim.g.hardtime_default_on = 1
 vim.g.hardtime_maxcount = 1

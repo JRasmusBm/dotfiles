@@ -1,3 +1,1 @@
-vim.cmd [[
-packadd vim-illuminate
-]]
+require("jrasmusbm.utils").ensure_setup("vim-illuminate")

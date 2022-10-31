@@ -1,7 +1,7 @@
-vim.cmd [[
-packadd vim-gitgutter
-packadd nvim-web-devicons
+require("jrasmusbm.utils").ensure_setup("vim-gitgutter")
+require("jrasmusbm.utils").ensure_setup("nvim-web-devicons")
 
+vim.cmd [[
 command! -nargs=? L silent call jrasmusbm#git#open_tree(<f-args>)
 
 command! Gpa call jrasmusbm#git#push_all()

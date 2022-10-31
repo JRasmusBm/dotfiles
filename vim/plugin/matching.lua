@@ -1,9 +1,7 @@
-vim.cmd [[
-packadd auto-pairs
-packadd matchit
-packadd vim-endwise
-packadd vim-surround
-]]
+require("jrasmusbm.utils").ensure_setup(" auto-pairs")
+require("jrasmusbm.utils").ensure_setup(" matchit")
+require("jrasmusbm.utils").ensure_setup(" vim-endwise")
+require("jrasmusbm.utils").ensure_setup(" vim-surround")
 
 vim.g.AutoPairsMoveCharacter = ""
 vim.g.AutoPairsMultilineClose = 0

@@ -1,8 +1,6 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
-vim.cmd [[
-packadd vim-presentation-mode
-]]
+require("jrasmusbm.utils").ensure_setup("vim-presentation-mode")
 
 mappings.nmap("<leader>vc", "<cmd>VpmOff<cr>", { noremap = true })
 mappings.nmap("<leader>vn", "<cmd>VpmNextHighlight<cr>", { noremap = true })

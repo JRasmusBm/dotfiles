@@ -1,6 +1,4 @@
-vim.cmd [[
-packadd! impatient.nvim
-]]
+require("jrasmusbm.utils").ensure_setup(" impatient.nvim", true)
 
 require('impatient')
 

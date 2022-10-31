@@ -15,7 +15,6 @@ if dotfiles == nil then
   vim.fn.setenv("DOTFILES", os.getenv "HOME" .. "/dotfiles")
 end
 
-vim.cmd [[ packadd! plenary.nvim ]]
 require("jrasmusbm.utils").ensure_setup("plenary.nvim", true)
 
 vim.opt.secure = true

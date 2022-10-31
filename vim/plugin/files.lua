@@ -1,3 +1,1 @@
-vim.cmd [[
-packadd vim-eunuch
-]]
+require("jrasmusbm.utils").ensure_setup("vim-eunuch")

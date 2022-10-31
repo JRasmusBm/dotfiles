@@ -1,18 +1,8 @@
-local state = {
-  loaded = false,
-}
-
-local ensure_setup_and_run = function()
-  if not state.loaded then
-    vim.cmd [[ packadd vim-caser ]]
-  end
-end
-
 vim.g.caser_no_mappings = 1
 
 local nmap = function(binding, command)
   vim.keymap.set({ "n" }, binding, function()
-    ensure_setup_and_run()
+    require("jrasmusbm.utils").ensure_setup("vim-caser")
 
     require("jrasmusbm.utils.edit").feedkeys(command)
   end, {})
@@ -20,7 +10,7 @@ end
 
 local vmap = function(binding, command)
   vim.keymap.set({ "v" }, binding, function()
-    ensure_setup_and_run()
+    require("jrasmusbm.utils").ensure_setup("vim-caser")
 
     require("jrasmusbm.utils.edit").feedkeys(command)
   end, {})

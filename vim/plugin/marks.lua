@@ -1,6 +1,4 @@
-vim.cmd [[
-packadd vim-signature
-]]
+require("jrasmusbm.utils").ensure_setup("vim-signature")
 
 vim.g.SignatureMarkTextHL = "Function"
 vim.g.SignatureMap = {

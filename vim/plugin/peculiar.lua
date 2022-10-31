@@ -1,8 +1,6 @@
 local mappings = require "jrasmusbm.utils.mappings"
 
-vim.cmd [[
-packadd vim-peculiar
-]]
+require("jrasmusbm.utils").ensure_setup(" vim-peculiar")
 
 mappings.nmap("<localleader>v", "<Plug>PeculiarV")
 mappings.nmap("<localleader>g", "<Plug>PeculiarG")

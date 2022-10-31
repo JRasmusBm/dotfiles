@@ -1,4 +1,2 @@
-vim.cmd [[
-packadd gruvbox-material
-packadd nvim-colorizer.lua
-]]
+require("jrasmusbm.utils").ensure_setup("gruvbox-material")
+require("jrasmusbm.utils").ensure_setup("nvim-colorizer.lua")
