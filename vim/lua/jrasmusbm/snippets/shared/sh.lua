@@ -111,7 +111,7 @@ elif {} ; then
   s(
     { trig = "ts", name = "tmux session" },
     fmt(
-      'tmux new-session -d -s {} -n {} -z "$(tput cols)" -y "$(tput lines)"\n\n{}',
+      'tmux new-session -d -s {} -n {} -x "$(tput cols)" -y "$(tput lines)"\n\n{}',
       { i(1), i(2), i(0) }
     )
   ),
