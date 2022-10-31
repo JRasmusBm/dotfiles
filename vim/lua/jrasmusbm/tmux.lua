@@ -14,6 +14,10 @@ M.ensure_setup = function()
   end
 
   require("jrasmusbm.utils").ensure_setup "vim-tmux-runner"
+
+  vim.cmd [[
+  silent VtrAttachToPane 1"
+  ]]
 end
 
 return M
