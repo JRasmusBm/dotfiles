@@ -2,7 +2,7 @@
 
 set -e
 
-unique_prompt_symbol='›'
+unique_prompt_symbol='➶'
 
 tmux send -X end-of-line
 tmux send -X search-forward-text "$unique_prompt_symbol"
