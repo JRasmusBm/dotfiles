@@ -1,3 +1,5 @@
+require("jrasmusbm.polyglot").ensure_setup()
+
 vim.cmd [[
 command! PR norm gg/Ticketf[yi]/#f[v2f]p0WysaW]Wdw
 ]]
