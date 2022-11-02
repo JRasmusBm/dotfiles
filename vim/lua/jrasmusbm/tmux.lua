@@ -9,6 +9,7 @@ M.ensure_setup = function()
     vim.g.vtr_filetype_runner_overrides = {
       rust = "cargo run {file}",
       go = "go run {file}",
+      terraform = "terraform apply",
     }
     state.already_setup = true
   end
