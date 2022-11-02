@@ -25,6 +25,4 @@ mappings.nmap(
   { silent = true, noremap = true }
 )
 
-mappings.xmap("<leader>h", "<cmd>call jrasmusbm#open#github()<CR>")
-
 mappings.nmap("==", "<cmd>call jrasmusbm#format#default()<cr>")

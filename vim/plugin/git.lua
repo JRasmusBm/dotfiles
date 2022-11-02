@@ -37,3 +37,10 @@ vim.api.nvim_create_user_command("GBrowse", function(options)
     vim.cmd("GBrowse " .. options.args)
   end
 end, { bang = true, nargs = "*" })
+
+vim.keymap.set({ "n", "x" },"<leader>h", function ()
+  require("jrasmusbm.git").open_github_link()
+end
+
+)
+

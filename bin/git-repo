@@ -3,9 +3,11 @@
 set -e
 
 _git_open_repo_on_github() {
+
   (
+    repo="$(echo "$1" | sed -E 's/git@github.com:// ; s/.git$//')"
     set -x
-    gh repo view --web "$@"
+    gh repo view --web "$repo"
   )
 }
 
