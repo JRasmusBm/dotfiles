@@ -32,16 +32,19 @@ end)
 
 vim.keymap.set({ "n" }, "<localleader>tf", function()
   require("jrasmusbm.tmux").ensure_setup()
+  vim.cmd "VtrOpenRunner"
   vim.cmd "VtrSendFile"
 end)
 
 vim.keymap.set({ "n" }, "<localleader>tl", function()
   require("jrasmusbm.tmux").ensure_setup()
+  vim.cmd "VtrOpenRunner"
   vim.cmd "VtrSendLinesToRunner"
 end)
 
 vim.keymap.set({ "n" }, "<localleader>tp", function()
   require("jrasmusbm.tmux").ensure_setup()
+  vim.cmd "VtrOpenRunner"
   vim.cmd "VtrSendCommandToRunner r"
 end)
 
