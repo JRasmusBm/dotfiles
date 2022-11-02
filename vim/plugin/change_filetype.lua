@@ -7,6 +7,7 @@ augroup ChangeFiletype
   autocmd BufNew,BufNewFile,BufRead .tmux,.tmux-default,.env* set filetype=sh
   autocmd BufNew,BufNewFile,BufRead *.jsx set filetype=javascript.jsx
   autocmd BufNew,BufNewFile,BufRead .sequelizerc set filetype=javascript
+  autocmd Filetype tf  set filetype=terraform
   autocmd BufNew,BufNewFile,BufRead *.graphql set filetype=graphql
   autocmd BufNew,BufNewFile,BufRead gitconfig set filetype=gitconfig
   autocmd BufNew,BufNewFile,BufRead .rgignore,.ignore set filetype=gitignore
