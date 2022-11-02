@@ -102,7 +102,7 @@ vim.keymap.set({ "n" }, "<leader>el", function()
   ensure_setup()
   require("jrasmusbm.telescope.find_files").find_files {
     prompt_title = "Lua Files",
-    cwd = vim.fn.getenv "DOTFILES" .. "/vim/lua/",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/lua/jrasmusbm/",
   }
 end, { noremap = true })
 
