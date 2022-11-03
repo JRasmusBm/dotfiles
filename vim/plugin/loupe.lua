@@ -1,3 +1,5 @@
+    require("jrasmusbm.utils").ensure_setup "loupe"
+
 local loupe_handler = function(cmd)
   vim.g.LoupeCaseSettingsAlways = 1
 
