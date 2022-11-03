@@ -31,6 +31,13 @@ vim.api.nvim_create_user_command("GBrowse", function(options)
   require("jrasmusbm.utils").ensure_setup "fugitive-gitlab.vim"
   require("jrasmusbm.utils").ensure_setup "vim-fugitive"
 
+  if options.fargs[1] == "mv" then
+   vim.cmd({command="GMove", args=vim.list_slice(options.fargs, 2, -1)}) 
+   return
+  end
+
+  
+
   if options.bang then
     vim.cmd("GBrowse! " .. options.args)
   else
