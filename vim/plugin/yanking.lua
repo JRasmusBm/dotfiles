@@ -1,10 +1,8 @@
-local mappings = require "jrasmusbm.utils.mappings"
-
 if not require("jrasmusbm.compat").in_termux() then
-  mappings.nmap("<C-Y>", '"+y', { noremap = true })
-  mappings.nmap("<C-P>", '"+p', { noremap = true })
-  mappings.vmap("<C-Y>", '"+y', { noremap = true })
-  mappings.vmap("<C-P>", '"+p', { noremap = true })
+  vim.keymap.set({ "n" },"<C-Y>", '"+y', { noremap = true })
+  vim.keymap.set({ "n" },"<C-P>", '"+p', { noremap = true })
+  vim.keymap.set({ "v" },"<C-Y>", '"+y', { noremap = true })
+  vim.keymap.set({ "v" },"<C-P>", '"+p', { noremap = true })
 end
 
 vim.cmd [[

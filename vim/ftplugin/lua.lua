@@ -78,11 +78,6 @@ ls.add_snippets("lua", {
   ),
 
   s(
-    { trig = "im", name = "import module" },
-    fmt('local mappings = require("jrasmusbm.utils.mappings")\n{}', { i(0) })
-  ),
-
-  s(
     { trig = "sn", name = "snippet" },
     fmt(
       's({{ trig="{}", name="{}" }}, fmt([[\n{}\n]], {{ {} }})),\n{}',

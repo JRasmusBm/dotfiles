@@ -1,5 +1,3 @@
-local mappings = require "jrasmusbm.utils.mappings"
-
 vim.cmd [[
 augroup Ruler
   autocmd WinEnter * :silent call jrasmusbm#ruler#source()
@@ -9,7 +7,7 @@ augroup END
 silent call jrasmusbm#ruler#source()
 ]]
 
-mappings.nmap(
+vim.keymap.set({ "n" },
   "<Leader>sr",
   "<cmd>call jrasmusbm#ruler#toggle()<cr>",
   { noremap = true }
