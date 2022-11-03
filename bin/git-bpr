@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+_open_pr_in_browser() {
+  (
+    _pull_requests="$(gh pr list)"
+    if test -z "$_pull_requests"; then
+      echo "No pull requests found."
+      exit 1
+    fi
+
+    echo "$_pull_requests" | fzf --reverse | awk '{ print $1 }' | xargs gh pr view --web
+
+  )
+
+}
+
+_open_pr_in_browser "$@"
