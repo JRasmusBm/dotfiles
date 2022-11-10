@@ -106,6 +106,14 @@ vim.keymap.set({ "n" }, "<leader>el", function()
   }
 end, { noremap = true })
 
+vim.keymap.set({ "n" }, "<leader>e.", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "All Dotfiles",
+    cwd = vim.fn.getenv "DOTFILES",
+  }
+end, { noremap = true })
+
 vim.keymap.set({ "n" }, "<leader>es", function()
   ensure_setup()
   require("jrasmusbm.telescope.find_files").find_files {
