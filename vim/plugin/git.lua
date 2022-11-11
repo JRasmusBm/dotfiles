@@ -23,40 +23,27 @@ vim.api.nvim_create_user_command("G", function(options)
   require("jrasmusbm.utils").ensure_setup "fugitive-gitlab.vim"
   require("jrasmusbm.utils").ensure_setup "vim-fugitive"
 
-  vim.cmd("Git " .. options.args)
-end, { nargs = "*" })
-
-vim.api.nvim_create_user_command("GBrowse", function(options)
-  require("jrasmusbm.utils").ensure_setup "vim-rhubarb"
-  require("jrasmusbm.utils").ensure_setup "fugitive-gitlab.vim"
-  require("jrasmusbm.utils").ensure_setup "vim-fugitive"
-
   if options.fargs[1] == "mv" then
-   vim.cmd({command="GMove", args={options.fargs[2]}}) 
+   vim.cmd({cmd="GMove", args={options.fargs[2]}}) 
    return
   end
 
-  if options.fargs[1] == "browse" then
-    if options.bang then
-   vim.cmd({command="GBrowse", args={options.fargs[2]}}) 
- else
-   vim.cmd({command="GBrowse!", args={options.fargs[2]}}) 
-      
-    end
+  if options.fargs[1] == "br" then
+   vim.cmd({cmd="GBrowse", args={options.fargs[2]}}) 
+   return
+  end
 
-    
+
+  if options.fargs[1] == "brc" then
+   vim.cmd({cmd="GBrowse!", args={options.fargs[2]}}) 
    return
   end
 
   
 
 
-  if options.bang then
-    vim.cmd("GBrowse! " .. options.args)
-  else
-    vim.cmd("GBrowse " .. options.args)
-  end
-end, { bang = true, nargs = "*" })
+    vim.cmd("G " .. options.args)
+end, { bang = true, nargs = "*", range=-1 })
 
 vim.keymap.set({ "n", "x" },"<leader>h", function ()
   require("jrasmusbm.git").open_github_link()
