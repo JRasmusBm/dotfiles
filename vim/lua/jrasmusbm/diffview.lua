@@ -1,7 +1,7 @@
 local M = {}
 
 M.ensure_setup = function()
-  if require("jrasmusbm.utils").ensure_setup "diffview.nvim" then
+  if not require("jrasmusbm.utils").ensure_setup "diffview.nvim" then
     return
   end
 
