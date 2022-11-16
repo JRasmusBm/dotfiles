@@ -227,6 +227,10 @@ resource "aws_eip" "{}" {{
   instance = aws_instance.{}.id
   vpc      = true
 }}
+
+output "ip" {{
+  value = aws_eip.{}.public_ip
+}}
   ]],
       {
         i(1), -- vpc
@@ -250,6 +254,7 @@ resource "aws_eip" "{}" {{
         i(9), -- secret key name
         i(10), -- elastic ip
         rep(8),
+        rep(10), -- output ip
       }
     )
   ),
@@ -265,6 +270,40 @@ variable "{}" {{
 {}
   ]],
       { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "s3", name = "s3" },
+    fmt(
+      [[
+resource "aws_s3_bucket" "{}" {{
+  bucket = "terraform-jrasmubm-zero-to-hero"
+}}
+
+resource "aws_s3_bucket_acl" "{}" {{
+  bucket = aws_s3_bucket.{}.id
+  acl    = "private"
+}}
+
+{}
+  ]],
+      { i(1), i(2), rep(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "mf", name = "mount file" },
+    fmt(
+      [[
+provisioner "file" {{
+  source      = "{}"
+  destination = "{}"
+}}
+
+{}
+  ]],
+      { i(1), i(0) }
     )
   ),
 })
