@@ -66,7 +66,7 @@ _get_supported_layouts() {
 }
 
 _set_layout() {
-  _config_file="$HOME/.config/jrasmusbm/layout"
+  _config_file="$LOCAL_CONFIG/layout"
 
   if test "$1" = 'show'; then
     cat "$_config_file"

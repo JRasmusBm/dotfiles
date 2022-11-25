@@ -22,17 +22,17 @@ _set_system_theme() {
 }
 
 _persist_theme() {
-  echo "$1" >"$HOME/.config/jrasmusbm/theme"
+  echo "$1" >"$LOCAL_CONFIG/theme"
 }
 
 _set_theme() {
   if test "$1" = 'show'; then
-    cat "$HOME/.config/jrasmusbm/theme"
+    cat "$LOCAL_CONFIG/theme"
     return 0
   fi
 
   if test "$1" = 'emoji'; then
-    _current_theme="$(cat "$HOME/.config/jrasmusbm/theme")"
+    _current_theme="$(cat "$LOCAL_CONFIG/theme")"
 
     if test "$_current_theme" = 'dark'; then
       printf '🌚'
@@ -51,7 +51,7 @@ _set_theme() {
   fi
 
   if test "$1" = 'toggle'; then
-    _old_theme="$(cat "$HOME/.config/jrasmusbm/theme")"
+    _old_theme="$(cat "$LOCAL_CONFIG/theme")"
     if test "$_old_theme" = 'dark'; then
       _new_theme='light'
     elif test "$_old_theme" = 'light'; then

@@ -9,6 +9,7 @@ esac
 
 export FLYCTL_INSTALL="/home/jrasmusbm/.fly"
 export DOTFILES="$HOME/dotfiles"
+export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export plug="$DOTFILES/vim/pack/bundle/opt"
 export PATH="$PATH:$HOME/bin"
 export PATH="$PATH:$DOTFILES/bin"
@@ -53,6 +54,7 @@ PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[0
 fi
 
 export DOTFILES="$HOME/dotfiles"
+export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 test -f "$HOME/.fzf.bash" && source "$HOME/.fzf.bash"
