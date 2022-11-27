@@ -388,6 +388,8 @@
 [submodule "telescope-ui-select.nvim"]
 	path = vim/pack/bundle/opt/telescope-ui-select.nvim
 	url = git@github.com:nvim-telescope/telescope-ui-select.nvim.git
-[submodule "vim/pack/bundle/opt/nvim-treesitter-context"]
+[submodule "nvim-treesitter-context"]
 	path = vim/pack/bundle/opt/nvim-treesitter-context
 	url = git@github.com:nvim-treesitter/nvim-treesitter-context.git
+  branch = master
+  ignore = dirty
