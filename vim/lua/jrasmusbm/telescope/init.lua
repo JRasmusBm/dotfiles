@@ -51,7 +51,6 @@ M.ensure_setup = function()
   if not require("jrasmusbm.compat").in_termux() then
     require("telescope").load_extension "fzy_native"
   end
-  require("telescope").load_extension "dap"
   require("telescope").load_extension "ui-select"
 end
 
