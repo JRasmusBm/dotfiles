@@ -1,5 +1,6 @@
 local M = {}
 
+require("jrasmusbm.dap").ensure_setup()
 require("jrasmusbm.utils").ensure_setup "nvim-dap-python"
 require("jrasmusbm.utils").ensure_setup "debugpy.nvim"
 
