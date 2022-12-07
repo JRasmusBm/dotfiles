@@ -10,7 +10,7 @@ unset XMODIFIERS
 unset GTK_IM_MODULES
 unset QT_IM_MODULES
 
-export DOTFILES="$HOME/dotfiles"
+export DOTFILES="$HOME/projects/dotfiles"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export PIP_REQUIRE_VIRTUALENV=true # use --isolated to bypass
 

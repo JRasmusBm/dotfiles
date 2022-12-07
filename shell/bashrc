@@ -8,7 +8,6 @@ esac
 #}}}
 
 export FLYCTL_INSTALL="/home/jrasmusbm/.fly"
-export DOTFILES="$HOME/dotfiles"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export plug="$DOTFILES/vim/pack/bundle/opt"
 export PATH="$PATH:$HOME/bin"
@@ -21,7 +20,9 @@ alias q="exit"
 alias so="source"
 alias ac="source ./.venv/bin/activate"
 alias ls="my-ls"
-alias grep='my-grep'
+if type my-grep 2> /dev/null ; then
+				alias grep='my-grep'
+fi
 alias da="deactivate"
 alias cdr='cd `cd-root`'
 alias ..="cd .."
@@ -53,8 +54,6 @@ if ! echo "$HOME" | grep -q 'com.termux' ; then
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 fi
 
-export DOTFILES="$HOME/dotfiles"
-export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export GCC_COLORS='error=01;31:warning=01;35:note=01;36:caret=01;32:locus=01:quote=01'
 
 test -f "$HOME/.fzf.bash" && source "$HOME/.fzf.bash"
@@ -78,4 +77,6 @@ test -f "$HOME/.config/broot/launcher/bash/br" && source "$HOME/.config/broot/la
 test -f "$HOME/.cargo/env" && . "$HOME/.cargo/env"
 
 test -f "$HOME/.rover/env" && source "$HOME/.rover/env"
-test -n "$(type zoxide)" && eval "$(zoxide init bash)"
+if type zoxide 2> /dev/null ; then 
+				eval "$(zoxide init bash)"
+fi
