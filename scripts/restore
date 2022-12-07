@@ -1,0 +1,52 @@
+#!/bin/sh
+
+set -e
+
+_scripts="$(realpath "$(dirname "$0")")"
+
+_config_entries() {
+  (
+    _config_file="$_scripts/../files.csv"
+    awk -F ',' '
+  BEGIN {
+  ORS="\n"
+}
+NR != 1 { print $1,$2,$3 }
+' <"$_config_file"
+  )
+}
+
+_restore_file() {
+  (
+    _is_dir="$_scripts/../$1"
+    _from_path="$_scripts/../$2"
+    _to_path="$HOME/$3"
+    _backup_path="$HOME/.backup_dotfiles/$3"
+
+    if test -L "$_to_path" -a -e "$_backup_path" ; then
+      echo "restoring $_to_path from $_backup_path" >/dev/stderr
+      rm "$_to_path"
+    fi
+  )
+}
+
+_restore_dotfiles() {
+  (
+    _entry_type=0
+    for entry in $(_config_entries); do
+      if test "$_entry_type" = '0'; then
+        _is_dir="$entry"
+      elif test "$_entry_type" = '1'; then
+        _from_path="$entry"
+      elif test "$_entry_type" = '2'; then
+        _to_path="$entry"
+
+        _restore_file  "$_is_dir" "$_from_path" "$_to_path"
+      fi
+
+      _entry_type="$((($_entry_type + 1) % 3))"
+    done
+  )
+}
+
+_restore_dotfiles "$@"
