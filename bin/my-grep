@@ -2,4 +2,4 @@
 
 set -e
 
-grep --color=auto "$@"
+ggrep --color=auto "$@"

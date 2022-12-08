@@ -4,4 +4,4 @@ set -e
 
 file="$1";
 shift;
-env "$(grep -v '^#' "$file" | xargs -0)" "$@"
+env "$(ggrep -v '^#' "$file" | xargs -0)" "$@"

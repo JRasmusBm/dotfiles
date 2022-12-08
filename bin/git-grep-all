@@ -3,7 +3,7 @@
 set -e
 
 _git_grep_all() {
-  git log --format=reference | cut -d \  -f 1 | xargs git grep "$@"
+  git log --format=reference | cut -d \  -f 1 | xargs git ggrep "$@"
 }
 
 _git_grep_all "$@"

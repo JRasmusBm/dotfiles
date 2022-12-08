@@ -2,4 +2,4 @@
 
 set -e
 
-export "$(grep -v '^#' "$1" | xargs -0)"
+export "$(ggrep -v '^#' "$1" | xargs -0)"

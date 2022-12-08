@@ -21,7 +21,7 @@ alias so="source"
 alias ac="source ./.venv/bin/activate"
 alias ls="my-ls"
 if type my-grep 2> /dev/null ; then
-				alias grep='my-grep'
+  alias grep='my-grep'
 fi
 alias da="deactivate"
 alias cdr='cd `cd-root`'
@@ -50,7 +50,7 @@ if test -z "${debian_chroot:-}" && test -r "/etc/debian_chroot"; then
   debian_chroot=$(cat /etc/debian_chroot)
 fi
 
-if ! echo "$HOME" | grep -q 'com.termux' ; then
+if ! echo "$HOME" | ggrep -q 'com.termux' ; then
 PS1='${debian_chroot:+($debian_chroot)}\[\033[01;32m\]\u@\h\[\033[00m\]:\[\033[01;34m\]\w\[\033[00m\]\$ '
 fi
 

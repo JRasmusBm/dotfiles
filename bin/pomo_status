@@ -8,7 +8,7 @@ pomo_status() {
   time=${raw_status#* }
   minutes="${time%%:*}m"
 
-  if echo "$raw_status" | grep -q "PAUSED"; then
+  if echo "$raw_status" | ggrep -q "PAUSED"; then
     printf "⭕ Paused"
     return
   fi

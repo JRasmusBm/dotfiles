@@ -5,11 +5,11 @@ set -e
 _github_url() {
   _url="$1"
 
-  if echo "$_url" | grep -qPv "\.git$" ; then
+  if echo "$_url" | ggrep -qPv "\.git$" ; then
     _url="$_url.git"
   fi
 
-  if echo "$_url" | grep -qPv "@" ; then
+  if echo "$_url" | ggrep -qPv "@" ; then
     _url="git@github.com:$_url"
   fi
   

@@ -8,7 +8,7 @@ _git_close_issue() {
   fi
 
   if test $# -eq 0; then
-    number=$(gh issue list | fzf --reverse | grep -o -E "^([0-9])+")
+    number=$(gh issue list | fzf --reverse | ggrep -o -E "^([0-9])+")
   else
     number=$1
   fi

@@ -9,7 +9,7 @@ _is_vim_running() {
     pane="$TMUX_PANE"
   fi
 
-  pane_pid="$(tmux list-panes -F "#{pane_id} #{pane_pid}" | grep "$pane" | cut -d ' ' -f 2)"
+  pane_pid="$(tmux list-panes -F "#{pane_id} #{pane_pid}" | ggrep "$pane" | cut -d ' ' -f 2)"
 
   for descendant in $(list-descendants "$pane_pid"); do
     p_name="$(ps -q "$descendant" -o comm=)"

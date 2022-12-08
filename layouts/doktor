@@ -6,7 +6,7 @@ _supported_devices='DP-1-[1-3]'
 
 _layout() {
   if test "$1" = 'supported'; then
-    xrandr | grep -qP "$_supported_devices connected"
+    xrandr | ggrep -qP "$_supported_devices connected"
     exit $?
   fi
 

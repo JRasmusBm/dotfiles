@@ -3,7 +3,7 @@
 set -e
 
 if test $# -eq 0; then
-  number=$(gh issue list | fzf --reverse | grep -o -E "^([0-9])+")
+  number=$(gh issue list | fzf --reverse | ggrep -o -E "^([0-9])+")
 elif test "$1" = '.' ; then
   number="$(g branch --show-current | awk -F '-' '{ print $1 }')"
 else

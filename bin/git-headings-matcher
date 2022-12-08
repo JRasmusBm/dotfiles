@@ -13,7 +13,7 @@ _git_headings_matcher() {
 
     git_headings="$(
       echo "$git_template" \
-        | grep -vP '(^#|^$|^<\+\+>)' \
+        | ggrep -vP '(^#|^$|^<\+\+>)' \
         | sed -E 's;<\+\+>;[^ ]+;g'
     )"
 
