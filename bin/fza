@@ -12,7 +12,7 @@ _fza() {
   fi
 
   echo "$selection" >/dev/stdout
-  echo "$data" | grep -v "$selection" | _fza "$@"
+  echo "$data" | ggrep -v "$selection" | _fza "$@"
 }
 
 _fza "$@"

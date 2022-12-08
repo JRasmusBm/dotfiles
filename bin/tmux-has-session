@@ -3,7 +3,7 @@
 set -e
 
 _tmux_has_session() {
-  test -n "$(tmux-active-sessions | grep -E "^$1$")"
+  test -n "$(tmux-active-sessions | ggrep -E "^$1$")"
 }
 
 _tmux_has_session "$@"

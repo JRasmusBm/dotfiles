@@ -3,11 +3,11 @@
 set -e
 
 _git_update_remote_due_to_fork() {
-  upstream="$(git remote -v | grep 'origin.*(fetch)' | awk '{ print $2 }')"
+  upstream="$(git remote -v | ggrep 'origin.*(fetch)' | awk '{ print $2 }')"
   github_user="$1"
 
   if test -z "$github_user"; then
-    github_user="$(gh auth status 2>&1 | grep -Po 'github.com as (\w+)' | grep -Po '\w+$')"
+    github_user="$(gh auth status 2>&1 | ggrep -Po 'github.com as (\w+)' | ggrep -Po '\w+$')"
   fi
 
   new_origin="$(echo "$upstream" | sed -E "s/:\w+/:$github_user/")"

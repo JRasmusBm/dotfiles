@@ -33,11 +33,11 @@ _GIT_OPTIONS='
 _git_has_command() {
   (
     _matching_portion="$(echo "$1" | awk -F'[ =]' '{print $1}')"
-    if echo "$_GIT_OPTIONS" | grep -qP "^$_matching_portion$"; then
+    if echo "$_GIT_OPTIONS" | ggrep -qP "^$_matching_portion$"; then
       return 0
     fi
 
-    git --list-cmds='builtins,main,others,nohelpers,alias,config' | grep "^$1\$" -q
+    git --list-cmds='builtins,main,others,nohelpers,alias,config' | ggrep "^$1\$" -q
   )
 }
 

@@ -9,12 +9,12 @@ _has_git_status() {
   fi
 
   if test "$1" = 'staged'; then
-    $(git status --porcelain | grep -Pq '^[MAD]')
+    $(git status --porcelain | ggrep -Pq '^[MAD]')
     return $?
   fi
 
   if test "$1" = 'unstaged'; then
-    $(git status --porcelain | grep -Pq '^ +[?MAD]')
+    $(git status --porcelain | ggrep -Pq '^ +[?MAD]')
     return $?
   fi
 

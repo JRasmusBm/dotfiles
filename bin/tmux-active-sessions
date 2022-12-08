@@ -5,7 +5,7 @@ set -e
 _tmux_active_sessions() {
   tmux list-sessions \
     | sed -E "s/:.*$//" \
-    | grep -v \"^"$(tmux display-message -p "#S")"\$\"
+    | ggrep -v \"^"$(tmux display-message -p "#S")"\$\"
 }
 
 _tmux_active_sessions "$@"

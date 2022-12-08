@@ -51,7 +51,7 @@ _matches_option() {
     echo "$_matcher" \
       | tr -d '()' \
       | tr -s '|' '\n' \
-      | grep -E "^$_value_to_check$" || true
+      | ggrep -E "^$_value_to_check$" || true
   )"
 
   test -n "$matches"

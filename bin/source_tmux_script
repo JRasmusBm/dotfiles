@@ -21,7 +21,7 @@ source_tmux_script() {
   fi
 
   local DIGEST="$(openssl sha256 "$tmux_script_path")"
-  if grep -q "$DIGEST" ~/..tmux.digests 2>/dev/null; then
+  if ggrep -q "$DIGEST" ~/..tmux.digests 2>/dev/null; then
     INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source $tmux_script_path
     return
   fi
