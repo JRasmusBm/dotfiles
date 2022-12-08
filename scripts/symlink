@@ -38,7 +38,7 @@ _link_file() {
       mkdir -p "$(dirname "$_to_path")"
     fi
 
-    ln -sfT "$(realpath "$_from_path")" "$_to_path"
+    ln -sf "$(realpath "$_from_path")" "$_to_path"
   )
 }
 

@@ -26,3 +26,4 @@ True,shell/zsh_completions,.zsh_completions
 False,python/poetry-config.toml,.config/pypoetry/config.toml
 False,db/pgcli.conf,.config/pgcli/config
 False,terminal/termux.conf,.termux/termux.properties
+True,window_manager/hammerspoon,.hammerspoon
