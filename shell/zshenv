@@ -1,7 +1,6 @@
 #!/bin/zsh
 
 export FZF_DEFAULT_OPTS="--preview 'preview {}'"
-export DOTFILES="$HOME/dotfiles"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export XDG_CONFIG_HOME="$HOME/.config"
 
@@ -48,9 +47,6 @@ function b {
 }
 
 source ~/.paths.sh
-if test -e "$LOCAL_CONFIG/projects.sh"; then
-  . "$LOCAL_CONFIG/projects.sh"
-fi
 
 if [[ -n $VIRTUAL_ENV && -e "${VIRTUAL_ENV}/bin/activate" ]]; then
   source "${VIRTUAL_ENV}/bin/activate"

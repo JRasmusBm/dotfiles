@@ -10,8 +10,8 @@ unset XMODIFIERS
 unset GTK_IM_MODULES
 unset QT_IM_MODULES
 
-export DOTFILES="$HOME/projects/dotfiles"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
+. "$DOTFILES/shell/paths.sh"
 export PIP_REQUIRE_VIRTUALENV=true # use --isolated to bypass
 
 # if running bash
@@ -22,7 +22,6 @@ if [ -n "$BASH_VERSION" ]; then
   fi
 fi
 
-. "$DOTFILES/shell/paths.sh"
 
 export D8_PATH=$HOME/.cache/v8/v8/out/x64.release/
 
