@@ -1,0 +1,11 @@
+#!/bin/sh
+
+set -e
+
+_anki() {
+  (
+    "$HOME/projects/pyautogui/.venv/bin/python" "$HOME/projects/pyautogui/anki.py" "$@"
+  )
+}
+
+_anki "$@"
