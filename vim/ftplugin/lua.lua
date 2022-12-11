@@ -335,4 +335,11 @@ require("jrasmusbm.utils.mappings").feedkeys "{}"
       { i(0) }
     )
   ),
+
+s({ trig="hmk", name="hammerspoon keymap" }, fmt([[
+hs.hotkey.bind({{{}}}, "{}", function()
+  {}
+end)
+]], { i(1), i(2), i(0) })),
+
 })
