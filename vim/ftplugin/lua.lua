@@ -64,11 +64,20 @@ ls.add_snippets("lua", {
     { trig = "ci", name = "if statement" },
     fmt("if {} then\n  {}\nend\n\n{}", { i(1), i(2), i(0) })
   ),
+
   s(
     { trig = "cf", name = "for loop" },
     fmt(
       "for {}, {} in {} do\n  {}\nend\n\n{}",
       { i(1, "_"), i(2), i(3), i(4), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "cfr", name = "range for loop" },
+    fmt(
+      "for {} = {}, {}, {} do\n  {}\nend\n\n{}",
+      { i(1, "_"), i(2, "0"), i(3, "10"), i(4, "1"), i(5), i(0) }
     )
   ),
 

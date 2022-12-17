@@ -174,13 +174,22 @@ vim.keymap.set({ "n" }, "<leader>ep", function()
   }
 end, { noremap = true })
 
-vim.keymap.set({ "n" }, "<leader>et", function()
+vim.keymap.set({ "n" }, "<leader>eq", function()
   ensure_setup()
   require("jrasmusbm.telescope.find_files").find_files {
     prompt_title = "Treesitter Queries",
     cwd = vim.fn.getenv "DOTFILES" .. "/vim/queries/",
   }
 end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>eh", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Treesitter Queries",
+    cwd = vim.fn.getenv "DOTFILES" .. "/window_manager/hammerspoon/",
+  }
+end, { noremap = true })
+
 
 vim.keymap.set({ "i" }, "<C-\\><C-I>", function()
   ensure_setup()
