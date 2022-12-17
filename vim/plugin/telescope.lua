@@ -7,7 +7,19 @@ end, { nargs = "*" })
 
 vim.keymap.set({ "n" }, "<leader>ff", function()
   ensure_setup()
-  require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }
+  local cwd = require("telescope.utils").get_os_command_output({ "cd-root" })[1]
+
+  require("jrasmusbm.telescope.git_files").git_files {
+    show_untracked = true,
+    cwd=cwd,
+    git_command = {
+      "git",
+      "ls-files",
+      "--exclude-standard",
+      "--cached",
+      cwd,
+    },
+  }
 end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>fg", function()
@@ -182,7 +194,18 @@ end, {})
 
 vim.keymap.set({ "i" }, "<C-\\><C-F>", function()
   ensure_setup()
-  require("jrasmusbm.telescope.git_files").git_files { show_untracked = true }
+
+  local pwd = require("telescope.utils").get_os_command_output { "cd-root" }
+  require("jrasmusbm.telescope.git_files").git_files {
+    show_untracked = true,
+    git_command = {
+      "git",
+      "ls-files",
+      "--exclude-standard",
+      "--cached",
+      pwd,
+    },
+  }
 end, {})
 
 vim.keymap.set({ "i" }, "<C-\\><C-H>", function()
