@@ -1,0 +1,32 @@
+#!/bin/sh
+
+set -e
+
+(
+  needs_stash="$(git status --porcelain)"
+  if test -n "$needs_stash"; then
+    printf "\e[0;33mStashing changes.\n\e[0;37m" >>/dev/stderr
+    (
+      set -x
+      git stash push -u
+    )
+  fi
+
+  original_branch="$(git branch --show-current)"
+  main_branch="$(git local-main-branch)"
+
+  (
+    set -x
+    git switch "$main_branch"
+    gt stack test 'git pup -f'
+    git switch "$original_branch"
+  )
+
+  if test -n "$needs_stash"; then
+    printf "\e[0;33mPopping stash.\n\e[0;37m" >>/dev/stderr
+    (
+      set -x
+      git stash pop
+    )
+  fi
+)

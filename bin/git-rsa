@@ -20,7 +20,6 @@ _git_restack_all() {
       set -x
       git switch "$main_branch"
       gt stack restack
-      gt stack test 'git pup -f'
       gt stack submit -u
       git switch "$original_branch"
     )
