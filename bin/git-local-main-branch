@@ -7,13 +7,7 @@ branch_exists_locally() {
 }
 
 git_get_local_main_branch() {
-  if test -n "$(branch_exists_locally main)"; then
-    echo "main"
-  elif test -n "$(branch_exists_locally master)"; then
-    echo "master"
-  else
-    exit 1
-  fi
+  git symbolic-ref refs/remotes/origin/HEAD | sed 's@^refs/remotes/origin/@@'
 }
 
 git_get_local_main_branch

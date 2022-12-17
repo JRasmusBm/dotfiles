@@ -7,13 +7,7 @@ branch_exists_remotely() {
 }
 
 git_get_remote_main_branch() {
-  if test -n "$(branch_exists_remotely origin/main)"; then
-    echo "origin/main"
-  elif test -n "$(branch_exists_remotely origin/master)"; then
-    echo "origin/master"
-  else
-    exit 1
-  fi
+  echo "origin/$(git local-main-branch)"
 }
 
 git_get_remote_main_branch
