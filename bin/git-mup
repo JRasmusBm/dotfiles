@@ -16,6 +16,7 @@ git_update_main() {
     g s "$local_main"
     g ff "$remote_main"
     g remove-merged || true
+    gt repo sync --delete
     g s - "$@" 2>/dev/null || true
 
     if test -n "$needs_stash"; then
