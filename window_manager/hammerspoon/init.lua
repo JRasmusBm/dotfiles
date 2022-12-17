@@ -1,3 +1,5 @@
-hs.loadSpoon("Windows")
-hs.loadSpoon("Reload")
-hs.loadSpoon("Apps")
+hs.loadSpoon "CycleWindows"
+hs.loadSpoon "Reload"
+hs.loadSpoon "Apps"
+hs.loadSpoon "Screen"
+hs.loadSpoon "Zoom"

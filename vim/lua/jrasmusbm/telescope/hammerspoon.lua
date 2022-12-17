@@ -2,8 +2,9 @@ local M = {}
 
 M.find_spoons = function()
   require("telescope.builtin").find_files {
-    prompt_title = "Treesitter Queries",
+    prompt_title = "Find Spoons",
     cwd = vim.fn.getenv "DOTFILES" .. "/window_manager/hammerspoon/",
+
     attach_mappings = function(prompt_bufnr, map)
       local create_new_spoon = function()
         require("telescope.actions").close(prompt_bufnr)
@@ -11,7 +12,7 @@ M.find_spoons = function()
         local spoon_name = require("telescope.actions.state").get_current_line()
         vim.cmd(
           string.format(
-            ":e! %s/window_manager/hammerspoon/%s.spoon/init.lua",
+            ":e! %s/window_manager/hammerspoon/Spoons/%s.spoon/init.lua",
             os.getenv "DOTFILES",
             spoon_name
           )
@@ -19,7 +20,7 @@ M.find_spoons = function()
 
         vim.fn.system(
           string.format(
-            "printf 'hs.loadSpoon(\"%s\")' >> %s/window_manager/hammerspoon/init.lua",
+            "printf '\nhs.loadSpoon \"%s\"' >> %s/window_manager/hammerspoon/init.lua",
             spoon_name,
             os.getenv "DOTFILES"
           )
@@ -31,11 +32,12 @@ M.find_spoons = function()
 
       return true
     end,
-    path_display = function(opts, path)
+
+    path_display = function(_, path)
       local split_path = vim.split(path, "/")
       local folder = split_path[#split_path - 1]
       local split_folder = vim.split(folder, ".", { plain = true })
-      return split_folder[1]
+      return split_folder[1] or path
     end,
   }
 end

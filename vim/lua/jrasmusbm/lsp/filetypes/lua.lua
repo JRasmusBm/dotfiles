@@ -1,6 +1,15 @@
 local M = {}
 
 local lua_language_server = vim.fn.stdpath "cache" .. "/../lua-language-server"
+local cmd = nil
+
+if vim.loop.os_uname().sysname ~= "Darwin" then
+  cmd = {
+    lua_language_server .. "/bin/Linux/lua-language-server",
+    "-E",
+    lua_language_server .. "/main.lua",
+  }
+end
 
 local function get_lua_runtime()
   local result = {}
@@ -25,11 +34,7 @@ function M.setup(options)
     capabilities = options.capabilities,
     on_attach = options.on_attach,
     filetypes = require("jrasmusbm.filetypes").lua,
-    cmd = {
-      lua_language_server .. "/bin/Linux/lua-language-server",
-      "-E",
-      lua_language_server .. "/main.lua",
-    },
+    cmd = cmd,
     settings = {
       Lua = {
         runtime = { version = "LuaJIT", path = runtime_path },
