@@ -184,10 +184,7 @@ end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>eh", function()
   ensure_setup()
-  require("jrasmusbm.telescope.find_files").find_files {
-    prompt_title = "Treesitter Queries",
-    cwd = vim.fn.getenv "DOTFILES" .. "/window_manager/hammerspoon/",
-  }
+  require("jrasmusbm.telescope.hammerspoon").find_spoons()
 end, { noremap = true })
 
 
