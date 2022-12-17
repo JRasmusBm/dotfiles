@@ -25,7 +25,7 @@ hs.hotkey.bind({ "cmd" }, "left", function()
   w:moveOneScreenWest()
 end)
 
-hs.hotkey.bind({ "cmd" }, "z", function()
+hs.hotkey.bind({ "cmd", "shift" }, "z", function()
   local w = hs.window.focusedWindow()
 
   if w == nil then
