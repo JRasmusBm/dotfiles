@@ -2,7 +2,7 @@
 
 set -e
 
-folder_path="/home/jrasmusbm/dotfiles/spotify"
+folder_path="$DOTFILES/spotify"
 session_name="$(tmux-session-name-from-path "$folder_path")"
 
 cd "$folder_path"
