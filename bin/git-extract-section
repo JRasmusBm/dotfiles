@@ -34,12 +34,17 @@ _git_extract_section() {
   start < NR && stop != 1 { print \$0 }
 "
 
-    _section="$(git --no-pager log --reverse --format="%b" "$(git local-main-branch)..HEAD" | awk "$_awk_code" | perl -pe 'chomp if eof')"
+    _section="$(git --no-pager log --reverse --format="%b" "$(git local-main-branch)..HEAD" | gawk "$_awk_code" | perl -pe 'chomp if eof')"
 
     if test "$_print" = 'true'; then
       printf "%s" "$_section"
     else
-      printf "%s" "$_section" | xclip -sel c
+
+      if [ "$(uname)" == "Darwin" ]; then
+        printf "%s" "$_section" | pbcopy
+      else
+        printf "%s" "$_section" | xclip -sel c
+      fi
     fi
   )
 }
