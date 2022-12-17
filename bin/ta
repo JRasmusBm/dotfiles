@@ -14,15 +14,14 @@ _start_project() {
 }
 
 _all_sessions() {
-  if test -f "$LOCAL_CONFIG"; then
-    _folders="$(cat "$LOCAL_CONFIG/project_folders")"
+  if test -f "$LOCAL_CONFIG/projects"; then
+    _folders="$(cat "$LOCAL_CONFIG/projects")"
   else
     _folders="$(echo "$DOTFILES/vim/pack/opt\n$HOME/projects")"
   fi
 
   _possible_sessions=""
-
-  _possible_sessions="$(echo "$JRASMUSBM_PROJECTS" | while read -r _folder; do
+  _possible_sessions="$(echo "$_folders" | while read -r _folder; do
     if test -d "$_folder"; then
       for _project in "$_folder"/*; do
         echo "$_project"
@@ -57,14 +56,15 @@ _all_sessions() {
 }
 
 _multiple_sessions() {
-  if test -z "$JRASMUSBM_PROJECTS"; then
-    echo '$JRASMUSBM_PROJECTS must be set'
-    exit 1
+  if test -f "$LOCAL_CONFIG/projects"; then
+    _folders="$(cat "$LOCAL_CONFIG/projects")"
+  else
+    _folders="$(echo "$DOTFILES/vim/pack/opt\n$HOME/projects")"
   fi
 
   _possible_sessions=""
 
-  _possible_sessions="$(echo "$JRASMUSBM_PROJECTS" | while read -r _folder; do
+  _possible_sessions="$(echo "$_projects" | while read -r _folder; do
     if test -d "$_folder"; then
       for _project in "$_folder"/*; do
         echo "$_project"
