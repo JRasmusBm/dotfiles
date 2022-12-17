@@ -2,19 +2,38 @@
 
 set -e
 
+_find_script() {
+  if test -e "temp_db"; then
+    echo "$(pwd)/temp_db"
+    return 0
+  fi
+
+  if test "$(pwd)" = '/'; then
+    (
+      echo "Could not find temp_db" >/dev/stderr
+      exit 1
+    )
+  fi
+
+  (
+    cd ..
+    _find_script
+  )
+
+}
+
 _run_temp_db() {
   (
-    session_name="$(tmux-session-name-from-path)"
+    session_name="$(tmux-session-name)"
 
     tmux split-window -t "$session_name"
     tmux select-pane -U
     tmux swap-pane -D
-    
-    tmux send-keys -t "$session_name" "$(echo "./temp_db" "$@")" Enter
+
+    tmux send-keys -t "$session_name" "$(echo "$(_find_script)" "$@")" Enter
 
     tmux select-pane -U
-    tmux send-keys -t "$session_name" "nvim -c 'VtrAttach 1' temp.sql" Enter
-
+    tmux send-keys -t "$session_name" "nvim temp.sql" Enter
 
   )
 }
