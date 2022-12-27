@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_browse() {
+  (
+    echo "Reserved for fugitive" >/dev/stderr
+    exit 1
+  )
+}
+
+_browse "$@"
