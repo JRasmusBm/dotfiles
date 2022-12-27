@@ -3,7 +3,7 @@ vim.fn.setreg("c", "/\\v\\%s\n$i,0l@n")
 
 vim.keymap.set({ "n" }, "==", function()
   vim.cmd [[
-    %!sqlformat - -k upper -r --indent_columns --wrap_after 60
+    %!sqlformat - -k upper -r --indent_columns --indent_width 2
   ]]
 end, { silent = true, buffer = 0 })
 

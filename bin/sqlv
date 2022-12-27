@@ -1,0 +1,61 @@
+#!/usr/bin/env python3
+
+import json
+import re
+import sys
+import argparse
+
+
+def interpolate_line(variables: list, line: str):
+    result = ""
+
+    start = 0
+    for match in re.finditer(r":([0-9]+)", line):
+        match_start, match_end = match.span()
+
+        preamble = line[start:match_start]
+        result += preamble
+
+        value = variables[int(match.group(1)) - 1]
+        result += json.dumps(value).replace('"', "'")
+
+        start = match_end
+
+    return result + line[start:]
+
+
+def interpolate_strings(contents) -> list:
+    variables = extract_variables(contents)
+
+    contents[-1] = re.sub(r" *\[.*\] *", "", contents[-1])
+
+    return [interpolate_line(variables, line) for line in contents]
+
+
+def extract_variables(contents) -> list:
+    match = re.search(r"\[.*\]", contents[-1])
+
+    if match is None:
+        return []
+
+    return json.loads(match.group(0).replace("'", '"')) or []
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Interpolate SQL variables")
+
+    parser.add_argument("file", type=str, nargs="?", default="-")
+
+    args = parser.parse_args()
+
+    if not args.file or args.file == "-":
+        contents = sys.stdin.readlines()
+    else:
+        with open(args.file) as f:
+            contents = f.readlines()
+
+    print("\n".join(interpolate_strings([line.rstrip() for line in contents])), end="")
+
+
+if __name__ == "__main__":
+    main()
