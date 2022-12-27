@@ -1,0 +1,17 @@
+#!/bin/sh
+
+set -e
+
+_extract_jira_id() {
+  _current_branch="$(git branch --show-current)"
+  _without_folders="${_current_branch##*/}"
+  echo "$_without_folders" | ggrep -oP '^\w+-\d+'
+}
+
+_open_jira() {
+  _ticket="${1:-"$(_extract_jira_id)"}"
+  echo "https://ice-floe.atlassian.net/browse/${_ticket}" > /dev/stdout
+  open "https://ice-floe.atlassian.net/browse/${_ticket}"
+}
+
+_open_jira "$@"
