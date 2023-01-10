@@ -25,65 +25,6 @@ local rep = require("luasnip.extras").rep
 
 ls.add_snippets("markdown", {
   s(
-    { trig = "nf", name = "notes file" },
-    fmt(
-      [[
----
-title: "{}"
-tags:
-  - "{}"
----
-
-# {}
-
-{}
-]],
-      { i(1), i(2), rep(1), i(0) }
-    )
-  ),
-
-  s(
-    { trig = "para", name = "para" },
-    fmt(
-      [[
-{} Took Paracetamol around {}.{}
-
-  ]],
-      { d(1, ls_utils.date, {}), d(2, ls_utils.time, {}), i(0) }
-    )
-  ),
-
-  s(
-    { trig = "para2", name = "para2" },
-    fmt(
-      [[
-Took Paracetamol around {}.{}
-  ]],
-      { d(1, ls_utils.time, {}), i(0) }
-    )
-  ),
-
-  s(
-    { trig = "ome", name = "ome" },
-    fmt(
-      [[
-Took Omeprazole around {}.{}
-  ]],
-      { d(1, ls_utils.time, {}), i(0) }
-    )
-  ),
-
-  s(
-    { trig = "suma", name = "suma" },
-    fmt(
-      [[
-Took Sumatriptan around {}.{}
-  ]],
-      { d(1, ls_utils.time, {}), i(0) }
-    )
-  ),
-
-  s(
     { trig = "acea", name = "" },
     fmt(
       [[
