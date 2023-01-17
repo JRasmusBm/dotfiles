@@ -24,6 +24,52 @@ def interpolate_line(variables: list, line: str):
     return result + line[start:]
 
 
+def strip_query_start(query: list[str]):
+    start_index = next(
+        (i for i, val in enumerate(query) if "[Executed Snowflake Query]" in val), None
+    )
+
+    if start_index is None:
+        return query
+
+    return [query[start_index].split(" ")[-1]] + query[start_index + 1 :]
+
+
+def strip_query_end(query):
+    end_index = next(
+        reversed(
+            list(
+                i
+                for i, val in enumerate(query)
+                if re.search(r"(INFO|WARNING|ERROR):", val)
+            )
+        ),
+        None,
+    )
+
+    if end_index is None:
+        return query
+
+    return query[:end_index]
+
+
+def join_variables_at_end(query: list[str]):
+    if query[-1] != "]":
+        return query
+
+    start_index = next(
+        reversed(list(i for i, val in enumerate(query) if val.strip()[-1] == "[")),
+        None,
+    )
+
+    if not start_index:
+        return query
+
+    variable_string = "[" + " ".join(query[start_index + 1 :])
+
+    return query[:start_index] + [query[start_index][:-1]] + [variable_string]
+
+
 def interpolate_strings(contents) -> list:
     variables = extract_variables(contents)
 
@@ -54,7 +100,11 @@ def main():
         with open(args.file) as f:
             contents = f.readlines()
 
-    print("\n".join(interpolate_strings([line.rstrip() for line in contents])), end="")
+    query = join_variables_at_end(
+        strip_query_end(strip_query_start([line.rstrip() for line in contents]))
+    )
+    interpolated_query = interpolate_strings(query)
+    print("\n".join(interpolated_query), end="")
 
 
 if __name__ == "__main__":
