@@ -10,9 +10,9 @@ vim.g["test#javascript#runner"] = "jest"
 vim.g["test#javascript#jest#executable"] = "./node_modules/.bin/jest"
 
 vim.g["test#javascript#jest#options"] = {
-  nearest = "--forceExit --verbose --no-coverage",
-  file = "--forceExit --verbose",
-  suite = "--forceExit --verbose",
+  nearest = "--forceExit --verbose --no-coverage --watchAll=false",
+  file = "--forceExit --verbose --watchAll=false",
+  suite = "--forceExit --verbose --watchAll=false",
 }
 
 require("jrasmusbm.dap.test").setup_test_debugging(
