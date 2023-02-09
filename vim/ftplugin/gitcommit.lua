@@ -23,6 +23,39 @@ local fill_git_section = function(section_tag)
   }
 end
 
+local heading = function (severity, is_breaking)
+local breaking_marker = ""
+if (is_breaking)  then
+  breaking_marker="!"
+end
+
+let about = i(1)
+       local branch = utils.get_os_command_output {
+          "git",
+          --show-current,
+        }
+if () {
+  
+}
+
+
+
+
+
+    return fmt(
+ string.format     ([[
+%s({})%s: {}
+
+{}
+  ]], severity, breaking_marker),
+      { about, i(2), i(0) }
+    )
+    
+
+  
+end
+
+
 local fill_git_section = function(section_tag)
   return
 end
@@ -46,98 +79,47 @@ end
 ls.add_snippets("gitcommit", {
   s(
     { trig = "!f", name = "breaking feature" },
-    fmt(
-      [[
-feat({})!: {}
-
-{}
-  ]],
-      { i(1), i(2), i(0) }
-    )
+      heading("feat", true)
   ),
 
   s(
     { trig = "f", name = "feature" },
-    fmt(
-      [[
-feat({}): {}
-
-{}
-  ]],
-      { i(1), i(2), i(0) }
-    )
+      heading("feat")
   ),
 
   s(
     { trig = "b", name = "bug fix" },
-    fmt(
-      [[
-fix({}): {}
-
-{}
-  ]],
-      { i(1), i(2), i(0) }
-    )
+      heading("fix")
   ),
 
   s(
     { trig = "d", name = "documentation" },
-    fmt(
-      [[
-docs({}): {}
+      heading("docs")
 
-{}
-  ]],
-      { i(1), i(2), i(0) }
-    )
   ),
 
   s(
     { trig = "s", name = "style" },
-    fmt(
-      [[
-style({}): {}
 
-{}
-  ]],
-      { i(1), i(2), i(0) }
-    )
+      heading("style")
   ),
 
   s(
     { trig = "r", name = "refactor" },
-    fmt(
-      [[
-refactor({}): {}
+            heading("refactor")
 
-{}
-    ]],
-      { i(1), i(2), i(0) }
-    )
   ),
 
   s(
     { trig = "t", name = "test" },
-    fmt(
-      [[
-test({}): {}
-
-{}
-    ]],
-      { i(1), i(2), i(0) }
-    )
+      
+      heading("test")
   ),
 
   s(
     { trig = "c", name = "chore" },
-    fmt(
-      [[
-chore({}): {}
 
-{}
-    ]],
-      { i(1), i(2), i(0) }
-    )
+      heading("chore")
   ),
 
   s(
