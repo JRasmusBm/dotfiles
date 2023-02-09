@@ -13,6 +13,7 @@ function M.setup(options)
     end,
     filetypes = filetypes,
   }
+  require("lspconfig").eslint.setup {}
 end
 
 return M
