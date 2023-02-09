@@ -13,121 +13,75 @@ local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local f = ls.function_node
+local t = ls.text_node
+local d = ls.dynamic_node
+local sn = ls.snippet_node
 
-local fill_git_section = function(section_tag)
-  return ls_utils.fill_command {
-    "git",
-    section_tag,
-    "r",
-    "p",
-  }
-end
-
-local heading = function (severity, is_breaking)
-local breaking_marker = ""
-if (is_breaking)  then
-  breaking_marker="!"
-end
-
-let about = i(1)
-       local branch = utils.get_os_command_output {
+local heading = function(severity, breaking_marker)
+  do
+    return function(_, _)
+      do
+        local about = i(1)
+        local branch = utils.get_os_command_output({
           "git",
-          --show-current,
-        }
-if () {
-  
-}
+          "branch",
+          "--show-current",
+        })[1]
 
+        local subject_section = (vim.split(branch, "/")[3] or "")
+        local ticket_prefix = vim.split(subject_section, "-")[1] or ""
+        if vim.tbl_contains({ "pss", "pa" }, ticket_prefix) then
+          local ticket_id = vim.split(subject_section, "-")[2]
+          about =
+          sn(1, { t { string.upper(ticket_prefix) .. "-" .. ticket_id } })
+        end
 
-
-
-
-    return fmt(
- string.format     ([[
+        return sn(
+          0,
+          fmt(
+            string.format(
+              [[
 %s({})%s: {}
 
 {}
-  ]], severity, breaking_marker),
-      { about, i(2), i(0) }
-    )
-    
-
-  
-end
-
-
-local fill_git_section = function(section_tag)
-  return
-end
-
-local fill_pr_info = function(field)
-  fmt(
-    [[
-{}
-]],
-    {
-      f(function()
-        return utils.get_os_command_output {
-          "get_pr_info",
-          field,
-        }
-      end, {}, {}),
-    }
-  )
+  ]]           ,
+              severity,
+              breaking_marker or ""
+            ),
+            { about, i(2), i(0) }
+          )
+        )
+      end
+    end
+  end
 end
 
 ls.add_snippets("gitcommit", {
   s(
     { trig = "!f", name = "breaking feature" },
-      heading("feat", true)
+    { d(1, heading("feat", "!"), {}) }
   ),
 
-  s(
-    { trig = "f", name = "feature" },
-      heading("feat")
-  ),
+  s({ trig = "f", name = "feature" }, { d(1, heading "feat", {}) }),
 
-  s(
-    { trig = "b", name = "bug fix" },
-      heading("fix")
-  ),
+  s({ trig = "b", name = "bug fix" }, { d(1, heading "fix", {}) }),
 
-  s(
-    { trig = "d", name = "documentation" },
-      heading("docs")
+  s({ trig = "d", name = "documentation" }, { d(1, heading "docs", {}) }),
 
-  ),
+  s({ trig = "s", name = "style" }, { d(1, heading "style", {}) }),
 
-  s(
-    { trig = "s", name = "style" },
+  s({ trig = "r", name = "refactor" }, { d(1, heading "refactor", {}) }),
 
-      heading("style")
-  ),
+  s({ trig = "t", name = "test" }, { d(1, heading "test", {}) }),
 
-  s(
-    { trig = "r", name = "refactor" },
-            heading("refactor")
-
-  ),
-
-  s(
-    { trig = "t", name = "test" },
-      
-      heading("test")
-  ),
-
-  s(
-    { trig = "c", name = "chore" },
-
-      heading("chore")
-  ),
+  s({ trig = "c", name = "chore" }, { d(1, heading "chore", {}) }),
 
   s(
     { trig = "ca", name = "Co-authored-by" },
     fmt(
       [[
 Co-authored-by: {} <{}>
-  ]],
+  ]]   ,
       { i(1), i(0) }
     )
   ),
@@ -137,7 +91,7 @@ Co-authored-by: {} <{}>
     fmt(
       [[
 Closes: #{}{}
-  ]],
+  ]]   ,
       {
         f(function()
           local branch_name = utils.get_os_command_output({
@@ -158,7 +112,7 @@ Closes: #{}{}
     fmt(
       [[
 Ticket: {}
-  ]],
+  ]]   ,
       { i(0) }
     )
   ),
@@ -170,7 +124,7 @@ Ticket: {}
 **Why** is the change needed?
 
 {}
-  ]],
+  ]]   ,
       { i(0) }
     )
   ),
@@ -182,7 +136,7 @@ Ticket: {}
 **How** is the need addressed?
 
 {}
-]],
+]]     ,
       { i(0) }
     )
   ),
@@ -194,7 +148,7 @@ Ticket: {}
 Concerns / side-effects of the changes:
 
 {}
-]],
+]]     ,
       { i(0) }
     )
   ),
