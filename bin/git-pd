@@ -22,5 +22,5 @@ fi
 
 (
   set -x
-  git push -d "$remote" "$branch_without_remote" "$@"
+  git push -d --no-verify "$remote" "$branch_without_remote" "$@"
 )
