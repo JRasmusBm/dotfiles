@@ -2,4 +2,4 @@
 
 set -e
 
-gt stack test 'git pup -f'
+gt stack test 'git pup -f --no-verify'

@@ -18,7 +18,7 @@ set -e
   (
     set -x
     git switch "$main_branch"
-    gt stack test 'git pup -f'
+    gt stack test 'git pup -f --no-verify'
     git switch "$original_branch"
   )
 
