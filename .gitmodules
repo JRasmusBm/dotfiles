@@ -393,3 +393,13 @@
 	url = git@github.com:nvim-treesitter/nvim-treesitter-context.git
   branch = master
   ignore = dirty
+[submodule "copilot.lua"]
+	path = vim/pack/bundle/opt/copilot.lua
+	url = git@github.com:zbirenbaum/copilot.lua.git
+  branch = master
+  ignore = dirty
+[submodule "copilot-cmp"]
+	path = vim/pack/bundle/opt/copilot-cmp
+	url = git@github.com:zbirenbaum/copilot-cmp.git
+  branch = master
+  ignore = dirty
