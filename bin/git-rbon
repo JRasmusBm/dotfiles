@@ -4,10 +4,25 @@ set -e
 
 git_rebase_onto() {
   previous_branch="$(git branch --show-current)"
+
+  if test $# -gt 2; then
+    (
+      set -x
+      g rebase --onto "$@"
+    )
+  else
+    (
+      _number_of_commits="${1:-1}"
+      _target_branch="${2:-"$(git branch --all --format='%(refname)' --sort='committerdate' | fzf --reverse)"}"
+
+      set -x
+      g rebase --onto "$_target_branch" "HEAD~$_number_of_commits" 'HEAD'
+    )
+  fi
+
   (
     set -x
-    g rebase --onto "$@"
-    g switch "$previous_branch" 2> /dev/null
+    g switch "$previous_branch" 2>/dev/null
     g reset --hard 'HEAD@{1}'
   )
 }
