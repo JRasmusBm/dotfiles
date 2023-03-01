@@ -2,6 +2,8 @@ local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
+local t = ls.text_node
+local d = ls.dynamic_node
 
 local s = function(context, nodes, options)
   return function()
@@ -62,7 +64,7 @@ case {}:
 const {} = use{}({});
 {}
 ]],
-      { i(1), i(2), i(3), i(0) }
+      { i(3), i(1), i(2), i(0) }
     )
   ),
 
@@ -148,4 +150,18 @@ const {} = React.useMemo(({}) => {{
       { i(1), i(2), i(3), i(4), i(0) }
     )
   ),
+
+  s({ trig = "lbb", name = "log breakpoint" }, {
+    t { "console.dir(JSON.stringify({", "\t" },
+    t 'file: "',
+    d(1, ls_utils.file_path, {}),
+    t { '",', "\t" },
+    t "line: ",
+    d(2, ls_utils.line_number, {}),
+    t { ",", "\t" },
+    i(3),
+    t { "", "" },
+    t { "}, null, 2), { depth: 20 }))", "" },
+    i(0),
+  }),
 }
