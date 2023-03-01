@@ -4,4 +4,4 @@ set -e
 
 g pup
 
-(set -x ; gh pr create "$@")
+(set -x ; gh pr create --draft "$@")
