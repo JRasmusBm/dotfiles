@@ -4,8 +4,20 @@ set -e
 
 git_push_force() {
   (
+
     set -x
+    needs_stash=$(git is-clean || echo "yes")
+
+    if test -n "$needs_stash"; then
+      g stash push -u
+    fi
+
     g push -f "$@"
+
+    if test -n "$needs_stash"; then
+      g stash pop
+      echo "Applied autostash."
+    fi
   )
 }
 
