@@ -1,0 +1,23 @@
+#!/bin/bash
+
+set -e
+
+(
+  _branch_target="$(git fb)"
+  _prefix="${_branch_target#*/}"
+  _source="${_prefix%%/*}"
+
+  _branch_without_prefix="${_branch_target#refs/*/}"
+
+  if test "$_source" = 'remotes'; then
+    (
+      set -x
+      git switch "${_branch_without_prefix#*/}" || git switch -t "$_branch_without_prefix"
+    )
+  else
+    (
+      set -x
+      git switch "$_branch_without_prefix"
+    )
+  fi
+)
