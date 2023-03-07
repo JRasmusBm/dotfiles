@@ -4,9 +4,14 @@ set -e
 
 git_rebase_in_place() {
   (
+    if test "$1" = ':'; then
+      _target_branch="$(git branch --all --format='%(refname)' --sort='committerdate' | fzf --reverse)"
+    else
+      _target_branch="${1:-"$(g remote-main-branch)"}"
+    fi
+
     set -x
-    remote_main="$(g remote-main-branch)"
-    g rebase -i "${1:-"$remote_main"}"
+    g rebase -i "$_target_branch"
   )
 }
 
