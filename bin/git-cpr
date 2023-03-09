@@ -2,6 +2,6 @@
 
 set -e
 
-g pup
+g pup --no-verify
 
 (set -x ; gh pr create --draft "$@")

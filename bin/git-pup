@@ -5,7 +5,18 @@ set -e
 git_push_set_upstream() {
   (
     set -x
+    needs_stash=$(git is-clean || echo "yes")
+
+    if test -n "$needs_stash"; then
+      g stash push -u
+    fi
+
     g push -u origin "$(git rev-parse --abbrev-ref HEAD)" "$@"
+
+    if test -n "$needs_stash"; then
+      g stash pop
+      echo "Applied autostash."
+    fi
   )
 }
 
