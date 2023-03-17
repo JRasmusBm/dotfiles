@@ -12,9 +12,16 @@ git_reset_hard() {
     _target_branch="$(git fb)"
   fi
 
+  if test "$_target_branch"; then
+    (
+
+      set -x
+      g reset --hard "$_target_branch" "$@"
+    )
+  fi
+
   (
-    set -x
-    g reset --hard "$_target_branch" "$@"
+      g reset --hard "$@"
   )
 }
 

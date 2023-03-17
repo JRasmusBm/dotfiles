@@ -2,4 +2,4 @@
 
 set -e
 
-git branch --all --format='%(refname)' --sort='committerdate' | fzf --reverse
+git branch --all --format='%(refname)' --sort='-committerdate' | grep -v 'detached'| fzf --reverse

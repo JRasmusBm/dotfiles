@@ -3,7 +3,7 @@
 set -e
 
 git_branch_delete() {
-  if [ -z "$1" ]; then # g bd
+  if test -z "$1" -o "$1" = ':'; then # g bd
     selected_branch_ref=$(git branch --format='%(refname)' | fzf --reverse)
     selected_branch=${selected_branch_ref#*/*/}
   else # g bd <branch>

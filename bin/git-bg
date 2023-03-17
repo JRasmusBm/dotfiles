@@ -1,0 +1,42 @@
+#!/bin/sh
+
+set -e
+
+_git_branch_get() {
+  (
+    if test "$1" = ':'; then
+      _branch_target="$(git fb)"
+      _branch_target="${_branch_target#refs/*/}"
+    elif test -z "$1"; then
+      _branch_target="$(git local-main-branch)"
+    else
+      _branch_target="$1"
+    fi
+
+    _current_hash="$(git rev-parse HEAD)"
+    _needs_stash=$(git is-clean || echo "yes")
+
+    if test -n "$_needs_stash"; then
+      (
+        set -x
+        g stash push -u
+      )
+    fi
+
+    (
+      set -x
+      git switch "$_branch_target"
+      git reset --hard "$_current_hash"
+    )
+
+    if test -n "$_needs_stash"; then
+      (
+        set -x
+        g stash pop
+      )
+      echo "Applied autostash."
+    fi
+  )
+}
+
+_git_branch_get "$@"
