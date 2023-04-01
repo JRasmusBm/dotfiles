@@ -214,3 +214,7 @@ bindkey -s "0" 'tmux-speeddial 10'
 bindkey -s "" 'ta'
 bindkey -s "" 'ta all'
 bindkey -s "" 'tk'
+
+if test -f "$HOME/.zshrc.local" ; then
+  source "$HOME/.zshrc.local" 
+fi
