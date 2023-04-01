@@ -24,7 +24,7 @@ M.ensure_setup = function()
   vim.g.indent_blankline_char = "│"
 
   require("nvim-treesitter.configs").setup {
-    highlight = { enable = true, disable = { "markdown" } },
+    highlight = { enable = true, disable = { "markdown", "help" } },
     query_linter = require("jrasmusbm.treesitter.query_linter").query_linter,
     textobjects = {
       select = require("jrasmusbm.treesitter.select").select,
