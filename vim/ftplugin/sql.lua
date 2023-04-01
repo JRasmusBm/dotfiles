@@ -8,6 +8,8 @@ vim.keymap.set({ "n" }, "==", function()
 end, { silent = true, buffer = 0 })
 
 vim.keymap.set({ "n" }, ";c", "", {})
+vim.keymap.set({ "n" }, ";q", "<cmd>VtrSendCommandToRunner q;q;q;q;q;q;q;q;q;q;q;q;q;q;q;q;q;q;q;q;q\\;<cr>", {})
+
 vim.g.VtrStripLeadingWhitespace = 0
 
 vim.opt.formatprg = "sqlformat - -k upper -r --indent_columns --wrap_after 60"
