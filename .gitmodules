@@ -403,3 +403,13 @@
 	url = git@github.com:zbirenbaum/copilot-cmp.git
   branch = master
   ignore = dirty
+[submodule "CodeGPT.nvim"]
+	path = vim/pack/bundle/opt/CodeGPT.nvim
+	url = git@github.com:dpayne/CodeGPT.nvim.git
+  branch = master
+  ignore = dirty
+[submodule "nui.nvim"]
+	path = vim/pack/bundle/opt/nui.nvim
+	url = git@github.com:MunifTanjim/nui.nvim.git
+  branch = main
+  ignore = dirty
