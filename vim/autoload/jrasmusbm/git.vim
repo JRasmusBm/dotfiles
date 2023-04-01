@@ -17,5 +17,5 @@ function! jrasmusbm#git#push_all() abort
   wa!
   G wip
   G rbof
-  G push
+  G push --no-verify
 endfunction
