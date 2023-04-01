@@ -4,8 +4,23 @@ set -e
 
 git_reset_soft() {
   (
-    set -x
-    g reset --soft "$@"
+    if test "$1" = ':'; then
+      shift
+      _target_branch="$(git fb)"
+    fi
+
+    if test "$_target_branch"; then
+      (
+
+        set -x
+        g reset --soft "$_target_branch" "$@"
+      )
+    fi
+
+    (
+      set -x
+      g reset --soft "$@"
+    )
   )
 }
 
