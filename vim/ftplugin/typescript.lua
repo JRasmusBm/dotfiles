@@ -14,11 +14,7 @@ ls.add_snippets("typescript", {
 
   s(
     { trig = "ti", name = "interface" },
-    fmt("interface {} {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
-  ),
-  s(
-    { trig = "ta", name = "type" },
-    fmt("type {} = {}\n{}", { i(1), i(2), i(0) })
+    fmt("type {} = {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
   ),
 })
 
