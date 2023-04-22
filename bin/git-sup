@@ -1,0 +1,18 @@
+#!/bin/sh
+
+set -e
+
+_git_submodule_upgrade() {
+  (
+    for submodule in $(git submodule status | awk '{print $2}'); do
+      (
+        set -x
+        cd "$submodule"
+        git switch "$(git local-main-branch)"
+        git pull || true
+      )
+    done
+  )
+}
+
+_git_submodule_upgrade "$@"
