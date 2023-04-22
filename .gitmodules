@@ -78,11 +78,6 @@
   url = git@github.com:Wincent/loupe.git
   branch = main
   ignore = dirty
-[submodule "vim-stay"]
-  path = vim/pack/bundle/opt/vim-stay
-  url = git@github.com:zhimsel/vim-stay.git
-  branch = master
-  ignore = dirty
 [submodule "vim-repeat"]
   path = vim/pack/bundle/opt/vim-repeat
   url = git@github.com:tpope/vim-repeat.git
