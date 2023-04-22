@@ -21,7 +21,6 @@ local heading = function(severity, breaking_marker)
   do
     return function(_, _)
       do
-        local about = i(1)
         local branch = utils.get_os_command_output({
           "git",
           "branch",
@@ -30,12 +29,25 @@ local heading = function(severity, breaking_marker)
 
         local subject_section = (vim.split(branch, "/")[3] or "")
         local ticket_prefix = vim.split(subject_section, "-")[1] or ""
-        if vim.tbl_contains({ "pss", "pa" }, ticket_prefix) then
-          local ticket_id = vim.split(subject_section, "-")[2]
-          about =
-          sn(1, { t { string.upper(ticket_prefix) .. "-" .. ticket_id } })
+        if not vim.tbl_contains({ "pss", "pa" }, ticket_prefix) then
+          return sn(
+            0,
+            fmt(
+              string.format(
+                [[
+%s%s: {}
+
+{}
+  ]],
+                severity,
+                breaking_marker or ""
+              ),
+              { i(1), i(0) }
+            )
+          )
         end
 
+        local ticket_id = vim.split(subject_section, "-")[2]
         return sn(
           0,
           fmt(
@@ -44,11 +56,15 @@ local heading = function(severity, breaking_marker)
 %s({})%s: {}
 
 {}
-  ]]           ,
+  ]],
               severity,
               breaking_marker or ""
             ),
-            { about, i(2), i(0) }
+            {
+              sn(1, { t { string.upper(ticket_prefix) .. "-" .. ticket_id } }),
+              i(2),
+              i(0),
+            }
           )
         )
       end
@@ -63,17 +79,11 @@ ls.add_snippets("gitcommit", {
   ),
 
   s({ trig = "f", name = "feature" }, { d(1, heading "feat", {}) }),
-
   s({ trig = "b", name = "bug fix" }, { d(1, heading "fix", {}) }),
-
   s({ trig = "d", name = "documentation" }, { d(1, heading "docs", {}) }),
-
   s({ trig = "s", name = "style" }, { d(1, heading "style", {}) }),
-
   s({ trig = "r", name = "refactor" }, { d(1, heading "refactor", {}) }),
-
   s({ trig = "t", name = "test" }, { d(1, heading "test", {}) }),
-
   s({ trig = "c", name = "chore" }, { d(1, heading "chore", {}) }),
 
   s(
@@ -81,7 +91,7 @@ ls.add_snippets("gitcommit", {
     fmt(
       [[
 Co-authored-by: {} <{}>
-  ]]   ,
+  ]],
       { i(1), i(0) }
     )
   ),
@@ -91,7 +101,7 @@ Co-authored-by: {} <{}>
     fmt(
       [[
 Closes: #{}{}
-  ]]   ,
+  ]],
       {
         f(function()
           local branch_name = utils.get_os_command_output({
@@ -112,7 +122,7 @@ Closes: #{}{}
     fmt(
       [[
 Ticket: {}
-  ]]   ,
+  ]],
       { i(0) }
     )
   ),
@@ -124,7 +134,7 @@ Ticket: {}
 **Why** is the change needed?
 
 {}
-  ]]   ,
+  ]],
       { i(0) }
     )
   ),
@@ -136,7 +146,7 @@ Ticket: {}
 **How** is the need addressed?
 
 {}
-]]     ,
+]],
       { i(0) }
     )
   ),
@@ -148,7 +158,7 @@ Ticket: {}
 Concerns / side-effects of the changes:
 
 {}
-]]     ,
+]],
       { i(0) }
     )
   ),
