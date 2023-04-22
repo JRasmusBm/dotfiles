@@ -77,7 +77,7 @@ const {} = use{}({});
     { trig = "hs", name = "useState hook" },
     fmt(
       [[
-const [{}, set{}] = React.useState({});
+const [{}, set{}] = useState({});
 {}
 ]],
       { i(1), ls_utils.capitalize(2, 1), i(3), i(0) }
@@ -88,7 +88,7 @@ const [{}, set{}] = React.useState({});
     { trig = "hr", name = "useReducer hook" },
     fmt(
       [[
-const [{{ {} }}, dispatch] = React.useReducer(reducer, {{ {} }});
+const [{{ {} }}, dispatch] = useReducer(reducer, {{ {} }});
 {}
 ]],
       { i(1), i(2), i(0) }
@@ -99,7 +99,7 @@ const [{{ {} }}, dispatch] = React.useReducer(reducer, {{ {} }});
     { trig = "he", name = "useEffect hook" },
     fmt(
       [[
-React.useEffect(() => {{
+useEffect(() => {{
   {}
 }}, [{}]);
 
@@ -113,7 +113,7 @@ React.useEffect(() => {{
     { trig = "hl", name = "useLayoutEffect hook" },
     fmt(
       [[
-React.useLayoutEffect(() => {{
+useLayoutEffect(() => {{
   {}
 }}, [{}]);
 
@@ -127,7 +127,7 @@ React.useLayoutEffect(() => {{
     { trig = "hc", name = "useCallback hook" },
     fmt(
       [[
-const {} = React.useCallback(({}) => {{
+const {} = useCallback(({}) => {{
   {}
 }}, [{}]);
 
@@ -141,7 +141,7 @@ const {} = React.useCallback(({}) => {{
     { trig = "hm", name = "useMemo" },
     fmt(
       [[
-const {} = React.useMemo(({}) => {{
+const {} = useMemo(({}) => {{
   {}
 }}, [{}]);
 
