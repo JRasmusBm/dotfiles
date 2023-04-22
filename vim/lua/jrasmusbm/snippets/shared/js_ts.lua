@@ -292,4 +292,16 @@ function {}(_d: unknown) {{
       { i(0) }
     )
   ),
+
+  s(
+    { trig = "lbb", name = "log breakpoint" },
+    fmt(
+      [[
+console.log("{}", JSON.stringify({{
+  {}
+}}, null, 2))
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 }

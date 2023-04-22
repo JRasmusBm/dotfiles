@@ -151,17 +151,17 @@ const {} = React.useMemo(({}) => {{
     )
   ),
 
-  s({ trig = "lbb", name = "log breakpoint" }, {
-    t { "console.dir(JSON.stringify({", "\t" },
-    t 'file: "',
-    d(1, ls_utils.file_path, {}),
-    t { '",', "\t" },
-    t "line: ",
-    d(2, ls_utils.line_number, {}),
-    t { ",", "\t" },
-    i(3),
-    t { "", "" },
-    t { "}, null, 2), { depth: 20 }))", "" },
-    i(0),
-  }),
+  s(
+    { trig = "hel", name = "effect log" },
+    fmt(
+      [[
+useEffect(() => {{
+  console.log("{}", JSON.stringify({{
+    {}
+  }}, null, 2))
+}}, [{}])
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
 }
