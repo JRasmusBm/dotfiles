@@ -30,21 +30,28 @@ table.insert(runtime_path, "lua/?.lua")
 table.insert(runtime_path, "lua/?/init.lua")
 
 function M.setup(options)
-  require("lspconfig").sumneko_lua.setup {
+  require("lspconfig").lua_ls.setup {
+    filetypes = require("jrasmusbm.filetypes").lua,
     capabilities = options.capabilities,
     on_attach = options.on_attach,
-    filetypes = require("jrasmusbm.filetypes").lua,
-    cmd = cmd,
     settings = {
       Lua = {
-        runtime = { version = "LuaJIT", path = runtime_path },
-        diagnostics = { globals = { "vim" } },
-        workspace = {
-          library = get_lua_runtime(),
-          maxPreload = 10000,
-          preloadFileSize = 10000,
+        runtime = {
+          -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+          version = "LuaJIT",
         },
-        telemetry = { enable = false },
+        diagnostics = {
+          -- Get the language server to recognize the `vim` global
+          globals = { "vim" },
+        },
+        workspace = {
+          -- Make the server aware of Neovim runtime files
+          library = vim.api.nvim_get_runtime_file("", true),
+        },
+        -- Do not send telemetry data containing a randomized but unique identifier
+        telemetry = {
+          enable = false,
+        },
       },
     },
   }
