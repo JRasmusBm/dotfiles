@@ -85,6 +85,10 @@ ls.add_snippets("lua", {
     { trig = "vc", name = "vim command" },
     fmt("vim.cmd[[\n{}\n]]\n\n{}", { i(1), i(0) })
   ),
+  s(
+    { trig = "vcm", name = "vim mapped command" },
+    fmt('require("jrasmusbm.utils.commands").run({}, options)', { i(0) })
+  ),
 
   s(
     { trig = "sn", name = "snippet" },
@@ -116,7 +120,7 @@ local rep = require("luasnip.extras").rep
 
 ls.add_snippets("{}", {{
   {}
-}})  
+}})
   ]],
       { i(1), i(0) }
     )
@@ -212,7 +216,7 @@ require("jrasmusbm.dap.test").setup_test_debugging(
     { trig = "ag", name = "augroup" },
     fmt(
       [[
-local {}_augroup = vim.api.nvim_create_augroup("{}", {{ clear=true }}) 
+local {}_augroup = vim.api.nvim_create_augroup("{}", {{ clear=true }})
 {}
 ]],
       { i(1), rep(1), i(0) }
@@ -345,10 +349,15 @@ require("jrasmusbm.utils.mappings").feedkeys "{}"
     )
   ),
 
-s({ trig="hmk", name="hammerspoon keymap" }, fmt([[
+  s(
+    { trig = "hmk", name = "hammerspoon keymap" },
+    fmt(
+      [[
 hs.hotkey.bind({{{}}}, "{}", function()
   {}
 end)
-]], { i(1), i(2), i(0) })),
-
+]],
+      { i(1), i(2), i(0) }
+    )
+  ),
 })
