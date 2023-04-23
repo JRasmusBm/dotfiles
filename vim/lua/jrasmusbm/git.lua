@@ -10,13 +10,6 @@ M.open_github_link = function()
   vim.fn.system("git-repo " .. selection)
 end
 
-local bang_marker = function(options)
-  if options.bang then
-    return "!"
-  end
-  return ""
-end
-
 M.run_command = function(options)
   if options.fargs[1] == "browse" or options.fargs[1] == "br" then
     table.remove(options.fargs, 1)

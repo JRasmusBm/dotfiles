@@ -3,10 +3,8 @@ local M = {}
 M.mapped_args = function(options)
   local result = {}
 
-  local args = vim.fn.join(options.fargs, " ")
-
-  if #args > 0 then
-    result.args = {}
+  if #options.fargs > 0 then
+    result.args = { vim.fn.join(options.fargs, " ") }
   end
 
   if options.count ~= -1 then
