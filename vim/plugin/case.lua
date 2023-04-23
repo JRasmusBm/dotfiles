@@ -2,15 +2,15 @@ vim.g.caser_no_mappings = 1
 
 local nmap = function(binding, command)
   vim.keymap.set({ "n" }, binding, function()
-    require("jrasmusbm.utils").ensure_setup("vim-caser")
+    require("jrasmusbm.utils").ensure_setup "vim-caser"
 
-    require("jrasmusbm.utils.edit").feedkeys(command)
+    require("jrasmusbm.utils.edit").feedkeys(command) "v"
   end, {})
 end
 
 local vmap = function(binding, command)
   vim.keymap.set({ "v" }, binding, function()
-    require("jrasmusbm.utils").ensure_setup("vim-caser")
+    require("jrasmusbm.utils").ensure_setup "vim-caser"
 
     require("jrasmusbm.utils.edit").feedkeys(command)
   end, {})

@@ -51,7 +51,5 @@ end)
 vim.keymap.set({ "v" }, "<localleader>tl", function()
   require("jrasmusbm.tmux").ensure_setup()
 
-  vim.cmd [[
-  '<,'>VtrSendLinesToRunner
-  ]]
-end, {})
+  require("jrasmusbm.utils.visual").run_with_range "VtrSendLinesToRunner"
+end)
