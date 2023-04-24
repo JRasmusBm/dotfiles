@@ -126,13 +126,18 @@ autoload -U colors
 RPROMPT_BASE="%F{blue}%~%f"
 setopt PROMPT_SUBST
 
+date_cmd='date'
+if type gdate >/dev/null ; then
+  date_cmd='gdate'
+fi
+
 function preexec() {
-  timer=$(($(date +%s%0N)/1000000))
+  timer=$(($($date_cmd +%s%0N)/1000000))
 }
 
 function precmd() {
   if [ $timer ]; then
-    now=$(($(date +%s%0N)/1000000))
+    now=$(($($date_cmd +%s%0N)/1000000))
     elapsed=$(($now-$timer))
 
     export RPROMPT="%F{cyan}${elapsed}ms %{$reset_color%} $RPROMPT_BASE"
