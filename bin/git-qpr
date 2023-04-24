@@ -5,6 +5,7 @@ set -e
 _create_and_merge_pr() {
   g pup
   g opr -f
+  gh pr ready
   g mpr
 }
 
