@@ -1,1 +1,2 @@
-vim.fn["jrasmusbm#man#man_mode"]()
+vim.opt_local.nonumber = true
+vim.cmd "only"
