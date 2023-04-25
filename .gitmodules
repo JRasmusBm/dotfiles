@@ -408,3 +408,8 @@
 	url = git@github.com:MunifTanjim/nui.nvim.git
   branch = main
   ignore = dirty
+[submodule "undotree"]
+	path = vim/pack/bundle/opt/undotree
+	url = git@github.com:mbbill/undotree.git
+  branch = master
+  ignore = dirty
