@@ -1,26 +1,32 @@
 #!/bin/sh
 
-set -e
+_tmux_speeddial() {
+  (
+    set -e
 
-_line="$1"
-if test "$_line" = '0' ; then
- _line='10'
-fi
+    _line="$1"
+    if test "$_line" = '0'; then
+      _line='10'
+    fi
 
-mkdir -p "$LOCAL_CONFIG"
-file_name="$LOCAL_CONFIG/tmux-speeddial"
-session_name=$(head -"$_line" <"$file_name" | tail -1)
+    mkdir -p "$LOCAL_CONFIG"
+    file_name="$LOCAL_CONFIG/tmux-speeddial"
+    session_name=$(head -"$_line" <"$file_name" | tail -1)
 
-if test -z "$session_name" ; then
-  echo "Entry $_line not found"
-  exit 1
-fi
+    if test -z "$session_name"; then
+      echo "Entry $_line not found"
+      exit 1
+    fi
 
-if ! (tmux list-sessions | ggrep -q "$session_name") ; then
-  root_folder="$(echo "$session_name" | xargs zoxide query)"
-  cd "$root_folder" || return 1
-  INITIATED_EXTERNALLY=false source_tmux_script "$root_folder/.tmux" || default_tmux_session
-  return 0
-fi
+    if ! (tmux list-sessions | ggrep -q "$session_name"); then
+      root_folder="$(echo "$session_name" | xargs zoxide query)"
+      cd "$root_folder" || return 1
+      INITIATED_EXTERNALLY=false source_tmux_script "$root_folder/.tmux" || default_tmux_session
+      return 0
+    fi
 
-tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
+    tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
+  )
+}
+
+_tmux_speeddial "$@"
