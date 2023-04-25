@@ -14,7 +14,7 @@ set listchars=tab:▶\ ,trail:·
 set ruler
 set wrap
 set textwidth=79
-set scrolloff=4
+set scrolloff=8
 set tabstop=2
 " }}}
 

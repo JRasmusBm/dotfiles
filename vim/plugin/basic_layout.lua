@@ -11,7 +11,7 @@ vim.opt.cmdheight = 2
 vim.opt.wrap = true
 vim.opt.textwidth = 79
 vim.opt.colorcolumn = "+1"
-vim.opt.scrolloff = 4
+vim.opt.scrolloff = 8
 vim.opt.tabstop = 2
 vim.opt.guicursor = require("jrasmusbm.utils.options").list {
   "n-v-c-sm:block",
