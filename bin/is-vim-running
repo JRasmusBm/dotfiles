@@ -12,7 +12,11 @@ _is_vim_running() {
   pane_pid="$(tmux list-panes -F "#{pane_id} #{pane_pid}" | ggrep "$pane" | cut -d ' ' -f 2)"
 
   for descendant in $(list-descendants "$pane_pid"); do
-    p_name="$(ps -q "$descendant" -o comm=)"
+    if test "$(uname)" = 'Darwin'; then
+      p_name="$(ps -o command -p "$descendant" | awk '!/COMMAND/ { print $1 }')"
+    else
+      p_name="$(ps -q "$descendant" -o comm=)"
+    fi
 
     if test "$p_name" = "v" -o "$p_name" = "vi" -o "$p_name" = "vim" -o "$p_name" = "nvim"; then
       return 0
