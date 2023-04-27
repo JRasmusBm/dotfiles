@@ -17,6 +17,12 @@ M.run_command = function(options)
     return
   end
 
+  if options.fargs[1] == "read" then
+    table.remove(options.fargs, 1)
+    require("jrasmusbm.utils.commands").run("Gread", options)
+    return
+  end
+
   if options.fargs[1] == "bl" then
     options.fargs[1] = "blame"
     return
