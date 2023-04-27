@@ -11,7 +11,4 @@ require("noice").setup {
       ["cmp.entry.get_documentation"] = true,
     },
   },
-  presets = {
-    command_palette = true,
-  },
 }
