@@ -50,6 +50,8 @@ nnoremap <leader>qc :cclose
 
 nnoremap ]q :cnext
 nnoremap [q :cprev
+nnoremap H :cnext
+nnoremap L :cprev
 
 nnoremap <Leader>d :Ex<CR>
 " }}}
