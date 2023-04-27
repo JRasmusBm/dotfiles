@@ -418,3 +418,13 @@
 	url = git@github.com:nathom/filetype.nvim.git
   branch = main
   ignore = dirty
+[submodule "noice.nvim"]
+	path = vim/pack/bundle/opt/noice.nvim
+	url = git@github.com:folke/noice.nvim.git
+  branch = main
+  ignore = dirty
+[submodule "nvim-notify"]
+	path = vim/pack/bundle/opt/nvim-notify
+	url = git@github.com:rcarriga/nvim-notify.git
+  branch = master
+  ignore = dirty

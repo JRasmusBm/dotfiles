@@ -17,4 +17,3 @@ vim.opt.ignorecase = true
 vim.opt.smartcase = true
 vim.opt.incsearch = true
 vim.opt.splitbelow = true
-vim.opt.lazyredraw = true
