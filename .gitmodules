@@ -413,3 +413,8 @@
 	url = git@github.com:mbbill/undotree.git
   branch = master
   ignore = dirty
+[submodule "filetype.nvim"]
+	path = vim/pack/bundle/opt/filetype.nvim
+	url = git@github.com:nathom/filetype.nvim.git
+  branch = main
+  ignore = dirty
