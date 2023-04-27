@@ -37,7 +37,7 @@ M.git_issues = function()
     previewer = previewers.new_termopen_previewer {
       title = "Issue Preview",
       get_command = function(entry)
-        return { "gh", "issue", "view", entry.id }
+        return { "gh", "issue", "view", "-L", "10000", entry.id }
       end,
     },
     sorter = sorters.get_generic_fuzzy_sorter(),
