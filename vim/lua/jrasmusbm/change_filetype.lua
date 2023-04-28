@@ -9,6 +9,7 @@ local default_options = {
     toml = "toml",
     tex = "tex",
     scm = "query",
+    sql = "sql",
     tsx = "typescript.tsx",
   },
   literal = {
