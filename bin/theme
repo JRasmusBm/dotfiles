@@ -8,17 +8,27 @@ _set_alacritty_theme() {
 }
 
 _set_vscode_theme() {
+  sed='sed'
+  if test "$(uname)" = "Darwin"; then
+    sed='gsed'
+  fi
+
   if test "$1" = 'dark'; then
-    sed -Ei 's/Gruvbox Material Light/Gruvbox Material Dark/' "$DOTFILES/vscode/settings.json"
+    "$sed" -Ei 's/Gruvbox Material Light/Gruvbox Material Dark/' "$DOTFILES/vscode/settings.json"
   else
-    sed -Ei 's/Gruvbox Material Dark/Gruvbox Material Light/' "$DOTFILES/vscode/settings.json"
+    "$sed" -Ei 's/Gruvbox Material Dark/Gruvbox Material Light/' "$DOTFILES/vscode/settings.json"
   fi
 
   touch "$DOTFILES/vscode/settings.json"
 }
 
 _set_system_theme() {
-  type dconf >/dev/null && dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
+  if type dconf 2>/dev/null; then
+    (
+      dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
+    )
+  fi
+
 }
 
 _persist_theme() {

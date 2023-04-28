@@ -1,6 +1,5 @@
 import:
   - ~/.config/alacritty/colorscheme.yml
-  - ~/.config/alacritty/fonts.yml
   - ~/.config/alacritty/fsize.yml
 
 env:
