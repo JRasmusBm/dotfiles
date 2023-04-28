@@ -5,7 +5,7 @@ set -e
 git_list_issues() {
   (
     set -x
-    gh issue list "$@"
+    gh issue list -L 10000 "$@"
   )
 }
 
