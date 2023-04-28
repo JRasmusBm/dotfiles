@@ -54,5 +54,6 @@ PATH="$PATH:$DOTFILES/bin"
 PATH="$PATH:$HOME/.pyenv/bin"
 PATH="$PATH:$HOME/.rover/bin"
 PATH="$PATH:$FLYCTL_INSTALL/bin"
+PATH="$PATH:$HOME/projects/polar/bin"
 
 export PATH=$PATH
