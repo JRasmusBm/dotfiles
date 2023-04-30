@@ -142,6 +142,12 @@ vim.keymap.set({ "n" }, "<leader>eb", function()
   }
 end, { noremap = true })
 
+vim.keymap.set({ "n" }, "<leader>em", function()
+  ensure_setup()
+  require("telescope.builtin").keymaps()
+end, { noremap = true })
+
+
 vim.keymap.set({ "n" }, "<leader>ec", function()
   ensure_setup()
   require("jrasmusbm.telescope.find_files").find_files {
