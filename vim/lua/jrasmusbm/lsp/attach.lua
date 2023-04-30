@@ -70,19 +70,19 @@ function M.on_attach(client, bufnr)
   end
 
   if client.supports_method "textDocument/codeAction" then
-    vim.keymap.set({ "n", "v" }, ";af", vim.lsp.buf.code_action)
+    vim.keymap.set({ "n", "v" }, "<leader>af", vim.lsp.buf.code_action)
   end
 
   if client.supports_method "workspace/symbol" then
     vim.keymap.set(
       { "n" },
-      ";as",
+      "<leader>as",
       require("telescope.builtin").lsp_workspace_symbols
     )
 
     vim.keymap.set(
       { "n" },
-      ";ad",
+      "<leader>ad",
       require("telescope.builtin").lsp_dynamic_workspace_symbols
     )
   end
