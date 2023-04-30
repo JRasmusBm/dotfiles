@@ -28,11 +28,6 @@
   url = git@github.com:tpope/vim-fugitive.git
   branch = master
   ignore = dirty
-[submodule "vim-gitgutter"]
-  path = vim/pack/bundle/opt/vim-gitgutter
-  url = git@github.com:airblade/vim-gitgutter.git
-  branch = master
-  ignore = dirty
 [submodule "vim-graphql"]
   path = vim/pack/bundle/opt/vim-graphql
   url = git@github.com:jparise/vim-graphql.git
@@ -428,3 +423,6 @@
 	url = git@github.com:rcarriga/nvim-notify.git
   branch = master
   ignore = dirty
+[submodule "vim/pack/bundle/opt/gitsigns.nvim"]
+	path = vim/pack/bundle/opt/gitsigns.nvim
+	url = git@github.com:lewis6991/gitsigns.nvim.git
