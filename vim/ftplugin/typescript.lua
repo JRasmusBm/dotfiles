@@ -6,6 +6,10 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local ls_utils = require "jrasmusbm.snippets.utils"
 
+require("jrasmusbm.treesitter.parent").setup_parent_mappings({
+  "function_declaration",
+}, { { "name" } })
+
 ls.add_snippets("typescript", {
   s(
     { trig = "at", name = "typed argument" },

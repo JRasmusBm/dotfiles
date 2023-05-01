@@ -7,6 +7,10 @@ nmap <buffer> <leader>me Imappings.f xys$)lysE"f r,lys])"$i, {}
 nmap <buffer> <leader>mr 0f.2l4x$F{a noremap=true,<Space>
 ]]
 
+require("jrasmusbm.treesitter.parent").setup_parent_mappings({
+  "assignment_statement",
+}, { { "variable_list_name" } })
+
 local ls = require "luasnip"
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
@@ -285,10 +289,7 @@ require("jrasmusbm.change_filetype").setup({{
     { trig = "acr", name = "on read" },
     fmt([["BufNew", "BufNewFile", "BufRead"{}]], { i(0) })
   ),
-  s(
-    { trig = "ab", name = "<abuf>" },
-    fmt([[vim.fn.expand("<abuf>"){}]], { i(0) })
-  ),
+  s({ trig = "ab", name = "" }, fmt([[vim.fn.expand("<abuf>"){}]], { i(0) })),
   s(
     { trig = "af", name = "<afile>" },
     fmt([[vim.fn.expand("<afile>"){}]], { i(0) })
