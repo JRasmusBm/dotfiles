@@ -9,7 +9,8 @@ nmap <buffer> <leader>mr 0f.2l4x$F{a noremap=true,<Space>
 
 require("jrasmusbm.treesitter.parent").setup_parent_mappings({
   "assignment_statement",
-}, { { "variable_list_name" } })
+  "function_declaration",
+}, { { "name" }, { "variable_list_name" } })
 
 local ls = require "luasnip"
 local s = ls.s

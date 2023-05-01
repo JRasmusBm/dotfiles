@@ -1,22 +1,23 @@
 local M = {}
 
 local find_first_parent_by_names = function(names, node)
-  for _, name in ipairs(names) do
-    local current_node = node or vim.treesitter.get_node()
+  local current_node = node or vim.treesitter.get_node()
 
-    while true do
-      if not current_node then
-        break
-      end
+  while true do
+    if not current_node then
+      return nil
+    end
 
+    for _, name in ipairs(names) do
       local matcher = "^%(" .. name
       local sexpr = current_node:sexpr()
+
       if string.match(sexpr, matcher) then
         return current_node
       end
-
-      current_node = current_node:parent()
     end
+
+    current_node = current_node:parent()
   end
 end
 

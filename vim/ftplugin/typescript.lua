@@ -8,6 +8,7 @@ local ls_utils = require "jrasmusbm.snippets.utils"
 
 require("jrasmusbm.treesitter.parent").setup_parent_mappings({
   "function_declaration",
+  "variable_declarator",
 }, { { "name" } })
 
 ls.add_snippets("typescript", {
