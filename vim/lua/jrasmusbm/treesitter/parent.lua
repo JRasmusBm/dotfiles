@@ -30,8 +30,8 @@ local lookup_children_paths = function(node, children_lookup_path_list)
       end
 
       current_node = node:field(child_name)[1]
-        or current_node:child(child_name)
-        or current_node:named_child(child_name)
+          or current_node:child(child_name)
+          or current_node:named_child(child_name)
     end
 
     if current_node ~= nil then
@@ -59,6 +59,8 @@ M.setup_parent_mappings = function(parent_names, children_paths)
     end
 
     local row, column = name_node:start()
+
+    vim.cmd.normal "m`"
     vim.api.nvim_win_set_cursor(0, { row + 1, column })
   end, {})
 end
