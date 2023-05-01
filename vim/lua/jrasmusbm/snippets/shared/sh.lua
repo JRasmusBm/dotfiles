@@ -4,6 +4,10 @@ local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 
+require("jrasmusbm.treesitter.parent").setup_parent_mappings({
+  "function_definition",
+}, { { "name" } })
+
 local s = function(context, nodes, options)
   return function()
     return ls.s(context, nodes, options)
@@ -17,7 +21,7 @@ return {
       [[
 for {} in {} ; do
   (
-    {} 
+    {}
   )
 done
 
@@ -40,7 +44,7 @@ done
       [[
 for i in {{0..{}}} ; do
   (
-    {}  
+    {}
   )
 done
 
@@ -56,7 +60,7 @@ done
       [[
 if {} ; then
   (
-    {} 
+    {}
   )
 fi
 
@@ -85,7 +89,7 @@ else
       [[
 elif {} ; then
   (
-    {} 
+    {}
   )
 ]],
       { i(1), i(0) }
@@ -98,7 +102,7 @@ elif {} ; then
       [[
 {}() {{
   (
-    {} 
+    {}
   )
 }}
 
