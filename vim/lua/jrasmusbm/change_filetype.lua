@@ -62,6 +62,9 @@ local default_options = {
       end
     end,
   },
+  shebang = {
+    ["/bin/sh"] = "sh",
+  },
 }
 
 local option_names = {

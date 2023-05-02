@@ -4,7 +4,7 @@ set -e
 
 _git_why() {
   (
-    git extract-section "$@" \
+    git commit-section "$@" \
       '/^\*\*Why\*\* is the change needed\?/' \
       '### Why is the change needed?'
   )
