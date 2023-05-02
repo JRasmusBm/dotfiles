@@ -137,10 +137,19 @@ end, { noremap = true })
 vim.keymap.set({ "n" }, "<leader>eb", function()
   ensure_setup()
   require("jrasmusbm.telescope.find_files").find_files {
-    prompt_title = "Filetype Config Files",
+    prompt_title = "Scripts",
     cwd = vim.fn.getenv "DOTFILES" .. "/bin",
   }
 end, { noremap = true })
+
+vim.keymap.set({ "n" }, "<leader>er", function()
+  ensure_setup()
+  require("jrasmusbm.telescope.find_files").find_files {
+    prompt_title = "Bin Source",
+    cwd = vim.fn.getenv "DOTFILES" .. "/bin-src",
+  }
+end, { noremap = true })
+
 
 vim.keymap.set({ "n" }, "<leader>em", function()
   ensure_setup()
