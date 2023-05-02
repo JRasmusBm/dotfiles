@@ -1,0 +1,21 @@
+#!/bin/sh
+
+set -e
+
+_install_bin_src() {
+  (
+    for src_dir in "$DOTFILES/bin-src/"*; do
+      if test -e "$src_dir/install.sh"; then
+        (
+          if cd "$src_dir"; then
+            set -x
+            sh "./install.sh"
+          fi
+
+        )
+      fi
+    done
+  )
+}
+
+_install_bin_src "$@"

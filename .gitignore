@@ -9,3 +9,4 @@ neovim
 vim/bundle
 vim/view
 shada*
+bin-src/*/target
