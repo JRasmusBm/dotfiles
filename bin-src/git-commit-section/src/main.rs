@@ -1,8 +1,14 @@
-use std::process::Command;
+use std::process::{exit, Command};
 
 fn main() {
-    let commits = Command::new("git").outpt()
+    let Ok(output) = Command::new("git").args(["local-main-branch"]).output() else {
+        exit(1)
+    };
 
-    println!(commits);
-git --no-pager log --reverse --format="%b" "$(git local-main-branch)..HEAD"
+    let commit_range = format!("{}..HEAD", String::from_utf8_lossy(&output.stdout));
+    let Ok(output) = Command::new("git").args(["--no-pager", "log", "--reverse", "--format=%b", &commit_range]).output() else {
+        exit(1)
+    };
+
+    println!("{:?}", String::from_utf8_lossy(&output.stdout));
 }
