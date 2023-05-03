@@ -5,7 +5,7 @@ local i = ls.insert_node
 
 ls.add_snippets("rust", {
   s(
-    { trig = "ts", name = "struct" },
+    { trig = "tc", name = "struct (class)" },
     fmt(
       [[
 struct {} {{
@@ -15,6 +15,47 @@ struct {} {{
 {}
   ]],
       { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ti", name = "trait (interface)" },
+    fmt(
+      [[
+trait {} {{
+    fn {}(&self{}) -> {};
+}}
+
+{}
+  ]],
+      { i(1), i(2), i(3), i(4), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "tp", name = "impl (aPplication)" },
+    fmt(
+      [[
+impl {} for {} {{
+}}
+
+{}
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "tm", name = "method" },
+    fmt(
+      [[
+fn {}(&self{}) -> {{
+  {}
+}}
+
+{}
+  ]],
+      { i(1), i(2), i(3), i(0) }
     )
   ),
 
