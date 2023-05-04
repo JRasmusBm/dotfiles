@@ -9,9 +9,15 @@ function! CustomMarkers() abort
 endfunction
 
 function! RulerHighlights() abort
-  highlight CursorColumn guibg=#303000
-  highlight CursorLine guibg=#303000 " TODO
-  highlight ColorColumn guibg=#301810
+  if luaeval("require(\"jrasmusbm.theme\").get_current_theme() == \"light\"")
+    highlight CursorColumn guibg=#e0e090
+    highlight CursorLine guibg=#e0e090 " TODO
+    highlight ColorColumn guibg=#c0a050
+  else
+    highlight CursorColumn guibg=#303000
+    highlight CursorLine guibg=#303000 " TODO
+    highlight ColorColumn guibg=#301810
+  endif
 endfunction
 
 function! RespectAlacrittyColorscheme() abort
@@ -20,8 +26,13 @@ function! RespectAlacrittyColorscheme() abort
 endfunction
 
 function! FoldHighlights() abort
-  highlight Folded guibg=NONE guifg=darkyellow
-  highlight FoldColumn guibg=darkgrey guifg=white
+  if luaeval("require(\"jrasmusbm.theme\").get_current_theme() == \"light\"")
+    highlight Folded guibg=NONE guifg=#906020
+    highlight FoldColumn guibg=darkgrey guifg=white
+  else
+    highlight Folded guibg=NONE guifg=darkyellow
+    highlight FoldColumn guibg=darkgrey guifg=white
+endif
 endfunction
 
 function! ErrorHighlights() abort
@@ -30,7 +41,11 @@ function! ErrorHighlights() abort
 endfunction
 
 function! SearchHighlights() abort
-  highlight Search guifg=yellow guibg=NONE
+  if luaeval("require(\"jrasmusbm.theme\").get_current_theme() == \"light\"")
+    highlight Search guifg=#d0d030 guibg=NONE
+  else
+    highlight Search guifg=yellow guibg=NONE
+  endif
 endfunction
 
 function! SpellingHighlights() abort
