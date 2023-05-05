@@ -29,6 +29,7 @@ PATH="$PATH:$_usr/bin"
 PATH="$PATH:/sbin"
 PATH="$PATH:/bin"
 PATH="$PATH:/snap/bin"
+PATH=$PATH:/opt/homebrew/opt/coreutils/libexec/gnubin
 PATH="$PATH:$HOMEBREW_PREFIX/bin"
 PATH="$PATH:$HOMEBREW_PREFIX/sbin";
 PATH="$PATH:$_usr/local/go/bin"
