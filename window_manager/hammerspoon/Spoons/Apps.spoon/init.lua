@@ -2,7 +2,7 @@ local M = {}
 
 -- BROWSER
 
-hs.hotkey.bind({ "cmd", "shift" }, "1", function()
+hs.hotkey.bind({ "ctrl" }, "1", function()
   hs.application.launchOrFocus "brave browser"
 end)
 
@@ -12,7 +12,7 @@ end)
 
 -- TERMINAL
 
-hs.hotkey.bind({ "cmd", "shift" }, "2", function()
+hs.hotkey.bind({ "ctrl" }, "2", function()
   hs.application.launchOrFocus "alacritty"
 end)
 
@@ -22,7 +22,7 @@ end)
 
 -- SLACK
 
-hs.hotkey.bind({ "cmd", "shift" }, "3", function()
+hs.hotkey.bind({ "ctrl" }, "3", function()
   hs.application.launchOrFocus "slack"
 end)
 
