@@ -254,7 +254,7 @@ INSERT INTO {} ({}) VALUES ({});
       [[
 SELECT {} FROM {};
 ]],
-      { i(1), i(0) }
+      { i(0), i(1) }
     )
   ),
 
