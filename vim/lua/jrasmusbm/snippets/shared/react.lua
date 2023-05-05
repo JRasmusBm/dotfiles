@@ -2,8 +2,7 @@ local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
-local t = ls.text_node
-local d = ls.dynamic_node
+local rep = require("luasnip.extras").rep
 
 local s = function(context, nodes, options)
   return function()
@@ -138,6 +137,17 @@ const {} = useCallback(({}) => {{
   ),
 
   s(
+    { trig = "hcon", name = "useContext hook" },
+    fmt(
+      [[
+const {{{}}} = useContext({}Context);
+{}
+]],
+      { i(2), i(1), i(0) }
+    )
+  ),
+
+  s(
     { trig = "hm", name = "useMemo" },
     fmt(
       [[
@@ -162,6 +172,34 @@ useEffect(() => {{
 }}, [{}])
   ]],
       { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "rsc", name = "react styled component" },
+    fmt(
+      [[
+const {} = styled.{}`
+{}
+`
+
+{}
+  ]],
+      { i(1), i(2), i(3), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "rcon", name = "create context" },
+    fmt(
+      [[
+type {}ContextType = {{
+  {}
+}}
+const {}Context = createContext<{}ContextType>(null as any);
+{}
+  ]],
+      { rep(1), i(2), i(1), rep(1), i(0) }
     )
   ),
 }

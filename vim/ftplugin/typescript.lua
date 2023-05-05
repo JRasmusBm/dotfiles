@@ -21,6 +21,17 @@ ls.add_snippets("typescript", {
     { trig = "ti", name = "interface" },
     fmt("type {} = {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
   ),
+
+  s(
+    { trig = "tef", name = "function type" },
+    fmt(
+      [[
+({}) => void;
+{}
+]],
+      { i(1), i(0) }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }
