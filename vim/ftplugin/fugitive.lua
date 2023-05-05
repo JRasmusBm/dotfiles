@@ -6,6 +6,6 @@ vim.keymap.set(
   { "n" },
   "L",
   vim.fn["jrasmusbm#git#open_tree"],
-  { silent = true }
+  { silent = true, buffer = true }
 )
 vim.keymap.set({ "n" }, "q", "q", { noremap = true })
