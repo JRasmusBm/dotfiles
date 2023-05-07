@@ -5,3 +5,7 @@ vim.api.nvim_create_user_command("TSP", function()
 
   vim.cmd "TSPlaygroundToggle"
 end, { nargs = 0 })
+
+vim.keymap.set({ "n" }, "<leader>am", function()
+  require("jrasmusbm.treesitter.jump-to-main").main()
+end, {})

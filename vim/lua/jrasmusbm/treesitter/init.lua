@@ -1,11 +1,6 @@
 local update_filetypes = function()
   for target, sources in pairs(require "jrasmusbm.filetypes") do
-    for _, source in ipairs(sources) do
-      if source ~= target then
-        require("nvim-treesitter.parsers").filetype_to_parsername[source] =
-          target
-      end
-    end
+    vim.treesitter.language.register(target, sources)
   end
 end
 
@@ -15,6 +10,7 @@ M.ensure_setup = function()
   if not require("jrasmusbm.utils").ensure_setup "nvim-treesitter" then
     return
   end
+  update_filetypes()
 
   require("jrasmusbm.utils").ensure_setup "nvim-treesitter-textobjects"
   require("jrasmusbm.utils").ensure_setup "indent-blankline.nvim"
