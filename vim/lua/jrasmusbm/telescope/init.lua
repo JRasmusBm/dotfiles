@@ -20,6 +20,7 @@ M.ensure_setup = function()
       file_sorter = require("telescope.sorters").get_fzy_sorter,
       file_ignore_patterns = { "pack/.*" },
       path_display = {},
+      color_devicons = true,
       layout_config = {
         prompt_position = "top",
         width = 0.75,
