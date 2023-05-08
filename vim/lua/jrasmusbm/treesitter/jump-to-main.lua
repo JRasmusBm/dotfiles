@@ -3,13 +3,7 @@ local M = {}
 M.main = function()
   local queries = require "nvim-treesitter.query"
   local matches = queries.get_capture_matches_recursively(0, "@function.name", "functions")
-  print(
-    vim.inspect({
-      file = "vim/lua/jrasmusbm/treesitter/jump-to-main.lua",
-      line = 12,
-      matches=matches
-    })
-  )
+
   if matches == nil or #matches == 0 then
     print "No matches found"
     return

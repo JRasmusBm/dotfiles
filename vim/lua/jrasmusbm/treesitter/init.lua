@@ -1,7 +1,11 @@
 local update_filetypes = function()
   for target, sources in pairs(require "jrasmusbm.filetypes") do
-    vim.treesitter.language.register(target, sources)
+    if target ~= "tsx" and target ~= "jsx" then
+      vim.treesitter.language.register(target, sources)
+    end
   end
+  vim.treesitter.language.register("tsx", require("jrasmusbm.filetypes").tsx)
+  vim.treesitter.language.register("jsx", require("jrasmusbm.filetypes").jsx)
 end
 
 local M = {}
