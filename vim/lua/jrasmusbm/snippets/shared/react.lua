@@ -190,6 +190,25 @@ const {} = styled.{}`
   ),
 
   s(
+    { trig = "rsp", name = "react styled parameter" },
+    fmt(
+      [[
+${{({{{}}}) => {{
+  switch({}) {{
+    case {}:
+      return css`
+        {}
+      `
+  }}
+}}}}
+
+{}
+  ]],
+      { i(1), rep(1), i(2), i(3), i(0) }
+    )
+  ),
+
+  s(
     { trig = "rcon", name = "create context" },
     fmt(
       [[

@@ -32,6 +32,12 @@ ls.add_snippets("typescript", {
       { i(1), i(0) }
     )
   ),
+
+  s({ trig="ten", name="number type" }, fmt([[
+{}: number;
+{}
+  ]], { i(1), i(0) })),
+  
 })
 
 ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }

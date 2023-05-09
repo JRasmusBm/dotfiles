@@ -11,14 +11,14 @@ ls.add_snippets("tsx", {
   s(
     { trig = "rf", name = "react file" },
     fmt(
-      'import * as React from "react"\n\ninterface {}Props {{\n  {}\n}}\n\nconst {}: React.FC<{}Props> = ({{{}}}) => {{\n  return ({})\n}}\n\nexport default {}',
-      { i(1), i(2), rep(1), rep(1), i(3), i(0, "null"), rep(1) }
+      "type {}Props = {{\n  {}\n}}\n\nconst {} = ({{{}}}: {}Props) => {{\n  return ({})\n}}\n\nexport default {}",
+      { rep(1), i(2), i(1), i(3), rep(1), i(0, "null"), rep(1) }
     )
   ),
   s(
     { trig = "rc", name = "react component" },
     fmt(
-      "interface {}Props {{\n  {}\n}}\n\nfunction {}({{{}}}: {}Props) {{\n  return ({})\n}}",
+      "type {}Props = {{\n  {}\n}}\n\nconst {} = ({{{}}}: {}Props) => {{\n  return ({})\n}}",
       { rep(1), i(2), i(1), i(3), rep(1), i(0, "null") }
     )
   ),

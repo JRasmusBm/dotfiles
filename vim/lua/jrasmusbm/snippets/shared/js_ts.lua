@@ -234,6 +234,16 @@ return {
   ),
 
   s(
+    { trig = "em", name = "map expression" },
+    fmt(
+      [[
+{}.map(({}) => ({}))
+  ]],
+      { i(1), i(2), i(3) }
+    )
+  ),
+
+  s(
     { trig = "tc", name = "type class" },
     fmt("class {} {{\n  {}\n}}\n\n{}", { i(1), i(2), i(0) })
   ),
