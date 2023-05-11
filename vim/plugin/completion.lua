@@ -5,15 +5,15 @@ require("jrasmusbm.utils").ensure_setup "cmp-buffer"
 require("jrasmusbm.utils").ensure_setup "cmp-cmdline"
 require("jrasmusbm.utils").ensure_setup "cmp_luasnip"
 
-require("jrasmusbm.utils").ensure_setup "copilot.lua"
-require("jrasmusbm.utils").ensure_setup "copilot-cmp"
+-- require("jrasmusbm.utils").ensure_setup "copilot.lua"
+-- require("jrasmusbm.utils").ensure_setup "copilot-cmp"
 
-require("copilot").setup {
-  suggestion = { enabled = false },
-  panel = { enabled = false },
-}
+-- require("copilot").setup {
+--   suggestion = { enabled = false },
+--   panel = { enabled = false },
+-- }
 
-require("copilot_cmp").setup {}
+-- require("copilot_cmp").setup {}
 
 local list = require("jrasmusbm.utils.options").list
 
@@ -85,7 +85,7 @@ cmp.setup {
       priority = 1,
       max_item_count = 5,
     },
-    { name = "copilot", group_index = 3, max_item_count = 2 },
+    -- { name = "copilot", group_index = 3, max_item_count = 2 },
   },
 }
 
