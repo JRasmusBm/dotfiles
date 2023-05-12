@@ -2,6 +2,13 @@
 
 set -e
 
+sed='sed'
+ln='ln'
+if test "$(uname)" = "Darwin"; then
+  sed='gsed'
+  ln='gln'
+fi
+
 _scripts="$(realpath "$(dirname "$0")")"
 
 _config_entries() {
@@ -11,15 +18,15 @@ _config_entries() {
   BEGIN {
   ORS="\n"
 }
-NR != 1 { print $1,$2,$3 }
+NR != 1 { print $1","$2","$3 }
 ' <"$_config_file"
   )
 }
 
 _link_file() {
   (
-    _is_dir="$_scripts/../$1"
-    _from_path="$_scripts/../$2"
+    _is_dir="$1"
+    _from_path="$(realpath "$_scripts/../$2")"
     _to_path="$HOME/$3"
     _backup_path="$HOME/.backup_dotfiles/$3"
 
@@ -34,18 +41,27 @@ _link_file() {
       cp -r "$_to_path" "$_backup_path"
     fi
 
-    if test "$_is_dir" != 'True' ; then
+    if test "$_is_dir" != 'True'; then
       mkdir -p "$(dirname "$_to_path")"
     fi
 
-    ln -sf "$(realpath "$_from_path")" "$_to_path"
+    if test -L "$_to_path"; then
+      echo "Skipping $_from_path"
+      return 0
+    fi
+
+    (
+      set -x
+      $ln -sf "$_from_path" "$_to_path"
+    )
   )
 }
 
 _symlink_dotfiles() {
   (
     _entry_type=0
-    for entry in $(_config_entries); do
+    IFS=','
+    for entry in $(_config_entries | "$sed" -Ez 's/\n/,/g'); do
       if test "$_entry_type" = '0'; then
         _is_dir="$entry"
       elif test "$_entry_type" = '1'; then
@@ -53,10 +69,10 @@ _symlink_dotfiles() {
       elif test "$_entry_type" = '2'; then
         _to_path="$entry"
 
-        _link_file  "$_is_dir" "$_from_path" "$_to_path"
+        _link_file "$_is_dir" "$_from_path" "$_to_path"
       fi
 
-      _entry_type="$((($_entry_type + 1) % 3))"
+      _entry_type="$(((_entry_type + 1) % 3))"
     done
   )
 }

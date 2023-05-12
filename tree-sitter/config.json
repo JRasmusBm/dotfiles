@@ -1,0 +1,55 @@
+{
+  "parser-directories": [
+    "/Users/jrasmusbm/projects/dotfiles/vim/pack/bundle/opt/nvim-treesitter/parser"
+  ],
+  "theme": {
+    "constant": 94,
+    "number": {
+      "color": 94,
+      "bold": true
+    },
+    "comment": {
+      "italic": true,
+      "color": 245
+    },
+    "function": 26,
+    "variable.parameter": {
+      "underline": true
+    },
+    "operator": {
+      "color": 239,
+      "bold": true
+    },
+    "constructor": 136,
+    "string.special": 30,
+    "type.builtin": {
+      "color": 23,
+      "bold": true
+    },
+    "punctuation.bracket": 239,
+    "attribute": {
+      "color": 124,
+      "italic": true
+    },
+    "function.builtin": {
+      "bold": true,
+      "color": 26
+    },
+    "keyword": 56,
+    "string": 28,
+    "module": 136,
+    "embedded": null,
+    "punctuation.delimiter": 239,
+    "property": 124,
+    "tag": 18,
+    "variable.builtin": {
+      "bold": true
+    },
+    "constant.builtin": {
+      "color": 94,
+      "bold": true
+    },
+    "type": 23
+  }
+}
+
