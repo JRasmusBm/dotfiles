@@ -86,6 +86,28 @@ return {
     fmt("console.error({})\n{}", { i(1), i(0) })
   ),
   s(
+    { trig = "lc", name = "log count" },
+    fmt(
+      [[
+console.count({})
+{}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "lg", name = "log group" },
+    fmt(
+      [[
+console.group({})
+{}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
     { trig = "li", name = "log info" },
     fmt("console.info({})\n{}", { i(1), i(0) })
   ),
