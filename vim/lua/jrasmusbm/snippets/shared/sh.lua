@@ -4,9 +4,9 @@ local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 
-require("jrasmusbm.treesitter.parent").setup_parent_mappings({
-  "function_definition",
-}, { { "name" } })
+require("jrasmusbm.treesitter.setup_mappings").main("<leader>ao", {
+  { { "function_declaration" }, { { "name" } } },
+}, true)
 
 local s = function(context, nodes, options)
   return function()

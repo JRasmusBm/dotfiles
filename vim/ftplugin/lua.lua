@@ -7,10 +7,13 @@ nmap <buffer> <leader>me Imappings.f xys$)lysE"f r,lys])"$i, {}
 nmap <buffer> <leader>mr 0f.2l4x$F{a noremap=true,<Space>
 ]]
 
-require("jrasmusbm.treesitter.parent").setup_parent_mappings({
-  "assignment_statement",
-  "function_declaration",
-}, { { "name" }, { "variable_list_name" } })
+require("jrasmusbm.treesitter.setup_mappings").main("<leader>ao", {
+  {
+    { "assignment_statement" },
+    { { "variable_list", "name", "field" }, { "variable_list", "name" } },
+  },
+  { { "function_declaration" }, { { "name" } } },
+}, true)
 
 local ls = require "luasnip"
 local s = ls.s

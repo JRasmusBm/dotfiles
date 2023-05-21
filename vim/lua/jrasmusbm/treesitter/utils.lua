@@ -31,13 +31,6 @@ end
 
 M.find_child_by_name = function(node, child_name, silent)
   for child, field_name in node:iter_children() do
-    print(vim.inspect {
-      file = "vim/lua/jrasmusbm/treesitter/utils.lua",
-      line = 45,
-      child_node_name = M.extract_node_name(child),
-      field_name = field_name,
-      child_name = child_name,
-    })
     if field_name == child_name then
       if silent ~= true then
         print("Found field " .. child_name)
@@ -60,8 +53,10 @@ M.find_child_by_name = function(node, child_name, silent)
 end
 
 M.lookup_children_paths = function(node, children_lookup_path_list, silent)
+  local current_node = node
+
   for _, child_path in ipairs(children_lookup_path_list) do
-    local current_node = node
+    current_node = node
 
     for _, lookup_value in ipairs(child_path) do
       if type(lookup_value) == "number" then
@@ -77,18 +72,13 @@ M.lookup_children_paths = function(node, children_lookup_path_list, silent)
         current_node = M.find_child_by_name(current_node, lookup_value, silent)
       end
     end
-
-    return current_node
   end
+
+  return current_node
 end
 
 M.up_and_down = function(path_pairs, silent)
   for _, pair in ipairs(path_pairs) do
-    print(vim.inspect {
-      file = "vim/lua/jrasmusbm/treesitter/utils.lua",
-      line = 20,
-      pair1 = pair[1],
-    })
     local parent =
       M.find_first_parent_by_names(pair[1], vim.treesitter.get_node(), silent)
     if parent ~= nil then

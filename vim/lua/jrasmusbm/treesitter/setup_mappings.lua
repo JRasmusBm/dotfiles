@@ -1,12 +1,12 @@
 local M = {}
 
-M.setup_parameter_mappings = function(list_pairs)
-  vim.keymap.set({ "n" }, "<leader>ap", function()
+M.main = function(mapping, path_lists, silent)
+  vim.keymap.set({ "n" }, mapping, function()
     local node =
-      require("jrasmusbm.treesitter.utils").up_and_down(list_pairs, true)
+      require("jrasmusbm.treesitter.utils").up_and_down(path_lists, silent)
 
     if node == nil then
-      print "Could not find parameter!"
+      print "Could not find a node to jump to!"
       return
     end
 

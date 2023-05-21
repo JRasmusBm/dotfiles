@@ -1,5 +1,4 @@
 require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
-require("plenary.reload").reload_module "jrasmusbm.treesitter.parameter-type"
 require("plenary.reload").reload_module "jrasmusbm.treesitter.utils"
 
 local ls = require "luasnip"
@@ -8,12 +7,11 @@ local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local ls_utils = require "jrasmusbm.snippets.utils"
 
-require("jrasmusbm.treesitter.parent").setup_parent_mappings({
-  "function_declaration",
-  "variable_declarator",
-}, { { "name" } })
+require("jrasmusbm.treesitter.setup_mappings").main("<leader>ao", {
+  { { "function_declaration", "variable_declarator" }, { { "name" } } },
+}, true)
 
-require("jrasmusbm.treesitter.parameter-type").setup_parameter_mappings {
+require("jrasmusbm.treesitter.setup_mappings").main("<leader>ap", {
   {
     { "variable_declarator" },
     {
@@ -37,7 +35,8 @@ require("jrasmusbm.treesitter.parameter-type").setup_parameter_mappings {
       },
     },
   },
-}
+  true,
+})
 
 ls.add_snippets("typescript", {
   s(
