@@ -1,4 +1,6 @@
 require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
+require("plenary.reload").reload_module "jrasmusbm.treesitter.parameter-type"
+require("plenary.reload").reload_module "jrasmusbm.treesitter.utils"
 
 local ls = require "luasnip"
 local s = ls.s
@@ -10,6 +12,32 @@ require("jrasmusbm.treesitter.parent").setup_parent_mappings({
   "function_declaration",
   "variable_declarator",
 }, { { "name" } })
+
+require("jrasmusbm.treesitter.parameter-type").setup_parameter_mappings {
+  {
+    { "variable_declarator" },
+    {
+      {
+        "arrow_function",
+        "parameters",
+        "required_parameter",
+        "type",
+        1,
+      },
+    },
+  },
+  {
+    { "function_declaration", "function" },
+    {
+      {
+        "parameters",
+        "required_parameter",
+        "type",
+        1,
+      },
+    },
+  },
+}
 
 ls.add_snippets("typescript", {
   s(
@@ -33,11 +61,16 @@ ls.add_snippets("typescript", {
     )
   ),
 
-  s({ trig="ten", name="number type" }, fmt([[
+  s(
+    { trig = "ten", name = "number type" },
+    fmt(
+      [[
 {}: number;
 {}
-  ]], { i(1), i(0) })),
-  
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }
