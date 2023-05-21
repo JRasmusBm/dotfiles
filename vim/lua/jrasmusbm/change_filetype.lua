@@ -11,6 +11,7 @@ local default_options = {
     scm = "query",
     sql = "sql",
     tsx = "typescript.tsx",
+    sh = "sh",
   },
   literal = {
     [".eslintrc"] = "json",
