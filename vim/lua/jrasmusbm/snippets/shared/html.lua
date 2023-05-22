@@ -92,21 +92,6 @@ return {
     fmt("{}={{{}{}}} {}", { i(1), i(2), rep(1), i(0) })
   ),
 
-  s({ trig = "ttf", name = "HTML file" }, {
-    t { "<!DOCTYPE html>", "" },
-    t { "", "" },
-    t { "<html>", "\t" },
-    t { "<head>", "\t\t" },
-    i(1),
-    t { "", "\t" },
-    t { "</head>", "\t" },
-    t { "<body>", "\t\t" },
-    i(2),
-    t { "", "\t" },
-    t { "</body>", "\t" },
-    t { "</html>" },
-  }),
-
   s(
     { trig = "tis", name = "import stylesheet" },
     fmt('<link rel="stylesheet" href="{}.css" />\n{}', { i(1), i(0) })

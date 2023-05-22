@@ -1,5 +1,3 @@
-require("jrasmusbm.polyglot").ensure_setup()
-
 vim.cmd [[
 command! PR norm gg/Ticketf[yi]/#f[v2f]p0WysaW]Wdw
 ]]
@@ -18,10 +16,8 @@ require("plenary.reload").reload_module "jrasmusbm.snippets.utils.init"
 local ls = require "luasnip"
 local ls_utils = require "jrasmusbm.snippets.utils.init"
 local i = ls.insert_node
-local d = ls.dynamic_node
 local s = ls.snippet
 local fmt = require("luasnip.extras.fmt").fmt
-local rep = require("luasnip.extras").rep
 
 ls.add_snippets("markdown", {
   s(

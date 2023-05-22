@@ -12,6 +12,7 @@ local default_options = {
     sql = "sql",
     tsx = "typescript.tsx",
     sh = "sh",
+    html = "html",
   },
   literal = {
     [".eslintrc"] = "json",

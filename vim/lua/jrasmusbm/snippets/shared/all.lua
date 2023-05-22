@@ -64,7 +64,7 @@ cd "$folder_path"
 if ! tmux has-session -t="$session_name" 2> /dev/null ; then
   tmux new-session -d -s "$session_name" -n run -x "$(tput cols)" -y "$(tput lines)"
 
-  {}  
+  {}
 
   tmux new-window -t "$session_name" -n vim
   tmux send-keys -t "$session_name" "vim -c GFiles" Enter
@@ -176,7 +176,7 @@ if __name__ == "__main__":
 version: "3"
 
 services:
-  
+
   {}
 ]],
       { i(0) }
@@ -197,6 +197,26 @@ highlights:
       cursorLine: {}
 ]],
       { i(1), i(2), i(3), i(4), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "!html", name = "html" },
+    fmt(
+      [[
+<!DOCTYPE html>
+
+<html>
+  <head>
+    {}
+  </head>
+
+  <body>
+    {}
+  </body>
+</html>
+  ]],
+      { i(1), i(0) }
     )
   ),
 })

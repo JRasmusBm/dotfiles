@@ -53,11 +53,6 @@
   url = git@github.com:jrasmusbm/vim-peculiar.git
   branch = main
   ignore = dirty
-[submodule "vim-polyglot"]
-  path = vim/pack/bundle/opt/vim-polyglot
-  url = git@github.com:sheerun/vim-polyglot.git
-  branch = master
-  ignore = dirty
 [submodule "prolog.vim"]
   path = vim/pack/bundle/opt/prolog.vim
   url = git@github.com:adimit/prolog.vim.git
