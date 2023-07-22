@@ -21,7 +21,7 @@ M.git_commits = function(options_)
     local browse = function()
       local selection = action_state.get_selected_entry()
 
-      vim.api.nvim_command("Gbrowse " .. selection.value)
+      vim.api.nvim_command("G browse " .. selection.value)
     end
 
     map("i", "<C-h>", reset_hard)
