@@ -82,7 +82,7 @@ fi
 
 cd -
   ]],
-      { d(1, ls_utils.file_name, {}), i(0) }
+      { d(1, ls_utils.basename, {}), i(0) }
     )
   ),
 

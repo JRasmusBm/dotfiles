@@ -102,6 +102,7 @@ console.count({})
       [[
 console.group({})
 {}
+console.groupEnd()
   ]],
       { i(1), i(0) }
     )
@@ -111,19 +112,23 @@ console.group({})
     { trig = "li", name = "log info" },
     fmt("console.info({})\n{}", { i(1), i(0) })
   ),
-  s({ trig = "lb", name = "log breakpoint" }, {
-    t { "console.dir({", "\t" },
-    t 'file: "',
-    d(1, ls_utils.file_path, {}),
-    t { '",', "\t" },
-    t "line: ",
-    d(2, ls_utils.line_number, {}),
-    t { ",", "\t" },
-    i(3),
-    t { "", "" },
-    t { "}, { depth: 20 })", "" },
-    i(0),
-  }),
+  s(
+    { trig = "lt", name = "log table" },
+    fmt("console.table({}, [{}])", { i(1), i(0) })
+  ),
+
+  s(
+    { trig = "lb", name = "log breakpoint" },
+    fmt(
+      [[
+console.dir({{
+  tag: "{}",
+  {},
+}}, {{ depth: 20 }})
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 
   s(
     { trig = "doc", name = "jsdoc" },

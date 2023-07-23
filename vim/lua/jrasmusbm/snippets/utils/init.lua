@@ -28,6 +28,14 @@ M.file_name = function(_, _)
   return sn(0, { t(vim.fn.expand "%:p:h") })
 end
 
+M.basename = function(_, _)
+  local path = vim.api.nvim_buf_get_name(0)
+  local path_segments = vim.split(path, "/")
+  local filename = path_segments[#path_segments]
+  local basename = vim.split(filename, "%.")[1]
+  return sn(0, { t(basename) })
+end
+
 M.capitalize = function(pos, pos_to_capitalize)
   return d(pos, function(args)
     return sn(1, { t((args[1][1]:gsub("^%l", string.upper))) })
