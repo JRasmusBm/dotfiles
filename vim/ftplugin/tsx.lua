@@ -4,8 +4,17 @@ local ls = require "luasnip"
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
+local d = ls.dynamic_node
 local rep = require("luasnip.extras").rep
 local ls_utils = require "jrasmusbm.snippets.utils"
+
+vim.api.nvim_create_user_command("DebugClear", function()
+  require("jrasmusbm.").ensure_setup()
+
+  vim.cmd [[
+norm 0gg/logPropDifferencesdafndaf/useDebugdd?propsT}D%d0da{;ao/props:viwp==:w
+  ]]
+end, { nargs = "*" })
 
 ls.add_snippets("tsx", {
   s(
@@ -27,38 +36,44 @@ ls.add_snippets("tsx", {
     { trig = "debugp", name = "debug props" },
     fmt(
       [[
-function logPropDifferences(newProps: any, lastProps: any) {{
-  const allKeys = new Set([
+function logPropDifferences(
+  newProps: Record<string, any>,
+  lastProps: Record<string, any>
+  ) {{
+    const allKeys = new Set([
     ...Object.keys(newProps),
     ...Object.keys(lastProps),
-  ]);
+    ]);
 
-  console.log("======= RENDER ========")
-  allKeys.forEach((key) => {{
-    const newValue = newProps[key];
-    const lastValue = lastProps[key];
-    if (newValue !== lastValue) {{
-      console.log(`New Value (${{key}}): `, newValue);
-      console.log(`Last Value (${{key}}): `, lastValue);
-    }}
-  }});
-}}
+    allKeys.forEach((key) => {{
+      const newValue = newProps[key];
+      const lastValue = lastProps?.[key];
+      if (newValue !== lastValue) {{
+        console.log(`New Value (${{key}}): `, newValue);
+        console.log(`Last Value (${{key}}): `, lastValue);
+      }}
+    }});
+  }}
 
-function useDebugPropChanges(newProps: any) {{
-  const lastProps = useRef();
-  // Should only run when the component re-mounts
-  useEffect(() => {{
-    console.log("Mounted");
+function useDebugPropChanges(newProps: Record<string, any>) {{
+  const lastProps = useRef<Record<string, any>>();
+  const counters = useMemo(() => {{
+    return {{ count: 0 }};
   }}, []);
+
+  console.log(`======= RENDER {} ${{counters.count++}} ========`);
+
   if (lastProps.current) {{
     logPropDifferences(newProps, lastProps.current);
   }}
+
   lastProps.current = newProps;
 }}
 
-{}
-  ]],
-      { i(0) }
+const {} = props
+useDebugPropChanges(props)
+]],
+      { d(1, ls_utils.basename, {}), i(0) }
     )
   ),
 })
