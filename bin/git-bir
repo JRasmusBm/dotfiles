@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_git_bisect_reset() {
+  (
+    cd "$(git rev-parse --show-toplevel)"
+    git bisect reset "$@"
+  )
+}
+
+_git_bisect_reset "$@"

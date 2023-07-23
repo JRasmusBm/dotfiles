@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_git_bisect_bad() {
+  (
+    cd "$(git rev-parse --show-toplevel)"
+    git bisect bad "$@"
+  )
+}
+
+_git_bisect_bad "$@"
