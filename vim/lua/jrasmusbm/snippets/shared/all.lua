@@ -219,4 +219,15 @@ highlights:
       { i(1), i(0) }
     )
   ),
+
+  s({ trig = "D", name = "date" }, d(1, ls_utils.date, {})),
+  s({ trig = "T", name = "time" }, d(1, ls_utils.time, {})),
+  s(
+    { trig = "Z", name = "time" },
+    fmt("{} {}", { d(1, ls_utils.date, {}), d(2, ls_utils.time, {}) })
+  ),
+  s(
+    { trig = "ZZ", name = "time" },
+    fmt("{}T{}", { d(1, ls_utils.date, {}), d(2, ls_utils.time, {}) })
+  ),
 })
