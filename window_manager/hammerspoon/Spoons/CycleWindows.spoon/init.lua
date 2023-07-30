@@ -29,8 +29,14 @@ end
 hs.hotkey.bind({ "ctrl" }, "=", function()
   cycleWindows(1)
 end)
+hs.hotkey.bind({ "ctrl" }, "`", function()
+  cycleWindows(1)
+end)
 
 hs.hotkey.bind({ "ctrl", "shift" }, "=", function()
+  cycleWindows(-1)
+end)
+hs.hotkey.bind({ "ctrl", "shift" }, "`", function()
   cycleWindows(-1)
 end)
 
