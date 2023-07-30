@@ -3,19 +3,6 @@ vim.keymap.set({ "i" }, "<C-c>", "<Esc>", { noremap = true })
 vim.keymap.set({ "n" }, "Q", "<nop>")
 vim.keymap.set({ "n" }, "gQ", "qqVipJ2jq2{w0")
 
-vim.keymap.set(
-  { "i" },
-  "<leader>D",
-  "=strftime('%Y-%m-%d')<cr>",
-  { noremap = true }
-)
-vim.keymap.set(
-  { "i" },
-  "<leader>T",
-  "=strftime('%H:%M')<cr>",
-  { noremap = true }
-)
-
 vim.keymap.set({ "n" }, "go", "o<Esc>S", { noremap = true })
 vim.keymap.set({ "n" }, "gO", "O<Esc>S", { noremap = true })
 
