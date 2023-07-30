@@ -26,11 +26,11 @@ local cycleWindows = function(dx)
   nextWindow:focus()
 end
 
-hs.hotkey.bind({ "cmd" }, "=", function()
+hs.hotkey.bind({ "ctrl" }, "=", function()
   cycleWindows(1)
 end)
 
-hs.hotkey.bind({ "cmd", "shift" }, "=", function()
+hs.hotkey.bind({ "ctrl", "shift" }, "=", function()
   cycleWindows(-1)
 end)
 
