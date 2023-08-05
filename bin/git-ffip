@@ -1,0 +1,28 @@
+#!/bin/sh
+
+set -e
+
+_pull_and_fast_forward() {
+  (
+    if test -z "$1"; then
+      (
+        echo 'Please specify target branch.'
+        return 1
+      )
+    fi
+
+    _source_branch="$(git branch --show-current)"
+    _target_branch="$1"
+    shift 1
+
+    (
+      set -x
+      git switch "$_target_branch"
+      git pull
+      git ff "$_source_branch" "$@"
+      git push
+    )
+  )
+}
+
+_pull_and_fast_forward "$@"
