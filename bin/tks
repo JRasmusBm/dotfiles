@@ -14,10 +14,8 @@ tmux_kill_session() {
     exit 1
   fi
 
-  for window in $(tmux list-windows -F '#{window_name}' -t "$session"); do
-    for pane_pid in $(tmux list-panes -F '#{pane_pid}' -t "$window"); do
-      nohup kill-descendants "$pane_pid" >/dev/null 2>&1 &
-    done
+  for pane_pid in $(tmux list-panes -s -F '#{pane_pid}' -t "$session"); do
+    nohup kill-descendants "$pane_pid" >/dev/null 2>&1 &
   done
 
   (
