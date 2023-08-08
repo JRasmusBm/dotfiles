@@ -35,7 +35,7 @@
   ignore = dirty
 [submodule "vim-hardtime"]
   path = vim/pack/bundle/opt/vim-hardtime
-  url = git@github.com:jrasmusbm/vim-hardtime.git
+  url = git@github.com:takac/vim-hardtime.git
   branch = master
   ignore = dirty
 [submodule "ghcmod-vim"]
@@ -95,7 +95,7 @@
   ignore = dirty
 [submodule "vim-test"]
   path = vim/pack/bundle/opt/vim-test
-  url = git@github.com:JRasmusBm/vim-test.git 
+  url = git@github.com:vim-test/vim-test.git 
   branch = master
   ignore = dirty
 [submodule "vim-textobj-user"]
@@ -164,7 +164,7 @@
   ignore = dirty
 [submodule "vim-caser"]
   path = vim/pack/bundle/opt/vim-caser
-  url = git@github.com:JRasmusBm/vim-caser.git
+  url = git@github.com:arthurxavierx/vim-caser.git
   branch = master
   ignore = dirty
 [submodule "vim-be-good"]
@@ -184,7 +184,7 @@
   ignore = dirty
 [submodule "telescope.nvim"]
   path = vim/pack/bundle/opt/telescope.nvim
-  url = git@github.com:JRasmusBm/telescope.nvim.git
+  url = git@github.com:nvim-telescope/telescope.nvim.git
   branch = master
   ignore = dirty
 [submodule "telescope-fzy-native.nvim"]
@@ -249,7 +249,7 @@
   ignore = dirty
 [submodule "nvim-dap"]
   path = vim/pack/bundle/opt/nvim-dap
-  url = git@github.com:JRasmusBm/nvim-dap.git 
+  url = git@github.com:mfussenegger/nvim-dap.git 
   branch = master
   ignore = dirty
 [submodule "indent-blankline.nvim"]

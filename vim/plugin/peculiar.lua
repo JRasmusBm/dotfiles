@@ -1,11 +1,7 @@
-local nmap = function (keys, command)
-require("jrasmusbm.utils").ensure_setup(" vim-peculiar")
-vim.keymap.set({ "n" }, keys, command, {  })
-
-  
+local nmap = function(keys, command)
+  require("jrasmusbm.utils").ensure_setup "vim-peculiar"
+  vim.keymap.set({ "n" }, keys, command, {})
 end
-
-
 
 nmap("<localleader>v", "<Plug>PeculiarV")
 nmap("<localleader>g", "<Plug>PeculiarG")
