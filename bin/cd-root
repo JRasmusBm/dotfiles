@@ -21,16 +21,11 @@ _cd_tmux_root() {
 
 _cd_repo_root() {
   (
-    _dir="$(pwd)"
+    _dir="$(git rev-parse --show-toplevel)"
 
-    if test -d "$_dir/.git" -o "$_dir" = "$HOME"; then
-      echo "$_dir"
-      return 0
-    fi
-
-    cd ..
-
-    _cd_repo_root
+    cd "$_dir"
+    pwd
+    return 0
   )
 }
 

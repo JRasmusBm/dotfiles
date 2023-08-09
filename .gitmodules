@@ -123,12 +123,12 @@
   url = git@github.com:rhysd/vim-wasm.git
   branch = master
   ignore = dirty
-[submodule "tmux/plugins/tpm"]
+[submodule "tpm"]
   path = tmux/plugins/tpm
   url = git@github.com:tmux-plugins/tpm.git
   branch = master
   ignore = dirty
-[submodule "tmux/plugins/tmux-safekill"]
+[submodule "tmux-safekill"]
   path = tmux/plugins/tmux-safekill
   url = git@github.com:jlipps/tmux-safekill.git
   branch = master
@@ -148,7 +148,7 @@
   url = git@github.com:norcalli/nvim-colorizer.lua.git
   branch = master
   ignore = dirty
-[submodule "shell/autosrc"]
+[submodule "autosrc"]
   path = shell/autosrc
   url = git@github.com:seanyeh/autosrc.git
   branch = master
@@ -282,11 +282,6 @@
   url = git@github.com:RRethy/vim-illuminate.git
   branch = master
   ignore = dirty
-[submodule "popup-menu.nvim"]
-  path = vim/pack/bundle/opt/popup-menu.nvim
-  url = git@github.com:kamykn/popup-menu.nvim.git
-  branch = master
-  ignore = dirty
 [submodule "shell/yarn-run"]
   path = shell/yarn-run
   url = git@github.com:Flydiverny/yarn-run.git
@@ -362,9 +357,6 @@
   url = git@github.com:saadparwaiz1/cmp_luasnip.git
   branch = master
   ignore = dirty
-[submodule "vim-startuptime"]
-	path = vim/pack/bundle/opt/vim-startuptime
-	url = git@github.com:dstein64/vim-startuptime.git
 [submodule "telescope-ui-select.nvim"]
 	path = vim/pack/bundle/opt/telescope-ui-select.nvim
 	url = git@github.com:nvim-telescope/telescope-ui-select.nvim.git
@@ -413,6 +405,8 @@
 	url = git@github.com:rcarriga/nvim-notify.git
   branch = master
   ignore = dirty
-[submodule "vim/pack/bundle/opt/gitsigns.nvim"]
+[submodule "gitsigns.nvim"]
 	path = vim/pack/bundle/opt/gitsigns.nvim
 	url = git@github.com:lewis6991/gitsigns.nvim.git
+  branch = main
+  ignore = dirty

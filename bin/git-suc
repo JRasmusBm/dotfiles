@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_git_submodule_check() {
+  (
+    cd "$(git rev-parse --show-toplevel)"
+    cat .gitmodules | gsed -E '/submodule/!d' | cut -d '"' -f 2 | x -I{} -n 1 sh -c 'rg -q {} || echo {}'
+  )
+}
+
+_git_submodule_check "$@"
