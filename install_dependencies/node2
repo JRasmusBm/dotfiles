@@ -6,13 +6,21 @@ _path="$HOME/.programs"
 
 _install_node_debug2() {
   mkdir -p "$_path"
-  cd "$_path"
+  (
+    cd "$_path"
 
-  git clone https://github.com/microsoft/vscode-node-debug2.git 
-  cd vscode-node-debug2
+    if ! test -d vscode-node-debug2; then
+      (
+        git clone https://github.com/microsoft/vscode-node-debug2.git
+      )
+    fi
 
-  npm install
-  npm run build
+    cd vscode-node-debug2
+    git pull
+
+    npm install
+    NODE_OPTIONS=--no-experimental-fetch npm run build
+  )
 }
 
 _install_node_debug2 "$@"
