@@ -181,7 +181,7 @@ ls.add_snippets("{}", {{
     { trig = "vim-test-options", name = "vim-test-options" },
     fmt(
       [[
-vim.g["test#{}#runner"] = "{}"
+require("jrasmusbm.test_config.{}.{}").setup()
 vim.g["test#{}#{}#executable"] = "{}"
 
 vim.g["test#{}#{}#options"] = {{

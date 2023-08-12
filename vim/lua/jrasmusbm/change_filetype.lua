@@ -1,5 +1,12 @@
 local M = {}
 
+M.is_typescript_test_file = function()
+  local path_segments = vim.split(vim.api.nvim_buf_get_name(0), "%.")
+
+  return path_segments[#path_segments - 1] == "test"
+      or path_segments[#path_segments - 1] == "spec"
+end
+
 local default_options = {
   extensions = {
     j = "jasmin",
@@ -10,7 +17,6 @@ local default_options = {
     tex = "tex",
     scm = "query",
     sql = "sql",
-    tsx = "typescript.tsx",
     sh = "sh",
     html = "html",
   },
@@ -38,9 +44,23 @@ local default_options = {
   complex = {
     ["%.env.*"] = "sh",
     ["Dockerfile.*"] = "dockerfile",
-    [".*%.test%.ts"] = "typescript.typescript_jest",
-    [".*%.test%.tsx"] = "typescript.tsx.typescript_jest",
     [".*%.cy%.ts"] = "typescript.typescript_cypress",
+  },
+  function_extensions = {
+    tsx = function()
+      if M.is_typescript_test_file() then
+        vim.bo.filetype = "typescript.tsx.typescript_jest"
+      else
+        vim.bo.filetype = "typescript.tsx"
+      end
+    end,
+    ts = function()
+      if M.is_typescript_test_file() then
+        vim.bo.filetype = "typescript.typescript_jest"
+      else
+        vim.bo.filetype = "typescript"
+      end
+    end,
   },
 }
 

@@ -11,7 +11,6 @@ let test#python#project_root = "./tests"
 let test#strategy = "vtr"
 
 let test#go#gotest#options = "-cover"
-let test#javascript#reactscripts#options = "--coverage --watchAll=false"
 ]]
 end
 

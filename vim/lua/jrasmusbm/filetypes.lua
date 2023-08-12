@@ -21,7 +21,6 @@ M.typescript = {
   "typescript.typescript_cypress",
   "typescript.tsx",
   "typescript.tsx.typescript_cypress",
-  "typescript.tsx.typescript_reactscripts",
   "typescript.tsx.remix",
   "typescript.tsx.typescript_jest",
   "typescript.typescript_jest",
