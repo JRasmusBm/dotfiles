@@ -39,18 +39,29 @@ M.configuration_factory = function(options)
   return result
 end
 
-local dap = require "dap"
-
-dap.adapters.node2 = {
-  type = "executable",
-  command = "node",
-  args = {
-    os.getenv "HOME" .. "/.programs/vscode-node-debug2/out/src/nodeDebug.js",
-  },
-}
-
 M.default_configurations = {
   M.configuration_factory { name = "Connect to 9000", port = 9000 },
 }
+
+M.setup_configurations = function(configs)
+  local dap = require "dap"
+
+  dap.adapters.node2 = {
+    type = "executable",
+    command = "node",
+    args = {
+      os.getenv "HOME" .. "/.programs/vscode-node-debug2/out/src/nodeDebug.js",
+    },
+  }
+
+  dap.configurations = {}
+  for ft, _ in pairs(filetypes) do
+    dap.configurations[ft] = {}
+
+    for _, c in ipairs(configs) do
+      table.insert(dap.configurations[ft], c)
+    end
+  end
+end
 
 return M

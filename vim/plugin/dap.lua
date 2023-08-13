@@ -106,5 +106,9 @@ end, { noremap = true })
 vim.keymap.set({ "n" }, "<leader>i<enter>", function()
   ensure_setup()
   require("jrasmusbm.telescope").ensure_setup()
-  require("telescope").extensions.dap.configurations {}
+  require("telescope").extensions.dap.configurations {
+    language_filter = function(lang)
+      return lang == vim.bo.filetype
+    end,
+  }
 end, { noremap = true })
