@@ -1,0 +1,23 @@
+#!/bin/sh
+
+set -e
+
+_tmux_speeddial_profile() {
+  (
+    if test "$1" = 'edit' -o "$1" = 'e'; then
+      shift 1
+      v "$LOCAL_CONFIG/ts-$1"
+      return 0
+    fi
+
+    _profile=${1:-"$(ls "$LOCAL_CONFIG" | grep ts- | cut -d - -f 2 | fzf)"}
+
+    if ! test -e "$LOCAL_CONFIG/ts-$_profile"; then
+      return 1
+    fi
+
+    cat "$LOCAL_CONFIG/ts-$_profile" >"$LOCAL_CONFIG/tmux-speeddial"
+  )
+}
+
+_tmux_speeddial_profile "$@"
