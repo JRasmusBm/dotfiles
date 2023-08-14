@@ -70,6 +70,17 @@ ls.add_snippets("typescript", {
       { i(1), i(0) }
     )
   ),
+
+  s(
+    { trig = "bp", name = "breakpoint" },
+    fmt(
+      [[
+// eslint-disable-next-line
+debugger;
+  ]],
+      {}
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }
