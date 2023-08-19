@@ -1,3 +1,4 @@
-vim.keymap.set({ "n" }, "gs", ':%s/<c-r>=expand("<cword>")<cr>/')
+vim.keymap.set({ "n" }, "gs", ':%s//g<Left><Left>')
+vim.keymap.set({ "v" }, "gs", ':s//g<Left><Left>')
 
 vim.keymap.set({ "n" }, "<Leader> fc", "<cmd>Cheat<CR>", { noremap = true })
