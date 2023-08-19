@@ -1,3 +1,8 @@
+if require("jrasmusbm.compat").in_termux() then
+  return  
+end
+
+
 require("jrasmusbm.utils").ensure_setup "nui.nvim"
 require("jrasmusbm.utils").ensure_setup "nvim-notify"
 require("jrasmusbm.utils").ensure_setup "noice.nvim"
