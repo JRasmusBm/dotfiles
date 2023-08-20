@@ -144,23 +144,23 @@ ls.add_snippets("{}", {{
   s({ trig = "i3", name = "three i(n)" }, fmt("i(1), i(2), i(0)", {})),
   s({ trig = "i4", name = "four i(n)" }, fmt("i(1), i(2), i(3), i(0)", {})),
   s(
-    { trig = "i5", name = "four i(n)" },
+    { trig = "i5", name = "five i(n)" },
     fmt("i(1), i(2), i(3), i(4), i(0)", {})
   ),
   s(
-    { trig = "i6", name = "four i(n)" },
+    { trig = "i6", name = "six i(n)" },
     fmt("i(1), i(2), i(3), i(4), i(5), i(0)", {})
   ),
   s(
-    { trig = "i7", name = "four i(n)" },
+    { trig = "i7", name = "seven i(n)" },
     fmt("i(1), i(2), i(3), i(4), i(5), i(6), i(0)", {})
   ),
   s(
-    { trig = "i8", name = "four i(n)" },
+    { trig = "i8", name = "eight i(n)" },
     fmt("i(1), i(2), i(3), i(4), i(5), i(6), i(7), i(0)", {})
   ),
   s(
-    { trig = "i9", name = "four i(n)" },
+    { trig = "i9", name = "nine i(n)" },
     fmt("i(1), i(2), i(3), i(4), i(5), i(6), i(7), i(8), i(0)", {})
   ),
 
