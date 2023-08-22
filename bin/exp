@@ -1,0 +1,13 @@
+#!/bin/sh
+
+set -e
+
+_expense() {
+  (
+    cd "$(zoxide query one-off-scripts)"
+    source ./.venv/bin/activate
+    python -m expense "$@"
+  )
+}
+
+_expense "$@"
