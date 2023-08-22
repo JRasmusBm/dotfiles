@@ -4,9 +4,14 @@ set -e
 
 _tmux_speeddial_profile() {
   (
+    _config_file="$LOCAL_CONFIG/tmux_speeddial_profile"
+
     if test "$1" = 'edit' -o "$1" = 'e'; then
       shift 1
-      v "$LOCAL_CONFIG/ts-$1"
+      _current_profile="$(cat "$LOCAL_CONFIG/tmux_speeddial_profile")"
+      _target_profile="${1:-$_current_profile}"
+      v "$LOCAL_CONFIG/ts-$_target_profile"
+      echo "$_target_profile" >"$_config_file"
       return 0
     fi
 
@@ -16,7 +21,7 @@ _tmux_speeddial_profile() {
       return 1
     fi
 
-    cat "$LOCAL_CONFIG/ts-$_profile" >"$LOCAL_CONFIG/tmux-speeddial"
+    echo "$_profile" >"$_config_file"
   )
 }
 

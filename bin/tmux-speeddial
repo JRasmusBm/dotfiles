@@ -2,7 +2,7 @@
 
 _tmux_speeddial() {
   (
-    set -e
+    set -ex
 
     _line="$1"
     if test "$_line" = '0'; then
@@ -10,8 +10,19 @@ _tmux_speeddial() {
     fi
 
     mkdir -p "$LOCAL_CONFIG"
-    file_name="$LOCAL_CONFIG/tmux-speeddial"
-    session_name=$(head -"$_line" <"$file_name" | tail -1)
+
+    _config_file="$LOCAL_CONFIG/tmux_speeddial_profile"
+    _current_ts_profile="$(cat "$_config_file")"
+    _file_name="$LOCAL_CONFIG/ts-$_current_ts_profile"
+
+    if ! test -e "$_file_name"; then
+      (
+        echo 'First run `tsp e <profile>` to create a profile'
+        return 1
+      )
+    fi
+
+    session_name=$(head -"$_line" <"$_file_name" | tail -1)
 
     if test -z "$session_name"; then
       echo "Entry $_line not found"
