@@ -81,6 +81,19 @@ debugger;
       {}
     )
   ),
+
+  s(
+    { trig = "tpp", name = "type pretty print" },
+    fmt(
+      [[
+type Prettify<T> = {{
+  [K in keyof T]: T[K];
+}} & {{}}
+{}
+  ]],
+      { i(0) }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }
