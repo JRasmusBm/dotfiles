@@ -33,6 +33,7 @@ mouse:
 
 key_bindings:
   - { key: 17, mods: Alt, chars: "\et" }
+  - { key: 35, mods: Alt, chars: "\ep" }
   - { key: 18, mods: Alt, chars: "\e1" }
   - { key: 19, mods: Alt, chars: "\e2" }
   - { key: 20, mods: Alt, chars: "\e3" }
