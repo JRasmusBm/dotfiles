@@ -2,7 +2,7 @@
 
 _tmux_speeddial() {
   (
-    set -ex
+    set -e
 
     _line="$1"
     if test "$_line" = '0'; then
