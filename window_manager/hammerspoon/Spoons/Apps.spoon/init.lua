@@ -37,4 +37,17 @@ for key, app in pairs(cmd_apps) do
   end
 end
 
+local bindAlt = function(key)
+  hs.hotkey.bind({ "alt" }, tostring(key), function()
+    hs.eventtap.keyStroke({ "alt" }, tostring(key), 0, hs.application.find "alacritty")
+    hs.application.launchOrFocus "alacritty"
+  end)
+end
+
+for i = 0, 9, 1 do
+  bindAlt(i)
+end
+bindAlt("t")
+bindAlt("p")
+
 return M
