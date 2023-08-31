@@ -341,4 +341,14 @@ console.log("{}", JSON.stringify({{
       { i(1), i(0) }
     )
   ),
+
+  s(
+    { trig = "lp", name = "log performance" },
+    fmt(
+      [[
+console.log(`- {}: ${{performance.now()}}`);
+  ]],
+      { i(0) }
+    )
+  ),
 }
