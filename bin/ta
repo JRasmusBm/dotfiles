@@ -99,13 +99,7 @@ _multiple_sessions() {
 }
 
 _open_and_filtered_sessions() {
-  speeddial_sessions=$(head -10 <"$LOCAL_CONFIG/tmux-speeddial" | tr "\n " "|" | tr -s '|')
-  speeddial_sessions=${speeddial_sessions%|}
-  speeddial_sessions=${speeddial_sessions#|}
-  speeddial_sessions="($speeddial_sessions)"
-  filtered_sessions=$(tmux-active-sessions | ggrep -vP "$speeddial_sessions" || true)
-
-  tmux-attach-to-session "$(echo "$filtered_sessions" | fzf --reverse | xargs)"
+  tmux-attach-to-session "$(tmux-active-sessions | fzf --reverse | xargs)"
 }
 
 _tmux_attach() {
