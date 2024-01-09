@@ -2,15 +2,15 @@
 
 _usr='/usr'
 
-if echo "$HOME" | \grep -q 'com.termux' 2> /dev/null ; then
+if echo "$HOME" | \grep -q 'com.termux' 2>/dev/null; then
   _usr="$(realpath "$HOME/../usr")"
 fi
 
-export DOTFILES="${DOTFILES:-"$HOME/projects/dotfiles"}";
-export HOMEBREW_PREFIX="/opt/homebrew";
-export HOMEBREW_CELLAR="$HOMEBREW_PREFIX/Cellar";
-export HOMEBREW_REPOSITORY="$HOMEBREW_PREFIX";
-export INFOPATH="$HOMEBREW_PREFIX/share/info:${INFOPATH:-}";
+export DOTFILES="${DOTFILES:-"$HOME/projects/dotfiles"}"
+export HOMEBREW_PREFIX="/opt/homebrew"
+export HOMEBREW_CELLAR="$HOMEBREW_PREFIX/Cellar"
+export HOMEBREW_REPOSITORY="$HOMEBREW_PREFIX"
+export INFOPATH="$HOMEBREW_PREFIX/share/info:${INFOPATH-}"
 
 MANPATH=''
 MANPATH="$MANPATH:/opt/homebrew/share/man"
@@ -23,6 +23,8 @@ export MANPATH
 
 PATH=''
 PATH="$_usr/local/sbin"
+PATH="$PATH:$HOMEBREW_PREFIX/bin"
+PATH="$PATH:$HOMEBREW_PREFIX/sbin"
 PATH="$PATH:$_usr/local/bin"
 PATH="$PATH:$_usr/sbin"
 PATH="$PATH:$_usr/bin"
@@ -30,8 +32,6 @@ PATH="$PATH:/sbin"
 PATH="$PATH:/bin"
 PATH="$PATH:/snap/bin"
 PATH=$PATH:/opt/homebrew/opt/coreutils/libexec/gnubin
-PATH="$PATH:$HOMEBREW_PREFIX/bin"
-PATH="$PATH:$HOMEBREW_PREFIX/sbin";
 PATH="$PATH:$_usr/local/go/bin"
 PATH="$PATH:$_usr/games"
 PATH="$PATH:$_usr/local/games"
