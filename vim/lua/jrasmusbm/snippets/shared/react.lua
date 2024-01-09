@@ -221,4 +221,20 @@ const {}Context = createContext<{}ContextType>(null as any);
       { rep(1), i(2), i(1), rep(1), i(0) }
     )
   ),
+
+  s(
+    { trig = "rs", name = "style" },
+    fmt(
+      [[
+style={{{{ {} }}}}
+]],
+      { i(0) }
+    )
+  ),
+
+  s({ trig="roc", name="on click" }, fmt([[
+onClick={{() => {{
+  {}
+}}}}
+  ]], { i(0) })),
 }
