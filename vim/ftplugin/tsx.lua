@@ -76,6 +76,53 @@ useDebugPropChanges(props)
       { d(1, ls_utils.basename, {}), i(0) }
     )
   ),
+
+  s(
+    { trig = "rconf", name = "react context file" },
+    fmt(
+      [[
+import {{ createContext, useContext }} from "react";
+
+type {}ContextType = {{
+  {}
+}};
+
+const {}Context = createContext<{}ContextType>(null as any);
+
+const useProvide{} = (): {}ContextType => {{
+  return {{}};
+}};
+
+export const Provide{} = ({{ children }}: any) => {{
+  const value = useProvide{}();
+
+  return (
+    <{}Context.Provider value={{value}}>
+      {{children}}
+    </{}Context.Provider>
+  );
+}};
+
+export const use{} = () => {{
+  return useContext({}Context);
+}};
+  ]],
+      {
+        i(1),
+        i(0),
+        rep(1),
+        rep(1),
+        rep(1),
+        rep(1),
+        rep(1),
+        rep(1),
+        rep(1),
+        rep(1),
+        rep(1),
+        rep(1),
+      }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "tsx", shared = "html" }

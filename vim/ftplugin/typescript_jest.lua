@@ -9,29 +9,84 @@ local rep = require("luasnip.extras").rep
 vim.g["test#javascript#runner"] = "jest"
 
 ls.add_snippets("typescript_jest", {
-  s({ trig = "ds", name = "test suite" }, {
-    t { 'describe("' },
-    i(1),
-    t { '", (): void => {', "\t" },
-    t { 'it("' },
-    i(2),
-    t { '", async (): Promise<void> => {', "\t\t" },
-    i(3, 'throw "Not implemented!"'),
-    t { "", "\t" },
-    t { "})", "\t" },
-    t { "", "\t" },
-    i(0),
-    t { "", "" },
-    t { "})" },
-  }),
-  s({ trig = "dc", name = "test case" }, {
-    t { 'it("' },
-    i(1),
-    t { '", async (): Promise<void> => {', "\t" },
-    i(0, 'throw "Not implemented!"'),
-    t { "", "" },
-    t { "})" },
-  }),
+  s(
+    { trig = "ds", name = "test suite" },
+    fmt(
+      [[
+describe("{}", (): void => {{
+  it("{}", async (): Promise<void> => {{
+    // given
+    // when
+    // then
+    throw "Not implemented!";
+  }});
+
+  {}
+}});
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "dc", name = "test case" },
+    fmt(
+      [[
+it("{}", async (): Promise<void> => {{
+  // given
+  // when
+  // then
+  throw "Not implemented!";
+}});
+
+{}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "dpm", name = "patch module" },
+    fmt(
+      [[
+import {} from "{}"
+
+jest.mock("{}")
+  ]],
+      { i(0), i(1), rep(1) }
+    )
+  ),
+
+  s(
+    { trig = "dpw", name = "wrapped mock" },
+    fmt(
+      [[
+jest.mocked({}).{}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "dp", name = "mock function" },
+    fmt(
+      [[
+jest.fn({})
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "dfc", name = "fire click event" },
+    fmt(
+      [[
+fireEvent.click({})
+{}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 
   s(
     { trig = "db", name = "test case" },

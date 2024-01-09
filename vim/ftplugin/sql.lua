@@ -314,4 +314,28 @@ ORDER BY {}
       { i(0) }
     )
   ),
+
+  s(
+    { trig = "bwl", name = "with list" },
+    fmt(
+      [[
+WITH {} AS (
+  SELECT {} FROM {}
+  )
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "bwn", name = "with node" },
+    fmt(
+      [[
+  , {} AS (
+    SELECT {} FROM {}
+  )
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
 })
