@@ -33,7 +33,7 @@ function M.on_attach(client, bufnr)
     }
   end, opts)
 
-  vim.keymap.set({ "n" }, "<localleader>q", function()
+  vim.keymap.set({ "n" }, "<leader>aq", function()
     vim.diagnostic.setloclist { open = true }
   end, opts)
 
