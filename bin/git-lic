@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e
+
+_git_get_commit_link() {
+  (
+    _n=0
+    while test $# != 0; do
+      case "$1" in
+        o) _open='true' ;;
+        *) _n=1 ;;
+      esac
+      shift
+    done
+
+    _commit="$(git rev-parse HEAD~"$_n")"
+    _remote="$(git remote get-url origin)"
+    _path="https://github.com/$(echo "$_remote" | cut -d ':' -f 2 | awk -F '.git' '{ print $1 }')/commit"
+    _result="$_path/$_commit"
+
+    if test "$_open" = 'true'; then
+      open "$_result"
+    else
+      if [ "$(uname)" == "Darwin" ]; then
+        printf "%s" "$_result" | pbcopy
+      else
+        printf "%s" "$_result" | xclip -sel c
+      fi
+      echo "$_result"
+    fi
+
+  )
+}
+
+_git_get_commit_link "$@"
