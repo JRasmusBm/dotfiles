@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+(
+  cd ~/projects/wikipedia-translator/cli || exit
+  source ./.venv/bin/activate
+  python wikipedia-translator.py "$1" "$2"
+)
