@@ -101,7 +101,14 @@ def main():
             contents = f.readlines()
 
     query = join_variables_at_end(
-        strip_query_end(strip_query_start([line.rstrip() for line in contents]))
+        strip_query_end(
+            strip_query_start(
+                [
+                    line.rstrip().replace("\\r\\n", " ").replace('\\"', '"')
+                    for line in contents
+                ]
+            )
+        )
     )
     interpolated_query = interpolate_strings(query)
     print("\n".join(interpolated_query), end="")
