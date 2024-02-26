@@ -5,6 +5,11 @@ local i = ls.insert_node
 local t = ls.text_node
 
 vim.g["test#javascript#runner"] = "mocha"
+vim.g["test#javascript#mocha#options"] = {
+  nearest = "--reporter-option maxDiffSize=0",
+  file = "--reporter-option maxDiffSize=0",
+  suite = "--reporter-option maxDiffSize=0",
+}
 
 require("jrasmusbm.dap.test").setup_test_debugging(
   {
@@ -26,10 +31,10 @@ ls.add_snippets("typescript_mocha", {
   s({ trig = "ds", name = "test suite" }, {
     t { 'describe("' },
     i(1),
-    t { '", async (): Promise<void> => {', "\t" },
+    t { '", async function(): Promise<void> {', "\t" },
     t { 'it("' },
     i(2),
-    t { '", async (): Promise<void> => {', "\t\t" },
+    t { '", async function(): Promise<void> {', "\t\t" },
     i(3, 'throw "Not implemented!"'),
     t { "", "\t" },
     t { "})", "\t" },
@@ -41,7 +46,7 @@ ls.add_snippets("typescript_mocha", {
   s({ trig = "dc", name = "test case" }, {
     t { 'it("' },
     i(1),
-    t { '", async (): Promise<void> => {', "\t" },
+    t { '", async function() Promise<void> {', "\t" },
     i(0, 'throw "Not implemented!"'),
     t { "", "" },
     t { "})" },
@@ -50,7 +55,7 @@ ls.add_snippets("typescript_mocha", {
   s(
     { trig = "db", name = "test case" },
     fmt(
-      "beforeEach(async (): Promise<void> => {{\n  {}\n}}){}\n",
+      "beforeEach(async function(): Promise<void> {{\n  {}\n}}){}\n",
       { i(1, 'console.log("before")'), i(0) }
     )
   ),
