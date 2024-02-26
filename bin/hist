@@ -1,0 +1,12 @@
+#!/bin/sh
+
+set -e
+
+_run_family_history() {
+  (
+    cd "$(zoxide query farfar)"
+    poetry run python -m 'farfar_family_history.cli' $@
+  )
+}
+
+_run_family_history "$@"
