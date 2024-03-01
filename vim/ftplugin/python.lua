@@ -208,4 +208,54 @@ with open("{}") as f:
       { i(1), i(0) }
     )
   ),
+
+  s(
+    { trig = "cli", name = "CLI Input" },
+    fmt(
+      [[
+parser = argparse.ArgumentParser(description="{}")
+subparsers = parser.add_subparsers(dest="command")
+
+{}
+
+args = parser.parse_args()
+
+if args.command in []:
+else:
+    parser.print_help()
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "clc", name = "CLI Command" },
+    fmt(
+      [[
+{}_parser = subparsers.add_parser("{}")
+{}
+  ]],
+      { rep(1), i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "cla", name = "CLI Argument" },
+    fmt(
+      [[
+introspect_parser.add_argument("{}", type=str)
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "clf", name = "CLI Flag" },
+    fmt(
+      [[
+analyze.add_argument("{}", action="store_true")
+  ]],
+      { i(0) }
+    )
+  ),
 })
