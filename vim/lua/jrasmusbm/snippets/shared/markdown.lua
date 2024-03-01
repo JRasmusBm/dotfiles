@@ -161,15 +161,10 @@ Industry: {}
   ),
 
   s({ trig = "li", name = "link" }, fmt("[{}]({}){}", { i(2), i(1), i(0) })),
-
   s({ trig = "im", name = "image" }, fmt("![{}]({}){}", { i(2), i(1), i(0) })),
-
   s({ trig = "rr", name = "reference" }, fmt("[{}]: {}", { i(1), i(0) })),
-
   s({ trig = "em", name = "emphasize" }, fmt("*{}*{}", { i(1), i(0) })),
-
   s({ trig = "bf", name = "bold face" }, fmt("**{}**{}", { i(1), i(0) })),
-
   s({ trig = "st", name = "strikethrough" }, fmt("~~{}~~{}", { i(1), i(0) })),
 
   s(
@@ -208,6 +203,27 @@ Industry: {}
 {}
   ]],
       { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "chi", name = "checkin" },
+    fmt(
+      [[
+- [{}] Check saved
+- [ ] Check notifications
+- [ ] Go through calendar for today, tomorrow and the week
+- [ ] Go through progress for next steps
+- [ ] Go through Sales + CS task forces
+- Check e-mails
+  - [ ] JRasmusBm
+  - [ ] Polar
+- [ ] Go through physical inbox
+- [ ] Go through waiting
+- [ ] Go through projects
+- [ ] Go through Jira
+  ]],
+      { i(0) }
     )
   ),
 }
