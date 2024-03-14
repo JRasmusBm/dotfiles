@@ -8,9 +8,26 @@ local actions = require "telescope.actions"
 local action_state = require "telescope.actions.state"
 local previewers = require "telescope.previewers"
 
+local separator = ' + ";;;" + '
 M.git_pull_requests = function()
-  local results =
-      utils.get_os_command_output { "gh", "pr", "list", "-L", "10000" }
+  local results, res, stderr = utils.get_os_command_output {
+    "gh",
+    "pr",
+    "list",
+    "--json",
+    "number,author,reviewDecision,isDraft,state,title,headRefName",
+    "-q",
+    ".[] | "
+    .. "(.number | tostring)"
+    .. separator
+    .. '(if .reviewDecision != "" then .reviewDecision elif .isDraft then "DRAFT" else "OPEN" end)'
+    .. separator
+    .. ".author.login"
+    .. separator
+    .. ".title",
+    "-L",
+    "10000",
+  }
 
   pickers
       .new({}, {
@@ -18,42 +35,51 @@ M.git_pull_requests = function()
         finder = finders.new_table {
           results = results,
           entry_maker = function(line)
-            local raw_line_parts = vim.split(line, "\t")
-            local sections = {
-              id = raw_line_parts[1],
-              title = raw_line_parts[2],
-              branch = raw_line_parts[3],
-              status = raw_line_parts[4],
+            local raw_line_parts = vim.split(line, ";;;")
+            local pull_request_entry = {
+              number = raw_line_parts[1],
+              status = raw_line_parts[2],
+              author_login = raw_line_parts[3],
+              title = raw_line_parts[4],
             }
             return {
               value = line,
               ordinal = line,
-              display = sections.id .. " " .. " " .. sections.title,
-              id = sections.id,
-              title = sections.title,
+              display = " ["
+                  .. pull_request_entry.status
+                  .. "] "
+                  .. pull_request_entry.author_login
+                  .. ": "
+                  .. pull_request_entry.number
+                  .. " - "
+                  .. pull_request_entry.title,
+              number = pull_request_entry.number,
+              title = pull_request_entry.title,
             }
           end,
         },
         previewer = previewers.new_termopen_previewer {
           title = "Issue Preview",
           get_command = function(entry)
-            return { "gh", "pr", "view", entry.id }
+            return { "gh", "pr", "view", entry.number }
           end,
         },
         sorter = sorters.get_generic_fuzzy_sorter(),
         attach_mappings = function(prompt_bufnr, map)
           local switch = function()
-            local selection = action_state.get_selected_entry()
+            local pull_request_entry = action_state.get_selected_entry()
 
             actions.close(prompt_bufnr)
-            vim.api.nvim_command("G pr " .. selection.id)
+            vim.api.nvim_command("G pr " .. pull_request_entry.number)
           end
 
           local open_in_browser = function()
-            local selection = action_state.get_selected_entry()
+            local pull_request_entry = action_state.get_selected_entry()
 
             actions.close(prompt_bufnr)
-            vim.api.nvim_command("!gh pr view --web " .. selection.id)
+            vim.api.nvim_command(
+              "!gh pr view --web " .. pull_request_entry.number
+            )
           end
 
           map("i", "<C-b>", open_in_browser)
