@@ -7,10 +7,6 @@ local i = ls.insert_node
 local d = ls.dynamic_node
 local rep = require("luasnip.extras").rep
 
-vim.cmd [[
-imap ;f =expand("%:")<Left><Left>
-]]
-
 ls.add_snippets("all", {
   s(
     { trig = "!sh", name = "shell script" },

@@ -1,5 +1,10 @@
 require("jrasmusbm.snippets").ensure_setup()
 
+vim.cmd [[
+imap ;f =expand("%:")<Left><Left>
+cmap ;f =expand("%:")<Left><Left>
+]]
+
 vim.keymap.set({ "i", "s" }, "<leader>s", function()
   require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
