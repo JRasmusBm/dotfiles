@@ -210,18 +210,30 @@ Industry: {}
     { trig = "chi", name = "checkin" },
     fmt(
       [[
-- [{}] Check saved
-- [ ] Check notifications
-- [ ] Go through calendar for today, tomorrow and the week
-- [ ] Go through progress for next steps
-- [ ] Go through Sales + CS task forces
-- Check e-mails
+- Slack
+  - [{}] Check saved
+  - [ ] Check notifications
+  - Check task forces
+     - [ ] Sales
+     - [ ] CS
+- Calendar
+  - [ ] Check today
+  - [ ] Check week
+- Notes
+  - [ ] Go through progress for next steps
+  - [ ] Go through waiting for next steps
+- E-mails
   - [ ] JRasmusBm
   - [ ] Polar
-- [ ] Go through physical inbox
-- [ ] Go through waiting
-- [ ] Go through projects
-- [ ] Go through Jira
+- Physical
+  - [ ] Inbox
+- GitHub
+  - [ ] Go through what there is to review
+- Todoist
+  - [ ] Inbox
+  - [ ] Today
+  - [ ] Waiting
+  - [ ] Projects
   ]],
       { i(0) }
     )
