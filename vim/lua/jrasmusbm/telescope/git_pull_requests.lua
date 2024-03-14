@@ -15,9 +15,11 @@ M.git_pull_requests = function()
     "pr",
     "list",
     "--json",
-    "number,author,reviewDecision,isDraft,state,title,headRefName",
+    "number,author,reviewDecision,isDraft,state,title,headRefName,createdAt",
     "-q",
     ".[] | "
+    .. '(.createdAt | fromdateiso8601 | strftime("%b %m"))'
+    .. separator
     .. "(.number | tostring)"
     .. separator
     .. '(if .reviewDecision != "" then .reviewDecision elif .isDraft then "DRAFT" else "OPEN" end)'
@@ -37,21 +39,27 @@ M.git_pull_requests = function()
           entry_maker = function(line)
             local raw_line_parts = vim.split(line, ";;;")
             local pull_request_entry = {
-              number = raw_line_parts[1],
-              status = raw_line_parts[2],
-              author_login = raw_line_parts[3],
-              title = raw_line_parts[4],
+              created_at = raw_line_parts[1],
+              number = raw_line_parts[2],
+              status = raw_line_parts[3],
+              author_login = raw_line_parts[4],
+              title = raw_line_parts[5],
             }
+
+            local author_login_short =
+                string.sub(pull_request_entry.author_login, 1, 12)
             return {
               value = line,
               ordinal = line,
-              display = " ["
+              display = ""
+                  .. pull_request_entry.created_at
+                  .. " "
                   .. pull_request_entry.status
-                  .. "] "
-                  .. pull_request_entry.author_login
-                  .. ": "
+                  .. string.rep(" ", 9 - #pull_request_entry.status)
+                  .. author_login_short
+                  .. string.rep(" ", 13 - #author_login_short)
                   .. pull_request_entry.number
-                  .. " - "
+                  .. " "
                   .. pull_request_entry.title,
               number = pull_request_entry.number,
               title = pull_request_entry.title,
