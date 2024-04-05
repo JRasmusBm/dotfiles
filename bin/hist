@@ -4,8 +4,8 @@ set -e
 
 _run_family_history() {
   (
-    cd "$(zoxide query farfar)"
-    poetry run python -m 'farfar_family_history.cli' $@
+    cd "$(zoxide query family-history)"
+    poetry run python -m 'family_history.cli' $@
   )
 }
 
