@@ -2,9 +2,49 @@ vim.cmd [[
 command! PR norm gg/Ticketf[yi]/#f[v2f]p0WysaW]Wdw
 ]]
 
-vim.opt_local.tabstop = 4
-vim.opt_local.shiftwidth = 4
-vim.opt_local.softtabstop = 4
+local function with_textobject(action)
+  return function()
+    local old_func = vim.go.operatorfunc
+    _G.op_func_helper = function()
+      _G.op_func_helper = nil
+      vim.go.operatorfunc = old_func
+      local start = vim.api.nvim_buf_get_mark(0, "[")
+      local end_ = vim.api.nvim_buf_get_mark(0, "]")
+      action(start, end_)
+    end
+    vim.go.operatorfunc = "v:lua.op_func_helper"
+    vim.api.nvim_feedkeys("g@", "n", false)
+  end
+end
+
+local replace_in_textobject = function(regex_)
+  return with_textobject(function(start_position, end_position)
+    vim.cmd(
+      "silent keeppatterns"
+      .. start_position[1]
+      .. ","
+      .. end_position[1]
+      .. regex_
+    )
+  end)
+end
+
+vim.keymap.set(
+  { "n" },
+  ";c",
+  replace_in_textobject "s/\\[ ]/[x]/",
+  { noremap = true }
+)
+vim.keymap.set(
+  { "n" },
+  ";C",
+  replace_in_textobject "s/\\[x]/[ ]/",
+  { noremap = true }
+)
+
+vim.opt_local.tabstop = 2
+vim.opt_local.shiftwidth = 2
+vim.opt_local.softtabstop = 2
 vim.opt_local.spell = true
 vim.opt_local.spelllang = { "en_us" }
 vim.opt_local.wrap = true
