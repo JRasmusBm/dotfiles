@@ -17,14 +17,14 @@ M.git_pull_requests = function()
     "--json",
     "number,author,reviewDecision,isDraft,state,title,headRefName,createdAt",
     "-q",
-    ".[] | "
-    .. '(.createdAt | fromdateiso8601 | strftime("%b %m"))'
+    ". | sort_by(.created_at) | .[] |"
+    .. '(.createdAt | fromdateiso8601 | strftime("%b %m %H:%M"))'
     .. separator
     .. "(.number | tostring)"
     .. separator
-    .. '(if .reviewDecision != "" then .reviewDecision elif .isDraft then "DRAFT" else "OPEN" end)'
-    .. separator
     .. ".author.login"
+    .. separator
+    .. '(if .reviewDecision != "" then .reviewDecision elif .isDraft then "DRAFT" else "OPEN" end)'
     .. separator
     .. ".title",
     "-L",
@@ -41,23 +41,25 @@ M.git_pull_requests = function()
             local pull_request_entry = {
               created_at = raw_line_parts[1],
               number = raw_line_parts[2],
-              status = raw_line_parts[3],
-              author_login = raw_line_parts[4],
+              author_login = raw_line_parts[3],
+              status = raw_line_parts[4],
               title = raw_line_parts[5],
             }
 
             local author_login_short =
-                string.sub(pull_request_entry.author_login, 1, 12)
+                string.sub(pull_request_entry.author_login, 1, 8)
+            local status_short = string.sub(pull_request_entry.status, 1, 8)
+
             return {
               value = line,
               ordinal = line,
               display = ""
                   .. pull_request_entry.created_at
                   .. " "
-                  .. pull_request_entry.status
-                  .. string.rep(" ", 9 - #pull_request_entry.status)
                   .. author_login_short
-                  .. string.rep(" ", 13 - #author_login_short)
+                  .. string.rep(" ", 9 - #author_login_short)
+                  .. status_short
+                  .. string.rep(" ", 9 - #status_short)
                   .. pull_request_entry.number
                   .. " "
                   .. pull_request_entry.title,
