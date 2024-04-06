@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e
+
+_git_branch_speeddial() {
+  (
+    _file_name="$(git rev-parse --show-toplevel)/.git/branch_speeddial"
+    if test $1 = 'e' -o $1 = 'edit'; then
+      nvim "$_file_name"
+      return 0
+    fi
+
+    if ! test -e "$_file_name" ; then
+      echo "No config file exists at $_file_name"
+      return 1
+    fi
+
+    
+
+    _line="$1"
+    if test "$_line" = '0'; then
+      _line='10'
+    fi
+
+    _branch_name="$(head -"$_line" <"$_file_name" | tail -1)"
+    if test -z "$_branch_name"; then
+      echo "No branch name specified on line $_line"
+      return 1
+    fi
+
+    git switch "$_branch_name"
+  )
+}
+
+_git_branch_speeddial "$@"
