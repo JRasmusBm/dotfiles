@@ -38,10 +38,11 @@ local default_options = {
     [".ignore"] = "gitignore",
     ["serviceworker.ts"] = "typescript.serviceworker",
     ["serviceworker.js"] = "javascript.serviceworker",
-    [".tmux-speeddial"] = "speeddial",
+    branch_speeddial = "speeddial",
     EDIT_DESCRIPTION = "gitcommit",
   },
   complex = {
+    ["ts-*"] = "speeddial",
     ["%.env.*"] = "sh",
     ["Dockerfile.*"] = "dockerfile",
     [".*%.cy%.ts"] = "typescript.typescript_cypress",
