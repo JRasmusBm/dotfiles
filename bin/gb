@@ -28,7 +28,7 @@ _git_branch_speeddial() {
       return 1
     fi
 
-    git switch "$_branch_name"
+    git switch "$_branch_name" > /dev/null
   )
 }
 
