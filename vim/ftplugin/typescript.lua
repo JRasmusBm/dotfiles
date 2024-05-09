@@ -6,6 +6,7 @@ local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local ls_utils = require "jrasmusbm.snippets.utils"
+local rep = require("luasnip.extras").rep
 
 require("jrasmusbm.treesitter.setup_mappings").main("<leader>ao", {
   { { "function_declaration", "variable_declarator" }, { { "name" } } },
@@ -92,6 +93,21 @@ type Prettify<T> = {{
 {}
   ]],
       { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "dg", name = "mock data generator" },
+    fmt(
+      [[
+const given{} = (overrides?: Partial<{}>): {} => {{
+  return {{
+    {},
+    ...overrides,
+  }}
+}}
+  ]],
+      { rep(1), rep(1), i(1), i(0) }
     )
   ),
 })
