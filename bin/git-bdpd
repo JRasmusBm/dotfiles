@@ -4,9 +4,14 @@ set -e
 
 _purge_current_branch() {
   current_branch="$(g branch --show-current)"
-  g s "$(g local-main-branch)"
-  g pd "$current_branch" || true
-  g bd "$current_branch" || true
+  branch_to_delete="${1:-$current_branch}"
+
+  if test "$current_branch" = "$branch_to_delete"; then
+    g s "$(g local-main-branch)"
+  fi
+
+  g pd "$branch_to_delete" || true
+  g bd "$branch_to_delete" || true
 
 }
 
