@@ -113,11 +113,6 @@
   url = git@github.com:tpope/vim-unimpaired.git
   branch = master
   ignore = dirty
-[submodule "vim-wasm"]
-  path = vim/pack/bundle/opt/vim-wasm
-  url = git@github.com:rhysd/vim-wasm.git
-  branch = master
-  ignore = dirty
 [submodule "tpm"]
   path = tmux/plugins/tpm
   url = git@github.com:tmux-plugins/tpm.git
