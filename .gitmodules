@@ -78,11 +78,6 @@
   url = git@github.com:tpope/vim-surround.git
   branch = master
   ignore = dirty
-[submodule "matchit"]
-  path = vim/pack/bundle/opt/matchit
-  url = git@github.com:tmhedberg/matchit.git
-  branch = master
-  ignore = dirty
 [submodule "auto-pairs"]
   path = vim/pack/bundle/opt/auto-pairs
   url = git@github.com:jiangmiao/auto-pairs.git
