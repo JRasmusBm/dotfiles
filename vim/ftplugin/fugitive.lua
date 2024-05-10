@@ -9,3 +9,6 @@ vim.keymap.set(
   { silent = true, buffer = true }
 )
 vim.keymap.set({ "n" }, "q", "q", { noremap = true })
+
+vim.keymap.set({ "n" }, "gh", "<cmd>diffget //2<CR>", { noremap = true })
+vim.keymap.set({ "n" }, "gl", "<cmd>diffget //3<CR>", { noremap = true })
