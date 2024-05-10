@@ -1,2 +1,2 @@
-vim.opt_local.nonumber = true
+vim.opt_local.number = false
 vim.cmd "only"
