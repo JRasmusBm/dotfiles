@@ -7,6 +7,8 @@ local i = ls.insert_node
 local rep = require("luasnip.extras").rep
 local ls_utils = require "jrasmusbm.snippets.utils"
 
+require("jrasmusbm.matchit").load_html_pairs()
+
 ls.add_snippets("jsx", {
   s(
     { trig = "rf", name = "react file" },

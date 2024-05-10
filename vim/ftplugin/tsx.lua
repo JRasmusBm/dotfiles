@@ -8,6 +8,8 @@ local d = ls.dynamic_node
 local rep = require("luasnip.extras").rep
 local ls_utils = require "jrasmusbm.snippets.utils"
 
+require("jrasmusbm.matchit").load_html_pairs()
+
 vim.api.nvim_create_user_command("DebugClear", function()
   require("jrasmusbm.").ensure_setup()
 
