@@ -319,21 +319,27 @@ vim.g["jrasmusbm#git#log_excludes"] = "--exclude=refs/remotes/origin/{}"
     fmt(
       [[
 vim.api.nvim_create_user_command("{}", function(options)
-  require("jrasmusbm.{}").ensure_setup()
-
   {}
 end, {{ nargs = "*" }})
 ]],
-      { i(1), i(2), i(0) }
+      { i(1), i(0) }
     )
   ),
 
   s(
-    { trig = "es", name = "ensure setup" },
+    { trig = "vdep", name = "ensure setup" },
     fmt(
       [[
-require("jrasmusbm.utils").ensure_setup("{}")
-  ]],
+return {{
+  "{}",
+  lazy=true,
+  config = function()
+  end,
+  dependencies = {{
+
+  }}
+}}
+]],
       { i(0) }
     )
   ),

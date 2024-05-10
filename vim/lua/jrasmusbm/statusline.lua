@@ -1,9 +1,5 @@
 local M = {}
 
-vim.cmd [[
-packadd vim-presentation-mode
-]]
-
 local utils = require "jrasmusbm.utils"
 
 local highlights = {
@@ -118,11 +114,6 @@ M.activeStatusLine = function()
       max_size = 8,
       highlight = { "DiagnosticSignHint" },
     }
-    .. item_group {
-      value = vim.fn.VpmStatusline(),
-      min_size = 0,
-      max_size = 20,
-    }
     .. utils.space(1)
     .. item_group {
       value = cursor_position(),
@@ -174,11 +165,6 @@ M.inactiveStatusLine = function()
       },
       min_size = 0,
       max_size = 8,
-    }
-    .. item_group {
-      value = vim.fn.VpmStatusline(),
-      min_size = 0,
-      max_size = 20,
     }
     .. utils.space(11)
 end

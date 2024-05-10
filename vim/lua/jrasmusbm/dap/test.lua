@@ -5,8 +5,6 @@ local state = {
 }
 
 local debug_test = function(cmd, debug_handlers, callback)
-  require("jrasmusbm.test").ensure_setup()
-
   return vim.schedule_wrap(function()
     local original_handlers = {}
 

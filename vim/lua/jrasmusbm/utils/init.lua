@@ -21,16 +21,16 @@ end
 
 M.for_each_file_in_directory = function(cwd, fn)
   require("plenary.job")
-    :new({
-      command = "ls",
-      cwd = cwd,
-      on_exit = vim.schedule_wrap(function(j)
-        for _, file in ipairs(j:result()) do
-          fn(file)
-        end
-      end),
-    })
-    :start()
+      :new({
+        command = "ls",
+        cwd = cwd,
+        on_exit = vim.schedule_wrap(function(j)
+          for _, file in ipairs(j:result()) do
+            fn(file)
+          end
+        end),
+      })
+      :start()
 end
 
 M.has_line_matching = function(regex)
@@ -53,23 +53,6 @@ M.has_line_matching = function(regex)
   end
 
   return false
-end
-
-local loaded_plugins = {}
-
-M.ensure_setup = function(plugin_name, is_startup)
-  if loaded_plugins[plugin_name] == true then
-    return false
-  end
-
-  maybe_bang = ""
-  if is_startup == true then
-    maybe_bang = "!"
-  end
-
-  vim.cmd("packadd" .. maybe_bang .. " " .. plugin_name)
-  loaded_plugins[plugin_name] = true
-  return true
 end
 
 return M

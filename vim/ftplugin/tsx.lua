@@ -11,8 +11,6 @@ local ls_utils = require "jrasmusbm.snippets.utils"
 require("jrasmusbm.matchit").load_html_pairs()
 
 vim.api.nvim_create_user_command("DebugClear", function()
-  require("jrasmusbm.").ensure_setup()
-
   vim.cmd [[
 norm 0gg/logPropDifferencesdafndaf/useDebugdd?propsT}D%d0da{;ao/props:viwp==:w
   ]]

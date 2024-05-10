@@ -8,13 +8,6 @@ local function refactor(prompt_bufnr)
 end
 
 M.refactors = function()
-  require("jrasmusbm.telescope").ensure_setup()
-  if not require("jrasmusbm.utils").ensure_setup "refactoring.nvim" then
-    return
-  end
-
-  require("refactoring").setup()
-
   local opts = require("telescope.themes").get_cursor() -- set personal telescope options
   require("telescope.pickers")
       .new(opts, {

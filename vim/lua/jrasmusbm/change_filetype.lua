@@ -4,7 +4,7 @@ M.is_typescript_test_file = function()
   local path_segments = vim.split(vim.api.nvim_buf_get_name(0), "%.")
 
   return path_segments[#path_segments - 1] == "test"
-      or path_segments[#path_segments - 1] == "spec"
+    or path_segments[#path_segments - 1] == "spec"
 end
 
 local default_options = {
@@ -93,7 +93,7 @@ end
 
 M.setup = function(overrides)
   if overrides == nil then
-    return require("filetype").setup { overrides = default_options }
+    return
   end
 
   local ignore_keys = {}
@@ -109,7 +109,7 @@ M.setup = function(overrides)
     options[option_name] = merge_options(option_name, overrides, ignore_keys)
   end
 
-  return require("filetype").setup { overrides = options }
+  return vim.filetype.add(options)
 end
 
 return M

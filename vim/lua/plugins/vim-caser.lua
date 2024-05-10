@@ -1,0 +1,22 @@
+return {
+  "arthurxavierx/vim-caser",
+  lazy = true,
+  keys = {
+    "<Plug>CaserMixedCase",
+    "<Plug>CaserVMixedCase",
+    "<Plug>CaserCamelCase",
+    "<Plug>CaserVCamelCase",
+    "<Plug>CaserSnakeCase",
+    "<Plug>CaserVSnakeCase",
+    "<Plug>CaserTitleCase",
+    "<Plug>CaserVTitleCase",
+    "<Plug>CaserSentenceCase",
+    "<Plug>CaserVSentenceCase",
+    "<Plug>CaserKebabCase",
+    "<Plug>CaserVKebabCase",
+    "<Plug>CaserTitleKebabCase",
+    "<Plug>CaserVTitleKebabCase",
+    "<Plug>CaserDotCase",
+    "<Plug>CaserVDotCase",
+  },
+}
