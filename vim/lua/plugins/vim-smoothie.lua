@@ -7,7 +7,7 @@ return {
     vim.g.smoothie_speed_linear_factor = 20
     vim.g.smoothie_speed_exponentiation_factor = 0.95
   end,
-  key = {
+  keys = {
     "<C-d>",
     "<C-u>",
   },
