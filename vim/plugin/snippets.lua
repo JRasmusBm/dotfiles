@@ -1,12 +1,9 @@
-require("jrasmusbm.snippets").ensure_setup()
-
 vim.cmd [[
 imap ;f =expand("%:")<Left><Left>
 cmap ;f =expand("%:")<Left><Left>
 ]]
 
 vim.keymap.set({ "i", "s" }, "<leader>s", function()
-  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
   local ls = require "luasnip"
   if ls.expandable() then
@@ -17,7 +14,6 @@ vim.keymap.set({ "i", "s" }, "<leader>s", function()
 end, { silent = true })
 
 vim.keymap.set({ "n" }, "<leader>s", function()
-  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
   local ls = require "luasnip"
   if ls.expandable() then
@@ -28,13 +24,11 @@ vim.keymap.set({ "n" }, "<leader>s", function()
 end, { silent = true })
 
 vim.keymap.set({ "i", "s", "n" }, "<leader>S", function()
-  require("jrasmusbm.snippets").ensure_setup()
   local ls = require "luasnip"
   ls.unlink_current()
 end, { silent = true })
 
 vim.keymap.set({ "i", "n" }, "<leader>g", function()
-  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
   local ls = require "luasnip"
   if ls.jumpable(1) then
@@ -47,7 +41,6 @@ vim.keymap.set({ "i", "n" }, "<leader>g", function()
 end, { silent = true })
 
 vim.keymap.set({ "i", "n" }, "<leader>G", function()
-  require("jrasmusbm.snippets").ensure_setup()
   local edit_utils = require "jrasmusbm.utils.edit"
   if ls.jumpable(-1) then
     edit_utils.add_undo_breakpoint()

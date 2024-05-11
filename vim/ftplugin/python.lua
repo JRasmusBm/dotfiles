@@ -12,8 +12,6 @@ local i = ls.insert_node
 local d = ls.dynamic_node
 local rep = require("luasnip.extras").rep
 
-require "jrasmusbm.dap.python"
-
 vim.keymap.set({ "n" }, "<localleader>tf", function()
   current_path = vim.fn.expand("%:.:r"):gsub("/", "."):gsub("^src.", "")
   module_path = current_path

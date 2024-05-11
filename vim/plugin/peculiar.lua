@@ -1,11 +1,4 @@
-local nmap = function(keys, command)
-  require("jrasmusbm.utils").ensure_setup "vim-peculiar"
-  vim.keymap.set({ "n" }, keys, command, {})
-end
-
-nmap("<localleader>v", "<Plug>PeculiarV")
-nmap("<localleader>g", "<Plug>PeculiarG")
-nmap("<localleader>n", "<Plug>PeculiarN")
-nmap("<localleader>r", "<Plug>PeculiarR")
-
-vim.g["peculiar#suppress_highlight_n"] = 1
+vim.keymap.set({ "n" }, "<localleader>v", "<Plug>PeculiarV")
+vim.keymap.set({ "n" }, "<localleader>g", "<Plug>PeculiarG")
+vim.keymap.set({ "n" }, "<localleader>n", "<Plug>PeculiarN")
+vim.keymap.set({ "n" }, "<localleader>r", "<Plug>PeculiarR")

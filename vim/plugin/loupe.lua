@@ -1,17 +1,13 @@
-    require("jrasmusbm.utils").ensure_setup "loupe"
-
 local loupe_handler = function(cmd)
   vim.g.LoupeCaseSettingsAlways = 1
 
   return function()
-    require("jrasmusbm.utils").ensure_setup "loupe"
-
     local handler = function()
       require("jrasmusbm.utils.mappings").feedkeys(
         "<Plug>("
-          .. cmd
-          .. ")"
-          .. ':lua require("jrasmusbm.search").set_search_as_x()<CR>'
+        .. cmd
+        .. ")"
+        .. ':lua require("jrasmusbm.search").set_search_as_x()<CR>'
       )
     end
 

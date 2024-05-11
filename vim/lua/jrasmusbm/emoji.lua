@@ -2,7 +2,6 @@ local M = {}
 
 M.emojify = function()
   vim.opt.completefunc = "emoji#complete"
-  require("jrasmusbm.utils").ensure_setup "vim-emoji"
 
   local pos = vim.fn.getpos "."
 

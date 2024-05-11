@@ -10,25 +10,4 @@ M.open_github_link = function()
   vim.fn.system("git-repo " .. selection)
 end
 
-M.run_command = function(options)
-  if options.fargs[1] == "browse" or options.fargs[1] == "br" then
-    table.remove(options.fargs, 1)
-    require("jrasmusbm.utils.commands").run("GBrowse", options)
-    return
-  end
-
-  if options.fargs[1] == "read" then
-    table.remove(options.fargs, 1)
-    require("jrasmusbm.utils.commands").run("Gread", options)
-    return
-  end
-
-  if options.fargs[1] == "bl" then
-    options.fargs[1] = "blame"
-    return
-  end
-
-  require("jrasmusbm.utils.commands").run("Git", options)
-end
-
 return M

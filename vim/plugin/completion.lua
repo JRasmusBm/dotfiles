@@ -1,20 +1,3 @@
-require("jrasmusbm.utils").ensure_setup "nvim-cmp"
-require("jrasmusbm.utils").ensure_setup "cmp-nvim-lsp"
-require("jrasmusbm.utils").ensure_setup "cmp-path"
-require("jrasmusbm.utils").ensure_setup "cmp-buffer"
-require("jrasmusbm.utils").ensure_setup "cmp-cmdline"
-require("jrasmusbm.utils").ensure_setup "cmp_luasnip"
-
--- require("jrasmusbm.utils").ensure_setup "copilot.lua"
--- require("jrasmusbm.utils").ensure_setup "copilot-cmp"
-
--- require("copilot").setup {
---   suggestion = { enabled = false },
---   panel = { enabled = false },
--- }
-
--- require("copilot_cmp").setup {}
-
 local list = require("jrasmusbm.utils.options").list
 
 vim.opt.completeopt = { "menu", "menuone", "noselect" }
