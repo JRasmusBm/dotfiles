@@ -8,7 +8,7 @@ M.is_typescript_test_file = function()
 end
 
 local default_options = {
-  extensions = {
+  extension = {
     j = "jasmin",
     jsx = "javascript.jsx",
     tf = "terraform",
@@ -19,8 +19,22 @@ local default_options = {
     sql = "sql",
     sh = "sh",
     html = "html",
+    tsx = function()
+      if M.is_typescript_test_file() then
+        vim.bo.filetype = "typescript.tsx.typescript_jest"
+      else
+        vim.bo.filetype = "typescript.tsx"
+      end
+    end,
+    ts = function()
+      if M.is_typescript_test_file() then
+        vim.bo.filetype = "typescript.typescript_jest"
+      else
+        vim.bo.filetype = "typescript"
+      end
+    end,
   },
-  literal = {
+  filename = {
     [".eslintrc"] = "json",
     [".babelrc"] = "json",
     [".stylelintrc"] = "json",
@@ -41,38 +55,18 @@ local default_options = {
     branch_speeddial = "speeddial",
     EDIT_DESCRIPTION = "gitcommit",
   },
-  complex = {
+  pattern = {
     ["ts-*"] = "speeddial",
     ["%.env.*"] = "sh",
     ["Dockerfile.*"] = "dockerfile",
     [".*%.cy%.ts"] = "typescript.typescript_cypress",
   },
-  function_extensions = {
-    tsx = function()
-      if M.is_typescript_test_file() then
-        vim.bo.filetype = "typescript.tsx.typescript_jest"
-      else
-        vim.bo.filetype = "typescript.tsx"
-      end
-    end,
-    ts = function()
-      if M.is_typescript_test_file() then
-        vim.bo.filetype = "typescript.typescript_jest"
-      else
-        vim.bo.filetype = "typescript"
-      end
-    end,
-  },
 }
 
 local option_names = {
-  "extensions",
-  "literal",
-  "complex",
-  "function_extensions",
-  "function_literal",
-  "function_complex",
-  "shebang",
+  "extension",
+  "filename",
+  "pattern",
 }
 
 local merge_options = function(option_name, overrides, ignore_keys)
@@ -93,7 +87,7 @@ end
 
 M.setup = function(overrides)
   if overrides == nil then
-    return
+    return vim.filetype.add(default_options)
   end
 
   local ignore_keys = {}
