@@ -23,6 +23,7 @@ return {
         mark_branch = true,
       },
     }
+    require("jrasmusbm.harpoon").setup()
   end,
   dependencies = {
     "nvim-lua/plenary.nvim",
