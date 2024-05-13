@@ -1,3 +1,0 @@
-vim.cmd [[
-let comment=';'
-]]

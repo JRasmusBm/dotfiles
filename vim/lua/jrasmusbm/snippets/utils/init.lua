@@ -45,7 +45,7 @@ end
 M.load_shared = function(options)
   local module_name = "jrasmusbm.snippets.shared." .. options.shared
 
-  require("plenary.reload").reload_module(module_name)
+  require("plenary").reload.reload_module(module_name)
 
   local snippets = {}
 
