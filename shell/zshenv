@@ -62,3 +62,4 @@ if test -f "$HOME/projects/polar/.zshenv" ; then
 fi
 
 
+export POETRY_VIRTUALENVS_IN_PROJECT='true'
