@@ -184,7 +184,7 @@ end, { noremap = true })
 vim.keymap.set({ "n" }, "<leader>ef", function()
   require("jrasmusbm.telescope.find_files").find_files {
     prompt_title = "Filetype Config Files",
-    cwd = vim.fn.getenv "DOTFILES" .. "/vim/ftplugin/",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/after/ftplugin/",
   }
 end, { noremap = true })
 
