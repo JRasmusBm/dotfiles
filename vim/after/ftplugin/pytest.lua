@@ -5,13 +5,17 @@ local sn = ls.snippet_node
 local i = ls.insert_node
 
 vim.g["test#python#runner"] = "pytest"
-vim.g["test#python#pytest#executable"] = "python -m pytest"
 
-vim.g["test#python#pytest#options"] = {
-  nearest = "--log-level WARNING --no-cov --disable-warnings -vv",
-  file = "--log-level WARNING --no-cov --disable-warnings -vv",
-  suite = "-vv",
-}
+print(vim.g["test#python#pytest#executable"])
+if vim.g["test#python#pytest#executable"] == nil then
+  vim.g["test#python#pytest#executable"] = "python -m pytest"
+
+  vim.g["test#python#pytest#options"] = {
+    nearest = "--log-level WARNING --no-cov --disable-warnings -vv",
+    file = "--log-level WARNING --no-cov --disable-warnings -vv",
+    suite = "-vv",
+  }
+end
 
 require("jrasmusbm.dap.test").setup_test_debugging(
   {
@@ -24,33 +28,51 @@ require("jrasmusbm.dap.test").setup_test_debugging(
   end)
 )
 
-local test_class = function()
-  return fmt("class Test{}:\n    {}", { i(1), i(0) })
-end
-
-local test_case = function()
-  return fmt("def test_{}():\n    {}\n\n{}", { i(1), i(2), i(0) })
-end
-
 ls.add_snippets("pytest", {
   s(
-    { trig = "df", name = "Test file" },
-    { sn(1, test_class()), sn(2, test_case()), i(0) }
-  ),
-  s(
     { trig = "ds", name = "Test suite" },
-    { sn(1, test_class()), sn(0, test_case()) }
+    fmt(
+      [[
+class Test{}:
+    @staticmethod
+    def test_{}():
+        {}
+  ]],
+      { i(1), i(2), i(0) }
+    )
   ),
 
-  s({ trig = "dc", name = "Test case" }, test_case()),
+  s(
+    { trig = "dc", name = "Test case" },
+    fmt(
+      [[
+@staticmethod
+def test_{}():
+    {}
+  ]],
+      { i(1), i(0) }
+    )
+  ),
 
-  s({ trig = "de", name = "Expect equals" }, fmt("assert {}", { i(0) })),
+  s(
+    { trig = "de", name = "Expect equals" },
+    fmt(
+      [[
+assert {}
+  ]],
+      { i(0) }
+    )
+  ),
 
   s(
     { trig = "db", name = "Pytest fixture" },
     fmt(
-      "@pytest.fixture\ndef {}({}){}:\n    {}\n\n{}",
-      { i(1), i(2), i(3), i(4), i(0) }
+      [[
+@pytest.fixture
+def {}({}){}:
+    {}
+  ]],
+      { i(1), i(2), i(3), i(0) }
     )
   ),
 

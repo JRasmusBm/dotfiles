@@ -1,5 +1,0 @@
-vim.keymap.set({ "n" }, "<localleader>dn", "TestNearest")
-vim.keymap.set({ "n" }, "<localleader>df", "TestFile")
-vim.keymap.set({ "n" }, "<localleader>ds", "TestSuite")
-vim.keymap.set({ "n" }, "<localleader>dp", "TestLast")
-vim.keymap.set({ "n" }, "<localleader>dv", "TestVisit")
