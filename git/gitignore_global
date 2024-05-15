@@ -20,3 +20,4 @@ debug.test
 .vscode
 .ignore
 .DS_Store
+dump.rdb
