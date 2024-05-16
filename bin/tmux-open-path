@@ -12,7 +12,7 @@ def main():
     column = int(get(["tmux", "display", "-pF", "#{copy_cursor_x}"]).strip())
     line = get(["tmux", "display", "-pF", "#{copy_cursor_line}"])
 
-    file_regex = re.compile("([-_/.@a-z:0-9]+)", re.IGNORECASE)
+    file_regex = re.compile("([-_/.@a-z:0-9~]+)", re.IGNORECASE)
 
     total_matches = []
     while True:
@@ -33,7 +33,20 @@ def main():
         line = line[match.end() :]
         column = column - match.end()
 
-    run(["open", path])
+    binary_path = get(["which", "open-path"]).strip()
+    try: 
+        result = run(["python3", binary_path, path])
+    except BaseException as e:
+        print(e)
+        exit(1)
+
+    if result.returncode != 0:
+        print(f"Exited with {result.returncode}")
+        print("STDOUT")
+        print(result.stdout)
+        print("STDERR")
+        print(result.stderr)
+
 
 
 if __name__ == "__main__":
