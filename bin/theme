@@ -29,6 +29,14 @@ _set_system_theme() {
     )
   fi
 
+  if type osascript 2>/dev/null; then
+    if test "$1" = 'dark'; then
+      osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true'
+    else
+      osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to false'
+    fi
+  fi
+
 }
 
 _persist_theme() {
