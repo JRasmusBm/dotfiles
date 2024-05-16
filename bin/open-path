@@ -34,11 +34,14 @@ def main():
     else:
         current_path = Path(".")
         file_path = None
-        while os.path.dirname(current_path) != str(current_path):
+        while True:
             if (current_path / raw_file_path).exists():
                 file_path = current_path / raw_file_path
                 break
-            current_path = current_path / ".."
+            next_path = current_path / ".."
+            if os.path.realpath(current_path) == os.path.realpath(next_path):
+                break
+            current_path = next_path
 
     if file_path is None:
         print(f"Cannot find file {raw_file_path}")
