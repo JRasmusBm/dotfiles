@@ -1,0 +1,3 @@
+#/bin/sh
+
+/Applications/Hammerspoon.app/Contents/Frameworks/hs/hs "$@"
