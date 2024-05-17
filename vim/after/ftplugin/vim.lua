@@ -23,12 +23,10 @@ vim.keymap.set(
   "<cmd>so %<cr>",
   { buffer = 0, noremap = true }
 )
-vim.keymap.set(
-  { "n" },
-  "zf",
-  vim.fn["jrasmusbm#folds#fold_selection"],
-  { expr = true }
-)
+
+vim.keymap.set({ "n" }, "zf", function()
+  require("jrasmusbm.folds").fold_selection()
+end, { expr = true })
 
 ls.add_snippets("vim", {
   s(

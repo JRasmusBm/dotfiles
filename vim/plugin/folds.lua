@@ -27,13 +27,6 @@ vim.keymap.set(
   { noremap = true }
 )
 
-vim.keymap.set(
-  { "n" },
-  "za",
-  "<cmd>call jrasmusbm#folds#toggle_foldopen()<cr>",
-  { noremap = true }
-)
-
 vim.opt.foldopen = require("jrasmusbm.utils.options").list {
   "block",
   "hor",
