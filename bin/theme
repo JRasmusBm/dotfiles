@@ -23,13 +23,13 @@ _set_vscode_theme() {
 }
 
 _set_system_theme() {
-  if type dconf 2>/dev/null; then
+  if type dconf >/dev/null 2>&1 ; then
     (
       dconf write '/org/gnome/desktop/interface/gtk-theme' "'Yaru-$1'"
     )
   fi
 
-  if type osascript 2>/dev/null; then
+  if type osascript >/dev/null 2>&1 ; then
     if test "$1" = 'dark'; then
       osascript -e 'tell application "System Events" to tell appearance preferences to set dark mode to true'
     else
