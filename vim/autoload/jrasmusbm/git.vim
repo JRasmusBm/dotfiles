@@ -12,10 +12,3 @@ function! jrasmusbm#git#list_tree(num_lines = 500) abort
     w
   endif
 endfunction
-
-function! jrasmusbm#git#push_all() abort
-  wa!
-  G wip
-  G rbof
-  G push --no-verify
-endfunction

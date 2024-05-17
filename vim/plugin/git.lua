@@ -1,8 +1,13 @@
 vim.cmd [[
 command! -nargs=? L silent call jrasmusbm#git#open_tree(<f-args>)
-
-command! Gpa call jrasmusbm#git#push_all()
 ]]
+
+vim.api.nvim_create_user_command("Gpa", function()
+  vim.cmd.wa { bang = true }
+  vim.cmd.G { "wip" }
+  vim.cmd.G { "rbof" }
+  vim.cmd.G { "push --no-verify" }
+end, { nargs = 0 })
 
 vim.g.diffopt = require("jrasmusbm.utils.options").list {
   "filler",
