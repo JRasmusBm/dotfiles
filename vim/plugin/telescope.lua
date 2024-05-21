@@ -90,10 +90,11 @@ vim.keymap.set(
   require("jrasmusbm.telescope.git_pull_requests").git_pull_requests
 )
 
-vim.keymap.set(
-  { "n" },
-  "<localleader>fb",
-  require("jrasmusbm.telescope.git_branches").git_branches
+vim.keymap.set({ "n" }, "<localleader>fb", function()
+  require("jrasmusbm.telescope.git_branches").git_branches {
+    show_remote_tracking_branches = false,
+  }
+end
 )
 
 vim.keymap.set(
