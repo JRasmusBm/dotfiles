@@ -1,6 +1,8 @@
-vim.cmd [[
-command! -nargs=? L silent call jrasmusbm#git#open_tree(<f-args>)
-]]
+vim.api.nvim_create_user_command("L", function(options)
+  pcall(function()
+    require("jrasmusbm.git").open_tree(options.args[1])
+  end)
+end, { nargs = "?" })
 
 vim.api.nvim_create_user_command("Gpa", function()
   vim.cmd.wa { bang = true }

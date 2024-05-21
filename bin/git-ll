@@ -4,7 +4,12 @@ set -e
 
 git_list_tree_with_pager() {
   (
-    set -x
+    if test "$1" = '--silent'; then
+      shift
+    else
+      set -x
+    fi
+
     g --no-pager log --oneline --decorate --graph --all -20 "$@"
   )
 }

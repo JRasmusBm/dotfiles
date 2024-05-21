@@ -10,22 +10,22 @@ M.git_branches = function(options_)
       local selection = action_state.get_selected_entry()
       vim.api.nvim_command("Git rh " .. selection.value)
       actions.close(prompt_bufnr)
-      vim.api.nvim_command "call jrasmusbm#git#list_tree()"
+      require("jrasmusbm.git").list_tree()
     end
 
     local switch = function()
       actions.git_checkout(prompt_bufnr)
-      vim.api.nvim_command "call jrasmusbm#git#list_tree()"
+      require("jrasmusbm.git").list_tree()
     end
 
     local track = function()
       actions.git_track_branch(prompt_bufnr)
-      vim.api.nvim_command "call jrasmusbm#git#list_tree()"
+      require("jrasmusbm.git").list_tree()
     end
 
     local delete_local = function()
       actions.git_delete_branch(prompt_bufnr)
-      vim.api.nvim_command "call jrasmusbm#git#list_tree()"
+      require("jrasmusbm.git").list_tree()
     end
 
     local delete_remote = function()
@@ -33,14 +33,14 @@ M.git_branches = function(options_)
       vim.api.nvim_command(
         "Git pd " .. selection.value:gsub("^origin/", "origin ")
       )
-      vim.api.nvim_command "call jrasmusbm#git#list_tree()"
+      require("jrasmusbm.git").list_tree()
     end
 
     local fast_forward = function()
       local selection = action_state.get_selected_entry()
       vim.api.nvim_command("Git ff " .. selection.value)
       actions.close(prompt_bufnr)
-      vim.api.nvim_command "call jrasmusbm#git#list_tree()"
+      require("jrasmusbm.git").list_tree()
     end
 
     map("i", "<C-h>", reset_hard)

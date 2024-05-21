@@ -10,7 +10,7 @@ M.git_commits = function(options_)
       local selection = action_state.get_selected_entry()
       vim.api.nvim_command("Git rh " .. selection.value)
       actions.close(prompt_bufnr)
-      vim.api.nvim_command "call jrasmusbm#git#list_tree()"
+      require("jrasmusbm.git").list_tree()
     end
 
     local rebase_interactive = function()
