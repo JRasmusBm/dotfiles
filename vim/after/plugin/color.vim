@@ -14,8 +14,8 @@ function! RulerHighlights() abort
     highlight CursorLine guibg=#e0e090 " TODO
     highlight ColorColumn guibg=#c0a050
   else
-    highlight CursorColumn guibg=#303000
-    highlight CursorLine guibg=#303000 " TODO
+    highlight CursorColumn guibg=#2a2a00
+    highlight CursorLine guibg=#2a2a00 " TODO
     highlight ColorColumn guibg=#301810
   endif
 endfunction
