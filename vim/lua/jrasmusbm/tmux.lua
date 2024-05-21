@@ -40,6 +40,22 @@ M.setup = function()
     vim.cmd "VtrSendCommandToRunner r"
   end)
 
+  vim.keymap.set(
+    { "n" },
+    "<localleader>ts",
+    require("jrasmusbm.utils.mappings").with_textobject(
+      function(start_position, end_position)
+        vim.cmd(
+          tostring(start_position[1])
+            .. ","
+            .. tostring(end_position[1])
+            .. " "
+            .. "VtrSendLinesToRunner"
+        )
+      end
+    )
+  )
+
   vim.keymap.set({ "v" }, "<localleader>tl", function()
     require("jrasmusbm.utils.visual").run_with_range "VtrSendLinesToRunner"
   end)
