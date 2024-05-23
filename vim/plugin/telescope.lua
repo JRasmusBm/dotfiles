@@ -114,13 +114,6 @@ end, { noremap = true })
 
 vim.keymap.set({ "n" }, "<leader>eu", function()
   require("jrasmusbm.telescope.find_files").find_files {
-    prompt_title = "Autoload Files",
-    cwd = vim.fn.getenv "DOTFILES" .. "/vim/autoload/",
-  }
-end, { noremap = true })
-
-vim.keymap.set({ "n" }, "<leader>el", function()
-  require("jrasmusbm.telescope.find_files").find_files {
     prompt_title = "Lua Files",
     cwd = vim.fn.getenv "DOTFILES" .. "/vim/lua/jrasmusbm/",
   }
