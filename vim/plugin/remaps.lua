@@ -44,5 +44,3 @@ vim.keymap.set(
   "<cmd>lclose<cr>",
   { silent = true, noremap = true }
 )
-
-vim.keymap.set({ "n" }, "==", "<cmd>call jrasmusbm#format#default()<cr>")
