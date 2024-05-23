@@ -1,14 +1,24 @@
-vim.cmd [[
-augroup Ruler
-  autocmd WinEnter * :silent call jrasmusbm#ruler#source()
-  autocmd WinLeave * :silent call jrasmusbm#ruler#off()
-augroup END
+local ruler_augroup = vim.api.nvim_create_augroup("ruler", { clear = true })
 
-silent call jrasmusbm#ruler#source()
-]]
+vim.api.nvim_create_autocmd({ "WinEnter", "FocusGained" }, {
+  group = ruler_augroup,
+  pattern = { "*" },
+  callback = function()
+    require("jrasmusbm.ruler").source()
+  end,
+})
 
-vim.keymap.set({ "n" },
-  "<Leader>sr",
-  "<cmd>call jrasmusbm#ruler#toggle()<cr>",
-  { noremap = true }
-)
+vim.api.nvim_create_autocmd({ "WinLeave", "FocusLost" }, {
+  group = ruler_augroup,
+  pattern = { "*" },
+  callback = function()
+    require("jrasmusbm.ruler").temporarily_disable()
+  end,
+})
+
+vim.opt.cursorline = true
+vim.opt.cursorcolumn = true
+vim.keymap.set({ "n" }, "<Leader>sr", function()
+  require("jrasmusbm.ruler").toggle()
+end, { noremap = true })
+
