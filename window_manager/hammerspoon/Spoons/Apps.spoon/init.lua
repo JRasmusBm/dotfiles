@@ -4,6 +4,7 @@ local ctrl_apps = {
   [1] = "brave browser",
   [2] = "alacritty",
   [3] = "slack",
+  [6] = "gimp",
   [8] = "obs",
   [9] = "kdenlive",
   [0] = "spotify",

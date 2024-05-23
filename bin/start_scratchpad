@@ -1,6 +1,0 @@
-#!/bin/sh
-
-set -e
-
-~/projects/pyautogui/.venv/bin/python ~/projects/pyautogui/start-scratchpad.py
-alacritty --class "Scratchpad" -e nvim -c "Scratchpad"
