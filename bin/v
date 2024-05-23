@@ -2,11 +2,11 @@
 
 set -e
 
-
-if test -x "$(which nvim-server-name)" ; then
+if test -x "$(which nvim-server-name)"; then
   NVIM_LISTEN_ADDRESS="$(nvim-server-name)"
-  rm "$NVIM_LISTEN_ADDRESS" 2> /dev/null || true
-  export NVIM_LISTEN_ADDRESS
+  if ! test -e "$NVIM_LISTEN_ADDRESS"; then
+    export NVIM_LISTEN_ADDRESS
+  fi
 fi
 
 nvim "$@"
