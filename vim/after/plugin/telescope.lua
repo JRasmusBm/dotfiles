@@ -105,13 +105,6 @@ vim.keymap.set(
 
 -- Config files
 
-vim.keymap.set({ "n" }, "<leader>ea", function()
-  require("jrasmusbm.telescope.find_files").find_files {
-    prompt_title = "All Files",
-    cwd = vim.fn.getenv "DOTFILES" .. "/vim/after/",
-  }
-end, { noremap = true })
-
 vim.keymap.set({ "n" }, "<leader>eu", function()
   require("jrasmusbm.telescope.find_files").find_files {
     prompt_title = "Lua Files",
@@ -185,7 +178,7 @@ end, { noremap = true })
 vim.keymap.set({ "n" }, "<leader>ep", function()
   require("jrasmusbm.telescope.find_files").find_files {
     prompt_title = "Plugin Files",
-    cwd = vim.fn.getenv "DOTFILES" .. "/vim/plugin/",
+    cwd = vim.fn.getenv "DOTFILES" .. "/vim/after/plugin/",
   }
 end, { noremap = true })
 
