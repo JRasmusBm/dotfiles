@@ -205,33 +205,4 @@ Industry: {}
       { i(1), i(2), i(0) }
     )
   ),
-
-  s(
-    { trig = "chi", name = "checkin" },
-    fmt(
-      [[
-- Slack
-  - [ {}] Check saved
-  - [ ] Check notifications
-  - [ ] Are we winning?
-- Calendar
-  - [ ] Check today
-  - [ ] Check week
-- Notes
-  - [ ] Go through progress for next steps
-  - [ ] Go through waiting for next steps
-- E-mails
-  - [ ] JRasmusBm
-  - [ ] Polar
-- GitHub
-  - [ ] Go through what there is to review
-- Todoist
-  - [ ] Inbox
-  - [ ] Today
-  - [ ] Waiting
-  - [ ] Projects
-  ]],
-      { i(0) }
-    )
-  ),
 }
