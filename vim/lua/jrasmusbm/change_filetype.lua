@@ -50,8 +50,6 @@ local default_options = {
     gitconfig = "gitconfig",
     [".rgignore"] = "gitignore",
     [".ignore"] = "gitignore",
-    ["serviceworker.ts"] = "typescript.serviceworker",
-    ["serviceworker.js"] = "javascript.serviceworker",
     branch_speeddial = "speeddial",
     EDIT_DESCRIPTION = "gitcommit",
   },
