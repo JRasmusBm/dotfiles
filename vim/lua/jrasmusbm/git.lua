@@ -22,7 +22,7 @@ M.list_tree = function(num_lines)
       num_lines = 400
     end
 
-    vim.cmd("silent %!git ll --silent -l " .. num_lines)
+    vim.cmd("silent %!git ll --silent -" .. num_lines)
     vim.cmd "silent write"
   end
 end
