@@ -211,11 +211,9 @@ Industry: {}
     fmt(
       [[
 - Slack
-  - [{}] Check saved
+  - [ {}] Check saved
   - [ ] Check notifications
-  - Check task forces
-     - [ ] Sales
-     - [ ] CS
+  - [ ] Are we winning?
 - Calendar
   - [ ] Check today
   - [ ] Check week
@@ -225,8 +223,6 @@ Industry: {}
 - E-mails
   - [ ] JRasmusBm
   - [ ] Polar
-- Physical
-  - [ ] Inbox
 - GitHub
   - [ ] Go through what there is to review
 - Todoist
