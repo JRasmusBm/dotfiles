@@ -110,7 +110,7 @@ M.diagnostic_highlights = function()
   })
   vim.fn.sign_define(
     "DiagnosticSignInfo",
-    { text = "⚠", texthl = "DiagnosticSignInfo" }
+    { text = "i", texthl = "DiagnosticSignInfo" }
   )
   vim.api.nvim_set_hl(0, "DiagnosticSignInfo", {
     fg = "teal",
