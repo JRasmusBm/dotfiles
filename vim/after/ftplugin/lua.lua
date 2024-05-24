@@ -365,4 +365,17 @@ end)
       { i(1), i(2), i(0) }
     )
   ),
+
+  s(
+    { trig = "hl", name = "highlight" },
+    fmt(
+      [[
+vim.api.nvim_set_hl(0, "{}", {{
+  fg = {},
+  bg = {},
+}})
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
 })
