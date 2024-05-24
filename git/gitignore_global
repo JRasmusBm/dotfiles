@@ -1,7 +1,7 @@
 .nvimlog
 .rgignore
 node_modules
-.vim/
+.jrb/
 .venv/
 .vimspector.json
 .tmux
