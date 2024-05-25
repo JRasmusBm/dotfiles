@@ -5,7 +5,8 @@ set -e
 if test -x "$(which nvim-server-name)"; then
   NVIM_LISTEN_ADDRESS="$(nvim-server-name)"
   if ! test -e "$NVIM_LISTEN_ADDRESS"; then
-    export NVIM_LISTEN_ADDRESS
+    nvim --listen "$NVIM_LISTEN_ADDRESS" "$@"
+    exit 0
   fi
 fi
 
