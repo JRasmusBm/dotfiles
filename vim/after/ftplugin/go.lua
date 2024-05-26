@@ -285,7 +285,7 @@ if err != nil {{
 switch {} {{
   case {}:
     {}
-  {} 
+  {}
 }}
 
 {}
@@ -300,7 +300,7 @@ switch {} {{
       [[
 case {}:
   {}
-{} 
+{}
 ]],
       { i(1), i(2), i(0) }
     )
@@ -313,7 +313,7 @@ case {}:
 select {} {{
   case {}:
     {}
-  {} 
+  {}
 }}
 
 {}
@@ -457,6 +457,18 @@ var {}
 const {}
 {}
 ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "rg", name = "Get endpoint" },
+    fmt(
+      [[
+app.Get("{}", func(c *fiber.Ctx) error {{
+  {}
+}})
+  ]],
       { i(1), i(0) }
     )
   ),
