@@ -33,7 +33,7 @@ _run_temp_db() {
     tmux send-keys -t "$session_name" "$(echo "$(_find_script)" "$@")" Enter
 
     tmux select-pane -U
-    tmux send-keys -t "$session_name" "nvim temp.sql" Enter
+    tmux send-keys -t "$session_name" "nvim" Enter
 
   )
 }
