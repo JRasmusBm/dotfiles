@@ -2,9 +2,6 @@ local os = require "os"
 
 vim.g.python3_host_prog = os.getenv "HOME" .. "/.virtualenvs/neovim3/bin/python"
 
-vim.cmd "syntax on"
-vim.cmd "filetype plugin indent on"
-
 vim.g.mapleader = ";"
 vim.g.maplocalleader = " "
 
@@ -23,6 +20,9 @@ end
 vim.opt.rtp:prepend(lazypath)
 
 require("lazy").setup "plugins"
+
+vim.cmd "syntax on"
+vim.cmd "filetype plugin indent on"
 
 vim.api.nvim_set_keymap("n", "ö", ";", { noremap = true })
 
