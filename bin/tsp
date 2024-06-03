@@ -2,26 +2,41 @@
 
 set -e
 
+if test "$(uname)" = "Darwin"; then
+  _find='gfind'
+else
+  _find='find'
+fi
+
 _tmux_speeddial_profile() {
   (
-    _config_file="$LOCAL_CONFIG/tmux_speeddial_profile"
+    _config_file="$LOCAL_CONFIG/ts-profile"
+    cd $LOCAL_CONFIG/ts-profiles || return 1
 
     if test "$1" = 'edit' -o "$1" = 'e'; then
       shift 1
-      _current_profile="$(cat "$LOCAL_CONFIG/tmux_speeddial_profile")"
+      _current_profile="$(cat "$_config_file")"
       _target_profile="${1:-$_current_profile}"
-      v "$LOCAL_CONFIG/ts-$_target_profile"
-      echo "$_target_profile" >"$_config_file"
+      _existing_profile="$($_find . -name "$(basename "$_target_profile")" -type f)"
+
+      if test -e "$_existing_profile"; then
+        v "$_existing_profile"
+      else
+        v "$LOCAL_CONFIG/ts-profiles/$_target_profile"
+      fi
+
+      echo "$(basename $_target_profile)" >"$_config_file"
       return 0
     fi
 
-    _profile=${1:-"$(ls "$LOCAL_CONFIG" | grep ts- | cut -d - -f 2 | fzf)"}
+    _profile_name=${1:-"$($_find . -type f | x -n 1 basename | sort -u | fzf)"}
+    _profile_path="$($_find . -type f -name "$_profile_name")"
 
-    if ! test -e "$LOCAL_CONFIG/ts-$_profile"; then
+    if ! test -f "$LOCAL_CONFIG/ts-profiles/$_profile_path"; then
       return 1
     fi
 
-    echo "$_profile" >"$_config_file"
+    echo "$_profile_name" >"$_config_file"
   )
 }
 
