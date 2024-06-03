@@ -10,5 +10,5 @@ vim.cmd [[
 :command! Trc exec "e $DOTFILES/tmux/tmux.conf"
 :command! Frc exec "e $DOTFILES/vim/ftplugin/" . &ft . ".lua"
 :command! Prc e ./.jrb
-:command! Esq e ./temp.sql
+:command! QL e ./temp.sql
 ]]

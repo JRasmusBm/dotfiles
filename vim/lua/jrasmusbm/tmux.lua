@@ -1,43 +1,30 @@
 local M = {}
 
 M.setup = function()
-  vim.keymap.set({ "n" }, "<localleader>td", function()
-    vim.cmd "VtrSendCtrlD"
-  end)
-
-  vim.keymap.set({ "n" }, "<localleader>tc", function()
-    vim.cmd "VtrSendCtrlC"
-  end)
-
-  vim.keymap.set({ "n" }, "<localleader>tr", function()
-    require("jrasmusbm.utils.mappings").feedkeys ":VtrSendCommandToRunner<Space>"
-  end)
-
   vim.keymap.set({ "n" }, "<localleader>ta", function()
-    require("jrasmusbm.utils.mappings").feedkeys ":VtrAttach<Space>"
+    local target = require("nvim-tmux-runner").get_target()
+
+    if target.window == nil then
+      require("nvim-tmux-runner").attach { window = "cli", pane = 0 }
+    else
+      require("nvim-tmux-runner").attach { pane = 1 }
+    end
+
+    print("Target: " .. require("nvim-tmux-runner").get_target_string())
   end)
 
-  vim.keymap.set({ "n" }, "<localleader>to", function()
-    vim.cmd "VtrOpenRunner"
-  end)
-
-  vim.keymap.set({ "n" }, "<localleader>tk", function()
-    vim.cmd "VtrKillRunner"
+  vim.keymap.set({ "n" }, "<localleader>tt", function()
+    require("nvim-tmux-runner").focus_target()
   end)
 
   vim.keymap.set({ "n" }, "<localleader>tf", function()
-    vim.cmd "VtrOpenRunner"
-    vim.cmd "VtrSendFile"
+    require("nvim-tmux-runner").send_file_to_runner()
   end)
 
   vim.keymap.set({ "n" }, "<localleader>tl", function()
-    vim.cmd "VtrOpenRunner"
-    vim.cmd "VtrSendLinesToRunner"
-  end)
-
-  vim.keymap.set({ "n" }, "<localleader>tp", function()
-    vim.cmd "VtrOpenRunner"
-    vim.cmd "VtrSendCommandToRunner r"
+    require("nvim-tmux-runner").send_lines_to_runner({
+      vim.api.nvim_get_current_line(),
+    }, true)
   end)
 
   vim.keymap.set(
@@ -45,20 +32,13 @@ M.setup = function()
     "<localleader>ts",
     require("jrasmusbm.utils.mappings").with_textobject(
       function(start_position, end_position)
-        vim.cmd(
-          tostring(start_position[1])
-            .. ","
-            .. tostring(end_position[1])
-            .. " "
-            .. "VtrSendLinesToRunner"
+        require("nvim-tmux-runner").send_selection_to_runner(
+          start_position,
+          end_position
         )
       end
     )
   )
-
-  vim.keymap.set({ "v" }, "<localleader>tl", function()
-    require("jrasmusbm.utils.visual").run_with_range "VtrSendLinesToRunner"
-  end)
 end
 
 return M

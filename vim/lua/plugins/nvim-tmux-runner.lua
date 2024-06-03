@@ -7,26 +7,26 @@ vim.g.vtr_filetype_runner_overrides = {
 }
 
 return {
-  "christoomey/vim-tmux-runner",
+  "JRasmusBm/nvim-tmux-runner",
   lazy = true,
+  dev = true,
   config = function()
+    require("nvim-tmux-runner").setup {
+      runners = {
+        sh = "sh %s",
+        python = "python %s",
+        rust = "cargo run %s",
+        go = "go run %s",
+        terraform = "terraform apply",
+      },
+    }
     require("jrasmusbm.tmux").setup()
-
-    vim.cmd [[
-  silent VtrAttachToPane 1"
-  ]]
   end,
   keys = {
-    "<localleader>td",
-    "<localleader>tc",
-    "<localleader>tr",
     "<localleader>ta",
-    "<localleader>to",
     "<localleader>ts",
-    "<localleader>tk",
+    "<localleader>tt",
     "<localleader>tf",
-    "<localleader>tl",
-    "<localleader>tp",
     "<localleader>tl",
   },
 }
