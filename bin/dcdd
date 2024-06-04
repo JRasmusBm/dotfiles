@@ -1,5 +1,5 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 docker compose -f docker-compose*dev.y*ml down --remove-orphans 

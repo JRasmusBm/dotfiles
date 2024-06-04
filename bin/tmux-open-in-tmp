@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -e
 
 tmux send -X copy-selection-and-cancel
 tmux showb | nr -o -
