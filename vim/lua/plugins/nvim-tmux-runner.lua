@@ -16,6 +16,8 @@ return {
         sh = "sh %s",
         python = "python %s",
         rust = "cargo run %s",
+        javascript = "node %s",
+        typescript = "ts-node %s",
         go = "go run %s",
         terraform = "terraform apply",
       },
