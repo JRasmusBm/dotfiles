@@ -14,6 +14,7 @@ _git_cherry_pick_into_branch() {
     git fetch
     git rof
     g cp "$_commit"
+    g push
   )
 }
 
