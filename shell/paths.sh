@@ -30,6 +30,7 @@ PATH="$PATH:$_usr/sbin"
 PATH="$PATH:$_usr/bin"
 PATH="$PATH:/sbin"
 PATH="$PATH:/bin"
+PATH="$PATH:$HOME/.local/share/nvim/mason/bin"
 PATH="$PATH:/snap/bin"
 PATH=$PATH:/opt/homebrew/opt/coreutils/libexec/gnubin
 PATH="$PATH:$_usr/local/go/bin"
