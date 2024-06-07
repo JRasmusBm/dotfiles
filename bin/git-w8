@@ -1,0 +1,25 @@
+#!/bin/sh
+
+set -e
+
+_wait_for_ci() {
+  (
+    _current_pr="$(gh pr view --json 'number' | jq -r '.number')"
+
+    if test -z $_current_pr; then
+      echo "No PR found" >/dev/stderr
+      return 1
+    fi
+
+    (
+      set -x
+      gh pr checks --watch
+    ) || true
+    (
+      set -x
+      gh pr view --web "$_current_pr"
+    ) || true
+  )
+}
+
+_wait_for_ci "$@"
