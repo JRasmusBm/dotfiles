@@ -100,7 +100,7 @@ type Prettify<T> = {{
     { trig = "dg", name = "mock data generator" },
     fmt(
       [[
-const given{} = (overrides?: Partial<{}>): {} => {{
+const mock{} = (overrides?: Partial<{}>): {} => {{
   return {{
     {},
     ...overrides,
