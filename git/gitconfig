@@ -9,7 +9,6 @@
   hooksPath = "~/.config/git/global_hooks"
   preloadindex = true
   mergeoptions = --no-edit
-  editor = nr --remote-wait-silent
 [init]
   defaultBranch = main
 [diff]
