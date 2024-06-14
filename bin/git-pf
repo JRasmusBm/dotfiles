@@ -12,7 +12,7 @@ git_push_force() {
       g stash push -u
     fi
 
-    g push -f "$@"
+    g push --force-with-lease "$@"
 
     if test -n "$needs_stash"; then
       g stash pop
