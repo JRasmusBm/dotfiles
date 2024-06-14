@@ -5,6 +5,8 @@ set foldexpr=nvim_treesitter#foldexpr()
 augroup CustomFoldlevel
   autocmd BufRead *.test.* setlocal foldlevel=1
 augroup END
+
+set foldlevel=10
 ]]
 
 vim.keymap.set(
