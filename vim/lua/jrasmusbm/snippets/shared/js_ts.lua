@@ -3,8 +3,10 @@ require("plenary").reload.reload_module "jrasmusbm.snippets.utils.init"
 local ls = require "luasnip"
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
+local d = ls.dynamic_node
 local t = ls.text_node
 local rep = require("luasnip.extras").rep
+local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 local s = function(context, nodes, options)
   return function()
@@ -120,11 +122,12 @@ console.groupEnd()
     fmt(
       [[
 console.dir({{
-  tag: "{}",
+  JRB_file_path: "{}",
+  JRB_line_number: "{}",
   {}
 }}, {{ depth: 20 }})
   ]],
-      { i(1), i(0) }
+      { d(1, ls_utils.file_path, {}), d(2, ls_utils.line_number, {}), i(0) }
     )
   ),
 
