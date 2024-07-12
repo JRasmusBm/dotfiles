@@ -2,7 +2,13 @@
 
 set -e
 
-map-lang
-map-esc
+if test "$(uname)" = 'Darwin'; then
+  defaults write -g ApplePressAndHoldEnabled -bool false
+  defaults write -g KeyRepeat -int 1
+  defaults write -g InitialKeyRepeat -int 10
+else
+  map-lang
+  map-esc
 
-xset r rate 150 100
+  xset r rate 150 100
+fi
