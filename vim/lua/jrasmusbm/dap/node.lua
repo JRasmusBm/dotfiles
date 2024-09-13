@@ -43,7 +43,7 @@ M.default_configurations = {
   M.configuration_factory { name = "Connect to 9000", port = 9000 },
 }
 
-M.setup_configurations = function(configs)
+M.setup = function(configs)
   local dap = require "dap"
 
   dap.adapters.node2 = {
