@@ -14,6 +14,20 @@ local s = function(context, nodes, options)
   end
 end
 
+vim.keymap.set({ "n" }, "<leader>rp", function ()
+  local component_name = vim.fn.expand("<cword>")
+  local current_line =  vim.api.nvim_win_get_cursor(0)
+  vim.api.nvim_buf_set_lines(0, current_line[1]-1, current_line[1]-1,true, {
+string.format("type %sProps = {", component_name),
+"  ",
+"}",
+"",
+  })
+  vim.api.nvim_win_set_cursor(0, {current_line[1] + 1, 2})
+  vim.cmd "startinsert!"
+end
+, {  })
+
 return {
   s(
     { trig = "id", name = "import default" },
@@ -42,11 +56,11 @@ return {
   ),
 
   s(
-    { trig = "el", name = "event listener" },
+    { trig = "vl", name = "(vanilla) event listener" },
     fmt('{}.eventListener("{}", {})\n{}', { i(1), i(2), i(3), i(0) })
   ),
   s(
-    { trig = "ef", name = "fire event" },
+    { trig = "vf", name = "f(vanilla) ire event" },
     fmt(
       '{}.dispatchEvent(new Event("{}", {{\n  {}\n}}))\n{}',
       { i(1), i(2), i(3), i(0) }
@@ -75,6 +89,19 @@ return {
     { trig = "of", name = "object field" },
     fmt("{}: {}{},\n{}", { i(1), i(2), rep(1), i(0) })
   ),
+
+  s({ trig="ok", name="object keys" }, fmt([[
+Object.keys({})
+  ]], { i(0)  })),
+  
+  s({ trig="oe", name="object entries" }, fmt([[
+Object.entries({})
+  ]], { i(0) })),
+  
+  s({ trig="ov", name="object values" }, fmt([[
+Object.values({})
+  ]], { i(0) })),
+  
 
   s(
     { trig = "lf", name = "format string" },
@@ -265,9 +292,29 @@ console.dir({{
     { trig = "em", name = "map expression" },
     fmt(
       [[
-{}.map(({}) => ({}))
+map(({}) => {}){}
   ]],
-      { i(1), i(2), i(3) }
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ef", name = "filter expression" },
+    fmt(
+      [[
+filter(({}) => {}){}
+  ]],
+      { i(1), i(2), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "eh", name = "(has) expression" },
+    fmt(
+      [[
+includes({}){}
+  ]],
+      { i(1), i(0) }
     )
   ),
 
