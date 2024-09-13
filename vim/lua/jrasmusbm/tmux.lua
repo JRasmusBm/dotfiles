@@ -1,5 +1,9 @@
 local M = {}
 
+local filetype_handlers = {
+  javascript = "node %s"
+}
+
 M.setup = function()
   vim.keymap.set({ "n" }, "<localleader>ta", function()
     local target = require("nvim-tmux-runner").get_target()
@@ -17,8 +21,18 @@ M.setup = function()
     require("nvim-tmux-runner").focus_target()
   end)
 
+
   vim.keymap.set({ "n" }, "<localleader>tf", function()
-    require("nvim-tmux-runner").send_file_to_runner()
+  local handler = filetype_handlers[vim.bo.filetype]
+
+  if handler == nil then
+    print(string.format("No handler found for %s", vim.bo.filetype))
+    return
+  end
+
+  require("nvim-tmux-runner").send_lines_to_runner({
+    string.format(handler, vim.api.nvim_buf_get_name(0))
+  })
   end)
 
   vim.keymap.set({ "n" }, "<localleader>tl", function()
