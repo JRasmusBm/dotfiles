@@ -36,7 +36,9 @@ return {
     end, { nargs = "*" })
     vim.api.nvim_create_user_command(
       "DFH",
-      "DiffviewFileHistory",
+      function (opts)
+       vim.cmd("DiffviewFileHistory ".. opts.args)
+      end,
       { nargs = "*" }
     )
   end,
