@@ -2,7 +2,9 @@ local ls = require "luasnip"
 local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
+local d = ls.dynamic_node
 local rep = require("luasnip.extras").rep
+local ls_utils = require "jrasmusbm.snippets.utils.init"
 
 local dapHost = "127.0.0.1"
 local dapPort = 38697
@@ -249,6 +251,13 @@ fmt.Printf({})
     { trig = "lf", name = "log format" },
     fmt("fmt.Sprintf({}){}", { i(1), i(0) })
   ),
+
+  s({ trig = "lb", name = "log breakpoint" }, fmt([[
+fmt.Printf(`
+file: {}
+line: {}
+{}
+`)]], { d(1, ls_utils.file_path, {}), d(2, ls_utils.line_number, {}), i(0) })),
 
   s(
     { trig = "ci", name = "if statement" },
