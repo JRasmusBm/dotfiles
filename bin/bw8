@@ -1,0 +1,40 @@
+#!/bin/sh
+
+set -e
+
+_wait_for_buddy() {
+  (
+    pipelines="$(buddy-cli pl ls --json 2>/dev/null)"
+    display_name="$(echo "$pipelines" | jq -r '.[].display_name' | fzf --reverse)"
+    pipeline_id="$(echo "$pipelines" | jq --arg name "$display_name" -r '.[] | select(.display_name==$name).id')"
+
+    revision="$(git rev-parse HEAD)"
+    execution_id="$(buddy-cli pl executions "$pipeline_id" --json 2>/dev/null | jq -r --arg revision "$revision" '.[] | select(.to_revision == $revision).id' | HEAD -1)"
+
+    if test -z "$execution_id"; then
+      (
+        echo "Cannot find an execution for $display_name ($pipeline_id) to $revision"
+        exit 1
+      )
+    fi
+
+    last_execution="$(BUDDY_CLI_PIPELINE="$pipeline_id" buddy-cli pl execution "$execution_id" --json 2> /dev/null)"
+    if test -z "$last_execution"; then
+      (
+        echo "Failed to retrieve last execution for $display_name ($pipeline_id) to $revision"
+        exit 1
+      )
+    fi
+
+    until test "$(echo "$last_execution" | jq -r '.status == "SUCCESSFUL" or .status == "FAILED"')" = 'true'
+    do
+      echo $last_execution > /dev/stderr
+      sleep 5
+      last_execution="$(BUDDY_CLI_PIPELINE="$pipeline_id" buddy-cli pl execution "$execution_id" --json 2> /dev/null)"
+    done
+
+    open "$(echo "$last_execution" | jq -r '.url')" 
+  )
+}
+
+_wait_for_buddy "$@"
