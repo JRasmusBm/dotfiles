@@ -53,7 +53,6 @@ return {
   cmd = {
     "THL",
     "GFiles",
-    "Noice",
   },
   keys = {
     "<leader>ff",
