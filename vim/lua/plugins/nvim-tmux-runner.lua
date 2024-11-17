@@ -11,17 +11,7 @@ return {
   lazy = true,
   dev = true,
   config = function()
-    require("nvim-tmux-runner").setup {
-      runners = {
-        sh = "sh %s",
-        python = "python %s",
-        rust = "cargo run %s",
-        javascript = "node %s",
-        typescript = "ts-node %s",
-        go = "go run %s",
-        terraform = "terraform apply",
-      },
-    }
+    require("nvim-tmux-runner").setup {}
     require("jrasmusbm.tmux").setup()
   end,
   keys = {
