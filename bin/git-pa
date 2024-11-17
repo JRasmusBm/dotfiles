@@ -1,5 +1,0 @@
-#!/bin/sh
-
-set -e
-
-gt stack test 'git pup -f --no-verify'

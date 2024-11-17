@@ -4,14 +4,7 @@ set -e
 
 my_git() {
   if test $# -gt 0; then
-    if git has-command "$1"; then
-      git "$@"
-    else
-      (
-        set -x
-        gt "$@"
-      )
-    fi
+    git "$@"
   else
     (
       set -x

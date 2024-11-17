@@ -6,7 +6,6 @@ git_switch_create() {
   (
     set -x
     g switch -c "$@"
-    gt btr
   )
 }
 
