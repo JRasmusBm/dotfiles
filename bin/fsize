@@ -2,7 +2,7 @@
 
 set -e
 
-ALACRITTY_FSIZE_FILE="$HOME/.config/alacritty/fsize.yml"
+ALACRITTY_FSIZE_FILE="$HOME/.config/alacritty/fsize.toml"
 ALACRITTY_CONFIG="$HOME/.config/alacritty/alacritty.yml"
 
 _set_font_size() {
@@ -12,13 +12,13 @@ _set_font_size() {
   fi
 
   if test -z "$1"; then
-    echo 'Usage: fzize <number>'
+    echo 'Usage: fsize <number>'
     exit 1
   fi
 
   {
-    printf 'font:'
-    printf '\n    size: %s' "$1"
+    printf '[font]'
+    printf '\nsize = %s' "$1"
   } >"$ALACRITTY_FSIZE_FILE"
   touch "$ALACRITTY_CONFIG"
 

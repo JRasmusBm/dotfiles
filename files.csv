@@ -1,7 +1,7 @@
 is_dir,source,target
 False,spotify/config.toml,.config/ncspot/config.toml
 False,vim/vimrc,.vimrc
-False,terminal/alacritty.yml,.config/alacritty/alacritty.yml
+False,terminal/alacritty.toml,.config/alacritty/alacritty.toml
 False,vscode/settings.json,.config/Code/User/settings.json
 True,vim,.config/nvim
 False,git/gitconfig,.gitconfig

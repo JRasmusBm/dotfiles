@@ -3,8 +3,8 @@
 set -e
 
 _set_alacritty_theme() {
-  cat "$DOTFILES/terminal/themes/$1.yml" >"$HOME/.config/alacritty/colorscheme.yml"
-  touch "$DOTFILES/terminal/alacritty.yml"
+  cat "$DOTFILES/terminal/themes/$1.toml" >"$HOME/.config/alacritty/colorscheme.toml"
+  touch "$DOTFILES/terminal/alacritty.toml"
 }
 
 _set_vscode_theme() {
