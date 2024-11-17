@@ -2,17 +2,6 @@
 
 set -e
 
-_start_project() {
-  if test -e "$1/.tmux"; then
-    INITIATED_EXTERNALLY="$INITIATED_EXTERNALLY" source_tmux_script "$1/.tmux"
-  elif test "$INITIATED_EXTERNALLY" != 'true' && tmux-active-sessions | ggrep -q "$(tmux-session-name-from-path "$1")"; then
-    tmux-attach-to-session "$(tmux-session-name-from-path "$1")"
-  else
-    cd "$1"
-    INITIATED_EXTERNALLY="$INITIATED_EXTERNALLY" my-tmux
-  fi
-}
-
 _all_sessions() {
   if test -f "$LOCAL_CONFIG/projects"; then
     _folders="$(cat "$LOCAL_CONFIG/projects")"
@@ -51,7 +40,7 @@ _all_sessions() {
 
   selected_session_path="$(echo "$selected_session_path" | head -1)"
 
-  _start_project "$selected_session_path"
+  tmux_start_session "$selected_session_path"
   tmux-attach-to-session "$(tmux-session-name-from-path "$selected_session_path")"
 }
 
@@ -94,7 +83,7 @@ _multiple_sessions() {
 
     selected_session_path="$(echo "$selected_session_path" | head -1)"
 
-    INITIATED_EXTERNALLY=true _start_project "$selected_session_path"
+    INITIATED_EXTERNALLY=true tmux_start_session "$selected_session_path"
   done
 }
 

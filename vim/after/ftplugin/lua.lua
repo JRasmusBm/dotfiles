@@ -378,4 +378,24 @@ vim.api.nvim_set_hl(0, "{}", {{
       { i(1), i(2), i(0) }
     )
   ),
+
+  s(
+    { trig = "rn", name = "neovim api" },
+    fmt(
+      [[
+vim.api.nvim_{}
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "rs", name = "system call" },
+    fmt(
+      [[
+vim.system({{ {} }})
+  ]],
+      { i(0) }
+    )
+  ),
 })
