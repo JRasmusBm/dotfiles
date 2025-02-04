@@ -122,6 +122,48 @@ z.object({{
       { i(0) }
     )
   ),
+
+  s(
+    { trig = "zc", name = "zod const" },
+    fmt(
+      [[
+const {} = z.object({{
+  {}
+}})
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "zs", name = "zod string" },
+    fmt(
+      [[
+z.string(){}
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "zn", name = "zod number" },
+    fmt(
+      [[
+z.number(){}
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
+    { trig = "ze", name = "zod enum" },
+    fmt(
+      [[
+z.enum([{}])
+  ]],
+      { i(0) }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }
