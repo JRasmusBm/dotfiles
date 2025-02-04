@@ -27,6 +27,14 @@ M.setup = function()
     require("nvim-tmux-runner").focus_target()
   end)
 
+  vim.keymap.set({ "n" }, "<localleader>tp", function()
+    require("nvim-tmux-runner").repeat_last_selection()
+  end)
+
+  vim.keymap.set({ "n" }, "<localleader>tv", function()
+    require("nvim-tmux-runner").go_to_last_selection()
+  end)
+
   vim.keymap.set({ "n" }, "<localleader>tf", function()
     local handler = filetype_handlers[vim.bo.filetype]
 

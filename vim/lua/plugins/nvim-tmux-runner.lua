@@ -20,5 +20,7 @@ return {
     "<localleader>tt",
     "<localleader>tf",
     "<localleader>tl",
+    "<localleader>tp",
+    "<localleader>tv",
   },
 }
