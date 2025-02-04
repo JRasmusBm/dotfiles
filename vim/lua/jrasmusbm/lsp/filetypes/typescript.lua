@@ -5,7 +5,7 @@ function M.setup(options)
   for _, filetype in ipairs(require("jrasmusbm.filetypes").javascript) do
     table.insert(filetypes, filetype)
   end
-  require("lspconfig").tsserver.setup {
+  require("lspconfig").ts_ls.setup {
     capabilities = options.capabilities,
     on_attach = function(client)
       client.server_capabilities.documentFormattingProvider = false
