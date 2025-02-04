@@ -110,6 +110,18 @@ const mock{} = (overrides?: Partial<{}>): {} => {{
       { rep(1), rep(1), i(1), i(0) }
     )
   ),
+
+  s(
+    { trig = "zo", name = "zod object" },
+    fmt(
+      [[
+z.object({{
+  {}
+}})
+  ]],
+      { i(0) }
+    )
+  ),
 })
 
 ls_utils.load_shared { filetype = "typescript", shared = "js_ts" }
