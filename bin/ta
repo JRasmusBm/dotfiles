@@ -40,7 +40,7 @@ _all_sessions() {
 
   selected_session_path="$(echo "$selected_session_path" | head -1)"
 
-  tmux_start_session "$selected_session_path"
+  tmux-start-session "$selected_session_path"
   tmux-attach-to-session "$(tmux-session-name-from-path "$selected_session_path")"
 }
 
@@ -83,7 +83,7 @@ _multiple_sessions() {
 
     selected_session_path="$(echo "$selected_session_path" | head -1)"
 
-    INITIATED_EXTERNALLY=true tmux_start_session "$selected_session_path"
+    INITIATED_EXTERNALLY=true tmux-start-session "$selected_session_path"
   done
 }
 
