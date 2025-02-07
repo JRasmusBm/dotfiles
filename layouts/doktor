@@ -4,9 +4,15 @@ set -e
 
 _supported_devices='DP-1-[1-3]'
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _layout() {
   if test "$1" = 'supported'; then
-    xrandr | ggrep -qP "$_supported_devices connected"
+    xrandr | "$grep_cmd" -qP "$_supported_devices connected"
     exit $?
   fi
 

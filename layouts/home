@@ -2,9 +2,15 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _layout() {
   if test "$1" = 'supported'; then
-    xrandr | ggrep -q 'HDMI-1 connected'
+    xrandr | "$grep_cmd" -q 'HDMI-1 connected'
     exit $?
   fi
 }

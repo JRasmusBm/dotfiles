@@ -1,6 +1,7 @@
 return {
   "dpayne/CodeGPT.nvim",
   lazy = true,
+  enabled = vim.loop.os_uname().sysname == "Darwin",
   dependencies = {
     "nvim-lua/plenary.nvim",
     "MunifTanjim/nui.nvim",

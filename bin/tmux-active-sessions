@@ -2,10 +2,16 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _tmux_active_sessions() {
   tmux list-sessions \
     | sed -E "s/:.*$//" \
-    | ggrep -v \"^"$(tmux display-message -p "#S")"\$\"
+    | "$grep_cmd" -v \"^"$(tmux display-message -p "#S")"\$\"
 }
 
 _tmux_active_sessions "$@"

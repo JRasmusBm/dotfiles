@@ -1,5 +1,11 @@
 #!/bin/sh
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 if test "$(uname)" = "Darwin"; then
   _find_cmd='gfind'
 else
@@ -48,7 +54,7 @@ _tmux_speeddial() {
       exit 1
     fi
 
-    if ! (tmux list-sessions | ggrep -q "$session_name"); then
+    if ! (tmux list-sessions | "$grep_cmd" -q "$session_name"); then
       root_folder="$(echo "$session_name" | xargs zoxide query)"
       cd "$root_folder" || return 1
       INITIATED_EXTERNALLY=false source_tmux_script "$root_folder/.tmux" || default_tmux_session

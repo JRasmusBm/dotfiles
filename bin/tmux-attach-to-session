@@ -2,8 +2,16 @@
 
 set -e
 
+
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
+
 _attach_to_session() {
-  session_name="$(echo "$1" | ggrep -oP '(\S+(?=:)|^\S+$)')"
+  session_name="$(echo "$1" | "$grep_cmd" -oP '(\S+(?=:)|^\S+$)')"
 
   if [ -z "$TMUX" ]; then
     (

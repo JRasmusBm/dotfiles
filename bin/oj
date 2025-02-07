@@ -2,10 +2,16 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _extract_jira_id() {
   _current_branch="$(git branch --show-current)"
   _without_folders="${_current_branch##*/}"
-  echo "$_without_folders" | ggrep -oP '^\w+-\d+'
+  echo "$_without_folders" | "$grep_cmd" -oP '^\w+-\d+'
 }
 
 _open_jira() {

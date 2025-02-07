@@ -2,6 +2,12 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _fza() {
   data="$(cat)"
 
@@ -12,7 +18,7 @@ _fza() {
   fi
 
   echo "$selection" >/dev/stdout
-  echo "$data" | ggrep -v "$selection" | _fza "$@"
+  echo "$data" | "$grep_cmd" -v "$selection" | _fza "$@"
 }
 
 _fza "$@"

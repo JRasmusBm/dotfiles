@@ -2,8 +2,14 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _tmux_has_session() {
-  test -n "$(tmux-active-sessions | ggrep -E "^$1$")"
+  test -n "$(tmux-active-sessions | "$grep_cmd" -E "^$1$")"
 }
 
 _tmux_has_session "$@"

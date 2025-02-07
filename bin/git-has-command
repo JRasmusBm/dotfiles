@@ -2,6 +2,12 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _GIT_OPTIONS='
 --version
 --help
@@ -33,11 +39,11 @@ _GIT_OPTIONS='
 _git_has_command() {
   (
     _matching_portion="$(echo "$1" | awk -F'[ =]' '{print $1}')"
-    if echo "$_GIT_OPTIONS" | ggrep -qP "^$_matching_portion$"; then
+    if echo "$_GIT_OPTIONS" | "$grep_cmd" -qP "^$_matching_portion$"; then
       return 0
     fi
 
-    git --list-cmds='builtins,main,others,nohelpers,alias,config' | ggrep "^$1\$" -q
+    git --list-cmds='builtins,main,others,nohelpers,alias,config' | "$grep_cmd" "^$1\$" -q
   )
 }
 

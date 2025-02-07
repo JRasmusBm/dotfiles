@@ -2,6 +2,12 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _update_screenkey() {
   if tmux-has-session 'screenkey'; then
     tmux send-keys -t 'screenkey' "C-c" Enter
@@ -51,7 +57,7 @@ _matches_option() {
     echo "$_matcher" \
       | tr -d '()' \
       | tr -s '|' '\n' \
-      | ggrep -E "^$_value_to_check$" || true
+      | "$grep_cmd" -E "^$_value_to_check$" || true
   )"
 
   test -n "$matches"

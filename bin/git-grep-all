@@ -2,8 +2,14 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _git_grep_all() {
-  git log --format=reference | cut -d \  -f 1 | xargs git ggrep "$@"
+  git log --format=reference | cut -d \  -f 1 | xargs git "$grep_cmd" "$@"
 }
 
 _git_grep_all "$@"

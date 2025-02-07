@@ -2,6 +2,12 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _git_headings_matcher() {
   (
     git_template="$(
@@ -13,7 +19,7 @@ _git_headings_matcher() {
 
     git_headings="$(
       echo "$git_template" \
-        | ggrep -vP '(^#|^$|^<\+\+>)' \
+        | "$grep_cmd" -vP '(^#|^$|^<\+\+>)' \
         | sed -E 's;<\+\+>;[^ ]+;g'
     )"
 

@@ -2,6 +2,12 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _has_git_status() {
   if test -z "$1"; then
     test -n "$(git status --porcelain)"
@@ -9,12 +15,12 @@ _has_git_status() {
   fi
 
   if test "$1" = 'staged'; then
-    $(git status --porcelain | ggrep -Pq '^[MAD]')
+    $(git status --porcelain | "$grep_cmd" -Pq '^[MAD]')
     return $?
   fi
 
   if test "$1" = 'unstaged'; then
-    $(git status --porcelain | ggrep -Pq '^ +[?MAD]')
+    $(git status --porcelain | "$grep_cmd" -Pq '^ +[?MAD]')
     return $?
   fi
 

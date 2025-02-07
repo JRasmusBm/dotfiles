@@ -2,10 +2,16 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _start_project() {
   if test -e "$1/.tmux"; then
     INITIATED_EXTERNALLY="$INITIATED_EXTERNALLY" source_tmux_script "$1/.tmux"
-  elif test "$INITIATED_EXTERNALLY" != 'true' && tmux-active-sessions | ggrep -q "$(tmux-session-name-from-path "$1")"; then
+  elif test "$INITIATED_EXTERNALLY" != 'true' && tmux-active-sessions | "$grep_cmd" -q "$(tmux-session-name-from-path "$1")"; then
     tmux-attach-to-session "$(tmux-session-name-from-path "$1")"
   else
     cd "$(zoxide query "$1" || printf '%s' "$1")"

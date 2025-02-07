@@ -2,13 +2,20 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
+
 _git_close_issue() {
   if ! (g is-my-repo || confirm "This is not your repository, do you want to continue?"); then
     return 1
   fi
 
   if test $# -eq 0; then
-    number=$(gh issue list | fzf --reverse | ggrep -o -E "^([0-9])+")
+    number=$(gh issue list | fzf --reverse | "$grep_cmd" -o -E "^([0-9])+")
   else
     number=$1
   fi

@@ -2,13 +2,19 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 pomo_status() {
   raw_status=$(/usr/bin/i3-gnome-pomodoro status)
   status_text=${raw_status%% *}
   time=${raw_status#* }
   minutes="${time%%:*}m"
 
-  if echo "$raw_status" | ggrep -q "PAUSED"; then
+  if echo "$raw_status" | "$grep_cmd" -q "PAUSED"; then
     printf "⭕ Paused"
     return
   fi

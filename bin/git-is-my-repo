@@ -2,8 +2,14 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _is_my_repo() {
-  g remote -v | ggrep -qi jrasmusbm || return 1
+  g remote -v | "$grep_cmd" -qi jrasmusbm || return 1
 }
 
 _is_my_repo "$@"

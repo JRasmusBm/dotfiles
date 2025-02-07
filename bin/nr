@@ -2,9 +2,15 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 . "$DOTFILES/.venv/bin/activate"
 
-if ! (pip list 2>/dev/null | ggrep -q neovim-remote); then
+if ! (pip list 2>/dev/null | "$grep_cmd" -q neovim-remote); then
   pip install neovim-remote
 fi
 

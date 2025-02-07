@@ -2,4 +2,10 @@
 
 set -e
 
-export "$(ggrep -v '^#' "$1" | xargs -0)"
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
+export "$("$grep_cmd" -v '^#' "$1" | xargs -0)"

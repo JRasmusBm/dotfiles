@@ -2,6 +2,12 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _is_vim_running() {
   if test -n "$1"; then
     pane="$1"
@@ -9,7 +15,7 @@ _is_vim_running() {
     pane="$TMUX_PANE"
   fi
 
-  pane_pid="$(tmux list-panes -F "#{pane_id} #{pane_pid}" | ggrep "$pane" | cut -d ' ' -f 2)"
+  pane_pid="$(tmux list-panes -F "#{pane_id} #{pane_pid}" | "$grep_cmd" "$pane" | cut -d ' ' -f 2)"
 
   for descendant in $(list-descendants "$pane_pid"); do
     if test "$(uname)" = 'Darwin'; then

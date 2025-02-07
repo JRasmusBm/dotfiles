@@ -63,7 +63,7 @@ _multiple_sessions() {
 
   tmux_session_names="$(echo "$_possible_sessions\n$(tmux-active-sessions)" | xargs -n 1 tmux-session-name-from-path)"
 
-  echo "$tmux_session_names" | sort -u | ggrep -v "$(tmux-active-sessions)" | fza --reverse --preview 'tmux-active-sessions' | while read -r _selected_session; do
+  echo "$tmux_session_names" | sort -u | "$grep_cmd" -v "$(tmux-active-sessions)" | fza --reverse --preview 'tmux-active-sessions' | while read -r _selected_session; do
     selected_session_path=""
     for _path in $_possible_sessions; do
       _derived_session_name="$(tmux-session-name-from-path "$_path")"

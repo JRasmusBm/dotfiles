@@ -2,5 +2,11 @@
 
 set -e
 
-hash=$(git log --pretty='%C(Yellow)%h %C(cyan)%ad %C(reset)%s' --date='format-local:%Y, %b %d' --all | fzf --reverse | ggrep -o -E "^([0-9a-z])+")
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
+hash=$(git log --pretty='%C(Yellow)%h %C(cyan)%ad %C(reset)%s' --date='format-local:%Y, %b %d' --all | fzf --reverse | "$grep_cmd" -o -E "^([0-9a-z])+")
 git s "$hash"

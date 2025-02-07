@@ -2,8 +2,14 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _has_url_prefix() {
-  ggrep -qP 'ix\.io/'
+  "$grep_cmd" -qP 'ix\.io/'
 }
 
 _pastebin() {

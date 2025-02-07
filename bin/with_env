@@ -2,6 +2,12 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 file="$1";
 shift;
-env "$(ggrep -v '^#' "$file" | xargs -0)" "$@"
+env "$("$grep_cmd" -v '^#' "$file" | xargs -0)" "$@"

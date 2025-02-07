@@ -2,14 +2,20 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _github_url() {
   _url="$1"
 
-  if echo "$_url" | ggrep -qPv "\.git$" ; then
+  if echo "$_url" | "$grep_cmd" -qPv "\.git$" ; then
     _url="$_url.git"
   fi
 
-  if echo "$_url" | ggrep -qPv "@" ; then
+  if echo "$_url" | "$grep_cmd" -qPv "@" ; then
     _url="git@github.com:$_url"
   fi
   

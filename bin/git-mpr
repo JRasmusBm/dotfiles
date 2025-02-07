@@ -2,19 +2,25 @@
 
 set -e
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _git_merge_pr() {
   current_branch="$(git branch --show-current)"
   check_states="$(gh pr checks | awk '{ print $2 }')"
 
-  if echo "$check_states" | ggrep -qP 'fail' && ! confirm "There are failed checks, do you still want to continue?"; then
+  if echo "$check_states" | "$grep_cmd" -qP 'fail' && ! confirm "There are failed checks, do you still want to continue?"; then
     return 1
   fi
 
-  if echo "$check_states" | ggrep -qP 'pending' && ! confirm "There are active checks, do you still want to continue?"; then
+  if echo "$check_states" | "$grep_cmd" -qP 'pending' && ! confirm "There are active checks, do you still want to continue?"; then
     return 1
   fi
   
-  if echo "$check_states" | ggrep -qP '^\s*$' && ! confirm "There are no checks, do you still want to continue?"; then
+  if echo "$check_states" | "$grep_cmd" -qP '^\s*$' && ! confirm "There are no checks, do you still want to continue?"; then
     return 1
   fi
 

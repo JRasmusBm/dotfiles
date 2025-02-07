@@ -2,12 +2,13 @@
 
 set -e
 
-source_tmux_script() {
-  if test "$1" = "-y"; then
-    override_check="true"
-    shift
-  fi
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
 
+source_tmux_script() {
   if test ! -d "$(dirname "$1")"; then
     echo "Couldn't find folder $(realpath "$(dirname $1)")" > /dev/stderr
     exit 0
@@ -21,19 +22,12 @@ source_tmux_script() {
   fi
 
   local DIGEST="$(openssl sha256 "$tmux_script_path")"
-  if ggrep -q "$DIGEST" ~/..tmux.digests 2>/dev/null; then
+  if "$grep_cmd" -q "$DIGEST" ~/..tmux.digests 2>/dev/null; then
     INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source $tmux_script_path
     return
   fi
 
-  if test -n "$override_check"; then
-    REPLY=T
-  else
-    cat "$tmux_script_path"
-    echo 'Trust (and run) this .tmux file? (t = trust, otherwise = skip) '
-    read REPLY >/dev/null
-  fi
-  if [[ $REPLY =~ ^[Tt]$ ]]; then
+  if confirm 'Trust (and run) this .tmux file?' ; then
     echo "$DIGEST" >>~/..tmux.digests
     INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source_tmux_script "$@"
     return

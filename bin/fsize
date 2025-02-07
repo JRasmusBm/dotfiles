@@ -5,9 +5,15 @@ set -e
 ALACRITTY_FSIZE_FILE="$HOME/.config/alacritty/fsize.toml"
 ALACRITTY_CONFIG="$HOME/.config/alacritty/alacritty.yml"
 
+if test "$(uname)" = 'Darwin' ; then
+  grep_cmd='ggrep'
+else
+  grep_cmd='grep'
+fi
+
 _set_font_size() {
   if test "$1" = 'show'; then
-    cat "$ALACRITTY_FSIZE_FILE" | ggrep -oP '\d+'
+    cat "$ALACRITTY_FSIZE_FILE" | "$grep_cmd" -oP '\d+'
     return 0
   fi
 
