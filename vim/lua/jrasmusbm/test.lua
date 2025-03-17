@@ -1,20 +1,7 @@
 local M = {}
 
 M.strategy = function(cmd)
-  local cmds = { cmd }
-
-  if not require("jrasmusbm.compat").in_termux() then
-    table.insert(
-      cmds,
-      "if test $? = 0 ; then ;"
-      .. "nr -c 'lua vim.notify(\"Passed!\")' ;"
-      .. "else ;"
-      .. "nr -c 'lua vim.notify(\"Failed!\", 4)' ;"
-      .. "fi"
-    )
-  end
-
-  require("nvim-tmux-runner").send_lines_to_runner(cmds)
+  require("nvim-tmux-runner").send_lines_to_runner({ cmd })
 end
 
 M.setup = function()
