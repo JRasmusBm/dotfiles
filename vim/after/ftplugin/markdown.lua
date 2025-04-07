@@ -7,10 +7,10 @@ local replace_in_textobject = function(regex_)
     function(start_position, end_position)
       vim.cmd(
         "silent keeppatterns"
-          .. start_position[1]
-          .. ","
-          .. end_position[1]
-          .. regex_
+        .. start_position[1]
+        .. ","
+        .. end_position[1]
+        .. regex_
       )
     end
   )
@@ -137,6 +137,23 @@ ls.add_snippets("markdown", {
       "mdtoc",
       vim.fn.expand "%",
     }
+  ),
+
+  s(
+    { trig = "go", name = "goalie owners" },
+    fmt(
+      [[
+**Summary for the goalie owners:**
+
+- Root cause:
+    - {}
+- Solution:
+    - {}
+Long term remediation:
+    - {}
+  ]],
+      { i(1), i(2), i(0) }
+    )
   ),
 })
 
