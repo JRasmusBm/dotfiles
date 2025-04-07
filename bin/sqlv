@@ -10,7 +10,7 @@ def interpolate_line(variables: list, line: str):
     result = ""
 
     start = 0
-    for match in re.finditer(r":([0-9]+)", line):
+    for match in re.finditer(r"[$:]([0-9]+)", line):
         match_start, match_end = match.span()
 
         preamble = line[start:match_start]
