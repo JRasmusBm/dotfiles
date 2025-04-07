@@ -3,6 +3,7 @@ local s = ls.s
 local fmt = require("luasnip.extras.fmt").fmt
 local i = ls.insert_node
 local t = ls.text_node
+local rep = require("luasnip.extras").rep
 
 vim.g["test#javascript#runner"] = "mocha"
 vim.g["test#javascript#mocha#options"] = {
@@ -50,10 +51,13 @@ describe("{}", function () {{
     fmt(
       [[
 it("{}", async function () {{
-  {}
+  // given
+  // when
+  // then
+  throw "Not implemented!";
 }});
   ]],
-      { i(1), i(0) }
+      { i(0) }
     )
   ),
 
@@ -101,5 +105,29 @@ expect(calls[0].args).to.deep.equal([{{ {} }}])
   s(
     { trig = "lm", name = "mock logging" },
     fmt('sinon.replace(console, "{}", sinon.fake())\n{}', { i(1), i(0) })
+  ),
+
+  s(
+    { trig = "dms", name = "" },
+    fmt(
+      [[
+sinon.stub({}, "{}");
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
+    { trig = "dmc", name = "" },
+    fmt(
+      [[
+let {}Stub: sinon.SinonStub<
+  Parameters<typeof {}["{}"]>,
+  ReturnType<typeof {}["{}"]>
+>;
+{}Stub = sinon.stub({}, "{}");
+  ]],
+      { rep(1), i(2), i(1), rep(2), rep(1), rep(1), rep(2), rep(1) }
+    )
   ),
 })
