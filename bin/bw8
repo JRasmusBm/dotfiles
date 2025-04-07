@@ -4,7 +4,20 @@ set -e
 
 _wait_for_buddy() {
   (
-    pipelines="$(buddy-cli pl ls --json 2>/dev/null)"
+    pipelines='[]'
+    page=1
+    while true; do
+      batch="$(buddy-cli pl ls -e $page --json 2>/dev/null)"
+
+      if test "$(echo $batch | jq length)" = 0; then
+        break
+      fi
+
+      pipelines=$(echo $pipelines $batch | jq -s add)
+
+      page="$(echo "$page + 1" | bc)"
+    done
+
     display_name="$(echo "$pipelines" | jq -r '.[].display_name' | fzf --reverse)"
     pipeline_id="$(echo "$pipelines" | jq --arg name "$display_name" -r '.[] | select(.display_name==$name).id')"
 
@@ -18,7 +31,7 @@ _wait_for_buddy() {
       )
     fi
 
-    last_execution="$(BUDDY_CLI_PIPELINE="$pipeline_id" buddy-cli pl execution "$execution_id" --json 2> /dev/null)"
+    last_execution="$(BUDDY_CLI_PIPELINE="$pipeline_id" buddy-cli pl execution "$execution_id" --json 2>/dev/null)"
     if test -z "$last_execution"; then
       (
         echo "Failed to retrieve last execution for $display_name ($pipeline_id) to $revision"
@@ -26,14 +39,13 @@ _wait_for_buddy() {
       )
     fi
 
-    until test "$(echo "$last_execution" | jq -r '.status == "SUCCESSFUL" or .status == "FAILED"')" = 'true'
-    do
-      echo $last_execution > /dev/stderr
+    until test "$(echo "$last_execution" | jq -r '.status == "SUCCESSFUL" or .status == "FAILED"')" = 'true'; do
+      echo $last_execution >/dev/stderr
       sleep 5
-      last_execution="$(BUDDY_CLI_PIPELINE="$pipeline_id" buddy-cli pl execution "$execution_id" --json 2> /dev/null)"
+      last_execution="$(BUDDY_CLI_PIPELINE="$pipeline_id" buddy-cli pl execution "$execution_id" --json 2>/dev/null)"
     done
 
-    open "$(echo "$last_execution" | jq -r '.url')" 
+    open "$(echo "$last_execution" | jq -r '.url')"
   )
 }
 
