@@ -1,11 +1,5 @@
-#!/bin/sh
+#!/usr/bin/env python3
 
-set -e
+import uuid
 
-_generate_uuid() {
-  (
-    curl "https://uuid4.com/?format=raw" 2> /dev/null
-  )
-}
-
-_generate_uuid "$@"
+print(uuid.uuid4())
