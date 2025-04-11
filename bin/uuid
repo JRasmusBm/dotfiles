@@ -4,8 +4,7 @@ set -e
 
 _generate_uuid() {
   (
-    n=${1:-1}
-    curl "uuid4.com/?count=$n" 2> /dev/null
+    curl "https://uuid4.com/?format=raw" 2> /dev/null
   )
 }
 
