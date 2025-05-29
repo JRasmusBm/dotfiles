@@ -1,0 +1,9 @@
+#!/bin/sh
+
+set -e
+
+(
+  cd "$HOME/projects/budget"
+  poetry run python -m budget.cli "$@"
+)
+

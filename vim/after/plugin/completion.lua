@@ -57,9 +57,10 @@ cmp.setup {
     },
   },
   sources = cmp.config.sources {
-    { name = "nvim_lsp", priority = 4, max_item_count = 5 },
-    { name = "luasnip",  priority = 3, max_item_count = 3 },
-    { name = "path",     priority = 2, max_item_count = 3 },
+    { name = "nvim_lsp", priority = 5, max_item_count = 5 },
+    { name = "avante", priority = 2, max_item_count = 5 },
+    { name = "luasnip", priority = 4, max_item_count = 3 },
+    { name = "path", priority = 3, max_item_count = 3 },
     {
       name = "buffer",
       get_bufnrs = function()
@@ -68,7 +69,6 @@ cmp.setup {
       priority = 1,
       max_item_count = 5,
     },
-    -- { name = "copilot", group_index = 3, max_item_count = 2 },
   },
 }
 
@@ -79,7 +79,7 @@ cmp.setup.cmdline(
 
 cmp.setup.cmdline(":", {
   sources = cmp.config.sources {
-    { name = "path",    max_item_count = 20 },
+    { name = "path", max_item_count = 20 },
     { name = "cmdline", max_item_count = 20 },
   },
 })

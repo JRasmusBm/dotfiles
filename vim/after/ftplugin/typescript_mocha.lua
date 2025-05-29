@@ -98,6 +98,16 @@ expect(calls[0].args).to.deep.equal([{{ {} }}])
   ),
 
   s(
+    { trig = "dnc", name = "expect not called" },
+    fmt(
+      [[
+expect({}.getCalls()).to.have.length(0)
+  ]],
+      { i(0) }
+    )
+  ),
+
+  s(
     { trig = "de", name = "expect (deep) equal" },
     fmt("expect({}).to.deep.equal({})\n{}", { i(1), i(2), i(0) })
   ),

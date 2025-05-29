@@ -78,8 +78,8 @@ ls.add_snippets("python", {
     fmt(
       [[
 print(dict(
-    file = "{}",
-    line = {},
+    jrb_file = "{}",
+    jrb_line = {},
     {}
 ))
 {}
