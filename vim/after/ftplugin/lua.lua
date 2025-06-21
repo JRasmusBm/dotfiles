@@ -276,10 +276,10 @@ vim.api.nvim_create_autocmd({{ "BufNew", "BufNewFile", "BufRead" }}, {{
     fmt(
       [[
 require("jrasmusbm.change_filetype").setup({{
-  extensions = {{}},
+  extension = {{}},
   literal = {{}},
   complex = {{{}}},
-  function_extensions = {{}},
+  function_extension = {{}},
   function_literal = {{}},
   function_complex = {{}},
   shebang = {{}},

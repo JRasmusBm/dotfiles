@@ -25,21 +25,6 @@ local fmt = require("luasnip.extras.fmt").fmt
 
 ls.add_snippets("sql", {
   s(
-    { trig = "running", name = "get running queries" },
-    fmt(
-      [[
-SELECT pid, now() - backend_start, query
-FROM pg_stat_activity
-WHERE state = 'active'
-  AND pid != pg_backend_pid()
-  AND query !~~ 'START_REPLICATION%'
-  ORDER B Y backend_start;
-  ]],
-      {}
-    )
-  ),
-
-  s(
     { trig = "bt", name = "new table" },
     fmt(
       [[
@@ -80,18 +65,6 @@ ALTER COLUMN {},
       [[
 ALTER COLUMN {} SET TYPE {} USING {},
   ]],
-      { i(1), i(2), i(0) }
-    )
-  ),
-
-  s(
-    { trig = "be", name = "new enum" },
-    fmt(
-      [[
-CREATE TYPE {} AS ENUM
-  ({});
-{}
-]],
       { i(1), i(2), i(0) }
     )
   ),
@@ -154,17 +127,7 @@ VARCHAR({}){}
     { trig = "btt", name = "text" },
     fmt(
       [[
-TEXT({}){}
-]],
-      { i(1), i(0) }
-    )
-  ),
-
-  s(
-    { trig = "bai", name = "serial" },
-    fmt(
-      [[
-BIGSERIAL{}
+TEXT{}
 ]],
       { i(0) }
     )
