@@ -112,6 +112,7 @@ Object.values({})
     { trig = "le", name = "log error" },
     fmt("console.error({})\n{}", { i(1), i(0) })
   ),
+
   s(
     { trig = "lc", name = "log count" },
     fmt(

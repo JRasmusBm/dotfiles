@@ -10,6 +10,10 @@ local s = function(context, nodes, options)
   end
 end
 
+local d = ls.dynamic_node
+
+ls.add_snippets("", {})
+
 return {
   s(
     { trig = "ir", name = "import react" },
@@ -70,6 +74,29 @@ const {} = use{}({});
   s(
     { trig = "he", name = "useEffect hook" },
     fmt("useEffect(() => {{\n  {}\n}}, [{}])\n\n{}", { i(1), i(2), i(0) })
+  ),
+
+  s(
+    { trig = "hec", name = "useEffect log changed" },
+    fmt(
+      [[
+useEffect(() => {{
+  console.count("{} changed")
+  console.dir({{
+    JRB_file_path: "{}",
+    JRB_line_number: "{}",
+    changed_property: {},
+  }}, {{ depth: 20 }})
+}}, [{}])
+    ]],
+      {
+        rep(1),
+        d(2, ls_utils.file_path, {}),
+        d(3, ls_utils.line_number, {}),
+        i(1),
+        rep(1),
+      }
+    )
   ),
 
   s(
@@ -232,9 +259,15 @@ style={{{{ {} }}}}
     )
   ),
 
-  s({ trig="roc", name="on click" }, fmt([[
+  s(
+    { trig = "roc", name = "on click" },
+    fmt(
+      [[
 onClick={{() => {{
   {}
 }}}}
-  ]], { i(0) })),
+  ]],
+      { i(0) }
+    )
+  ),
 }

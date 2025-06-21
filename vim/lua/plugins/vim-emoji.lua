@@ -1,4 +1,5 @@
 return {
   "junegunn/vim-emoji",
-  cmd = "Emojify",
+  -- cmd = "Emojify",
+  lazy = false,
 }
