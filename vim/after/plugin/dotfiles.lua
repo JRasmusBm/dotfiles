@@ -5,7 +5,7 @@ vim.cmd [[
 :command! Brc exec "e $DOTFILES/shell/bashrc"
 :command! Zrc exec "e $DOTFILES/shell/zshrc"
 :command! Zenv exec "e $DOTFILES/shell/zshenv"
-:command! Arc exec "e $DOTFILES/terminal/alacritty.yml"
+:command! Arc exec "e $DOTFILES/terminal/alacritty.toml"
 :command! Grc exec "e $DOTFILES/git/gitconfig"
 :command! Trc exec "e $DOTFILES/tmux/tmux.conf"
 :command! Frc exec "e $DOTFILES/vim/ftplugin/" . &ft . ".lua"
