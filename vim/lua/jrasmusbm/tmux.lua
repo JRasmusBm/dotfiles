@@ -66,6 +66,19 @@ M.setup = function()
       end
     )
   )
+
+  vim.keymap.set({ "v" }, "<localleader>ts", function()
+    vim.schedule(function()
+      local start_position = vim.api.nvim_buf_get_mark(0, "<")
+      local end_position = vim.api.nvim_buf_get_mark(0, ">")
+
+      require("nvim-tmux-runner").send_selection_to_runner(
+        start_position,
+        end_position
+      )
+    end
+)
+  end)
 end
 
 return M

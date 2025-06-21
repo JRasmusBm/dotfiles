@@ -17,6 +17,7 @@ return {
   keys = {
     "<localleader>ta",
     "<localleader>ts",
+    { "<localleader>ts", mode = "v" },
     "<localleader>tt",
     "<localleader>tf",
     "<localleader>tl",
