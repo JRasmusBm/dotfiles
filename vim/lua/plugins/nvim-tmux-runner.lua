@@ -22,6 +22,10 @@ return {
     "<localleader>tf",
     "<localleader>tl",
     "<localleader>tp",
+    "<localleader>to",
+    "<localleader>tj",
+    "<localleader>tc",
+    "<localleader>td",
     "<localleader>tv",
   },
 }

@@ -67,6 +67,35 @@ M.setup = function()
     )
   )
 
+  vim.keymap.set({ "n" }, "<localleader>td", function()
+    require("nvim-tmux-runner").send_special_to_runner "C-d"
+  end)
+
+  vim.keymap.set({ "n" }, "<localleader>tc", function()
+    require("nvim-tmux-runner").send_special_to_runner "C-c"
+  end)
+
+  vim.keymap.set({ "n" }, "<localleader>to", function()
+    local cmd = {
+      "tmux",
+      "split-window",
+      "-h",
+    }
+    vim.system(cmd):wait()
+    require("nvim-tmux-runner").attach { pane = 1 }
+    vim.system({ "tmux", "last-pane" }):wait()
+  end)
+
+  vim.keymap.set({ "n" }, "<localleader>tj", function()
+    local cmd = {
+      "tmux",
+      "split-window",
+    }
+    vim.system(cmd):wait()
+    require("nvim-tmux-runner").attach { pane = 1 }
+    vim.system({ "tmux", "last-pane" }):wait()
+  end)
+
   vim.keymap.set({ "v" }, "<localleader>ts", function()
     vim.schedule(function()
       local start_position = vim.api.nvim_buf_get_mark(0, "<")
@@ -76,8 +105,7 @@ M.setup = function()
         start_position,
         end_position
       )
-    end
-)
+    end)
   end)
 end
 
