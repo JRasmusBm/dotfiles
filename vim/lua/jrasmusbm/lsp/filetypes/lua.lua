@@ -30,11 +30,7 @@ table.insert(runtime_path, "lua/?.lua")
 table.insert(runtime_path, "lua/?/init.lua")
 
 function M.setup(options)
-  require("lspconfig").lua_ls.setup {
-    filetypes = require("jrasmusbm.filetypes").lua,
-    capabilities = options.capabilities,
-    on_attach = options.on_attach,
-    settings = {
+  local settings = {
       Lua = {
         runtime = {
           -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
@@ -53,7 +49,13 @@ function M.setup(options)
           enable = false,
         },
       },
-    },
+    }
+
+  require("lspconfig").lua_ls.setup {
+    filetypes = require("jrasmusbm.filetypes").lua,
+    capabilities = options.capabilities,
+    on_attach = options.on_attach,
+    settings = settings,
   }
 end
 

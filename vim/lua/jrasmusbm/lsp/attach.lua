@@ -1,8 +1,18 @@
 local M = {}
 
+
+local state = {
+
+}
+
 function M.on_attach(client, bufnr)
   bufnr = bufnr or 0
-  vim.api.nvim_buf_set_option(bufnr, "omnifunc", "v:lua.vim.lsp.omnifunc")
+
+  vim.api.nvim_set_option_value(
+    "omnifunc",
+    "v:lua.vim.lsp.omnifunc",
+    { buf = bufnr }
+  )
 
   -- Mappings.
   local opts = { noremap = true, silent = true, buffer = bufnr }
@@ -10,25 +20,29 @@ function M.on_attach(client, bufnr)
   vim.keymap.set({ "n" }, "g?", vim.diagnostic.open_float, opts)
 
   vim.keymap.set({ "n" }, "[v", function()
-    vim.diagnostic.goto_prev {
+    vim.diagnostic.jump {
+      count = -1,
       severity = { min = vim.diagnostic.severity.ERROR },
     }
   end, opts)
 
   vim.keymap.set({ "n" }, "]v", function()
-    vim.diagnostic.goto_next {
+    vim.diagnostic.jump {
+      count = 1,
       severity = { min = vim.diagnostic.severity.ERROR },
     }
   end, opts)
 
   vim.keymap.set({ "n" }, "[V", function()
-    vim.diagnostic.goto_prev {
+    vim.diagnostic.jump {
+      count = -1,
       severity = { max = vim.diagnostic.severity.WARN },
     }
   end, opts)
 
   vim.keymap.set({ "n" }, "]V", function()
-    vim.diagnostic.goto_next {
+    vim.diagnostic.jump {
+      count = 1,
       severity = { max = vim.diagnostic.severity.WARN },
     }
   end, opts)
@@ -93,8 +107,27 @@ function M.on_attach(client, bufnr)
     end)
   end
 
+  if client.server_capabilities.inlayHintProvider and vim.bo[bufnr].buftype ~= "" then
+    vim.lsp.inlay_hint.enable(true, { bufnr = bufnr })
+  else
+    vim.lsp.inlay_hint.enable(false, { bufnr = bufnr })
+  end
+
+
   if client.supports_method "textDocument/document_range_formatting" then
     vim.keymap.set({ "v" }, "==", vim.lsp.buf.format)
+  end
+
+  if state.original_inlay_hint_handler == nil then
+    state.original_inlay_hint_handler = vim.lsp.handlers["textDocument/inlayHint"]
+  end
+
+
+  vim.lsp.handlers["textDocument/inlayHint"] = function(err, result, ctx, config)
+    if err and err.message and err.message:find("File not opened in the editor") then
+      return
+    end
+    state.original_inlay_hint_handler(err, result, ctx, config)
   end
 
   vim.lsp.handlers["textDocument/publishDiagnostics"] = vim.lsp.with(
@@ -104,12 +137,8 @@ function M.on_attach(client, bufnr)
 
   -- Set autocommands conditional on server_capabilities
   if client.supports_method "textDocument/documentHighlight" then
-    local lsp_document_highlight_augroup = vim.api.nvim_create_augroup(
-      "lsp_document_highlight",
-      { clear = true }
-    )
-
-    local ignore_filetypes = { fugitive = true }
+    local lsp_document_highlight_augroup =
+        vim.api.nvim_create_augroup("lsp_document_highlight", { clear = true })
 
     vim.api.nvim_create_autocmd({ "CursorHold" }, {
       group = lsp_document_highlight_augroup,
