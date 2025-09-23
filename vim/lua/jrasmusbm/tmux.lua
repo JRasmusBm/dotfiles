@@ -5,7 +5,7 @@ local filetype_handlers = {
   python = "python %s",
   sh = "sh %s",
   rust = "cargo run %s",
-  typescript = "ts-node %s",
+  typescript = "node -r tsconfig-paths/register -r ts-node/register %s",
   go = "go run %s",
   terraform = "terraform apply",
 }
