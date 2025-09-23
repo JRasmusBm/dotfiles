@@ -8,4 +8,7 @@ return {
   cmd = {
     "UndotreeToggle",
   },
+  keys = {
+    "<localleader>u",
+  },
 }
