@@ -6,7 +6,10 @@ return {
   },
   config = function()
     require("mason").setup()
-    require("mason-lspconfig").setup()
+    require("mason-lspconfig").setup({
+      automatic_installation = true,
+      handlers = { lua_ls= function() end, efm=function()end }
+    })
     require("jrasmusbm.lsp").ensure_setup()
   end,
 }
