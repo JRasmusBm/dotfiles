@@ -1,0 +1,291 @@
+#!/usr/bin/env python3
+"""
+AI Development Environment Setup Script
+Manages Ollama installation, daemon, and models for local AI development.
+"""
+
+import argparse
+import subprocess
+import sys
+import os
+import time
+import signal
+import json
+from pathlib import Path
+
+
+class OllamaManager:
+    def __init__(self):
+        self.pid_file = Path.home() / ".ollama_daemon.pid"
+        self.models = [
+            "qwen2.5-coder:7b",   # Fast model for quick edits
+            "qwen2.5-coder:14b",  # Smarter model for complex tasks
+        ]
+    
+    def run_command(self, cmd, capture_output=False, check=True):
+        """Run a shell command with proper error handling."""
+        try:
+            if capture_output:
+                result = subprocess.run(cmd, shell=True, capture_output=True, text=True, check=check)
+                return result.stdout.strip()
+            else:
+                subprocess.run(cmd, shell=True, check=check)
+                return True
+        except subprocess.CalledProcessError as e:
+            print(f"Error running command: {cmd}")
+            print(f"Error: {e}")
+            return False
+    
+    def install(self):
+        """Install Ollama and pull required models."""
+        print("🚀 Installing Ollama...")
+        
+        # Check if Ollama is already installed
+        if self.run_command("which ollama", capture_output=True, check=False):
+            print("✅ Ollama already installed")
+        else:
+            print("📦 Installing Ollama...")
+            
+            # Detect OS and install appropriately
+            import platform
+            system = platform.system()
+            
+            if system == "Darwin":  # macOS
+                print("🍎 Detected macOS - installing via Homebrew or direct download...")
+                
+                # Try Homebrew first
+                if self.run_command("which brew", capture_output=True, check=False):
+                    print("🍺 Using Homebrew to install Ollama...")
+                    success = self.run_command("brew install ollama")
+                else:
+                    print("📥 Using direct download for macOS...")
+                    success = self.run_command("curl -fsSL https://ollama.com/install.sh | sh")
+                    
+            elif system == "Linux":
+                print("🐧 Detected Linux - using install script...")
+                success = self.run_command("curl -fsSL https://ollama.com/install.sh | sh")
+                
+            else:
+                print(f"❌ Unsupported operating system: {system}")
+                print("Please install Ollama manually from https://ollama.com/download")
+                sys.exit(1)
+            
+            if not success:
+                print("❌ Failed to install Ollama")
+                print("💡 Try installing manually:")
+                if system == "Darwin":
+                    print("   - Download from: https://ollama.com/download/mac")
+                    print("   - Or use: brew install ollama")
+                sys.exit(1)
+            print("✅ Ollama installed successfully")
+        
+        # Start Ollama temporarily to pull models
+        print("🔄 Starting Ollama to pull models...")
+        self.start(for_install=True)
+        
+        # Wait for service to be ready
+        print("⏳ Waiting for Ollama service to start...")
+        time.sleep(3)
+        
+        # Pull models
+        for model in self.models:
+            print(f"📥 Pulling {model}...")
+            success = self.run_command(f"ollama pull {model}")
+            if success:
+                print(f"✅ {model} pulled successfully")
+            else:
+                print(f"❌ Failed to pull {model}")
+        
+        # Stop the temporary instance
+        self.stop()
+        
+        # Test installation
+        print("\n🧪 Testing installation...")
+        self.start(for_install=True)
+        time.sleep(2)
+        
+        # List available models
+        models_output = self.run_command("ollama list", capture_output=True)
+        if models_output:
+            print("📋 Available models:")
+            print(models_output)
+        
+        # Test a simple query
+        print("\n🔍 Testing with a simple TypeScript question...")
+        test_query = "Write a simple TypeScript interface for a User with id, name, and email"
+        test_result = self.run_command(f'ollama run qwen2.5-coder:7b "{test_query}"', capture_output=True)
+        if test_result:
+            print("✅ Test successful!")
+            print("📝 Test output:")
+            print(test_result[:200] + "..." if len(test_result) > 200 else test_result)
+        
+        self.stop()
+        print("\n🎉 Installation complete!")
+        print("💡 Use 'python script.py start' to start the daemon")
+        print("🌐 Ollama will be available at: http://localhost:11434")
+    
+    def start(self, for_install=False):
+        """Start the Ollama daemon."""
+        if self.is_running():
+            print("✅ Ollama daemon already running")
+            return
+        
+        print("🚀 Starting Ollama daemon...")
+        
+        # On macOS, check if we need to start as a service
+        import platform
+        if platform.system() == "Darwin":
+            # Try to start as a service first (if installed via Homebrew)
+            try:
+                subprocess.run(["brew", "services", "start", "ollama"], 
+                             check=True, capture_output=True)
+                print("✅ Started Ollama as macOS service")
+                time.sleep(3)  # Give service time to start
+                if self.is_running():
+                    return
+            except:
+                print("ℹ️  Service start failed, starting manually...")
+        
+        # Start Ollama manually in background
+        process = subprocess.Popen(
+            ["ollama", "serve"],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            preexec_fn=None if platform.system() == "Darwin" else os.setsid
+        )
+        
+        # Save PID
+        with open(self.pid_file, "w") as f:
+            f.write(str(process.pid))
+        
+        if not for_install:
+            # Wait and verify it's running
+            time.sleep(3)
+            if self.is_running():
+                print("✅ Ollama daemon started successfully")
+                print("🌐 Available at: http://localhost:11434")
+                print("🛠️  Use in neovim with <leader>aa")
+            else:
+                print("❌ Failed to start Ollama daemon")
+                sys.exit(1)
+    
+    def stop(self):
+        """Stop the Ollama daemon."""
+        import platform
+        
+        # On macOS, try to stop the service first
+        if platform.system() == "Darwin":
+            try:
+                subprocess.run(["brew", "services", "stop", "ollama"], 
+                             check=True, capture_output=True)
+                print("✅ Stopped Ollama macOS service")
+                return
+            except:
+                print("ℹ️  Service stop failed, stopping manually...")
+        
+        if not self.pid_file.exists():
+            print("❌ No PID file found - daemon may not be running")
+            return
+        
+        try:
+            with open(self.pid_file, "r") as f:
+                pid = int(f.read().strip())
+            
+            # Kill the process (macOS doesn't use process groups the same way)
+            if platform.system() == "Darwin":
+                os.kill(pid, signal.SIGTERM)
+            else:
+                os.killpg(os.getpgid(pid), signal.SIGTERM)
+            
+            # Wait for process to terminate
+            time.sleep(2)
+            
+            # Clean up PID file
+            self.pid_file.unlink()
+            
+            print("✅ Ollama daemon stopped")
+            
+        except (FileNotFoundError, ProcessLookupError):
+            print("⚠️  Daemon was already stopped")
+            if self.pid_file.exists():
+                self.pid_file.unlink()
+        except Exception as e:
+            print(f"❌ Error stopping daemon: {e}")
+    
+    def is_running(self):
+        """Check if Ollama daemon is running."""
+        try:
+            result = subprocess.run(
+                ["curl", "-s", "http://localhost:11434/api/tags"],
+                capture_output=True,
+                timeout=5
+            )
+            return result.returncode == 0
+        except:
+            return False
+    
+    def status(self):
+        """Show daemon status and available models."""
+        if self.is_running():
+            print("✅ Ollama daemon is running")
+            print("🌐 Endpoint: http://localhost:11434")
+            
+            # Show models
+            models_output = self.run_command("ollama list", capture_output=True)
+            if models_output:
+                print("\n📋 Available models:")
+                print(models_output)
+            
+            # Show memory usage
+            try:
+                ps_output = self.run_command("ps aux | grep '[o]llama serve'", capture_output=True)
+                if ps_output:
+                    print(f"\n💾 Process info:")
+                    print(ps_output)
+            except:
+                pass
+                
+        else:
+            print("❌ Ollama daemon is not running")
+            print("💡 Use 'python script.py start' to start it")
+
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="AI Development Environment Manager",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  python script.py install    # Install Ollama and pull models
+  python script.py start      # Start the daemon
+  python script.py stop       # Stop the daemon
+  python script.py status     # Check daemon status
+        """
+    )
+    
+    parser.add_argument(
+        "command",
+        choices=["install", "start", "stop", "status"],
+        help="Command to execute",
+        nargs="?",
+    )
+
+    args = parser.parse_args()
+
+    manager = OllamaManager()
+
+    if args.command == "install":
+        manager.install()
+    elif args.command == "start":
+        manager.start()
+    elif args.command == "stop":
+        manager.stop()
+    elif args.command == "status":
+        manager.status()
+    else:
+        parser.print_help()
+        sys.exit(1)
+
+
+if __name__ == "__main__":
+    main()
