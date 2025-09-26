@@ -1,0 +1,17 @@
+#!/usr/bin/env node
+
+const main = () => {
+  const url = process.argv[2]
+  if (url.includes("app")) {
+    const searchParams = new URL(url)
+    const initialConfig = searchParams.searchParams.get("initialConfig")
+    console.log(initialConfig)
+    return
+  }
+
+  const config = url
+  const newUrl = `https://app.polaranalytics.com/custom/create?initialConfig=${encodeURIComponent(config)}`
+  console.log(newUrl)
+}
+
+main()
