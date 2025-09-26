@@ -10,9 +10,12 @@ return {
     providers = {
       openai = {
         endpoint = "https://api.openai.com/v1",
-        model = "gpt-4o",
+        model = "gpt-5",
         timeout = 30000,
         max_tokens = 8192,
+      extra_request_body = {
+        temperature = 1,
+      },
       },
 
       -- Ollama config for local models
