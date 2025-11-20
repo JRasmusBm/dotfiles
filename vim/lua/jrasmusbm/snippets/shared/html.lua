@@ -96,7 +96,7 @@ return {
   ),
   s(
     { trig = "aj", name = "interpolated (javascript) argument" },
-    fmt("{}={{{}{}}} {}", { i(1), i(2), rep(1), i(0) })
+    fmt("{}={{{}}} {}", { i(1), i(2), i(0) })
   ),
 
   s(
