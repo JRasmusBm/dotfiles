@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+git_worktree_create() {
+  if test -z "$1"; then
+    echo "Usage: git wc <branch-name>" >&2
+    exit 1
+  fi
+
+  _branch="$1"
+  _root="$(git rev-parse --show-toplevel)"
+  _worktree_dir="${_root}-worktrees/${_branch}"
+
+  (
+    set -x
+    git worktree add "$_worktree_dir" -b "$_branch"
+  )
+}
+
+git_worktree_create "$@"

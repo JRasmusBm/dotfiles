@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+
+git_worktree_delete() {
+  if test -z "$1" -o "$1" = ':'; then
+    _selected=$(git worktree list --porcelain | grep '^worktree ' | sed 's/^worktree //' | fzf --reverse)
+  else
+    _selected="$1"
+  fi
+
+  (
+    set -x
+    git worktree remove "$_selected"
+  )
+}
+
+git_worktree_delete "$@"

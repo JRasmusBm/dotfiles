@@ -1,0 +1,21 @@
+#!/bin/bash
+
+set -e
+
+git_worktree_open() {
+  _current_dir="$(pwd)"
+  _root="$(git rev-parse --show-toplevel)"
+  _relative="${_current_dir#$_root}"
+
+  _selected=$(git worktree list --porcelain | grep '^worktree ' | sed 's/^worktree //' | fzf --reverse)
+
+  _target="${_selected}${_relative}"
+
+  if test -d "$_target"; then
+    cd "$_target"
+  else
+    cd "$_selected"
+  fi
+}
+
+git_worktree_open "$@"
