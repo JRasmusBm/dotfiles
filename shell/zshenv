@@ -63,3 +63,4 @@ fi
 
 
 export POETRY_VIRTUALENVS_IN_PROJECT='true'
+export NODE_OPTIONS='--max-old-space-size=4096'
