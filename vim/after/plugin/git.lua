@@ -1,6 +1,6 @@
 vim.api.nvim_create_user_command("L", function(options)
   pcall(function()
-    require("jrasmusbm.git").open_tree(options.args[1])
+    require("jrasmusbm.git").open_tree(options.fargs[1])
   end)
 end, { nargs = "?" })
 
