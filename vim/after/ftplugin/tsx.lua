@@ -20,10 +20,19 @@ ls.add_snippets("tsx", {
   s(
     { trig = "rf", name = "react file" },
     fmt(
-      "type {}Props = {{\n  {}\n}}\n\nconst {} = ({{{}}}: {}Props) => {{\n  return ({})\n}}\n\nexport default {}",
-      { rep(1), i(2), i(1), i(3), rep(1), i(0, "null"), rep(1) }
+      [[
+type {}Props = {{
+  {}
+}}
+
+export const {} = ({{{}}}: {}Props) => {{
+  return ({})
+}}
+  ]],
+      { rep(1), i(2), i(1), i(3), rep(1), i(0, "null") }
     )
   ),
+
   s(
     { trig = "rc", name = "react component" },
     fmt(

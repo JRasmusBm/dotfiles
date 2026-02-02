@@ -400,4 +400,51 @@ console.log(`- {}: ${{performance.now()}}`);
       { i(0) }
     )
   ),
+
+  s({ trig="uq", name="useQuery" }, fmt([[
+export const use{} = () => {{
+  const auth = useAuth();
+
+  return useQuery({{
+    queryKey: ["tenant", auth.user?.tenantId, {}],
+    queryFn: async () => {{
+      return await client
+      .new()
+      .get(`{}`)
+      .auth(await auth.getToken())
+      .fetch<{{
+        data: {};
+      }}>();
+    }},
+  }});
+}};
+]], { i(1), i(2), i(3), i(0) })),
+
+s({ trig="um", name="useMutation" }, fmt([[
+export const use{} = () => {{
+  const auth = useAuth();
+
+  return useMutation({{
+    mutationFn: async ({}) => {{
+      const result = await client
+      .new()
+      .{}(
+        `{}`
+      )
+      .auth(await auth.getToken())
+      .fetch<{{
+        data: {};
+      }}>();
+      await refetchQueriesByQueryKey(
+        queryClient,
+        {}
+      );
+      return result;
+    }},
+  }});
+}};
+
+]], {i(1), i(2), i(3), i(4), i(5), i(0)})),
+
+
 }

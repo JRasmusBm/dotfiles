@@ -124,6 +124,16 @@ z.object({{
   ),
 
   s(
+    { trig = "zi", name = "zod infer" },
+    fmt(
+      [[
+type {} = z.infer<typeof {}>
+  ]],
+      { i(1), i(0) }
+    )
+  ),
+
+  s(
     { trig = "zc", name = "zod const" },
     fmt(
       [[

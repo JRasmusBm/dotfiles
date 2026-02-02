@@ -38,7 +38,7 @@ return {
   s({ trig = "sw", name = "width" }, fmt("width: {};\n{}", { i(1), i(0) })),
   s({ trig = "sh", name = "height" }, fmt("height: {};\n{}", { i(1), i(0) })),
   s(
-    { trig = "sb", name = "background" },
+    { trig = "sbg", name = "background" },
     fmt("background: {};\n{}", { i(1), i(0) })
   ),
   s({ trig = "sc", name = "color" }, fmt("color: {};\n{}", { i(1), i(0) })),
@@ -69,6 +69,12 @@ return {
     { trig = "sfg", name = "flex-grow" },
     fmt("flex-grow: {};\n{}", { i(1), i(0) })
   ),
+
+  s(
+    { trig = "sfb", name = "flex-basis" },
+    fmt("flex-basis: {};\n{}", { i(1), i(0) })
+  ),
+
   s(
     { trig = "sfd", name = "flex-direction" },
     fmt("flex-direction: {};\n{}", { i(1), i(0) })
@@ -114,7 +120,7 @@ return {
     { trig = "sbr", name = "border-radius" },
     fmt("border-radius: {};\n{}", { i(1), i(0) })
   ),
-  s({ trig = "sb", name = "border" }, fmt("border: {};\n{}", { i(1), i(0) })),
+  s({ trig = "sb", name = "border" }, fmt("border: 1px solid {};\n{}", { i(1), i(0) })),
 
   s(
     { trig = "spd", name = "padding" },
