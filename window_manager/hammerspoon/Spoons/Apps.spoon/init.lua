@@ -5,6 +5,7 @@ local ctrl_apps = {
   [2] = "alacritty",
   [3] = "slack",
   [4] = "cypress",
+  [5] = "claude",
   [6] = "gimp",
   [8] = "obs",
   [9] = "kdenlive",
