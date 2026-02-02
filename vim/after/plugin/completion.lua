@@ -58,7 +58,6 @@ cmp.setup {
   },
   sources = cmp.config.sources {
     { name = "nvim_lsp", priority = 5, max_item_count = 5 },
-    { name = "avante", priority = 2, max_item_count = 5 },
     { name = "luasnip", priority = 4, max_item_count = 3 },
     { name = "path", priority = 3, max_item_count = 3 },
     {
