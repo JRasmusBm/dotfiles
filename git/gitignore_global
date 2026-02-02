@@ -1,4 +1,5 @@
 .nvimlog
+.claude/
 .rgignore
 node_modules
 .jrb/
