@@ -17,7 +17,11 @@ Dotfiles are installed using **symlinks**. The `scripts/symlink` script reads `f
 ### Running the Symlink Script
 
 ```sh
-./scripts/symlink
+sh scripts/symlink
 ```
 
 Existing non-symlink files are backed up to `~/.backup_dotfiles/` before being replaced.
+
+## Skills
+
+- **[commit](.claude/skills/commit/SKILL.md)** — Create atomic commits from uncommitted changes. Groups related modifications into logical, self-contained commits.
