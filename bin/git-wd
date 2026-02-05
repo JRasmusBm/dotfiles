@@ -11,7 +11,7 @@ git_worktree_delete() {
 
   (
     set -x
-    git worktree remove "$_selected"
+    git worktree remove --force "$_selected"
   )
 }
 
