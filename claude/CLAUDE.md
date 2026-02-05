@@ -44,6 +44,8 @@ Don't ask "Want me to do X?" - just do it. I'll review the diff and provide feed
 
 ## Communication Style
 
+Be concise. Sacrifice grammar for the sake of concision.
+
 **When explaining how to do things**, provide extra context and include documentation links where relevant. Don't just give the answer—help me understand the broader picture.
 
 **When investigating**, explain the approach you're taking and why. Don't just show results—share the reasoning.
