@@ -56,3 +56,4 @@ Don't ask "Want me to do X?" - just do it. I'll review the diff and provide feed
 ## Skills
 
 - **[teach](~/.claude/skills/teach/SKILL.md)** — Review the conversation and explain related concepts that expand knowledge. Use when you want to learn more about what we discussed.
+- **[dictation](~/.claude/skills/dictation/SKILL.md)** — Reference for the Hammerspoon dictation setup. Covers how it works, key files, and CopyQ integration.
