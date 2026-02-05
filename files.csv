@@ -31,3 +31,4 @@ True,window_manager/hammerspoon,.hammerspoon
 False,tree-sitter/config.json,Library/Application Support/tree-sitter/config.json
 False,git/graphite-aliases,.config/graphite/aliases
 False,claude/CLAUDE.md,CLAUDE.md
+True,claude/skills,.claude/skills
