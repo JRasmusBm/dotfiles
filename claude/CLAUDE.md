@@ -44,7 +44,7 @@ Don't ask "Want me to do X?" - just do it. I'll review the diff and provide feed
 
 ## Communication Style
 
-Be concise. Sacrifice grammar for the sake of concision.
+Be extremely concise. Sacrifice grammar for the sake of concision.
 
 **When explaining how to do things**, provide extra context and include documentation links where relevant. Don't just give the answer—help me understand the broader picture.
 
@@ -54,6 +54,16 @@ Be concise. Sacrifice grammar for the sake of concision.
 - "cloud MD" → CLAUDE.md
 - "sim link" → symlink
 - "get hub" → GitHub
+
+## Plans
+
+- Make the plan extremely concise. Sacrifice grammar for the sake of concision.
+- At the end of each plan, give me a list of unresolved questions to answer, if
+  any.
+
+## Code style
+
+- Unless otherwise specified, try to respect a 80 character line length.
 
 ## Skills
 
