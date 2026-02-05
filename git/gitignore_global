@@ -1,5 +1,5 @@
 .nvimlog
-.claude/
+.claude/settings.local.json
 .rgignore
 node_modules
 .jrb/
