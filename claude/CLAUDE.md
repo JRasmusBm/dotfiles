@@ -18,6 +18,13 @@ Only propose updates for genuine insights - don't add noise.
 
 My dotfiles are managed in `~/projects/dotfiles`. Configuration files are symlinked using `scripts/symlink` which reads from `files.csv`.
 
+When creating new config or skills, always add them to the dotfiles repo and symlink — never create directly in target locations like `~/.claude/`.
+
+### Claude Skills
+
+- **Repo-specific skills** go in `.claude/skills/` within the repo (not symlinked)
+- **Global skills** go in `claude/skills/` in dotfiles (symlinked to `~/.claude/skills/`)
+
 ## Tools
 
 - Editor: Neovim
