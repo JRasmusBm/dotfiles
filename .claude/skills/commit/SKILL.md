@@ -4,12 +4,20 @@ Create atomic commits from uncommitted changes. Analyzes changes to group relate
 
 ## Process
 
+### Research (read-only)
+
 1. **Survey all changes** — Run `git status` and `git diff` to see what's uncommitted (staged and unstaged)
+
+### Planning
+
 2. **Analyze change relationships** — Look at file paths, content changes, and logical groupings
 3. **Plan atomic commits** — Group changes that belong together:
    - Same feature or bugfix
    - Same area of the codebase
    - Dependent changes that only make sense together
+
+### Execution
+
 4. **Create commits** — Stage and commit each group with a clear message
 
 ## Grouping Heuristics
