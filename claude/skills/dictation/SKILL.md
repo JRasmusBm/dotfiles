@@ -1,3 +1,8 @@
+---
+name: dictation
+description: "Hammerspoon dictation setup. Load when discussing dictation, voice input, or CopyQ."
+---
+
 # Dictation
 
 Reference this skill when the user mentions dictation, voice input, or the Dictate Hammerspoon spoon.

@@ -1,3 +1,8 @@
+---
+name: teach
+description: "Load when asked to teach, explain deeper, or expand on concepts from the conversation."
+---
+
 # Teach
 
 When invoked, review the conversation and expand on concepts that came up. The goal is deeper understanding, not just task completion.
