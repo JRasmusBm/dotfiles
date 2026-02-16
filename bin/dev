@@ -22,7 +22,7 @@ _dev_file() {
 }
 
 _session_name() {
-  echo "dev-$(basename "$(_repo_root)")"
+  echo "$(basename "$(_repo_root)")[dev]"
 }
 
 _source_dev_file() {
