@@ -58,9 +58,17 @@ _tmux_speeddial() {
     if echo "$_entry" | "$grep_cmd" -qP '\[\d+\]$'; then
       _repo="$(echo "$_entry" | sed 's/\[.*$//')"
       _index="$(echo "$_entry" | "$grep_cmd" -oP '\[\K\d+')"
-      root_folder="$(wt-resolve "$_repo" "$_index")"
-      session_name="$_entry"
-      export TMUX_SESSION_NAME="$session_name"
+      _wt_status=0
+      root_folder="$(wt-resolve "$_repo" "$_index")" \
+        || _wt_status=$?
+      if test "$_wt_status" -eq 0; then
+        session_name="$_entry"
+        export TMUX_SESSION_NAME="$session_name"
+      elif test "$_wt_status" -eq 2; then
+        session_name="$_repo"
+      else
+        exit "$_wt_status"
+      fi
     else
       session_name="$_entry"
     fi

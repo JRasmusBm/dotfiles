@@ -58,7 +58,7 @@ _branch="$(sed -n "${_index}p" "$_order_file")"
 
 if test -z "$_branch"; then
   echo "$_root"
-  exit 0
+  exit 2
 fi
 
 # Check convention path first
