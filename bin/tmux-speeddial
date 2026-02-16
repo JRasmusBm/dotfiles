@@ -64,16 +64,16 @@ _tmux_speeddial() {
       session_name="$_entry"
     fi
 
-    if ! (tmux list-sessions | "$grep_cmd" -q "$session_name"); then
-      if test -z "$root_folder"; then
-        root_folder="$(echo "$session_name" | xargs zoxide query)"
-      fi
-      cd "$root_folder" || return 1
-      INITIATED_EXTERNALLY=false source_tmux_script "$root_folder/.tmux" || default_tmux_session
+    if tmux has-session -t "$session_name" 2>/dev/null; then
+      tmux-attach-to-session "$session_name:cli" || tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
       return 0
     fi
 
-    tmux-attach-to-session "$session_name:cli" || tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
+    if test -z "$root_folder"; then
+      root_folder="$(echo "$session_name" | xargs zoxide query)"
+    fi
+    cd "$root_folder" || return 1
+    INITIATED_EXTERNALLY=false source_tmux_script "$root_folder/.tmux" || default_tmux_session
   )
 }
 
