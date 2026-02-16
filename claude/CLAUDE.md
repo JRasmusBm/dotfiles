@@ -52,3 +52,9 @@ Order files at `$LOCAL_CONFIG/worktrees/<repo>`. Line 1 =
 default branch. Blank line separates active/archived.
 
 Always use `wt` commands, never raw `git worktree add`.
+
+## Git
+
+Use `g s <branch>` to switch branches (not raw
+`git switch`). The `git-s` wrapper refreshes the
+tmux status bar after switching.
