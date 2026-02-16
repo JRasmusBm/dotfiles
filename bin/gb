@@ -29,6 +29,7 @@ _git_branch_speeddial() {
     fi
 
     git switch "$_branch_name" > /dev/null
+    tmux refresh-client -S 2>/dev/null || true
   )
 }
 
