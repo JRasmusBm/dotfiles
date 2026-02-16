@@ -59,7 +59,8 @@ _tmux_speeddial() {
       _repo="$(echo "$_entry" | sed 's/\[.*$//')"
       _index="$(echo "$_entry" | "$grep_cmd" -oP '\[\K\d+')"
       root_folder="$(wt-resolve "$_repo" "$_index")"
-      session_name="$(tmux-session-name-from-path "$root_folder")"
+      session_name="$_entry"
+      export TMUX_SESSION_NAME="$session_name"
     else
       session_name="$_entry"
     fi

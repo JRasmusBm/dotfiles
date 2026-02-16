@@ -3,6 +3,10 @@
 set -e
 
 _session_name_from_path() {
+  if test -n "$TMUX_SESSION_NAME"; then
+    echo "$TMUX_SESSION_NAME"
+    return 0
+  fi
   folder_path="${1:-$(pwd)}"
   folder_name="${folder_path##*/}"
   echo "${folder_name//./_}"
