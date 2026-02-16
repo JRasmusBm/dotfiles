@@ -1,0 +1,6 @@
+#!/bin/sh
+
+set -e 
+
+result=$(copyq clipboard | eval "$@")
+copyq copy "$result"

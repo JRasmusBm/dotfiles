@@ -1,0 +1,2 @@
+#!/bin/sh
+/Applications/CopyQ.app/Contents/MacOS/CopyQ "$@"
