@@ -3,6 +3,7 @@
 .rgignore
 node_modules
 .jrb/
+.worktrees/
 .venv/
 .vimspector.json
 .tmux

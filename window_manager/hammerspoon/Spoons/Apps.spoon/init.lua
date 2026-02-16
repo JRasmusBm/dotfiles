@@ -52,5 +52,7 @@ for i = 0, 9, 1 do
 end
 bindAlt("t")
 bindAlt("p")
+bindAlt("w")
+bindAlt("m")
 
 return M

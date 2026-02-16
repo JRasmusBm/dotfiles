@@ -1,0 +1,80 @@
+#!/bin/sh
+
+set -e
+
+if test "$(uname)" = 'Darwin'; then
+  _grep='ggrep'
+else
+  _grep='grep'
+fi
+
+_git_root() {
+  git rev-parse --show-toplevel
+}
+
+_dev_file() {
+  echo "$(_git_root)/.jrb/dev"
+}
+
+_current_session() {
+  tmux display-message -p '#S'
+}
+
+_current_window() {
+  tmux display-message -p '#{window_id}'
+}
+
+_source_dev_file() {
+  _path="$1"
+
+  if ! test -x "$_path"; then
+    echo ".jrb/dev file not executable: $_path" >&2
+    exit 1
+  fi
+
+  _digest="$(openssl sha256 "$_path")"
+  if $_grep -q "$_digest" ~/..dev.digests 2>/dev/null
+  then
+    SESSION="$(_current_session)" . "$_path"
+    return
+  fi
+
+  if confirm 'Trust (and run) this .jrb/dev file?'; then
+    echo "$_digest" >> ~/..dev.digests
+    SESSION="$(_current_session)" . "$_path"
+    return
+  fi
+
+  echo "Aborted" >&2
+  exit 1
+}
+
+_dev_up() {
+  _df="$(_dev_file)"
+  if ! test -f "$_df"; then
+    echo "No .jrb/dev file at $(_git_root)" >&2
+    exit 1
+  fi
+
+  cd "$(_git_root)"
+  _source_dev_file "$_df"
+}
+
+_dev_down() {
+  _cur="$(_current_window)"
+  tmux list-windows -F '#{window_id}' \
+    | while read _w; do
+      if test "$_w" != "$_cur"; then
+        tmux kill-window -t "$_w"
+      fi
+    done
+}
+
+case "${1:-}" in
+  up) _dev_up ;;
+  down) _dev_down ;;
+  *)
+    echo "Usage: dev [up|down]" >&2
+    exit 1
+    ;;
+esac

@@ -55,6 +55,7 @@ local default_options = {
   },
   pattern = {
     ["ts-*"] = "speeddial",
+    [".*/worktrees/[^/]+$"] = "speeddial",
     ["%.env.*"] = "sh",
     ["Dockerfile.*"] = "dockerfile",
     [".*%.cy%.ts"] = "typescript.typescript_cypress",

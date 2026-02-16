@@ -1,0 +1,288 @@
+#!/bin/sh
+
+set -e
+
+if test "$(uname)" = 'Darwin'; then
+  _grep='ggrep'
+  _sed='gsed'
+else
+  _grep='grep'
+  _sed='sed'
+fi
+
+_main_root() {
+  _common_git="$(git rev-parse --git-common-dir)"
+  dirname "$(cd "$_common_git" && pwd)"
+}
+
+_repo_name() {
+  basename "$(_main_root)"
+}
+
+_order_file() {
+  echo "$LOCAL_CONFIG/worktrees/$(_repo_name)"
+}
+
+_ensure_order_dir() {
+  mkdir -p "$LOCAL_CONFIG/worktrees"
+}
+
+_resolve_branch_path() {
+  _branch="$1"
+  _root="$(_main_root)"
+  _wt_path="${_root}/.worktrees/${_branch}"
+
+  if test -d "$_wt_path"; then
+    echo "$_wt_path"
+  else
+    echo "$_root"
+  fi
+}
+
+_switch_to() {
+  _target="$1"
+  _session="$(tmux-session-name-from-path "$_target")"
+
+  if ! (tmux list-sessions 2>/dev/null \
+    | $_grep -q "$_session"); then
+    cd "$_target"
+    INITIATED_EXTERNALLY=false \
+      source_tmux_script "$_target/.tmux" \
+      || default_tmux_session
+    return 0
+  fi
+
+  tmux-attach-to-session "$_session:cli" \
+    || tmux-attach-to-session "$_session:vim" \
+    || ta "$_session" \
+    || true
+}
+
+_wt_pick() {
+  _of="$(_order_file)"
+  if ! test -f "$_of"; then
+    echo "No order file. Run: wt add <branch>" >&2
+    exit 1
+  fi
+
+  _list="$(awk '
+    /^$/ && !sep { sep=1; print "---"; next }
+    /^$/ { next }
+    { printf "%d: %s\n", NR, $0 }
+  ' "$_of")"
+
+  if test -z "$_list"; then
+    echo "Order file is empty" >&2
+    exit 1
+  fi
+
+  _sel="$(echo "$_list" | fzf --reverse)"
+
+  if test "$_sel" = "---"; then
+    exit 0
+  fi
+
+  _branch="$(echo "$_sel" | $_sed 's/^[0-9]*: //')"
+  _target="$(_resolve_branch_path "$_branch")"
+  _switch_to "$_target"
+}
+
+_wt_edit() {
+  _ensure_order_dir
+  if test -n "$1"; then
+    _of="$LOCAL_CONFIG/worktrees/$1"
+  else
+    _of="$(_order_file)"
+  fi
+  touch "$_of"
+  ${EDITOR:-vim} "$_of"
+}
+
+_wt_add() {
+  _branch="$1"
+  if test -z "$_branch"; then
+    echo "Usage: wt add <branch>" >&2
+    exit 1
+  fi
+
+  git wc "$_branch"
+
+  _ensure_order_dir
+  _of="$(_order_file)"
+  touch "$_of"
+
+  if $_grep -qx "$_branch" "$_of" 2>/dev/null; then
+    return 0
+  fi
+
+  # Insert before separator or append
+  _sep="$($_grep -n '^$' "$_of" \
+    | head -1 | cut -d: -f1)"
+  if test -n "$_sep"; then
+    $_sed -i "${_sep}i\\${_branch}" "$_of"
+  else
+    echo "$_branch" >> "$_of"
+  fi
+}
+
+_wt_rm() {
+  _branch="${1:-}"
+  if test -z "$_branch"; then
+    _of="$(_order_file)"
+    if ! test -f "$_of"; then
+      echo "No order file" >&2
+      exit 1
+    fi
+    _branch="$(awk \
+      '/^$/{exit} /^.+$/{print}' "$_of" \
+      | fzf --reverse)"
+  fi
+
+  if test -z "$_branch"; then
+    exit 0
+  fi
+
+  _root="$(_main_root)"
+  _wt_path="${_root}/.worktrees/${_branch}"
+  if test -d "$_wt_path"; then
+    git worktree remove --force "$_wt_path" 2>/dev/null \
+      || rm -rf "$_wt_path"
+  fi
+  # Clean stale worktree references
+  git -C "$_root" worktree prune 2>/dev/null || true
+
+  # Blank the line to preserve indices
+  _of="$(_order_file)"
+  if test -f "$_of"; then
+    _ln="$($_grep -nx "$_branch" "$_of" \
+      | head -1 | cut -d: -f1)"
+    if test -n "$_ln"; then
+      $_sed -i "${_ln}s/.*//" "$_of"
+    fi
+  fi
+}
+
+_wt_archive() {
+  _branch="$1"
+  if test -z "$_branch"; then
+    echo "Usage: wt archive <branch>" >&2
+    exit 1
+  fi
+
+  _of="$(_order_file)"
+  if ! test -f "$_of"; then
+    echo "No order file" >&2
+    exit 1
+  fi
+
+  # Blank the line in active section
+  _ln="$($_grep -nx "$_branch" "$_of" \
+    | head -1 | cut -d: -f1)"
+  if test -z "$_ln"; then
+    echo "Branch not in order file" >&2
+    exit 1
+  fi
+  $_sed -i "${_ln}s/.*//" "$_of"
+
+  # Ensure separator exists
+  if ! $_grep -q '^$' "$_of"; then
+    echo "" >> "$_of"
+  fi
+
+  echo "$_branch" >> "$_of"
+}
+
+_wt_unarchive() {
+  _branch="$1"
+  if test -z "$_branch"; then
+    echo "Usage: wt unarchive <branch>" >&2
+    exit 1
+  fi
+
+  _of="$(_order_file)"
+
+  # Remove from archived section (last match)
+  _ln="$($_grep -nx "$_branch" "$_of" \
+    | tail -1 | cut -d: -f1)"
+  if test -z "$_ln"; then
+    echo "Branch not found" >&2
+    exit 1
+  fi
+  $_sed -i "${_ln}d" "$_of"
+
+  # Insert before separator
+  _sep="$($_grep -n '^$' "$_of" \
+    | head -1 | cut -d: -f1)"
+  if test -n "$_sep"; then
+    $_sed -i "${_sep}i\\${_branch}" "$_of"
+  else
+    echo "$_branch" >> "$_of"
+  fi
+}
+
+_wt_move() {
+  _branch="${1:-$(git branch --show-current)}"
+  _root="$(_main_root)"
+  _wt_path="${_root}/.worktrees/${_branch}"
+
+  # Don't move the default branch
+  _default="$(git -C "$_root" symbolic-ref \
+    refs/remotes/origin/HEAD 2>/dev/null \
+    | sed 's|refs/remotes/origin/||')"
+  _default="${_default:-main}"
+  if test "$_branch" = "$_default"; then
+    echo "Can't move the default branch" >&2
+    exit 1
+  fi
+
+  # Stash if dirty
+  _has_stash=false
+  if ! git diff --quiet 2>/dev/null \
+    || ! git diff --cached --quiet 2>/dev/null; then
+    git stash
+    _has_stash=true
+  fi
+
+  # Switch current checkout to default branch
+  _default="$(git -C "$_root" symbolic-ref \
+    refs/remotes/origin/HEAD 2>/dev/null \
+    | sed 's|refs/remotes/origin/||')"
+  _default="${_default:-main}"
+  git switch "$_default"
+
+  # Create worktree with existing branch (no -b)
+  git worktree add "$_wt_path" "$_branch"
+
+  # Add to order file
+  _ensure_order_dir
+  _of="$(_order_file)"
+  touch "$_of"
+  if ! $_grep -qx "$_branch" "$_of" 2>/dev/null; then
+    _sep="$($_grep -n '^$' "$_of" \
+      | head -1 | cut -d: -f1)"
+    if test -n "$_sep"; then
+      $_sed -i "${_sep}i\\${_branch}" "$_of"
+    else
+      echo "$_branch" >> "$_of"
+    fi
+  fi
+
+  # Pop stash in new worktree if we stashed
+  if test "$_has_stash" = true; then
+    git -C "$_wt_path" stash pop
+  fi
+}
+
+case "${1:-}" in
+  "") _wt_pick ;;
+  e|edit) shift; _wt_edit "$@" ;;
+  add) shift; _wt_add "$@" ;;
+  rm|remove) shift; _wt_rm "$@" ;;
+  move) shift; _wt_move "$@" ;;
+  archive) shift; _wt_archive "$@" ;;
+  unarchive) shift; _wt_unarchive "$@" ;;
+  *)
+    echo "Usage: wt [e|add|rm|archive|unarchive]" >&2
+    exit 1
+    ;;
+esac

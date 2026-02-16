@@ -12,7 +12,7 @@ else
   _find_cmd='find'
 fi
 
-_extract_session_name() {
+_extract_profile_entry() {
   (
     _profiles_dir="$LOCAL_CONFIG/ts-profiles"
     mkdir -p "$_profiles_dir"
@@ -48,20 +48,32 @@ _tmux_speeddial() {
       _line='10'
     fi
 
-    session_name="$(_extract_session_name "$_line")"
-    if test -z "$session_name"; then
+    _entry="$(_extract_profile_entry "$_line")"
+    if test -z "$_entry"; then
       echo "Entry $_line not found"
       exit 1
     fi
 
+    # Parse repo[N] syntax
+    if echo "$_entry" | "$grep_cmd" -qP '\[\d+\]$'; then
+      _repo="$(echo "$_entry" | sed 's/\[.*$//')"
+      _index="$(echo "$_entry" | "$grep_cmd" -oP '\[\K\d+')"
+      root_folder="$(wt-resolve "$_repo" "$_index")"
+      session_name="$(tmux-session-name-from-path "$root_folder")"
+    else
+      session_name="$_entry"
+    fi
+
     if ! (tmux list-sessions | "$grep_cmd" -q "$session_name"); then
-      root_folder="$(echo "$session_name" | xargs zoxide query)"
+      if test -z "$root_folder"; then
+        root_folder="$(echo "$session_name" | xargs zoxide query)"
+      fi
       cd "$root_folder" || return 1
       INITIATED_EXTERNALLY=false source_tmux_script "$root_folder/.tmux" || default_tmux_session
       return 0
     fi
 
-    tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
+    tmux-attach-to-session "$session_name:cli" || tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
   )
 }
 

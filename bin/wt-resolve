@@ -1,0 +1,87 @@
+#!/bin/sh
+
+set -e
+
+# Resolves <repo> + optional <index> to absolute path
+# Usage: wt-resolve <repo> [index]
+#
+# Resolution:
+# 1. zoxide query <repo> → repo root
+# 2. No index or no order file → repo root
+# 3. Read line N from order file
+# 4. Check ${root}-worktrees/${branch}, else root
+
+_repo="$1"
+_index="$2"
+
+if test -z "$_repo"; then
+  echo "Usage: wt-resolve <repo> [index]" >&2
+  exit 1
+fi
+
+_root="$(echo "$_repo" | xargs zoxide query)"
+
+_order_file="$LOCAL_CONFIG/worktrees/$_repo"
+
+if test -z "$_index" && ! test -f "$_order_file"; then
+  echo "$_root"
+  exit 0
+fi
+
+if test -z "$_index"; then
+  _index=1
+fi
+
+if ! test -f "$_order_file"; then
+  # Auto-create order file from existing worktrees
+  mkdir -p "$(dirname "$_order_file")"
+
+  # Default branch first (origin/HEAD → dev, main, etc.)
+  _main_branch="$(git -C "$_root" symbolic-ref \
+    refs/remotes/origin/HEAD 2>/dev/null \
+    | sed 's|refs/remotes/origin/||')"
+  _main_branch="${_main_branch:-$(git -C "$_root" branch --show-current)}"
+  echo "$_main_branch" > "$_order_file"
+
+  # Append existing worktrees
+  _wt_dir="${_root}/.worktrees"
+  if test -d "$_wt_dir"; then
+    for _d in "$_wt_dir"/*/; do
+      test -d "$_d" || continue
+      _name="$(basename "$_d")"
+      echo "$_name" >> "$_order_file"
+    done
+  fi
+fi
+
+_branch="$(sed -n "${_index}p" "$_order_file")"
+
+if test -z "$_branch"; then
+  echo "$_root"
+  exit 0
+fi
+
+# Check convention path first
+_wt_path="${_root}/.worktrees/${_branch}"
+
+if test -d "$_wt_path"; then
+  echo "$_wt_path"
+  exit 0
+fi
+
+# Check git worktree list for non-standard paths
+_wt_path="$(git -C "$_root" worktree list --porcelain \
+  | grep '^worktree ' | sed 's/^worktree //' \
+  | while read _p; do
+    _b="$(git -C "$_p" branch --show-current 2>/dev/null)"
+    if test "$_b" = "$_branch"; then
+      echo "$_p"
+      break
+    fi
+  done)"
+
+if test -n "$_wt_path"; then
+  echo "$_wt_path"
+else
+  echo "$_root"
+fi

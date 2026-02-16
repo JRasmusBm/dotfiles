@@ -38,3 +38,17 @@ Managed in ~/projects/dotfiles. Symlinked via scripts/symlink +
 files.csv. Repo skills: .claude/skills/. Global skills:
 ~/projects/dotfiles/claude/skills/ (→ ~/.claude/skills/).
 Never create config directly in target locations.
+
+## Worktree Workflow
+
+Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
+- `wt add <branch>` — create worktree + register in order file
+- `wt rm [name]` — remove worktree + blank order file line
+- `wt move [branch]` — stash, create worktree, pop
+- `wt e [repo]` — edit worktree order file
+- `wt archive/unarchive <name>` — move between sections
+
+Order files at `$LOCAL_CONFIG/worktrees/<repo>`. Line 1 =
+default branch. Blank line separates active/archived.
+
+Always use `wt` commands, never raw `git worktree add`.
