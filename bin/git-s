@@ -46,3 +46,4 @@ git_switch() {
 }
 
 git_switch "$@"
+tmux refresh-client -S 2>/dev/null || true
