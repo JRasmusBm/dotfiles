@@ -23,9 +23,14 @@ Voice typing: interpret phonetic errors from context
 
 Extremely concise. End with unresolved questions if any.
 
-## Code Style
+## Line Length — HARD LIMIT
 
-80 char line length unless otherwise specified.
+ALL chat output MUST wrap at 80 chars — prose,
+markdown tables, plans, explanations. No exceptions.
+Break lines mid-sentence if needed.
+
+Code edits: 80 chars unless the project has its own
+style guide (e.g. prettier config).
 
 ## Dotfiles
 
