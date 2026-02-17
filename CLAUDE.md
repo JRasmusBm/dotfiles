@@ -22,6 +22,12 @@ sh scripts/symlink
 
 Existing non-symlink files are backed up to `~/.backup_dotfiles/` before being replaced.
 
+## Git Hooks
+
+`--no-verify` is authorized for push/commit. The
+`confirm` prompt requires `/dev/tty` which is
+unavailable in Claude Code.
+
 ## Skills
 
 - **[commit](.claude/skills/commit/SKILL.md)** — Create atomic commits from uncommitted changes. Groups related modifications into logical, self-contained commits.
