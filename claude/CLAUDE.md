@@ -39,11 +39,20 @@ files.csv. Repo skills: .claude/skills/. Global skills:
 ~/projects/dotfiles/claude/skills/ (→ ~/.claude/skills/).
 Never create config directly in target locations.
 
+## CLI Conventions
+
+- No args = sane default (help or primary action)
+- `:` = fuzzy find
+- `.` = current context (branch/issue/worktree)
+- Explicit arg = use directly
+
 ## Worktree Workflow
 
 Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
-- `wt add <branch>` — create worktree + register in order file
-- `wt rm [name]` — remove worktree + blank order file line
+- `wt .` — remove current worktree + switch to base
+- `wt :` — fzf pick worktree to switch to
+- `wt add <branch>` — create worktree + register
+- `wt rm .`/`:`/`<name>` — remove worktree
 - `wt move [branch]` — stash, create worktree, pop
 - `wt e [repo]` — edit worktree order file
 - `wt archive/unarchive <name>` — move between sections

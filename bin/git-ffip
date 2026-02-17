@@ -5,14 +5,16 @@ set -e
 _pull_and_fast_forward() {
   (
     if test -z "$1"; then
-      (
-        echo 'Please specify target branch.'
-        return 1
-      )
+      echo "Usage: git ffip [:|<branch>]" >&2
+      return 1
+    elif test "$1" = ':'; then
+      _target_branch="$(git fb)"
+      _target_branch="${_target_branch#refs/*/}"
+    else
+      _target_branch="$1"
     fi
 
     _source_branch="$(git branch --show-current)"
-    _target_branch="$1"
     shift 1
 
     (

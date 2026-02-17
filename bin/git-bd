@@ -3,10 +3,15 @@
 set -e
 
 git_branch_delete() {
-  if test -z "$1" -o "$1" = ':'; then # g bd
+  if test -z "$1"; then
+    echo "Usage: git bd [.|:] <branch>" >&2
+    exit 1
+  elif test "$1" = ':'; then
     selected_branch_ref=$(git branch --format='%(refname)' | fzf --reverse)
     selected_branch=${selected_branch_ref#*/*/}
-  else # g bd <branch>
+  elif test "$1" = '.'; then
+    selected_branch="$(git branch --show-current)"
+  else
     selected_branch="$1"
   fi
 

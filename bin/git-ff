@@ -3,7 +3,14 @@
 set -e
 
 git_fast_forward_merge() {
-  selected_branch_ref=${1:-$(git branch --all --format='%(refname)' | fzf --reverse)}
+  if test -z "$1"; then
+    echo "Usage: git ff [:|<branch>]" >&2
+    exit 1
+  elif test "$1" = ':'; then
+    selected_branch_ref=$(git branch --all --format='%(refname)' | fzf --reverse)
+  else
+    selected_branch_ref="$1"
+  fi
   selected_branch_ref_prefix=${selected_branch_ref#*/}
   selected_branch_source=${selected_branch_ref_prefix%%/*}
 

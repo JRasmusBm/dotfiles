@@ -125,9 +125,29 @@ _wt_add() {
   fi
 }
 
+_wt_rm_current() {
+  _root="$(_main_root)"
+  _current="$(pwd)"
+
+  case "$_current" in
+    "${_root}/.worktrees/"*)
+      _branch="$(git branch --show-current)"
+      _switch_to "$_root"
+      _wt_rm "$_branch"
+      ;;
+    *)
+      echo "Not in a worktree" >&2
+      exit 1
+      ;;
+  esac
+}
+
 _wt_rm() {
   _branch="${1:-}"
-  if test -z "$_branch"; then
+  if test "$_branch" = '.'; then
+    _wt_rm_current
+    return
+  elif test -z "$_branch" || test "$_branch" = ':'; then
     _of="$(_order_file)"
     if ! test -f "$_of"; then
       echo "No order file" >&2
@@ -274,7 +294,9 @@ _wt_move() {
 }
 
 case "${1:-}" in
-  "") _wt_pick ;;
+  "") echo "Usage: wt [.|:|e|add|rm|move|archive|unarchive]" >&2; exit 1 ;;
+  :) _wt_pick ;;
+  .) _wt_rm_current ;;
   e|edit) shift; _wt_edit "$@" ;;
   add) shift; _wt_add "$@" ;;
   rm|remove) shift; _wt_rm "$@" ;;
@@ -282,7 +304,7 @@ case "${1:-}" in
   archive) shift; _wt_archive "$@" ;;
   unarchive) shift; _wt_unarchive "$@" ;;
   *)
-    echo "Usage: wt [e|add|rm|archive|unarchive]" >&2
+    echo "Usage: wt [.|:|e|add|rm|move|archive|unarchive]" >&2
     exit 1
     ;;
 esac

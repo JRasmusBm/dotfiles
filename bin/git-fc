@@ -8,5 +8,12 @@ else
   grep_cmd='grep'
 fi
 
-hash=$(git log --pretty='%C(Yellow)%h %C(cyan)%ad %C(reset)%s' --date='format-local:%Y, %b %d' --all | fzf --reverse | "$grep_cmd" -o -E "^([0-9a-z])+")
+if test -z "$1"; then
+  echo "Usage: git fc :" >&2
+  exit 1
+elif test "$1" = ':'; then
+  hash=$(git log --pretty='%C(Yellow)%h %C(cyan)%ad %C(reset)%s' --date='format-local:%Y, %b %d' --all | fzf --reverse | "$grep_cmd" -o -E "^([0-9a-z])+")
+else
+  hash="$1"
+fi
 git s "$hash"
