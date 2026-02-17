@@ -5,7 +5,7 @@ set -e
 session_name="$(tmux-session-name-from-path)"
 
 if ! tmux has-session -t="$session_name" 2>/dev/null; then
-  tmux new-session -d -s "$session_name" -n run -x "$(tput cols)" -y "$(tput lines)"
+  tmux new-session -d -s "$session_name" -n run
 
   tmux new-window -t "$session_name" -n vim
   tmux send-keys -t "$session_name" "v -c GFiles" Enter
