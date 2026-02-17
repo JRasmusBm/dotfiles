@@ -66,6 +66,7 @@ _tmux_speeddial() {
         export TMUX_SESSION_NAME="$session_name"
       elif test "$_wt_status" -eq 2; then
         session_name="$_repo"
+        export TMUX_SESSION_NAME="$session_name"
       else
         exit "$_wt_status"
       fi
