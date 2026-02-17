@@ -40,7 +40,7 @@ if ! test -f "$_order_file"; then
   _main_branch="$(git -C "$_root" symbolic-ref \
     refs/remotes/origin/HEAD 2>/dev/null \
     | sed 's|refs/remotes/origin/||')"
-  _main_branch="${_main_branch:-$(git -C "$_root" branch --show-current)}"
+  _main_branch="${_main_branch:-$(git -C "$_root" symbolic-ref --short HEAD 2>/dev/null || true)}"
   echo "$_main_branch" > "$_order_file"
 
   # Append existing worktrees
