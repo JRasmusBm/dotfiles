@@ -369,6 +369,51 @@ chars = "\u001B;"
 key = "Semicolon"
 mods = "Alt"
 
+[[keyboard.bindings]]
+chars = "\u001b[1w"
+key = "Key1"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[2w"
+key = "Key2"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[3w"
+key = "Key3"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[4w"
+key = "Key4"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[5w"
+key = "Key5"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[6w"
+key = "Key6"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[7w"
+key = "Key7"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[8w"
+key = "Key8"
+mods = "Command"
+
+[[keyboard.bindings]]
+chars = "\u001b[9w"
+key = "Key9"
+mods = "Command"
+
 [general]
 import = ["/Users/jrasmusbm/.config/alacritty/colorscheme.toml", "/Users/jrasmusbm/.config/alacritty/fsize.toml"]
 
