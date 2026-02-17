@@ -66,7 +66,7 @@ _wt_pick() {
   fi
 
   _list="$(awk '
-    /^$/ && !sep { sep=1; print "---"; next }
+    /^---$/ { sep=1; print "---"; next }
     /^$/ { next }
     { printf "%d: %s\n", NR, $0 }
   ' "$_of")"
@@ -116,7 +116,7 @@ _wt_add() {
   fi
 
   # Insert before separator or append
-  _sep="$($_grep -n '^$' "$_of" \
+  _sep="$($_grep -n '^---$' "$_of" \
     | head -1 | cut -d: -f1)"
   if test -n "$_sep"; then
     $_sed -i "${_sep}i\\${_branch}" "$_of"
@@ -154,7 +154,7 @@ _wt_rm() {
       exit 1
     fi
     _branch="$(awk \
-      '/^$/{exit} /^.+$/{print}' "$_of" \
+      '/^---$/{exit} /^.+$/{print}' "$_of" \
       | fzf --reverse)"
   fi
 
@@ -205,8 +205,8 @@ _wt_archive() {
   $_sed -i "${_ln}s/.*//" "$_of"
 
   # Ensure separator exists
-  if ! $_grep -q '^$' "$_of"; then
-    echo "" >> "$_of"
+  if ! $_grep -q '^---$' "$_of"; then
+    echo "---" >> "$_of"
   fi
 
   echo "$_branch" >> "$_of"
@@ -231,7 +231,7 @@ _wt_unarchive() {
   $_sed -i "${_ln}d" "$_of"
 
   # Insert before separator
-  _sep="$($_grep -n '^$' "$_of" \
+  _sep="$($_grep -n '^---$' "$_of" \
     | head -1 | cut -d: -f1)"
   if test -n "$_sep"; then
     $_sed -i "${_sep}i\\${_branch}" "$_of"
@@ -278,7 +278,7 @@ _wt_move() {
   _of="$(_order_file)"
   touch "$_of"
   if ! $_grep -qx "$_branch" "$_of" 2>/dev/null; then
-    _sep="$($_grep -n '^$' "$_of" \
+    _sep="$($_grep -n '^---$' "$_of" \
       | head -1 | cut -d: -f1)"
     if test -n "$_sep"; then
       $_sed -i "${_sep}i\\${_branch}" "$_of"

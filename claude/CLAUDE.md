@@ -63,7 +63,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt archive/unarchive <name>` — move between sections
 
 Order files at `$LOCAL_CONFIG/worktrees/<repo>`. Line 1 =
-default branch. Blank line separates active/archived.
+default branch. `---` line separates active/archived.
+Removed entries are blanked (not deleted) to preserve
+line-number indices used by `wt-resolve`.
 
 Always use `wt` commands, never raw `git worktree add`.
 
