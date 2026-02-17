@@ -1,10 +1,15 @@
 # Personal Preferences
 
 At conversation end, propose CLAUDE.md updates if patterns discovered.
+Only write to auto memory for cross-project notes.
+Per-project knowledge goes in repo CLAUDE.md or related skills/docs where it
+can be committed and shared.
 
 ## Identity
 
-Initials: jrb. Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
+Initials: jrb.
+Name: Rasmus Bergström.
+Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
 
 ## Working Style
 
