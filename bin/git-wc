@@ -9,8 +9,9 @@ git_worktree_create() {
   fi
 
   _branch="$1"
-  _root="$(git rev-parse --show-toplevel)"
-  _worktree_dir="${_root}/.worktrees/${_branch}"
+  _common_git="$(git rev-parse --git-common-dir)"
+  _root="$(dirname "$(cd "$_common_git" && pwd)")"
+  _worktree_dir="${_root}/.worktrees/$(basename "$_branch")"
 
   (
     set -x

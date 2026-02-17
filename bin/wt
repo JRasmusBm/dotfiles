@@ -30,10 +30,13 @@ _ensure_order_dir() {
 _resolve_branch_path() {
   _branch="$1"
   _root="$(_main_root)"
-  _wt_path="${_root}/.worktrees/${_branch}"
+  _slug="$(basename "$_branch")"
+  _wt_path="${_root}/.worktrees/${_slug}"
 
   if test -d "$_wt_path"; then
     echo "$_wt_path"
+  elif test -d "${_root}/.worktrees/${_branch}"; then
+    echo "${_root}/.worktrees/${_branch}"
   else
     echo "$_root"
   fi
@@ -163,7 +166,11 @@ _wt_rm() {
   fi
 
   _root="$(_main_root)"
-  _wt_path="${_root}/.worktrees/${_branch}"
+  _slug="$(basename "$_branch")"
+  _wt_path="${_root}/.worktrees/${_slug}"
+  if ! test -d "$_wt_path"; then
+    _wt_path="${_root}/.worktrees/${_branch}"
+  fi
   if test -d "$_wt_path"; then
     git worktree remove --force "$_wt_path" 2>/dev/null \
       || rm -rf "$_wt_path"
@@ -243,7 +250,7 @@ _wt_unarchive() {
 _wt_move() {
   _branch="${1:-$(git branch --show-current)}"
   _root="$(_main_root)"
-  _wt_path="${_root}/.worktrees/${_branch}"
+  _wt_path="${_root}/.worktrees/$(basename "$_branch")"
 
   # Don't move the default branch
   _default="$(git -C "$_root" symbolic-ref \

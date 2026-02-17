@@ -61,9 +61,16 @@ if test -z "$_branch"; then
   exit 2
 fi
 
-# Check convention path first
-_wt_path="${_root}/.worktrees/${_branch}"
+# Check convention path first (slug, then full branch)
+_slug="$(basename "$_branch")"
+_wt_path="${_root}/.worktrees/${_slug}"
 
+if test -d "$_wt_path"; then
+  echo "$_wt_path"
+  exit 0
+fi
+
+_wt_path="${_root}/.worktrees/${_branch}"
 if test -d "$_wt_path"; then
   echo "$_wt_path"
   exit 0
