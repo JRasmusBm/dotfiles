@@ -21,3 +21,4 @@ git_push() {
 }
 
 git_push "$@"
+tmux refresh-client -S 2>/dev/null || true

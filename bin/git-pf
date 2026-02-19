@@ -22,3 +22,4 @@ git_push_force() {
 }
 
 git_push_force "$@"
+tmux refresh-client -S 2>/dev/null || true
