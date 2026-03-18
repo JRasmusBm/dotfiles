@@ -1,0 +1,36 @@
+#!/bin/sh
+
+INPUT=$(cat)
+TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
+
+# Tmux context (session:window) or fallback to cwd
+if [ -n "$TMUX_PANE" ]; then
+  CONTEXT=$(tmux display-message -p -t "$TMUX_PANE" '#S:#W')
+  TTY=$(tmux display-message -p -t "$TMUX_PANE" '#{pane_tty}')
+else
+  CONTEXT=$(basename "$PWD")
+  TTY=""
+fi
+
+# Map type to message + sound
+case "$TYPE" in
+  permission_prompt)
+    MSG="needs permission"
+    SOUND="/System/Library/Sounds/Funk.aiff"
+    ;;
+  *)
+    MSG="done"
+    SOUND="/System/Library/Sounds/Glass.aiff"
+    ;;
+esac
+
+# macOS notification
+osascript -e "display notification \"$MSG\" with title \"Claude: $CONTEXT\""
+
+# Sound
+afplay "$SOUND" &
+
+# Bell for tmux status bar highlight
+if [ -n "$TTY" ]; then
+  printf '\a' > "$TTY"
+fi

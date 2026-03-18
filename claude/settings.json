@@ -1,5 +1,18 @@
 {
   "permissions": {
     "defaultMode": "plan"
+  },
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.bin/claude-notify"
+          }
+        ]
+      }
+    ]
   }
 }
