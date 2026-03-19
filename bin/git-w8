@@ -15,6 +15,7 @@ _wait_for_ci() {
       set -x
       gh pr checks --watch --fail-fast
     ) || true
+    notify "CI" "PR #$_current_pr done"
     (
       set -x
       gh pr view --web "$_current_pr"

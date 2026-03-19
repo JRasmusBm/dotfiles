@@ -45,6 +45,8 @@ _wait_for_buddy() {
       last_execution="$(BUDDY_CLI_PIPELINE="$pipeline_id" buddy-cli pl execution "$execution_id" --json 2>/dev/null)"
     done
 
+    _status="$(echo "$last_execution" | jq -r '.status')"
+    notify "Buddy" "$display_name: $_status"
     open "$(echo "$last_execution" | jq -r '.url')"
   )
 }

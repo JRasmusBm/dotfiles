@@ -1,0 +1,18 @@
+#!/bin/sh
+
+# notify "title" "message" [sound]
+
+_title="${1:-Notification}"
+_msg="${2:-done}"
+_sound="${3:-/System/Library/Sounds/Glass.aiff}"
+
+osascript -e "display notification \"$_msg\" with title \"$_title\""
+afplay "$_sound" &
+
+# Tmux bell for status bar highlight
+if [ -n "$TMUX_PANE" ]; then
+  _tty="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_tty}')"
+  if [ -n "$_tty" ]; then
+    printf '\a' > "$_tty"
+  fi
+fi
