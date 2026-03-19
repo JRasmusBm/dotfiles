@@ -101,6 +101,27 @@ _wt_edit() {
   ${EDITOR:-vim} "$_of"
 }
 
+_of_insert() {
+  _entry="$1"
+  _of="$2"
+
+  # Reuse first blank line in active section (skip line 1)
+  _sep="$($_grep -n '^---$' "$_of" \
+    | head -1 | cut -d: -f1)"
+  _blank="$(awk 'NR > 1 && /^$/ {print NR; exit}' \
+    "$_of")"
+
+  if test -n "$_blank" \
+    && { test -z "$_sep" \
+      || test "$_blank" -lt "$_sep"; }; then
+    $_sed -i "${_blank}c\\${_entry}" "$_of"
+  elif test -n "$_sep"; then
+    $_sed -i "${_sep}i\\${_entry}" "$_of"
+  else
+    echo "$_entry" >> "$_of"
+  fi
+}
+
 _wt_add() {
   _branch="$1"
   if test -z "$_branch"; then
@@ -118,31 +139,23 @@ _wt_add() {
     return 0
   fi
 
-  # Insert before separator or append
-  _sep="$($_grep -n '^---$' "$_of" \
-    | head -1 | cut -d: -f1)"
-  if test -n "$_sep"; then
-    $_sed -i "${_sep}i\\${_branch}" "$_of"
-  else
-    echo "$_branch" >> "$_of"
-  fi
+  _of_insert "$_branch" "$_of"
 }
 
 _wt_rm_current() {
-  _root="$(_main_root)"
-  _current="$(pwd)"
+  _git_dir="$(cd "$(git rev-parse --git-dir)" && pwd)"
+  _common="$(cd "$(git rev-parse --git-common-dir)" \
+    && pwd)"
 
-  case "$_current" in
-    "${_root}/.worktrees/"*)
-      _branch="$(git branch --show-current)"
-      _switch_to "$_root"
-      _wt_rm "$_branch"
-      ;;
-    *)
-      echo "Not in a worktree" >&2
-      exit 1
-      ;;
-  esac
+  if test "$_git_dir" = "$_common"; then
+    echo "Not in a worktree" >&2
+    exit 1
+  fi
+
+  _root="$(_main_root)"
+  _branch="$(git branch --show-current)"
+  _switch_to "$_root"
+  _wt_rm "$_branch"
 }
 
 _wt_rm() {
@@ -171,21 +184,51 @@ _wt_rm() {
   if ! test -d "$_wt_path"; then
     _wt_path="${_root}/.worktrees/${_branch}"
   fi
-  if test -d "$_wt_path"; then
-    git worktree remove --force "$_wt_path" 2>/dev/null \
-      || rm -rf "$_wt_path"
-  fi
-  # Clean stale worktree references
-  git -C "$_root" worktree prune 2>/dev/null || true
 
-  # Blank the line to preserve indices
+  # Find order file line (needed for tmux + blanking)
   _of="$(_order_file)"
+  _ln=""
   if test -f "$_of"; then
     _ln="$($_grep -nx "$_branch" "$_of" \
       | head -1 | cut -d: -f1)"
-    if test -n "$_ln"; then
-      $_sed -i "${_ln}s/.*//" "$_of"
-    fi
+  fi
+
+  # Compute tmux session names before removal
+  _speeddial_session=""
+  if test -n "$_ln"; then
+    _speeddial_session="$(_repo_name)[$_ln]"
+  fi
+  _path_session=""
+  if test -d "$_wt_path"; then
+    _path_session="$(tmux-session-name-from-path \
+      "$_wt_path")"
+  fi
+
+  # Remove worktree
+  if test -d "$_wt_path"; then
+    git worktree remove --force "$_wt_path" \
+      2>/dev/null || rm -rf "$_wt_path"
+  fi
+  git -C "$_root" worktree prune 2>/dev/null || true
+
+  # Delete branch
+  git -C "$_root" branch -D "$_branch" \
+    2>/dev/null || true
+
+  # Blank the line to preserve indices
+  if test -n "$_ln"; then
+    $_sed -i "${_ln}s/.*//" "$_of"
+  fi
+
+  # Kill tmux session(s) last — when run from
+  # wt . this may kill the pane running this script
+  if test -n "$_speeddial_session"; then
+    tmux kill-session -t "$_speeddial_session" \
+      2>/dev/null || true
+  fi
+  if test -n "$_path_session"; then
+    tmux kill-session -t "$_path_session" \
+      2>/dev/null || true
   fi
 }
 
@@ -237,14 +280,7 @@ _wt_unarchive() {
   fi
   $_sed -i "${_ln}d" "$_of"
 
-  # Insert before separator
-  _sep="$($_grep -n '^---$' "$_of" \
-    | head -1 | cut -d: -f1)"
-  if test -n "$_sep"; then
-    $_sed -i "${_sep}i\\${_branch}" "$_of"
-  else
-    echo "$_branch" >> "$_of"
-  fi
+  _of_insert "$_branch" "$_of"
 }
 
 _wt_move() {
@@ -285,13 +321,7 @@ _wt_move() {
   _of="$(_order_file)"
   touch "$_of"
   if ! $_grep -qx "$_branch" "$_of" 2>/dev/null; then
-    _sep="$($_grep -n '^---$' "$_of" \
-      | head -1 | cut -d: -f1)"
-    if test -n "$_sep"; then
-      $_sed -i "${_sep}i\\${_branch}" "$_of"
-    else
-      echo "$_branch" >> "$_of"
-    fi
+    _of_insert "$_branch" "$_of"
   fi
 
   # Pop stash in new worktree if we stashed
