@@ -16,6 +16,12 @@ Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
 Be proactive, not permission-seeking. Make changes first, ask later.
 Don't ask "Want me to do X?" — just do it.
 
+## Questions
+
+Prefer AskUserQuestion with options over plain text
+questions. Easier to pick + annotate a 90% correct
+suggestion than retype from scratch.
+
 ## Communication
 
 Extremely concise. Sacrifice grammar for concision.
