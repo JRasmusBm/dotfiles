@@ -50,6 +50,10 @@ files.csv. Repo skills: .claude/skills/. Global skills:
 ~/projects/dotfiles/claude/skills/ (→ ~/.claude/skills/).
 Never create config directly in target locations.
 
+## Platform Quirks
+
+macOS ships BSD awk. Use `gawk` for GNU awk features.
+
 ## CLI Conventions
 
 - No args = sane default (help or primary action)
