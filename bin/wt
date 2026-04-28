@@ -154,12 +154,21 @@ _wt_rm_current() {
 
   _root="$(_main_root)"
   _branch="$(git branch --show-current)"
+  _wt_path="$(git rev-parse --show-toplevel)"
+  _cur_session="${TMUX_SESSION_NAME:-}"
+  if test -z "$_cur_session"; then
+    _cur_session="$(tmux display-message -p \
+      '#{session_name}' 2>/dev/null || true)"
+  fi
+  cd "$_root"
   _switch_to "$_root"
-  _wt_rm "$_branch"
+  _wt_rm "$_branch" "$_wt_path" "$_cur_session"
 }
 
 _wt_rm() {
   _branch="${1:-}"
+  _wt_path_arg="${2:-}"
+  _session_arg="${3:-}"
   if test "$_branch" = '.'; then
     _wt_rm_current
     return
@@ -179,18 +188,29 @@ _wt_rm() {
   fi
 
   _root="$(_main_root)"
-  _slug="$(basename "$_branch")"
-  _wt_path="${_root}/.worktrees/${_slug}"
-  if ! test -d "$_wt_path"; then
-    _wt_path="${_root}/.worktrees/${_branch}"
+  if test -n "$_wt_path_arg"; then
+    _wt_path="$_wt_path_arg"
+  else
+    _slug="$(basename "$_branch")"
+    _wt_path="${_root}/.worktrees/${_slug}"
+    if ! test -d "$_wt_path"; then
+      _wt_path="${_root}/.worktrees/${_branch}"
+    fi
   fi
+  _wt_name="$(basename "$_wt_path")"
 
-  # Find order file line (needed for tmux + blanking)
+  # Find order file line — try branch name, then
+  # worktree dir name (covers worktrees where the
+  # current branch differs from the added one)
   _of="$(_order_file)"
   _ln=""
   if test -f "$_of"; then
     _ln="$($_grep -nx "$_branch" "$_of" \
       | head -1 | cut -d: -f1)"
+    if test -z "$_ln"; then
+      _ln="$($_grep -nx "$_wt_name" "$_of" \
+        | head -1 | cut -d: -f1)"
+    fi
   fi
 
   # Compute tmux session names before removal
@@ -198,38 +218,59 @@ _wt_rm() {
   if test -n "$_ln"; then
     _speeddial_session="$(_repo_name)[$_ln]"
   fi
-  _path_session=""
-  if test -d "$_wt_path"; then
+  _path_session="$_session_arg"
+  if test -z "$_path_session" \
+    && test -d "$_wt_path"; then
     _path_session="$(tmux-session-name-from-path \
       "$_wt_path")"
   fi
 
-  # Remove worktree
-  if test -d "$_wt_path"; then
-    git worktree remove --force "$_wt_path" \
-      2>/dev/null || rm -rf "$_wt_path"
-  fi
-  git -C "$_root" worktree prune 2>/dev/null || true
-
-  # Delete branch
-  git -C "$_root" branch -D "$_branch" \
-    2>/dev/null || true
-
-  # Blank the line to preserve indices
+  # Free the order file slot immediately so a new
+  # `wt add` can reuse the index right away
   if test -n "$_ln"; then
     $_sed -i "${_ln}s/.*//" "$_of"
   fi
 
-  # Kill tmux session(s) last — when run from
-  # wt . this may kill the pane running this script
-  if test -n "$_speeddial_session"; then
-    tmux kill-session -t "$_speeddial_session" \
-      2>/dev/null || true
+  # Free the tmux speed-dial name immediately by
+  # renaming — actual kill happens in the bg cleanup
+  _speeddial_rename=""
+  if test -n "$_speeddial_session" \
+    && tmux has-session -t "$_speeddial_session" \
+      2>/dev/null; then
+    _speeddial_rename="_removing_$_speeddial_session"
+    tmux rename-session -t "$_speeddial_session" \
+      "$_speeddial_rename" 2>/dev/null \
+      || _speeddial_rename=""
   fi
-  if test -n "$_path_session"; then
-    tmux kill-session -t "$_path_session" \
-      2>/dev/null || true
-  fi
+
+  # Heavy cleanup in the background, detached so it
+  # survives the tmux kill-session at the end
+  nohup sh -c '
+    wt_path="$1"
+    root="$2"
+    branch="$3"
+    speeddial="$4"
+    path_sess="$5"
+
+    if [ -d "$wt_path" ]; then
+      git worktree remove --force "$wt_path" \
+        2>/dev/null || rm -rf "$wt_path"
+    fi
+    git -C "$root" worktree prune 2>/dev/null
+    git -C "$root" branch -D "$branch" 2>/dev/null
+
+    if [ -n "$speeddial" ]; then
+      tmux kill-session -t "$speeddial" 2>/dev/null
+    fi
+    if [ -n "$path_sess" ] \
+      && [ "$path_sess" != "$speeddial" ]; then
+      tmux kill-session -t "$path_sess" 2>/dev/null
+    fi
+  ' sh \
+    "$_wt_path" "$_root" "$_branch" \
+    "${_speeddial_rename:-$_speeddial_session}" \
+    "$_path_session" \
+    >/dev/null 2>&1 </dev/null &
 }
 
 _wt_archive() {

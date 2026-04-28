@@ -3,7 +3,7 @@
 set -e
 
 _session_name_from_path() {
-  if test -n "$TMUX_SESSION_NAME"; then
+  if test -z "$1" && test -n "$TMUX_SESSION_NAME"; then
     echo "$TMUX_SESSION_NAME"
     return 0
   fi
