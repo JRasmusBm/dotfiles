@@ -14,5 +14,8 @@
         ]
       }
     ]
-  }
+  },
+  "effortLevel": "xhigh",
+  "theme": "dark-ansi",
+  "editorMode": "vim"
 }
