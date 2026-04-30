@@ -1,3 +1,4 @@
+hs.loadSpoon "GameMode"
 hs.loadSpoon "CycleWindows"
 hs.loadSpoon "Reload"
 hs.loadSpoon "Apps"

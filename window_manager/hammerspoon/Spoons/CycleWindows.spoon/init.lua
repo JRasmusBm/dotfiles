@@ -20,18 +20,18 @@ local cycleWindows = function(dx)
   nextWindow:focus()
 end
 
-hs.hotkey.bind({ "ctrl" }, "=", function()
+spoon.GameMode:register(hs.hotkey.bind({ "ctrl" }, "=", function()
   cycleWindows(1)
-end)
-hs.hotkey.bind({ "ctrl" }, "`", function()
+end))
+spoon.GameMode:register(hs.hotkey.bind({ "ctrl" }, "`", function()
   cycleWindows(1)
-end)
+end))
 
-hs.hotkey.bind({ "ctrl", "shift" }, "=", function()
+spoon.GameMode:register(hs.hotkey.bind({ "ctrl", "shift" }, "=", function()
   cycleWindows(-1)
-end)
-hs.hotkey.bind({ "ctrl", "shift" }, "`", function()
+end))
+spoon.GameMode:register(hs.hotkey.bind({ "ctrl", "shift" }, "`", function()
   cycleWindows(-1)
-end)
+end))
 
 return M

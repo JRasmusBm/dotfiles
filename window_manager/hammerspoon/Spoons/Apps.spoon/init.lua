@@ -18,13 +18,13 @@ local cmd_apps = {
 
 for key, app in pairs(ctrl_apps) do
   if app ~= nil then
-    hs.hotkey.bind({ "ctrl" }, tostring(key), function()
+    spoon.GameMode:register(hs.hotkey.bind({ "ctrl" }, tostring(key), function()
       hs.application.launchOrFocus(app)
-    end)
+    end))
 
-    hs.hotkey.bind({ "ctrl", "shift" }, tostring(key), function()
+    spoon.GameMode:register(hs.hotkey.bind({ "ctrl", "shift" }, tostring(key), function()
       hs.application.launch(app)
-    end)
+    end))
   end
 end
 
@@ -41,10 +41,10 @@ for key, app in pairs(cmd_apps) do
 end
 
 local bindAlt = function(key)
-  hs.hotkey.bind({ "alt" }, tostring(key), function()
+  spoon.GameMode:register(hs.hotkey.bind({ "alt" }, tostring(key), function()
     hs.eventtap.keyStroke({ "alt" }, tostring(key), 0, hs.application.find "alacritty")
     hs.application.launchOrFocus "alacritty"
-  end)
+  end))
 end
 
 for i = 0, 9, 1 do
