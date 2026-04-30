@@ -16,6 +16,12 @@
     ]
   },
   "effortLevel": "xhigh",
+  "voice": {
+    "enabled": true,
+    "mode": "hold"
+  },
   "theme": "dark-ansi",
-  "editorMode": "vim"
+  "editorMode": "vim",
+  "voiceEnabled": true,
+  "skipAutoPermissionPrompt": true
 }
