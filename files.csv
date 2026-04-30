@@ -33,3 +33,4 @@ False,git/graphite-aliases,.config/graphite/aliases
 False,claude/CLAUDE.md,CLAUDE.md
 True,claude/skills,.claude/skills
 False,claude/settings.json,.claude/settings.json
+False,claude/statusline.sh,.claude/statusline.sh

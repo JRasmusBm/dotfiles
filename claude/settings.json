@@ -23,5 +23,9 @@
   "theme": "dark-ansi",
   "editorMode": "vim",
   "voiceEnabled": true,
-  "skipAutoPermissionPrompt": true
+  "skipAutoPermissionPrompt": true,
+  "statusLine": {
+    "type": "command",
+    "command": "sh ~/.claude/statusline.sh"
+  }
 }
