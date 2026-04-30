@@ -34,3 +34,4 @@ False,claude/CLAUDE.md,CLAUDE.md
 True,claude/skills,.claude/skills
 False,claude/settings.json,.claude/settings.json
 False,claude/statusline.sh,.claude/statusline.sh
+False,games/wc3/CustomKeys.txt,Library/Application Support/Blizzard/Warcraft III/CustomKeyBindings/CustomKeys.txt
