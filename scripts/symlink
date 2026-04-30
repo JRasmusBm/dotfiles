@@ -26,14 +26,16 @@ NR != 1 { print $1","$2","$3 }
 _link_file() {
   (
     _is_dir="$1"
-    _from_path="$(realpath "$_scripts/../$2")"
+    _src_rel="$_scripts/../$2"
     _to_path="$HOME/$3"
     _backup_path="$HOME/.backup_dotfiles/$3"
 
-    if test ! -e "$_from_path"; then
-      echo "WARNING: $_from_path does not exist"
+    if test ! -e "$_src_rel"; then
+      echo "WARNING: $_src_rel does not exist"
       return 0
     fi
+
+    _from_path="$(realpath "$_src_rel")"
 
     if test -e "$_to_path" -a ! -L "$_to_path"; then
       echo "Backing up $_to_path to $_backup_path" >/dev/stderr
