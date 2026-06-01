@@ -2,20 +2,35 @@
 
 set -e
 
+# Create a worktree at .worktrees/<basename branch>.
+#   git wc <branch>                 new branch from HEAD
+#   git wc <branch> <start-point>   new branch from start-point
+#   git wc <existing-branch> [...]  check the branch out as-is
+# Used by both `wt add` (no start) and `wt resume` (start =
+# the pinned refs/wt/<slug>), so a resumed worktree lands at
+# the exact same path as the original — preserving the
+# Claude context keyed to that path.
 git_worktree_create() {
   if test -z "$1"; then
-    echo "Usage: git wc <branch-name>" >&2
+    echo "Usage: git wc <branch> [<start-point>]" >&2
     exit 1
   fi
 
   _branch="$1"
+  _start="${2:-}"
   _common_git="$(git rev-parse --git-common-dir)"
   _root="$(dirname "$(cd "$_common_git" && pwd)")"
   _worktree_dir="${_root}/.worktrees/$(basename "$_branch")"
 
   (
     set -x
-    git worktree add "$_worktree_dir" -b "$_branch"
+    if git show-ref --verify --quiet "refs/heads/$_branch"; then
+      git worktree add "$_worktree_dir" "$_branch"
+    elif test -n "$_start"; then
+      git worktree add "$_worktree_dir" -b "$_branch" "$_start"
+    else
+      git worktree add "$_worktree_dir" -b "$_branch"
+    fi
   )
 }
 
