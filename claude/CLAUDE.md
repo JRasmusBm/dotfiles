@@ -64,18 +64,49 @@ macOS ships BSD awk. Use `gawk` for GNU awk features.
 ## Worktree Workflow
 
 Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
-- `wt .` — remove current worktree + switch to base
-- `wt :` — fzf pick worktree to switch to
+- `wt .`/`rm`/`remove` — remove the checkout AND delete the
+  branch, but pin `refs/wt/<slug>` + log to the registry
+  first, so it's fully reversible via resume. Reclaims GBs.
+  `.` = current, `:` = fzf pick, or `<name>`.
+- `wt :` — fzf pick worktree to switch to (preview shows
+  PR state + last commit)
 - `wt add <branch>` — create worktree + register
-- `wt rm .`/`:`/`<name>` — remove worktree
+- `wt clean [-f]` — remove every active worktree whose PR
+  is merged (via `gh`), confirming each; `-f` skips prompts
+- `wt resume <slug>`/`:` — re-materialise a removed
+  worktree at the same path (so `claude -r` finds its
+  context). `:` opens the registry graveyard in fzf.
+- `wt forget <slug>` — the only true destroy: drop branch
+  + `refs/wt/<slug>` so it leaves the resurrectable set.
+  Claude context dir left intact.
+- `wt dedup` — reinstall across worktrees so Yarn relinks
+  node_modules into the hardlinks-global store (run once
+  after enabling `nmMode`)
 - `wt move [branch]` — stash, create worktree, pop
 - `wt e [repo]` — edit worktree order file
-- `wt archive/unarchive <name>` — move between sections
 
 Order files at `$LOCAL_CONFIG/worktrees/<repo>`. Line 1 =
-default branch. `---` line separates active/archived.
-Removed entries are blanked (not deleted) to preserve
-line-number indices used by `wt-resolve`.
+default branch; each later line = a speed-dial slot.
+Removed entries are blanked (not deleted) to keep slot
+indices stable for `wt-resolve`. No archiving — removing a
+worktree drops it from the board into the registry, where
+`wt resume` brings it back.
+
+Removed worktrees append to `<repo>.registry` (append-only,
+never blanked): `slug<TAB>branch<TAB>sha<TAB>date`. The
+companion `refs/wt/<slug>` git ref pins the commit and
+survives `git branch -D`, `fetch --prune`, and `gc` —
+that's what makes `wt resume` reliable after branch cleanup.
+
+Disk: `~/.yarnrc.yml` sets `nmMode: hardlinks-global` so
+node_modules dedupes across worktrees via Yarn's global
+content store. Removal is cheap because the checkout is
+the only expensive, non-reconstructable-from-refs part.
+
+Claude context is keyed by cwd path
+(`~/.claude/projects/<escaped-path>/`), deterministic from
+the worktree path. `wt rm` never touches it, so the context
+outlives the checkout and `wt resume` lands you back on it.
 
 Always use `wt` commands, never raw `git worktree add`.
 
