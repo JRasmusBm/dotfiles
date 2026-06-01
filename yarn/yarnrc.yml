@@ -1,0 +1,8 @@
+# Personal Yarn Berry settings, merged with each repo's committed
+# .yarnrc.yml. Repo configs win on conflict; this only adds keys.
+
+# Hardlink node_modules files into a machine-global content-addressable
+# store so identical deps across git worktrees share one inode on disk.
+# Lets `wt clear` stay cheap and keeps many worktrees from duplicating
+# multi-GB node_modules. See bin/wt.
+nmMode: hardlinks-global
