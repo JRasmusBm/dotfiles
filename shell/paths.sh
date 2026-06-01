@@ -57,5 +57,7 @@ PATH="$PATH:$HOME/.pyenv/bin"
 PATH="$PATH:$HOME/.rover/bin"
 PATH="$PATH:$FLYCTL_INSTALL/bin"
 PATH="$PATH:$HOME/projects/polar/bin"
+PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$JAVA_HOME/bin
+
 
 export PATH=$PATH
