@@ -78,32 +78,80 @@ _switch_to() {
     || true
 }
 
-_wt_pick() {
-  _of="$(_order_file)"
-  if ! test -f "$_of"; then
-    echo "No order file. Run: wt add <branch>" >&2
-    exit 1
-  fi
-
+# All worktrees under .worktrees/ (the disk is the source
+# of truth), one per line as "<path>\t<branch>" — branch
+# empty when detached.
+_wt_worktrees() {
   _root="$(_main_root)"
-  _list="$(awk '/^$/ { next } { printf "%d: %s\n", NR, $0 }' \
-    "$_of")"
+  git -C "$_root" worktree list --porcelain | awk '
+    /^worktree /{ p=$2; b=""; next }
+    /^branch /{ b=$2; sub(/^refs\/heads\//, "", b); next }
+    /^$/{ if (p ~ /\/\.worktrees\//) print p "\t" b; p=""; b="" }
+    END{ if (p != "" && p ~ /\/\.worktrees\//) print p "\t" b }
+  '
+}
+
+_wt_pick() {
+  _root="$(_main_root)"
+  _of="$(_order_file)"
+  test -f "$_of" || touch "$_of"
+  _tab="$(printf '\t')"
+
+  # List worktrees that actually exist (disk). Tag any not
+  # on the board with ⊘ so orphans are visible; tracked ones
+  # sort by their speed-dial slot, orphans fall to the end.
+  _list="$(_wt_worktrees \
+    | while IFS="$_tab" read -r _p _b; do
+        _dir="${_p##*/}"
+        _name="${_b:-$_dir}"
+        _ln="$($_grep -nxF "$_name" "$_of" 2>/dev/null \
+          | head -1 | cut -d: -f1)"
+        if test -z "$_ln"; then
+          _ln="$($_grep -nxF "$_dir" "$_of" 2>/dev/null \
+            | head -1 | cut -d: -f1)"
+        fi
+        if test -n "$_ln"; then
+          printf '%05d\t%s: %s\n' "$_ln" "$_ln" "$_name"
+        else
+          printf '99999\t\342\212\230 %s\n' "$_name"
+        fi
+      done \
+    | sort | cut -f2-)"
 
   if test -z "$_list"; then
-    echo "Order file is empty" >&2
+    echo "No worktrees. Run: wt add <branch>" >&2
     exit 1
   fi
 
   _sel="$(echo "$_list" | fzf --reverse \
-    --preview "b=\$(echo {} | $_sed 's/^[0-9]*: //'); \
+    --preview "b=\$(echo {} \
+      | $_sed -e 's/^[0-9]*: //' -e 's/^\342\212\230 //'); \
       wt-preview '$_root' \"\$b\"" \
     --preview-window=right,55%,wrap)"
 
   test -z "$_sel" && exit 0
 
-  _branch="$(echo "$_sel" | $_sed 's/^[0-9]*: //')"
-  _target="$(_resolve_branch_path "$_branch")"
-  _switch_to "$_target"
+  case "$_sel" in
+    '⊘ '*)
+      # Orphan: offer to adopt onto the board, then switch
+      _name="${_sel#⊘ }"
+      printf 'Adopt %s onto the board? [Y/n] ' "$_name" >&2
+      { read -r _ans </dev/tty || _ans=y; } 2>/dev/null
+      case "${_ans:-y}" in
+        n|N) : ;;
+        *)
+          if ! $_grep -qxF "$_name" "$_of" 2>/dev/null; then
+            _of_insert "$_name" "$_of"
+          fi
+          ;;
+      esac
+      _switch_to "$(_resolve_branch_path "$_name")"
+      ;;
+    *)
+      _branch="$(echo "$_sel" | $_sed 's/^[0-9]*: //')"
+      _switch_to "$(_resolve_branch_path "$_branch")"
+      ;;
+  esac
 }
 
 _wt_edit() {
@@ -511,20 +559,19 @@ _wt_clean() {
     echo "wt clean needs the gh CLI" >&2
     exit 1
   fi
-  _of="$(_order_file)"
-  if ! test -f "$_of"; then
-    echo "No order file" >&2
-    exit 1
-  fi
   _root="$(_main_root)"
+  _tab="$(printf '\t')"
 
-  _branches="$(awk '/^.+$/{print}' "$_of")"
+  # Source from disk so orphans are included, not just the
+  # board. Detached worktrees (no branch) can't be PR-checked.
+  _branches="$(_wt_worktrees | cut -f2 | $_grep -v '^$' \
+    || true)"
   if test -z "$_branches"; then
-    echo "No active worktrees" >&2
+    echo "No worktrees" >&2
     return 0
   fi
 
-  echo "Checking PR state of active worktrees..." >&2
+  echo "Checking PR state of worktrees..." >&2
   # Fan out the gh lookups (8 at a time); each prints its
   # branch only if its PR is merged.
   _merged="$(printf '%s\n' "$_branches" \
@@ -543,14 +590,18 @@ _wt_clean() {
   printf 'merged: %s\n' $_merged >&2
 
   for _b in $_merged; do
+    # Pass the real path so eviction works for orphans whose
+    # dir name differs from basename(branch).
+    _p="$(_wt_worktrees \
+      | awk -F"$_tab" -v b="$_b" '$2==b{print $1; exit}')"
     if test "$_force" = true; then
       echo "removing $_b" >&2
-      _wt_evict "$_b"
+      _wt_evict "$_b" "$_p"
     else
       printf 'Remove merged worktree %s? [y/N] ' "$_b" >&2
       { read _ans </dev/tty || _ans=n; } 2>/dev/null
       case "$_ans" in
-        y|Y) _wt_evict "$_b" ;;
+        y|Y) _wt_evict "$_b" "$_p" ;;
         *) echo "  skipped $_b" >&2 ;;
       esac
     fi

@@ -68,11 +68,16 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   branch, but pin `refs/wt/<slug>` + log to the registry
   first, so it's fully reversible via resume. Reclaims GBs.
   `.` = current, `:` = fzf pick, or `<name>`.
-- `wt :` — fzf pick worktree to switch to (preview shows
-  PR state + last commit)
+- `wt :` — fzf pick worktree to switch to. Lists from disk
+  (`git worktree list`), so it always reflects reality;
+  preview shows PR state + last commit. Tracked worktrees
+  show their speed-dial slot (`N: branch`); on-disk worktrees
+  not on the board show as `⊘ branch` and selecting one
+  offers to adopt it onto the board.
 - `wt add <branch>` — create worktree + register
-- `wt clean [-f]` — remove every active worktree whose PR
-  is merged (via `gh`), confirming each; `-f` skips prompts
+- `wt clean [-f]` — remove every worktree (incl. orphans)
+  whose PR is merged (via `gh`), confirming each; `-f` skips
+  prompts
 - `wt resume <slug>`/`:` — re-materialise a removed
   worktree at the same path (so `claude -r` finds its
   context). `:` opens the registry graveyard in fzf.
