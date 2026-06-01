@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# fzf preview for `wt :` / `wt clear`. Shows the PR state
+# (best-effort, needs gh) and the last commit for a branch.
+# Usage: wt-preview <root> <branch> [git-ref]
+# Tolerant of board entries that aren't branches (section
+# headers like REVIEW:) — those just yield empty output.
+
+_root="$1"
+_branch="$2"
+_ref="${3:-$2}"
+
+test -n "$_branch" || exit 0
+
+if command -v gh >/dev/null 2>&1; then
+  ( cd "$_root" 2>/dev/null \
+    && gh pr view "$_branch" \
+         --json state,title,url \
+         -q '"PR " + .state + ": " + .title, .url' \
+       2>/dev/null )
+  echo
+fi
+
+git -C "$_root" log -1 --stat "$_ref" 2>/dev/null \
+  || git -C "$_root" log -1 --stat "$_branch" 2>/dev/null

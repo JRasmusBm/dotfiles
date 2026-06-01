@@ -42,6 +42,23 @@ _resolve_branch_path() {
   fi
 }
 
+# Append-only graveyard of removed worktrees. Never
+# blanked — it's the searchable registry behind
+# `wt resume :`. Rows: slug<TAB>branch<TAB>sha<TAB>date
+_registry_file() {
+  echo "$LOCAL_CONFIG/worktrees/$(_repo_name).registry"
+}
+
+_registry_append() {
+  _ra_slug="$1"
+  _ra_branch="$2"
+  _ra_sha="$3"
+  _ensure_order_dir
+  printf '%s\t%s\t%s\t%s\n' \
+    "$_ra_slug" "$_ra_branch" "$_ra_sha" \
+    "$(date -u +%FT%TZ)" >> "$(_registry_file)"
+}
+
 _switch_to() {
   _target="$1"
   _session="$(tmux-session-name-from-path "$_target")"
@@ -68,22 +85,21 @@ _wt_pick() {
     exit 1
   fi
 
-  _list="$(awk '
-    /^---$/ { sep=1; print "---"; next }
-    /^$/ { next }
-    { printf "%d: %s\n", NR, $0 }
-  ' "$_of")"
+  _root="$(_main_root)"
+  _list="$(awk '/^$/ { next } { printf "%d: %s\n", NR, $0 }' \
+    "$_of")"
 
   if test -z "$_list"; then
     echo "Order file is empty" >&2
     exit 1
   fi
 
-  _sel="$(echo "$_list" | fzf --reverse)"
+  _sel="$(echo "$_list" | fzf --reverse \
+    --preview "b=\$(echo {} | $_sed 's/^[0-9]*: //'); \
+      wt-preview '$_root' \"\$b\"" \
+    --preview-window=right,55%,wrap)"
 
-  if test "$_sel" = "---"; then
-    exit 0
-  fi
+  test -z "$_sel" && exit 0
 
   _branch="$(echo "$_sel" | $_sed 's/^[0-9]*: //')"
   _target="$(_resolve_branch_path "$_branch")"
@@ -105,18 +121,13 @@ _of_insert() {
   _entry="$1"
   _of="$2"
 
-  # Reuse first blank line in active section (skip line 1)
-  _sep="$($_grep -n '^---$' "$_of" \
-    | head -1 | cut -d: -f1)"
-  _blank="$(awk 'NR > 1 && /^$/ {print NR; exit}' \
-    "$_of")"
+  # Reuse the first freed (blank) slot, else append. Blank
+  # lines are freed speed-dial slots; line 1 is the default
+  # branch, so skip it.
+  _blank="$(awk 'NR > 1 && /^$/ {print NR; exit}' "$_of")"
 
-  if test -n "$_blank" \
-    && { test -z "$_sep" \
-      || test "$_blank" -lt "$_sep"; }; then
+  if test -n "$_blank"; then
     $_sed -i "${_blank}c\\${_entry}" "$_of"
-  elif test -n "$_sep"; then
-    $_sed -i "${_sep}i\\${_entry}" "$_of"
   else
     echo "$_entry" >> "$_of"
   fi
@@ -142,7 +153,28 @@ _wt_add() {
   _of_insert "$_branch" "$_of"
 }
 
-_wt_rm_current() {
+# fzf the active board, previewing PR state + last commit.
+# Echoes a branch.
+_pick_active_branch() {
+  _of="$(_order_file)"
+  if ! test -f "$_of"; then
+    echo "No order file" >&2
+    return 1
+  fi
+  _root="$(_main_root)"
+  awk '/^.+$/{print}' "$_of" \
+    | fzf --reverse \
+        --preview "wt-preview '$_root' {}" \
+        --preview-window=right,55%,wrap
+}
+
+# Evict a worktree: remove the checkout AND delete the
+# branch, but pin refs/wt/<slug> + log to the registry
+# FIRST so it stays fully resurrectable via `wt resume`.
+# `rm`/`remove` and bare `.` all do this — only `wt forget`
+# destroys the record. Heavy work is detached to the
+# background so it survives the tmux kill-session.
+_wt_evict_current() {
   _git_dir="$(cd "$(git rev-parse --git-dir)" && pwd)"
   _common="$(cd "$(git rev-parse --git-common-dir)" \
     && pwd)"
@@ -162,25 +194,18 @@ _wt_rm_current() {
   fi
   cd "$_root"
   _switch_to "$_root"
-  _wt_rm "$_branch" "$_wt_path" "$_cur_session"
+  _wt_evict "$_branch" "$_wt_path" "$_cur_session"
 }
 
-_wt_rm() {
+_wt_evict() {
   _branch="${1:-}"
   _wt_path_arg="${2:-}"
   _session_arg="${3:-}"
   if test "$_branch" = '.'; then
-    _wt_rm_current
+    _wt_evict_current
     return
   elif test -z "$_branch" || test "$_branch" = ':'; then
-    _of="$(_order_file)"
-    if ! test -f "$_of"; then
-      echo "No order file" >&2
-      exit 1
-    fi
-    _branch="$(awk \
-      '/^---$/{exit} /^.+$/{print}' "$_of" \
-      | fzf --reverse)"
+    _branch="$(_pick_active_branch)"
   fi
 
   if test -z "$_branch"; then
@@ -191,13 +216,26 @@ _wt_rm() {
   if test -n "$_wt_path_arg"; then
     _wt_path="$_wt_path_arg"
   else
-    _slug="$(basename "$_branch")"
-    _wt_path="${_root}/.worktrees/${_slug}"
+    _wt_path="${_root}/.worktrees/$(basename "$_branch")"
     if ! test -d "$_wt_path"; then
       _wt_path="${_root}/.worktrees/${_branch}"
     fi
   fi
   _wt_name="$(basename "$_wt_path")"
+  # Key the registry + ref on the actual worktree dir — the
+  # Claude-context anchor — not on the branch name.
+  _slug="$_wt_name"
+
+  # Pin the tip + register BEFORE removal so the branch is
+  # resurrectable via `wt resume` after we delete it.
+  _sha="$(git -C "$_root" rev-parse "$_branch" \
+    2>/dev/null \
+    || git -C "$_wt_path" rev-parse HEAD 2>/dev/null \
+    || true)"
+  if test -n "$_sha"; then
+    git -C "$_root" update-ref "refs/wt/$_slug" "$_sha"
+    _registry_append "$_slug" "$_branch" "$_sha"
+  fi
 
   # Find order file line — try branch name, then
   # worktree dir name (covers worktrees where the
@@ -244,7 +282,9 @@ _wt_rm() {
   fi
 
   # Heavy cleanup in the background, detached so it
-  # survives the tmux kill-session at the end
+  # survives the tmux kill-session at the end. The branch
+  # is deleted — refs/wt/<slug> keeps the commit alive;
+  # only `wt forget` drops that pin.
   nohup sh -c '
     wt_path="$1"
     root="$2"
@@ -271,57 +311,6 @@ _wt_rm() {
     "${_speeddial_rename:-$_speeddial_session}" \
     "$_path_session" \
     >/dev/null 2>&1 </dev/null &
-}
-
-_wt_archive() {
-  _branch="$1"
-  if test -z "$_branch"; then
-    echo "Usage: wt archive <branch>" >&2
-    exit 1
-  fi
-
-  _of="$(_order_file)"
-  if ! test -f "$_of"; then
-    echo "No order file" >&2
-    exit 1
-  fi
-
-  # Blank the line in active section
-  _ln="$($_grep -nx "$_branch" "$_of" \
-    | head -1 | cut -d: -f1)"
-  if test -z "$_ln"; then
-    echo "Branch not in order file" >&2
-    exit 1
-  fi
-  $_sed -i "${_ln}s/.*//" "$_of"
-
-  # Ensure separator exists
-  if ! $_grep -q '^---$' "$_of"; then
-    echo "---" >> "$_of"
-  fi
-
-  echo "$_branch" >> "$_of"
-}
-
-_wt_unarchive() {
-  _branch="$1"
-  if test -z "$_branch"; then
-    echo "Usage: wt unarchive <branch>" >&2
-    exit 1
-  fi
-
-  _of="$(_order_file)"
-
-  # Remove from archived section (last match)
-  _ln="$($_grep -nx "$_branch" "$_of" \
-    | tail -1 | cut -d: -f1)"
-  if test -z "$_ln"; then
-    echo "Branch not found" >&2
-    exit 1
-  fi
-  $_sed -i "${_ln}d" "$_of"
-
-  _of_insert "$_branch" "$_of"
 }
 
 _wt_move() {
@@ -371,18 +360,200 @@ _wt_move() {
   fi
 }
 
+# Re-materialise a removed worktree at its deterministic
+# path so `claude -r` finds the same context. No arg or
+# `:` opens the registry (the graveyard) in fzf.
+_wt_resume() {
+  _arg="${1:-:}"
+  _root="$(_main_root)"
+  _rf="$(_registry_file)"
+
+  if test "$_arg" = ':'; then
+    if ! test -f "$_rf"; then
+      echo "Nothing removed yet (empty registry)" >&2
+      exit 1
+    fi
+    # Reverse to newest-first, keep one row per slug.
+    _sel="$(awk -F'\t' '
+      { a[NR] = $0 }
+      END {
+        for (i = NR; i >= 1; i--) {
+          split(a[i], f, "\t")
+          if (!seen[f[1]]++) print a[i]
+        }
+      }' "$_rf" \
+      | fzf --reverse --delimiter='\t' --with-nth=1,2,4 \
+          --preview "git -C '$_root' log -1 --stat \
+            'refs/wt/'{1} 2>/dev/null" \
+          --preview-window=right,55%,wrap)"
+    test -z "$_sel" && exit 0
+    _slug="$(printf '%s' "$_sel" | cut -f1)"
+    _branch="$(printf '%s' "$_sel" | cut -f2)"
+  else
+    _slug="$(basename "$_arg")"
+    _branch=""
+    if test -f "$_rf"; then
+      _branch="$($_grep -P "^$_slug\t" "$_rf" \
+        | tail -1 | cut -f2)"
+    fi
+    test -z "$_branch" && _branch="$_arg"
+  fi
+
+  # Resume IS `wt add` from the pinned tip: same `git wc`
+  # call, so the worktree lands at its original path and the
+  # Claude context (keyed by that path) is right there.
+  _wt_path="${_root}/.worktrees/$(basename "$_branch")"
+  if test -d "$_wt_path"; then
+    echo "Worktree exists; switching" >&2
+    _switch_to "$_wt_path"
+    return 0
+  fi
+
+  _start=""
+  if git -C "$_root" show-ref --verify --quiet \
+      "refs/wt/$_slug"; then
+    _start="refs/wt/$_slug"
+  fi
+  if test -z "$_start" && ! git -C "$_root" show-ref \
+      --verify --quiet "refs/heads/$_branch"; then
+    echo "No ref to resume $_slug ($_branch)" >&2
+    exit 1
+  fi
+
+  git wc "$_branch" $_start
+
+  # Put it back on the active board (same as `wt add`)
+  _ensure_order_dir
+  _of="$(_order_file)"
+  touch "$_of"
+  if ! $_grep -qx "$_branch" "$_of" 2>/dev/null; then
+    _of_insert "$_branch" "$_of"
+  fi
+
+  _switch_to "$_wt_path"
+}
+
+# Hard-forget a slug: drop branch + refs/wt/<slug> so it
+# leaves the registry's resurrectable set. The Claude
+# context dir is intentionally left intact.
+_wt_forget() {
+  _arg="$1"
+  if test -z "$_arg"; then
+    echo "Usage: wt forget <slug>" >&2
+    exit 1
+  fi
+  _slug="$(basename "$_arg")"
+  _root="$(_main_root)"
+  _rf="$(_registry_file)"
+  _branch="$_arg"
+  if test -f "$_rf"; then
+    _b="$($_grep -P "^$_slug\t" "$_rf" \
+      | tail -1 | cut -f2)"
+    test -n "$_b" && _branch="$_b"
+  fi
+
+  _wt_path="${_root}/.worktrees/${_slug}"
+  if test -d "$_wt_path"; then
+    git -C "$_root" worktree remove --force "$_wt_path" \
+      2>/dev/null || rm -rf "$_wt_path"
+    git -C "$_root" worktree prune 2>/dev/null
+  fi
+  git -C "$_root" branch -D "$_branch" 2>/dev/null || true
+  git -C "$_root" update-ref -d \
+    "refs/wt/$_slug" 2>/dev/null || true
+  _registry_append "$_slug" "$_branch" "PURGED"
+  echo "Forgot $_slug (Claude context left intact)" >&2
+}
+
+# Reclaim disk on existing worktrees by reinstalling so
+# Yarn relinks node_modules into the hardlinks-global
+# store. Run once after enabling nmMode.
+_wt_dedup() {
+  _root="$(_main_root)"
+  _wt_dir="${_root}/.worktrees"
+  if ! test -d "$_wt_dir"; then
+    echo "No worktrees" >&2
+    exit 0
+  fi
+  for _d in "$_wt_dir"/*/; do
+    test -d "$_d" || continue
+    test -f "${_d}package.json" || continue
+    echo ">> yarn install: $_d" >&2
+    ( cd "$_d" && yarn install ) \
+      || echo "  (failed in $_d)" >&2
+  done
+}
+
+# Remove every active worktree whose PR is merged. Confirms
+# each (read from /dev/tty); `-f`/`--force` skips prompts.
+# Needs gh. Safe to run — removal is reversible via resume.
+_wt_clean() {
+  _force=false
+  case "${1:-}" in
+    -f|--force) _force=true ;;
+  esac
+
+  if ! command -v gh >/dev/null 2>&1; then
+    echo "wt clean needs the gh CLI" >&2
+    exit 1
+  fi
+  _of="$(_order_file)"
+  if ! test -f "$_of"; then
+    echo "No order file" >&2
+    exit 1
+  fi
+  _root="$(_main_root)"
+
+  echo "Checking PR state of active worktrees..." >&2
+  _merged=""
+  for _b in $(awk '/^.+$/{print}' "$_of"); do
+    _st="$( (cd "$_root" \
+      && gh pr view "$_b" --json state -q .state \
+        2>/dev/null) || true )"
+    if test "$_st" = MERGED; then
+      echo "  merged: $_b" >&2
+      _merged="$_merged $_b"
+    fi
+  done
+
+  if test -z "$_merged"; then
+    echo "No merged worktrees to remove." >&2
+    return 0
+  fi
+
+  for _b in $_merged; do
+    if test "$_force" = true; then
+      echo "removing $_b" >&2
+      _wt_evict "$_b"
+    else
+      printf 'Remove merged worktree %s? [y/N] ' "$_b" >&2
+      read _ans </dev/tty 2>/dev/null || _ans=n
+      case "$_ans" in
+        y|Y) _wt_evict "$_b" ;;
+        *) echo "  skipped $_b" >&2 ;;
+      esac
+    fi
+  done
+}
+
+_usage() {
+  echo "Usage: wt [.|:|add|rm|clean|resume|forget|dedup|move|e]" >&2
+}
+
 case "${1:-}" in
-  "") echo "Usage: wt [.|:|e|add|rm|move|archive|unarchive]" >&2; exit 1 ;;
+  "") _usage; exit 1 ;;
   :) _wt_pick ;;
-  .) _wt_rm_current ;;
+  .) _wt_evict . ;;
   e|edit) shift; _wt_edit "$@" ;;
   add) shift; _wt_add "$@" ;;
-  rm|remove) shift; _wt_rm "$@" ;;
+  rm|remove) shift; _wt_evict "$@" ;;
+  clean) shift; _wt_clean "$@" ;;
+  resume) shift; _wt_resume "$@" ;;
+  forget) shift; _wt_forget "$@" ;;
+  dedup) _wt_dedup ;;
   move) shift; _wt_move "$@" ;;
-  archive) shift; _wt_archive "$@" ;;
-  unarchive) shift; _wt_unarchive "$@" ;;
   *)
-    echo "Usage: wt [.|:|e|add|rm|move|archive|unarchive]" >&2
+    _usage
     exit 1
     ;;
 esac
