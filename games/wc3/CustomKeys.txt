@@ -1559,7 +1559,6 @@ Tip=(|cffffcc00Q|r) Shadowraze - [|cffffcc00Level 1|r],(|cffffcc00Q|r) Shadowraz
 [a0f0]
 Buttonpos=2,0
 Hotkey=E
-Researchbuttonpos=
 Researchtip=(|cffffcc00|r) 
 Tip=(|cffffcc00E|r) Shadowraze - [|cffffcc00Level 1|r],(|cffffcc00E|r) Shadowraze - [|cffffcc00Level 2|r],(|cffffcc00E|r) Shadowraze - [|cffffcc00Level 3|r],(|cffffcc00E|r) Shadowraze - [|cffffcc00Level 4|r]
 
@@ -1573,7 +1572,6 @@ Tip=Caustic Finale - [|cffffcc00Level 1|r],Caustic Finale - [|cffffcc00Level 2|r
 [a0fh]
 Buttonpos=1,0
 Hotkey=W
-Researchbuttonpos=
 Researchtip=(|cffffcc00|r) 
 Tip=(|cffffcc00W|r) Shadowraze - [|cffffcc00Level 1|r],(|cffffcc00W|r) Shadowraze - [|cffffcc00Level 2|r],(|cffffcc00W|r) Shadowraze - [|cffffcc00Level 3|r],(|cffffcc00W|r) Shadowraze - [|cffffcc00Level 4|r]
 
@@ -4536,35 +4534,30 @@ Tip=(|cffffcc00V|r) Fire Remnant - [|cffffcc00Level 1|r],(|cffffcc00V|r) Fire Re
 [A2JL]
 Buttonpos=2,1
 Hotkey=D
-Researchbuttonpos=
 Researchtip=(|cffffcc00|r) 
 Tip=(|cffffcc00D|r) Fire Remnant - [|cffffcc00Level 1|r],(|cffffcc00D|r) Fire Remnant - [|cffffcc00Level 2|r],(|cffffcc00D|r) Fire Remnant - [|cffffcc00Level 3|r],(|cffffcc00D|r) Fire Remnant - [|cffffcc00Level 4|r]
 
 [A2JO]
 Buttonpos=3,0
 Hotkey=R
-Researchbuttonpos=
 Researchtip=(|cffffcc00|r) 
 Tip=(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 1|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 2|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 3|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 4|r]
 
 [A2JP]
 Buttonpos=3,0
 Hotkey=R
-Researchbuttonpos=
 Researchtip=(|cffffcc00|r) 
 Tip=(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 1|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 2|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 3|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 4|r]
 
 [A2JQ]
 Buttonpos=3,0
 Hotkey=R
-Researchbuttonpos=
 Researchtip=(|cffffcc00|r) 
 Tip=(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 1|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 2|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 3|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 4|r]
 
 [A2JR]
 Buttonpos=3,0
 Hotkey=R
-Researchbuttonpos=
 Researchtip=(|cffffcc00|r) 
 Tip=(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 1|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 2|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 3|r],(|cffffcc00R|r) Fire Remnant - [|cffffcc00Level 4|r]
 
@@ -5948,7 +5941,7 @@ Hotkey=E
 Tip=(|cffffcc00E|r) Sacrifice
 
 [alcm]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=65
 Modifier=Alt
 
@@ -7296,7 +7289,7 @@ Hotkey=Q
 Tip=(|cffffcc00Q|r) Purchase Boots of Speed
 
 [capt]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=67
 Modifier=Ctrl_or_Alt
 
@@ -7320,7 +7313,7 @@ Hotkey=F
 MerchantAvailable=1
 
 [clnt]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=32
 
 [clsd]
@@ -7422,52 +7415,52 @@ Hotkey=C
 MerchantAvailable=1
 
 [ctcr]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=8
 
 [Ctr0]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=48
 
 [Ctr1]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=49
 
 [Ctr2]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=50
 
 [Ctr3]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=51
 
 [Ctr4]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=52
 
 [Ctr5]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=53
 
 [Ctr6]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=54
 
 [Ctr7]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=55
 
 [Ctr8]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=56
 
 [Ctr9]
-CtrlGroupCommand=1
+CtrlGroupCommand=1,1,1,1
 Hotkey=57
 
 [DeGS]
 Hotkey=189
-ReplayCommand=1
+ReplayCommand=1,1,1,1
 
 [desc]
 Hotkey=E
@@ -7657,7 +7650,7 @@ Hotkey=E
 Tip=(|cffffcc00E|r) Train Fairie Dragon
 
 [egol]
-Hoktey=None
+Hoktey=None,None,None,None
 
 [ehip]
 Buttonpos=0,0
@@ -8717,15 +8710,15 @@ Hotkey=Q
 Tip=(|cffffcc00Q|r) Train Dragon Hawk
 
 [her1]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=113
 
 [her2]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=114
 
 [her3]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=115
 
 [hfoo]
@@ -8895,34 +8888,34 @@ Tip=(|cffffcc00A|r) Build Scout Tower
 
 [InGS]
 Hotkey=187
-ReplayCommand=1
+ReplayCommand=1,1,1,1
 
 [iotw]
 Hotkey=I
 MerchantAvailable=1
 
 [itm1]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=37
 
 [itm2]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=39
 
 [itm3]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=36
 
 [itm4]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=46
 
 [itm5]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=97
 
 [itm6]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=98
 
 [jpnt]
@@ -9004,7 +8997,7 @@ Modifier=Alt
 Hotkey=M
 
 [mpng]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=71
 Modifier=Alt
 
@@ -9014,20 +9007,20 @@ MenuCommand=1
 Modifier=Alt
 
 [mvcb]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=40
 
 [mvcf]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=38
 
 [mvcl]
-CameraCommand=1
-Hotkey=37
+CameraCommand=1,1,1,1
+Hotkey=58
 
 [mvcr]
-CameraCommand=1
-Hotkey=39
+CameraCommand=1,1,1,1
+Hotkey=58
 
 [N00b]
 Buttonpos=2,0
@@ -10328,7 +10321,7 @@ Hotkey=R
 Tip=(|cffffcc00R|r) Research Well Spring
 
 [rezm]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=116
 
 [Rhac]
@@ -10524,12 +10517,12 @@ Hotkey=Z
 Tip=(|cffffcc00Z|r) Research Berserker Strength
 
 [rocl]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=45
 
 [rocr]
-CameraCommand=1
-Hotkey=46
+CameraCommand=1,1,1,1
+Hotkey=58
 
 [Roen]
 Buttonpos=0,2
@@ -10757,7 +10750,7 @@ Hotkey=C
 MerchantAvailable=1
 
 [sbgp]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=9
 
 [sbok]
@@ -10826,7 +10819,7 @@ Hotkey=H
 Hotkey=S
 
 [sidw]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=192
 
 [silk]
@@ -10889,7 +10882,7 @@ Hotkey=O
 [SPQM]
 Hotkey=80
 Modifier=Alt
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [spre]
 Buttonpos=3,1
@@ -10965,19 +10958,19 @@ Tip=(|cffffcc00W|r) Unholy Frenzy
 [SULM]
 Hotkey=85
 Modifier=Alt
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [TAHb]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=219
 
 [TAll]
 Hotkey=65
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [TAuC]
 Hotkey=101
-ReplayCommand=1
+ReplayCommand=1,1,1,1
 
 [tbak]
 Hotkey=K
@@ -10995,7 +10988,7 @@ Hotkey=A
 Hotkey=A
 
 [TEHb]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=221
 
 [tels]
@@ -11008,13 +11001,13 @@ Hotkey=E
 Hotkey=F
 
 [TFmv]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=70
 Modifier=Alt
 
 [TFoW]
 Hotkey=100
-ReplayCommand=1
+ReplayCommand=1,1,1,1
 
 [tgrh]
 Buttonpos=1,2
@@ -11026,7 +11019,7 @@ Hotkey=T
 
 [THer]
 Hotkey=72
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [tint]
 Hotkey=T
@@ -11039,10 +11032,10 @@ Hotkey=R
 
 [TMap]
 Hotkey=77
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [TMcd]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=82
 Modifier=Alt
 
@@ -11050,7 +11043,7 @@ Modifier=Alt
 Hotkey=T
 
 [TMtr]
-GameCommand=1
+GameCommand=1,1,1,1
 Hotkey=84
 Modifier=Alt
 
@@ -11061,11 +11054,11 @@ Modifier=Ctrl
 
 [TPPl]
 Hotkey=80
-ReplayCommand=1
+ReplayCommand=1,1,1,1
 
 [TPUQ]
 Hotkey=81
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [tret]
 Buttonpos=0,2
@@ -11074,7 +11067,7 @@ Tip=(|cffffcc00Z|r) Purchase Tome of Retraining
 
 [TRpl]
 Hotkey=82
-ReplayCommand=1
+ReplayCommand=1,1,1,1
 
 [tsct]
 Buttonpos=3,1
@@ -11083,7 +11076,7 @@ Tip=(|cffffcc00F|r) Purchase Ivory Tower
 
 [TSel]
 Hotkey=83
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [TSFX]
 Hotkey=83
@@ -11092,14 +11085,14 @@ Modifier=Ctrl
 
 [TSta]
 Hotkey=84
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [tstr]
 Hotkey=S
 
 [TToD]
 Hotkey=68
-ObserverCommand=1
+ObserverCommand=1,1,1,1
 
 [U000]
 Buttonpos=3,0
@@ -11394,10 +11387,10 @@ MerchantAvailable=1
 Hotkey=L
 
 [zmin]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=33
 
 [zmou]
-CameraCommand=1
+CameraCommand=1,1,1,1
 Hotkey=34
 
