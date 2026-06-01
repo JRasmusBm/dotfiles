@@ -475,13 +475,27 @@ _wt_dedup() {
     echo "No worktrees" >&2
     exit 0
   fi
-  for _d in "$_wt_dir"/*/; do
+
+  # Collect worktrees with a package.json, then reinstall up
+  # to 8 at once. (Guard the list — macOS xargs runs once on
+  # empty input.)
+  _list="$(for _d in "$_wt_dir"/*/; do
     test -d "$_d" || continue
     test -f "${_d}package.json" || continue
-    echo ">> yarn install: $_d" >&2
-    ( cd "$_d" && yarn install ) \
-      || echo "  (failed in $_d)" >&2
-  done
+    printf '%s\n' "$_d"
+  done)"
+  if test -z "$_list"; then
+    echo "No worktrees to dedup" >&2
+    exit 0
+  fi
+
+  printf '%s\n' "$_list" | xargs -P 8 -I {} sh -c '
+    d="$1"
+    echo ">> yarn install: $d" >&2
+    ( cd "$d" && yarn install ) >/dev/null 2>&1 \
+      && echo "   done: $d" >&2 \
+      || echo "   FAILED: $d" >&2
+  ' sh {}
 }
 
 # Remove every active worktree whose PR is merged. Confirms
@@ -504,22 +518,29 @@ _wt_clean() {
   fi
   _root="$(_main_root)"
 
+  _branches="$(awk '/^.+$/{print}' "$_of")"
+  if test -z "$_branches"; then
+    echo "No active worktrees" >&2
+    return 0
+  fi
+
   echo "Checking PR state of active worktrees..." >&2
-  _merged=""
-  for _b in $(awk '/^.+$/{print}' "$_of"); do
-    _st="$( (cd "$_root" \
-      && gh pr view "$_b" --json state -q .state \
-        2>/dev/null) || true )"
-    if test "$_st" = MERGED; then
-      echo "  merged: $_b" >&2
-      _merged="$_merged $_b"
-    fi
-  done
+  # Fan out the gh lookups (8 at a time); each prints its
+  # branch only if its PR is merged.
+  _merged="$(printf '%s\n' "$_branches" \
+    | xargs -P 8 -I {} sh -c '
+        root="$1"
+        b="$2"
+        st="$( (cd "$root" && gh pr view "$b" \
+          --json state -q .state 2>/dev/null) || true )"
+        if test "$st" = MERGED; then echo "$b"; fi
+      ' sh "$_root" {} || true)"
 
   if test -z "$_merged"; then
     echo "No merged worktrees to remove." >&2
     return 0
   fi
+  printf 'merged: %s\n' $_merged >&2
 
   for _b in $_merged; do
     if test "$_force" = true; then
@@ -527,7 +548,7 @@ _wt_clean() {
       _wt_evict "$_b"
     else
       printf 'Remove merged worktree %s? [y/N] ' "$_b" >&2
-      read _ans </dev/tty 2>/dev/null || _ans=n
+      { read _ans </dev/tty || _ans=n; } 2>/dev/null
       case "$_ans" in
         y|Y) _wt_evict "$_b" ;;
         *) echo "  skipped $_b" >&2 ;;
