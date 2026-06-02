@@ -97,32 +97,44 @@ _wt_pick() {
   test -f "$_of" || touch "$_of"
   _tab="$(printf '\t')"
 
-  # List worktrees that actually exist (disk). Tag any not
-  # on the board with ⊘ so orphans are visible; tracked ones
-  # sort by their speed-dial slot, orphans fall to the end.
-  _list="$(_wt_worktrees \
-    | while IFS="$_tab" read -r _p _b; do
-        _dir="${_p##*/}"
-        _name="${_b:-$_dir}"
-        _ln="$($_grep -nxF "$_name" "$_of" 2>/dev/null \
-          | head -1 | cut -d: -f1)"
-        if test -z "$_ln"; then
-          _ln="$($_grep -nxF "$_dir" "$_of" 2>/dev/null \
-            | head -1 | cut -d: -f1)"
-        fi
-        if test -n "$_ln"; then
-          printf '%05d\t%s: %s\n' "$_ln" "$_ln" "$_name"
-        else
-          printf '99999\t\342\212\230 %s\n' "$_name"
-        fi
-      done \
-    | sort | cut -f2-)"
+  # Show on-disk worktrees that sit under a heading (a FOO:
+  # line) in the order file, prefixed with that heading.
+  # Speed-dial entries (above the first heading) are hidden —
+  # they're on Alt-N already. On-disk worktrees not on the
+  # board show as ⊘ and can be adopted.
+  _list="$( { printf '#DISK\n'; _wt_worktrees; \
+    printf '#ORDER\n'; cat "$_of"; } \
+    | awk -F"$_tab" '
+        $0 == "#DISK"  { sec = "D"; next }
+        $0 == "#ORDER" { sec = "O"; h = ""; next }
+        sec == "D" {
+          n = split($1, pa, "/"); dir = pa[n]
+          br = $2; name = (br != "" ? br : dir)
+          if (br != "") ondisk[br] = 1
+          ondisk[dir] = 1
+          c++; wbr[c] = br; wdir[c] = dir; wname[c] = name
+          next
+        }
+        sec == "O" {
+          if ($0 ~ /:[[:space:]]*$/) {
+            h = $0; sub(/:[[:space:]]*$/, "", h); next
+          }
+          if ($0 ~ /^[[:space:]]*$/) next
+          seen[$0] = 1
+          if (h != "" && ondisk[$0]) print h ": " $0
+        }
+        END {
+          for (i = 1; i <= c; i++)
+            if (!seen[wbr[i]] && !seen[wdir[i]])
+              print "\342\212\230 " wname[i]
+        }
+      ')"
 
   # No worktrees → just open an empty fzf (no error). printf
   # (not echo) so an empty list is truly empty, not a blank row.
   _sel="$(printf '%s' "$_list" | fzf --reverse \
     --preview "b=\$(echo {} \
-      | $_sed -e 's/^[0-9]*: //' -e 's/^\342\212\230 //'); \
+      | $_sed -e 's/^[^:]*: //' -e 's/^\342\212\230 //'); \
       wt-preview '$_root' \"\$b\"" \
     --preview-window=right,55%,wrap || true)"
 
@@ -145,7 +157,7 @@ _wt_pick() {
       _switch_to "$(_resolve_branch_path "$_name")"
       ;;
     *)
-      _branch="$(echo "$_sel" | $_sed 's/^[0-9]*: //')"
+      _branch="$(echo "$_sel" | $_sed 's/^[^:]*: //')"
       _switch_to "$(_resolve_branch_path "$_branch")"
       ;;
   esac

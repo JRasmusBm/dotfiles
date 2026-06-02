@@ -70,10 +70,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `.` = current, `:` = fzf pick, or `<name>`.
 - `wt :` — fzf pick worktree to switch to. Lists from disk
   (`git worktree list`), so it always reflects reality;
-  preview shows PR state + last commit. Tracked worktrees
-  show their speed-dial slot (`N: branch`); on-disk worktrees
-  not on the board show as `⊘ branch` and selecting one
-  offers to adopt it onto the board.
+  preview shows PR state + last commit. Speed-dial entries
+  (above the first `FOO:` heading in the order file) are
+  hidden — they're on Alt-N already. Worktrees under a
+  heading show as `HEADING: branch`; on-disk worktrees not on
+  the board show as `⊘ branch` and selecting one offers to
+  adopt it.
 - `wt add <branch>` — create worktree + register
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
