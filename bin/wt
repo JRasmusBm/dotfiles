@@ -116,8 +116,12 @@ _wt_pick() {
           next
         }
         sec == "O" {
-          if ($0 ~ /:[[:space:]]*$/) {
-            h = $0; sub(/:[[:space:]]*$/, "", h); next
+          # Heading: a "# Foo" or "Foo:" line.
+          if ($0 ~ /^[[:space:]]*#/ || $0 ~ /:[[:space:]]*$/) {
+            h = $0
+            sub(/^[[:space:]]*#+[[:space:]]*/, "", h)
+            sub(/:[[:space:]]*$/, "", h)
+            next
           }
           if ($0 ~ /^[[:space:]]*$/) next
           seen[$0] = 1
@@ -140,8 +144,11 @@ _wt_pick() {
 
   case "$_sel" in
     '⊘ '*)
-      # Orphan: offer to adopt onto the board, then switch
+      # Orphan: open its session regardless, and offer to
+      # adopt it onto the board.
       _name="${_sel#⊘ }"
+      _target="${_root}/.worktrees/$(basename "$_name")"
+      test -d "$_target" || _target="${_root}/.worktrees/$_name"
       printf 'Adopt %s onto the board? [Y/n] ' "$_name" >&2
       { read -r _ans </dev/tty || _ans=y; } 2>/dev/null
       case "${_ans:-y}" in
@@ -152,7 +159,7 @@ _wt_pick() {
           fi
           ;;
       esac
-      _switch_to "$(_resolve_branch_path "$_name")"
+      _switch_to "$_target"
       ;;
     *)
       _branch="$(echo "$_sel" | $_sed 's/^[^:]*: //')"

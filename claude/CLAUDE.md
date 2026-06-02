@@ -72,12 +72,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   (`git worktree list`), so it always reflects reality;
   preview (`wt-preview`) shows branch, last commit, PR state,
   and the first prompt of the worktree's last AI session.
-  Speed-dial entries
-  (above the first `FOO:` heading in the order file) are
-  hidden — they're on Alt-N already. Worktrees under a
-  heading show as `HEADING: branch`; on-disk worktrees not on
-  the board show as `⊘ branch` and selecting one offers to
-  adopt it.
+  Speed-dial entries (above the first heading — a `# Foo` or
+  `Foo:` line — in the order file) are hidden, they're on
+  Alt-N already. Worktrees under a heading show as
+  `HEADING: branch`; on-disk worktrees not on the board show
+  as `⊘ branch`. Selecting either opens its tmux session;
+  picking an orphan also offers to adopt it onto the board.
 - `wt add <branch>` — create worktree + register
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
