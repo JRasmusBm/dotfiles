@@ -118,16 +118,13 @@ _wt_pick() {
       done \
     | sort | cut -f2-)"
 
-  if test -z "$_list"; then
-    echo "No worktrees. Run: wt add <branch>" >&2
-    exit 1
-  fi
-
-  _sel="$(echo "$_list" | fzf --reverse \
+  # No worktrees → just open an empty fzf (no error). printf
+  # (not echo) so an empty list is truly empty, not a blank row.
+  _sel="$(printf '%s' "$_list" | fzf --reverse \
     --preview "b=\$(echo {} \
       | $_sed -e 's/^[0-9]*: //' -e 's/^\342\212\230 //'); \
       wt-preview '$_root' \"\$b\"" \
-    --preview-window=right,55%,wrap)"
+    --preview-window=right,55%,wrap || true)"
 
   test -z "$_sel" && exit 0
 
