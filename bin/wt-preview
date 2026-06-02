@@ -1,25 +1,70 @@
 #!/bin/sh
 
-# fzf preview for `wt :` / `wt clear`. Shows the PR state
-# (best-effort, needs gh) and the last commit for a branch.
-# Usage: wt-preview <root> <branch> [git-ref]
-# Tolerant of board entries that aren't branches (section
-# headers like REVIEW:) — those just yield empty output.
+# fzf preview for `wt :`. Given the repo root and a picker
+# line ("HEADING: branch", "⊘ branch", or a bare name),
+# show the worktree's branch, last commit, PR state, and a
+# one-line summary of its most recent Claude session.
+# Best-effort throughout — missing pieces are skipped so the
+# preview never errors out.
+# Usage: wt-preview <root> <picker-line>
 
 _root="$1"
-_branch="$2"
-_ref="${3:-$2}"
+_line="$2"
+test -n "$_line" || exit 0
 
-test -n "$_branch" || exit 0
+# Strip the picker prefix down to the worktree name.
+_name="$_line"
+case "$_line" in
+  '⊘ '*) _name="${_line#⊘ }" ;;
+  *': '*) _name="${_line#*: }" ;;
+esac
+test -n "$_name" || exit 0
 
+_dir="${_name##*/}"
+_wt="$_root/.worktrees/$_dir"
+test -d "$_wt" || _wt="$_root/.worktrees/$_name"
+test -d "$_wt" || exit 0
+
+# Branch + last commit
+_branch="$(git -C "$_wt" branch --show-current 2>/dev/null)"
+printf 'branch  %s\n' "${_branch:-(detached)}"
+git -C "$_wt" log -1 \
+  --format='commit  %h  %s%n        %an, %cr' 2>/dev/null
+echo
+
+# PR state (best-effort; needs gh)
 if command -v gh >/dev/null 2>&1; then
-  ( cd "$_root" 2>/dev/null \
-    && gh pr view "$_branch" \
-         --json state,title,url \
-         -q '"PR " + .state + ": " + .title, .url' \
+  ( cd "$_wt" 2>/dev/null \
+    && gh pr view --json state,title,url \
+         -q '"PR " + .state + "  " + .title, "   " + .url' \
        2>/dev/null )
   echo
 fi
 
-git -C "$_root" log -1 --stat "$_ref" 2>/dev/null \
-  || git -C "$_root" log -1 --stat "$_branch" 2>/dev/null
+# Snippet from the most recent Claude session for this
+# worktree: a Claude summary entry if present, else the first
+# user prompt. Context dir = the path with / and . → -.
+_ctx="$HOME/.claude/projects/$(printf '%s' "$_wt" \
+  | sed 's![/.]!-!g')"
+if test -d "$_ctx"; then
+  _last="$(ls -t "$_ctx"/*.jsonl 2>/dev/null | head -1)"
+  if test -n "$_last"; then
+    # First user prompt = what the session was about. Stream
+    # and stop at the first match (head closes the pipe), so
+    # we don't parse the whole multi-MB transcript.
+    _sum=""
+    if command -v jq >/dev/null 2>&1; then
+      _sum="$(jq -r 'select(.type=="user")
+        | (.message.content | strings)' "$_last" 2>/dev/null \
+        | head -1)"
+    fi
+    if test -z "$_sum"; then
+      _sum="$(grep -m1 '"type":"user"' "$_last" 2>/dev/null \
+        | sed -n 's/.*"content":"//p')"
+    fi
+    if test -n "$_sum" && test "$_sum" != null; then
+      printf 'last AI  %s\n' "$(printf '%s' "$_sum" \
+        | tr '\n' ' ' | cut -c1-240)"
+    fi
+  fi
+fi

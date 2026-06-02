@@ -133,9 +133,7 @@ _wt_pick() {
   # No worktrees → just open an empty fzf (no error). printf
   # (not echo) so an empty list is truly empty, not a blank row.
   _sel="$(printf '%s' "$_list" | fzf --reverse \
-    --preview "b=\$(echo {} \
-      | $_sed -e 's/^[^:]*: //' -e 's/^\342\212\230 //'); \
-      wt-preview '$_root' \"\$b\"" \
+    --preview "wt-preview '$_root' {}" \
     --preview-window=right,55%,wrap || true)"
 
   test -z "$_sel" && exit 0

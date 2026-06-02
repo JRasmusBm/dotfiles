@@ -70,7 +70,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `.` = current, `:` = fzf pick, or `<name>`.
 - `wt :` — fzf pick worktree to switch to. Lists from disk
   (`git worktree list`), so it always reflects reality;
-  preview shows PR state + last commit. Speed-dial entries
+  preview (`wt-preview`) shows branch, last commit, PR state,
+  and the first prompt of the worktree's last AI session.
+  Speed-dial entries
   (above the first `FOO:` heading in the order file) are
   hidden — they're on Alt-N already. Worktrees under a
   heading show as `HEADING: branch`; on-disk worktrees not on
