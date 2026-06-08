@@ -79,6 +79,26 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   as `⊘ branch`. Selecting either opens its tmux session;
   picking an orphan also offers to adopt it onto the board.
 - `wt add <branch>` — create worktree + register
+- `wt fix <url|text>` / `wt feat <url|text>` — Linear-aware
+  add. A Linear issue URL becomes
+  `<type>/${WT_INITIALS:-jrb}/<id>-<slug>` (id + slug parsed
+  straight from the URL, no token); free text is slugified
+  to `<type>/<initials>/<slug>`. The `fix`/`feat` prefix
+  comes from the command name. E.g. `wt fix
+  linear.app/x/issue/POL-1527/deleting-connections-…` →
+  branch `fix/jrb/pol-1527-deleting-connections-…`.
+  After creating the worktree it opens the tmux session and,
+  for a Linear URL, kicks off a Claude session in the third
+  window (`cli`) preloaded with a prompt: `fix` →
+  "Can you please fix <url>? Please also examine the video
+  and the images"; `feat` → "Can you please read <url> and
+  relative feature docs? Then please grill me on the
+  solution." Generic (not per-repo) — relies on the default
+  run/vim/cli layout worktrees get with no `.tmux`. The
+  session is named `<repo>[<line>]` (the order-file row it
+  landed on, the Alt-N speed-dial convention) — not the
+  branch slug — so `wt fix`/`feat` and a later Alt-N attach
+  to the *same* session instead of spawning a duplicate.
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
   prompts

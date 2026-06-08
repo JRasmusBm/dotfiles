@@ -195,6 +195,142 @@ _of_insert() {
   fi
 }
 
+# Build "<type>/<initials>/<id>-<slug>" from a Linear URL,
+# or "<type>/<initials>/<slug>" from free text. The Linear
+# URL already carries a lowercase, hyphenated, truncated
+# slug, so no API/token is needed.
+_branch_from() {
+  _type="$1"
+  _arg="$2"
+  _ini="${WT_INITIALS:-jrb}"
+  case "$_arg" in
+    *linear.app/*issue/*)
+      _id="$(printf '%s' "$_arg" \
+        | $_sed -nE 's#.*/issue/([^/]+).*#\1#p' \
+        | tr '[:upper:]' '[:lower:]')"
+      _slug="$(printf '%s' "$_arg" \
+        | $_sed -nE 's#.*/issue/[^/]+/([^/?#]+).*#\1#p')"
+      if test -n "$_slug"; then
+        echo "${_type}/${_ini}/${_id}-${_slug}"
+      else
+        echo "${_type}/${_ini}/${_id}"
+      fi
+      ;;
+    *)
+      # Free text → slugify (lowercase, non-alnum → -, trim)
+      _slug="$(printf '%s' "$_arg" \
+        | tr '[:upper:]' '[:lower:]' \
+        | $_sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//')"
+      echo "${_type}/${_ini}/${_slug}"
+      ;;
+  esac
+}
+
+# Session name a board entry resolves to. Only entries ABOVE
+# the first heading are Alt-N speed-dials (see _wt_pick + the
+# Worktree Workflow docs) and get the <repo>[<line>] name, so
+# `wt fix`/`wt feat` and a later Alt-N share one session
+# instead of spawning a duplicate. Entries at/below the first
+# heading are reached via `wt :` (which names by path), so
+# they fall back to the path-derived slug — as does a branch
+# not on the board at all.
+_speeddial_name() {
+  _sn_branch="$1"
+  _sn_path="$2"
+  _of="$(_order_file)"
+  _ln=""
+  if test -f "$_of"; then
+    _ln="$(awk -v b="$_sn_branch" '
+      # First "# Foo" / "Foo:" line ends the speed-dial region.
+      ($0 ~ /^[[:space:]]*#/ || $0 ~ /:[[:space:]]*$/) {
+        if (!h) h = NR
+      }
+      $0 == b { ln = NR }
+      END { if (ln > 1 && (!h || ln < h)) print ln }
+    ' "$_of")"
+  fi
+  if test -n "$_ln"; then
+    echo "$(_repo_name)[$_ln]"
+  else
+    echo "$(tmux-session-name-from-path "$_sn_path")"
+  fi
+}
+
+# Open (creating if needed) the worktree's tmux session under
+# the given name and, on a freshly created session with a
+# prompt, kick off a Claude session in its third window
+# (`cli`) preloaded with that prompt. Generic: relies on the
+# default run/vim/cli layout that worktrees without a .tmux
+# get from default_tmux_session. Exporting TMUX_SESSION_NAME
+# is what makes the new session adopt $_session (see
+# tmux-session-name-from-path).
+_wt_open_with_claude() {
+  _target="$1"
+  _prompt="$2"
+  _session="$3"
+  test -n "$_session" \
+    || _session="$(tmux-session-name-from-path "$_target")"
+
+  # Build the session detached first so we can preload Claude
+  # into the cli window before attaching.
+  _created=false
+  if ! tmux has-session -t "$_session" 2>/dev/null; then
+    ( cd "$_target" \
+      && TMUX_SESSION_NAME="$_session" \
+         INITIATED_EXTERNALLY=true \
+         source_tmux_script "$_target/.tmux" \
+      || TMUX_SESSION_NAME="$_session" \
+         INITIATED_EXTERNALLY=true default_tmux_session \
+    ) >/dev/null 2>&1 || true
+    _created=true
+  fi
+
+  if test -n "$_prompt" && test "$_created" = true; then
+    tmux send-keys -t "$_session:cli" \
+      "claude \"$_prompt\"" Enter 2>/dev/null || true
+  fi
+
+  tmux-attach-to-session "$_session:cli" \
+    || tmux-attach-to-session "$_session:vim" \
+    || ta "$_session" \
+    || true
+}
+
+# `wt fix <url>` / `wt feat <url>`: derive a branch from a
+# Linear URL (or description), create the worktree, then open
+# it and kick off Claude on the issue. The prefix and the
+# kickoff prompt both come from the command name.
+_wt_typed() {
+  _type="$1"
+  shift
+  _arg="$1"
+  if test -z "$_arg"; then
+    echo "Usage: wt $_type <linear-url|description>" >&2
+    exit 1
+  fi
+
+  _branch="$(_branch_from "$_type" "$_arg")"
+  _wt_add "$_branch"
+
+  # Only Linear URLs get a Claude kickoff prompt; free text
+  # just opens the worktree session.
+  _prompt=""
+  case "$_arg" in
+    *linear.app/*issue/*)
+      if test "$_type" = feat; then
+        _prompt="Can you please read $_arg and relative feature docs? Then please grill me on the solution."
+      else
+        _prompt="Can you please fix $_arg? Please also examine the video and the images"
+      fi
+      ;;
+  esac
+
+  _root="$(_main_root)"
+  _wt_path="${_root}/.worktrees/$(basename "$_branch")"
+  _session="$(_speeddial_name "$_branch" "$_wt_path")"
+  _wt_open_with_claude "$_wt_path" "$_prompt" "$_session"
+}
+
 _wt_add() {
   _branch="$1"
   if test -z "$_branch"; then
@@ -623,7 +759,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|add|rm|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|add|fix|feat|rm|clean|resume|forget|dedup|move|e]" >&2
 }
 
 case "${1:-}" in
@@ -632,6 +768,8 @@ case "${1:-}" in
   .) _wt_evict . ;;
   e|edit) shift; _wt_edit "$@" ;;
   add) shift; _wt_add "$@" ;;
+  fix) shift; _wt_typed fix "$@" ;;
+  feat) shift; _wt_typed feat "$@" ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
   resume) shift; _wt_resume "$@" ;;
