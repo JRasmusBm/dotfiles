@@ -1,0 +1,55 @@
+#!/bin/sh
+
+set -e
+
+if test "$(uname)" = 'Darwin'; then
+  _grep='ggrep'
+else
+  _grep='grep'
+fi
+
+# Linear workspace slug for issue URLs. Override per machine
+# with $LINEAR_WORKSPACE.
+_workspace() {
+  echo "${LINEAR_WORKSPACE:-polaranalytics-new}"
+}
+
+# Pull the Linear identifier (e.g. POL-1527) out of the
+# current branch. Branches made by `wt fix`/`wt feat` look
+# like <type>/<initials>/<id>-<slug> where <id> is lowercase
+# (pol-1527); Linear wants it uppercase.
+_branch_identifier() {
+  _br="$(git branch --show-current 2>/dev/null || true)"
+  if test -z "$_br"; then
+    echo "Not on a branch" >&2
+    return 1
+  fi
+  _id="$(printf '%s' "$_br" \
+    | $_grep -oiE '[a-z]+-[0-9]+' | head -1 \
+    | tr '[:lower:]' '[:upper:]')"
+  if test -z "$_id"; then
+    echo "No Linear id in branch: $_br" >&2
+    return 1
+  fi
+  echo "$_id"
+}
+
+# Open the current branch's Linear ticket in the browser.
+# The slug-less /issue/<ID> URL redirects to the full ticket.
+_lin_open() {
+  _id="$(_branch_identifier)" || exit 1
+  _url="https://linear.app/$(_workspace)/issue/$_id"
+  echo "$_url" >&2
+  open "$_url"
+}
+
+_usage() {
+  echo "Usage: lin [o|open]" >&2
+}
+
+# No args = primary action (open current ticket).
+case "${1:-o}" in
+  o|open) _lin_open ;;
+  -h|--help|help) _usage ;;
+  *) _usage; exit 1 ;;
+esac

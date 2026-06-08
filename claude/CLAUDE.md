@@ -139,6 +139,17 @@ outlives the checkout and `wt resume` lands you back on it.
 
 Always use `wt` commands, never raw `git worktree add`.
 
+## Linear
+
+`lin o` (or just `lin`) — open the current branch's Linear
+ticket in the browser. Parses the identifier from the branch
+(e.g. `fix/jrb/pol-1527-…` → `POL-1527`) and opens
+`linear.app/<workspace>/issue/<ID>` (slug-less; Linear
+redirects to the full ticket). Workspace defaults to
+`polaranalytics-new`, override with `$LINEAR_WORKSPACE`.
+Pairs with `wt fix`/`wt feat`, which embed the id in the
+branch name.
+
 ## Git
 
 Use `g s <branch>` to switch branches (not raw
