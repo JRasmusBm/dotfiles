@@ -440,6 +440,7 @@ save_to_clipboard = false
 [window]
 decorations = "none"
 opacity = 1
+option_as_alt = "Both"
 startup_mode = "Maximized"
 
 [keyboard]
