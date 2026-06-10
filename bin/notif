@@ -1,0 +1,165 @@
+#!/bin/sh
+
+set -e
+
+# Persistent notification inbox. `notify` appends rows
+# (epoch<TAB>context<TAB>title<TAB>message) here; this viewer
+# collapses them to one entry per place, lets you jump to the
+# place (fzf + Enter), and clears entries on arrival.
+#
+#   notif              open the inbox picker (primary action)
+#   notif seen <ctx>   drop all rows for a context (focus hook)
+#   notif clear        empty the inbox
+
+if test "$(uname)" = 'Darwin'; then
+  _grep='ggrep'
+else
+  _grep='grep'
+fi
+
+_inbox() {
+  echo "${LOCAL_CONFIG:?LOCAL_CONFIG unset}/notifications"
+}
+
+# Remove every row whose context (col 2) matches $1. Fast
+# path: only rewrite the file when there's actually a match,
+# so the focus hooks that call this on every navigation are
+# nearly free. Rewrite via temp + mv so it's atomic.
+_notif_seen() {
+  _ns_ctx="$1"
+  _f="$(_inbox)"
+  test -n "$_ns_ctx" || return 0
+  test -f "$_f" || return 0
+  if ! awk -F'\t' -v c="$_ns_ctx" \
+    '$2 == c { found = 1 } END { exit !found }' "$_f"; then
+    return 0
+  fi
+  _tmp="$(mktemp)"
+  awk -F'\t' -v c="$_ns_ctx" '$2 != c' "$_f" > "$_tmp" \
+    && mv "$_tmp" "$_f"
+  # We changed the inbox → refresh the status-bar badge now.
+  tmux refresh-client -S 2>/dev/null || true
+}
+
+_notif_clear() {
+  _f="$(_inbox)"
+  : > "$_f" 2>/dev/null || true
+}
+
+# Status-bar badge: count of distinct pending places. Prints
+# "(N)  " when >0, nothing when empty (so the status segment
+# self-hides). Portable distinct-count (no length(array)).
+_notif_count() {
+  _f="$(_inbox)"
+  test -f "$_f" || return 0
+  _n="$(awk -F'\t' \
+    '{ if ($2 != "" && !($2 in s)) { s[$2]=1; n++ } } \
+     END { print n+0 }' "$_f")"
+  if test "$_n" -gt 0; then
+    printf '(%s)  ' "$_n"
+  fi
+}
+
+# Build the collapsed view: one line per context, newest
+# first, with a ×N count. Output is TSV
+# context<TAB>×N<TAB>title<TAB>message — col 1 (context) is
+# the action key, cols 2-4 are shown.
+_notif_list() {
+  _f="$(_inbox)"
+  test -f "$_f" || return 0
+  awk -F'\t' '
+    {
+      ctx = $2
+      if (!(ctx in seen)) { order[++n] = ctx; seen[ctx] = 1 }
+      count[ctx]++
+      # Keep the newest (largest epoch) title/message.
+      if ($1 + 0 >= ts[ctx] + 0) {
+        ts[ctx] = $1; title[ctx] = $3; msg[ctx] = $4
+      }
+    }
+    END {
+      # Emit newest-first by last-seen epoch.
+      for (i = 1; i <= n; i++) {
+        c = order[i]
+        rank[i] = ts[c]
+      }
+      # Simple insertion sort on the small set, desc by ts.
+      for (i = 2; i <= n; i++)
+        for (j = i; j > 1 && rank[j] > rank[j-1]; j--) {
+          tr = rank[j]; rank[j] = rank[j-1]; rank[j-1] = tr
+          to = order[j]; order[j] = order[j-1]; order[j-1] = to
+        }
+      for (i = 1; i <= n; i++) {
+        c = order[i]
+        cnt = (count[c] > 1 ? "\303\227" count[c] : "")
+        printf "%s\t%s\t%s\t%s\n", c, cnt, title[c], msg[c]
+      }
+    }' "$_f"
+}
+
+# Jump straight to the oldest pending notification (FIFO),
+# no picker. Rows are appended chronologically, so the first
+# line is the oldest; `seen` preserves order. Arriving fires
+# the focus hook which clears it.
+_notif_next() {
+  _f="$(_inbox)"
+  _ctx=""
+  test -f "$_f" && _ctx="$(head -1 "$_f" 2>/dev/null | cut -f2)"
+  if test -z "$_ctx"; then
+    tmux display-message "No notifications" 2>/dev/null || true
+    return 0
+  fi
+  tmux switch-client -t "$_ctx" 2>/dev/null \
+    || tmux-attach-to-session "$_ctx" 2>/dev/null \
+    || true
+}
+
+_notif_open() {
+  _list="$(_notif_list)"
+  if test -z "$_list"; then
+    echo "Inbox empty" >&2
+    exit 0
+  fi
+
+  _sel="$(printf '%s\n' "$_list" | fzf --reverse \
+    --delimiter='\t' --with-nth=2,3,4 \
+    --preview "$0 _preview {1}" \
+    --preview-window=down,40%,wrap || true)"
+  test -z "$_sel" && exit 0
+
+  _ctx="$(printf '%s' "$_sel" | cut -f1)"
+  test -n "$_ctx" || exit 0
+
+  # Jump to the place. Arriving fires the focus hook, which
+  # clears the entry — no explicit remove needed here.
+  tmux switch-client -t "$_ctx" 2>/dev/null \
+    || tmux-attach-to-session "$_ctx" 2>/dev/null \
+    || true
+}
+
+# Preview: the raw rows for a context, oldest→newest, as
+# "HH:MM  title — message".
+_notif_preview() {
+  _pv_ctx="$1"
+  _f="$(_inbox)"
+  test -f "$_f" || return 0
+  awk -F'\t' -v c="$_pv_ctx" '
+    $2 == c {
+      "date -r " $1 " +%H:%M" | getline t
+      close("date -r " $1 " +%H:%M")
+      printf "%s  %s \342\200\224 %s\n", t, $3, $4
+    }' "$_f"
+}
+
+case "${1:-}" in
+  ""|:|open) _notif_open ;;
+  next) _notif_next ;;
+  count) _notif_count ;;
+  seen) shift; _notif_seen "$@" ;;
+  clear) _notif_clear ;;
+  _preview) shift; _notif_preview "$@" ;;
+  *)
+    echo "Usage: notif [open|next|count|seen <ctx>|clear]" >&2
+    exit 1
+    ;;
+esac

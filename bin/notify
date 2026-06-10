@@ -16,3 +16,28 @@ if [ -n "$TMUX_PANE" ]; then
     printf '\a' > "$_tty"
   fi
 fi
+
+# Append to the persistent notification inbox (`notif`). This
+# is the one chokepoint every notifier funnels through
+# (claude-notify, git-w8, bw8, ...), so they all land here for
+# free. Capture the place to jump back to: the tmux
+# session:window of the calling pane, else the cwd basename.
+# Plain `>>` of one short line is atomic, so concurrent
+# notifiers don't clobber each other; dedup happens at view
+# time in `notif`.
+if [ -n "$LOCAL_CONFIG" ]; then
+  _inbox="$LOCAL_CONFIG/notifications"
+  if [ -n "$TMUX_PANE" ]; then
+    _ctx="$(tmux display-message -p -t "$TMUX_PANE" '#S:#W' \
+      2>/dev/null)"
+  else
+    _ctx="$(basename "$PWD")"
+  fi
+  mkdir -p "$(dirname "$_inbox")"
+  printf '%s\t%s\t%s\t%s\n' \
+    "$(date +%s)" "$_ctx" "$_title" "$_msg" >> "$_inbox"
+  # Update the status-bar counter (`notif count`) right away.
+  if [ -n "$TMUX_PANE" ]; then
+    tmux refresh-client -S 2>/dev/null || true
+  fi
+fi

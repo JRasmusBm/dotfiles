@@ -163,6 +163,41 @@ redirects to the full ticket). Workspace defaults to
 Pairs with `wt fix`/`wt feat`, which embed the id in the
 branch name.
 
+## Notifications
+
+A persistent inbox so notifications don't just flash and
+vanish. Every notifier funnels through `bin/notify`
+(Claude's hook via `claude-notify`, `git-w8`, `bw8`, …), so
+`notify` is the one chokepoint: alongside the macOS toast +
+sound + tmux bell it appends a row to
+`$LOCAL_CONFIG/notifications`
+(`epoch<TAB>session:window<TAB>title<TAB>message`), capturing
+the calling pane's `#S:#W` as the place to jump back to.
+
+- `M-i` (tmux) / `notif next` — jump straight to the *oldest*
+  pending notification (FIFO), no picker.
+- `M-o` (tmux) / `notif` — pop a temp pane with an fzf list,
+  collapsed to one row per place (latest message + `×N`
+  count, newest first); `<Enter>` jumps to that
+  session:window.
+- A counter badge (`#(notif count)` → `✉N`, count of distinct
+  pending places) sits in `status-right` before the date.
+  `notify` and `notif seen` call `refresh-client -S` so it
+  updates the moment a notification lands or clears.
+- Clearing is keyed on **arriving** at the place, not on any
+  Enter: the focus/nav hooks (`pane-focus-in`,
+  `client-session-changed`, `after-select-window`) run
+  `notif seen "#{session_name}:#{window_name}"`, so reaching
+  a place *any* way (M-i, M-o, speed-dial, `wt :`, manual
+  nav, mouse) clears its entries.
+- `notif seen <ctx>` — drop a context's rows (hook-driven;
+  fast no-op when nothing matches). `notif count` — badge.
+  `notif clear` — empty it.
+
+`bin/notify` only appends (atomic single-line `>>`, safe
+across concurrent Claude sessions); the dedup/count happens
+at view time in `bin/notif`.
+
 ## Git
 
 Use `g s <branch>` to switch branches (not raw
