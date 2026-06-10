@@ -99,6 +99,14 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   landed on, the Alt-N speed-dial convention) — not the
   branch slug — so `wt fix`/`feat` and a later Alt-N attach
   to the *same* session instead of spawning a duplicate.
+- `wt review` — park the current worktree for review: move
+  its board entry into the `# REVIEW` section (reusing a
+  freed slot there, else adding a new line; creates the
+  heading if missing) and kill its tmux session — but keep
+  the checkout + branch (PR's still open). Frees a speed-dial
+  slot + session for new tickets. Reachable again via `wt :`
+  (shown as `REVIEW: branch`). Unlike `wt rm`, nothing is
+  removed or registered.
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
   prompts
@@ -115,8 +123,13 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt e [repo]` — edit worktree order file
 
 Order files at `$LOCAL_CONFIG/worktrees/<repo>`. Line 1 =
-default branch; each later line = a speed-dial slot.
-Removed entries are blanked (not deleted) to keep slot
+default branch; each later line up to the first heading
+(`# Foo`/`Foo:`) = a speed-dial slot (Alt-N). `add`/`fix`/
+`feat` insert into the first freed speed-dial slot if one's
+open, else append to the `# IN PROGRESS` section (reusing a
+freed slot there, else a new line at the section's end) —
+never spilling into a later section's blank or the file
+tail. Removed entries are blanked (not deleted) to keep slot
 indices stable for `wt-resolve`. No archiving — removing a
 worktree drops it from the board into the registry, where
 `wt resume` brings it back.

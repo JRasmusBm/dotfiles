@@ -179,20 +179,87 @@ _wt_edit() {
   ${EDITOR:-vim} "$_of"
 }
 
+# Place an entry inside the named heading's section: reuse
+# the first freed (blank) slot in that section, else insert a
+# new line at the section's end (before the next heading or
+# EOF). Appends the heading at EOF if it doesn't exist yet.
+_of_place_in_section() {
+  _ps_name="$1"
+  _ps_entry="$2"
+  _ps_of="$3"
+
+  _ps_head="$(awk -v want="$_ps_name" '
+    /^[[:space:]]*#/ {
+      h = $0
+      sub(/^[[:space:]]*#+[[:space:]]*/, "", h)
+      if (toupper(h) == toupper(want)) { print NR; exit }
+    }' "$_ps_of")"
+
+  if test -z "$_ps_head"; then
+    printf '\n# %s\n%s\n' "$_ps_name" "$_ps_entry" >> "$_ps_of"
+    return 0
+  fi
+
+  _ps_next="$(awk -v s="$_ps_head" '
+    NR > s && ($0 ~ /^[[:space:]]*#/ \
+      || $0 ~ /:[[:space:]]*$/) { print NR; exit }' "$_ps_of")"
+  if test -z "$_ps_next"; then
+    _ps_end="$(wc -l < "$_ps_of")"
+  else
+    _ps_end=$((_ps_next - 1))
+  fi
+
+  _ps_blank="$(awk -v a="$((_ps_head + 1))" -v b="$_ps_end" '
+    NR >= a && NR <= b && /^[[:space:]]*$/ { print NR; exit }
+  ' "$_ps_of")"
+
+  if test -n "$_ps_blank"; then
+    $_sed -i "${_ps_blank}c\\${_ps_entry}" "$_ps_of"
+  elif test -n "$_ps_next"; then
+    $_sed -i "${_ps_next}i\\${_ps_entry}" "$_ps_of"
+  else
+    printf '%s\n' "$_ps_entry" >> "$_ps_of"
+  fi
+}
+
+# Add a board entry. Prefer a freed speed-dial slot (a blank
+# line above the first heading — line 1 is the default branch,
+# so skip it) so a reclaimed Alt-N slot is reused. When the
+# speed-dial region is full, drop into # IN PROGRESS instead
+# of spilling into a later section's blank or the file tail.
 _of_insert() {
   _entry="$1"
   _of="$2"
 
-  # Reuse the first freed (blank) slot, else append. Blank
-  # lines are freed speed-dial slots; line 1 is the default
-  # branch, so skip it.
-  _blank="$(awk 'NR > 1 && /^$/ {print NR; exit}' "$_of")"
+  # First heading ends the speed-dial region.
+  _head="$(awk '
+    $0 ~ /^[[:space:]]*#/ || $0 ~ /:[[:space:]]*$/ {
+      print NR; exit
+    }' "$_of")"
 
+  if test -z "$_head"; then
+    # No sections → whole file is the speed-dial region.
+    _blank="$(awk 'NR > 1 && /^[[:space:]]*$/ {print NR; exit}' \
+      "$_of")"
+    if test -n "$_blank"; then
+      $_sed -i "${_blank}c\\${_entry}" "$_of"
+    else
+      echo "$_entry" >> "$_of"
+    fi
+    return 0
+  fi
+
+  # Reuse a freed speed-dial slot (rows 2..head-1).
+  _blank="$(awk -v b="$((_head - 1))" \
+    'NR > 1 && NR <= b && /^[[:space:]]*$/ {print NR; exit}' \
+    "$_of")"
   if test -n "$_blank"; then
     $_sed -i "${_blank}c\\${_entry}" "$_of"
-  else
-    echo "$_entry" >> "$_of"
+    return 0
   fi
+
+  # Speed-dial full → append into # IN PROGRESS.
+  _of_place_in_section 'IN PROGRESS' "$_entry" "$_of"
 }
 
 # Build "<type>/<initials>/<id>-<slug>" from a Linear URL,
@@ -511,6 +578,100 @@ _wt_evict() {
     >/dev/null 2>&1 </dev/null &
 }
 
+# Move a board entry into the # REVIEW section: blank its old
+# slot (freeing it — blank, not delete, so indices stay
+# stable) and drop it into REVIEW via _of_place_in_section.
+_move_to_review() {
+  _mr_entry="$1"
+  _mr_oldln="$2"
+  _mr_of="$3"
+
+  if test -n "$_mr_oldln"; then
+    $_sed -i "${_mr_oldln}s/.*//" "$_mr_of"
+  fi
+  _of_place_in_section 'REVIEW' "$_mr_entry" "$_mr_of"
+}
+
+# Park the current worktree for review: move its board entry
+# into # REVIEW (freeing the speed-dial slot) and kill its
+# tmux session — WITHOUT removing the checkout or branch. The
+# PR is still open; this just reclaims a speed-dial slot +
+# session for new tickets. Reachable later via `wt :`.
+_wt_review() {
+  _git_dir="$(cd "$(git rev-parse --git-dir)" && pwd)"
+  _common="$(cd "$(git rev-parse --git-common-dir)" \
+    && pwd)"
+  if test "$_git_dir" = "$_common"; then
+    echo "Not in a worktree" >&2
+    exit 1
+  fi
+
+  _root="$(_main_root)"
+  _branch="$(git branch --show-current)"
+  _wt_path="$(git rev-parse --show-toplevel)"
+  _wt_name="$(basename "$_wt_path")"
+  _cur_session="${TMUX_SESSION_NAME:-}"
+  if test -z "$_cur_session"; then
+    _cur_session="$(tmux display-message -p \
+      '#{session_name}' 2>/dev/null || true)"
+  fi
+
+  _ensure_order_dir
+  _of="$(_order_file)"
+  touch "$_of"
+
+  # Locate the current entry (branch, then worktree dir name).
+  _ln="$($_grep -nx "$_branch" "$_of" | head -1 | cut -d: -f1)"
+  if test -z "$_ln"; then
+    _ln="$($_grep -nx "$_wt_name" "$_of" \
+      | head -1 | cut -d: -f1)"
+  fi
+  _entry="$_branch"
+  if test -n "$_ln"; then
+    _entry="$($_sed -n "${_ln}p" "$_of")"
+  fi
+
+  # Session names to reclaim.
+  _speeddial_session=""
+  if test -n "$_ln"; then
+    _speeddial_session="$(_repo_name)[$_ln]"
+  fi
+  _path_session="$(tmux-session-name-from-path "$_wt_path")"
+
+  # Move the entry into # REVIEW.
+  _move_to_review "$_entry" "$_ln" "$_of"
+
+  # Rename the speed-dial session right away so a new ticket
+  # taking this freed slot doesn't attach to the dying one.
+  _speeddial_rename=""
+  if test -n "$_speeddial_session" \
+    && tmux has-session -t "$_speeddial_session" \
+      2>/dev/null; then
+    _speeddial_rename="_review_$_speeddial_session"
+    tmux rename-session -t "$_speeddial_session" \
+      "$_speeddial_rename" 2>/dev/null \
+      || _speeddial_rename=""
+  fi
+
+  # Hop the client to root before killing our own session.
+  cd "$_root"
+  _switch_to "$_root"
+
+  # Kill the worktree's sessions in the background, detached
+  # so it survives this pane closing. Checkout + branch stay.
+  nohup sh -c '
+    speeddial="$1"
+    path_sess="$2"
+    cur="$3"
+    for s in "$speeddial" "$path_sess" "$cur"; do
+      [ -n "$s" ] && tmux kill-session -t "$s" 2>/dev/null
+    done
+  ' sh \
+    "${_speeddial_rename:-$_speeddial_session}" \
+    "$_path_session" "$_cur_session" \
+    >/dev/null 2>&1 </dev/null &
+}
+
 _wt_move() {
   _branch="${1:-$(git branch --show-current)}"
   _root="$(_main_root)"
@@ -759,7 +920,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|add|fix|feat|rm|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|add|fix|feat|review|rm|clean|resume|forget|dedup|move|e]" >&2
 }
 
 case "${1:-}" in
@@ -770,6 +931,7 @@ case "${1:-}" in
   add) shift; _wt_add "$@" ;;
   fix) shift; _wt_typed fix "$@" ;;
   feat) shift; _wt_typed feat "$@" ;;
+  review) _wt_review ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
   resume) shift; _wt_resume "$@" ;;
