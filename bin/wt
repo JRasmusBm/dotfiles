@@ -578,26 +578,29 @@ _wt_evict() {
     >/dev/null 2>&1 </dev/null &
 }
 
-# Move a board entry into the # REVIEW section: blank its old
-# slot (freeing it — blank, not delete, so indices stay
-# stable) and drop it into REVIEW via _of_place_in_section.
-_move_to_review() {
-  _mr_entry="$1"
-  _mr_oldln="$2"
-  _mr_of="$3"
+# Move a board entry into a named section: blank its old slot
+# (freeing it — blank, not delete, so indices stay stable) and
+# drop it into the section via _of_place_in_section.
+_move_to_section() {
+  _ms_section="$1"
+  _ms_entry="$2"
+  _ms_oldln="$3"
+  _ms_of="$4"
 
-  if test -n "$_mr_oldln"; then
-    $_sed -i "${_mr_oldln}s/.*//" "$_mr_of"
+  if test -n "$_ms_oldln"; then
+    $_sed -i "${_ms_oldln}s/.*//" "$_ms_of"
   fi
-  _of_place_in_section 'REVIEW' "$_mr_entry" "$_mr_of"
+  _of_place_in_section "$_ms_section" "$_ms_entry" "$_ms_of"
 }
 
-# Park the current worktree for review: move its board entry
-# into # REVIEW (freeing the speed-dial slot) and kill its
-# tmux session — WITHOUT removing the checkout or branch. The
-# PR is still open; this just reclaims a speed-dial slot +
-# session for new tickets. Reachable later via `wt :`.
+# Park the current worktree under a review section ($1, e.g.
+# "TEAM REVIEW" / "PROD REVIEW"): move its board entry there
+# (freeing the speed-dial slot) and kill its tmux session —
+# WITHOUT removing the checkout or branch. The PR is still
+# open; this just reclaims a speed-dial slot + session for new
+# tickets. Reachable later via `wt :`.
 _wt_review() {
+  _section="$1"
   _git_dir="$(cd "$(git rev-parse --git-dir)" && pwd)"
   _common="$(cd "$(git rev-parse --git-common-dir)" \
     && pwd)"
@@ -638,8 +641,8 @@ _wt_review() {
   fi
   _path_session="$(tmux-session-name-from-path "$_wt_path")"
 
-  # Move the entry into # REVIEW.
-  _move_to_review "$_entry" "$_ln" "$_of"
+  # Move the entry into the chosen review section.
+  _move_to_section "$_section" "$_entry" "$_ln" "$_of"
 
   # Rename the speed-dial session right away so a new ticket
   # taking this freed slot doesn't attach to the dying one.
@@ -920,7 +923,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|add|fix|feat|review|rm|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|add|fix|feat|rt|rp|rm|clean|resume|forget|dedup|move|e]" >&2
 }
 
 case "${1:-}" in
@@ -931,7 +934,8 @@ case "${1:-}" in
   add) shift; _wt_add "$@" ;;
   fix) shift; _wt_typed fix "$@" ;;
   feat) shift; _wt_typed feat "$@" ;;
-  review) _wt_review ;;
+  rt) _wt_review 'TEAM REVIEW' ;;
+  rp) _wt_review 'PROD REVIEW' ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
   resume) shift; _wt_resume "$@" ;;

@@ -99,14 +99,15 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   landed on, the Alt-N speed-dial convention) — not the
   branch slug — so `wt fix`/`feat` and a later Alt-N attach
   to the *same* session instead of spawning a duplicate.
-- `wt review` — park the current worktree for review: move
-  its board entry into the `# REVIEW` section (reusing a
-  freed slot there, else adding a new line; creates the
-  heading if missing) and kill its tmux session — but keep
-  the checkout + branch (PR's still open). Frees a speed-dial
-  slot + session for new tickets. Reachable again via `wt :`
-  (shown as `REVIEW: branch`). Unlike `wt rm`, nothing is
-  removed or registered.
+- `wt rt` / `wt rp` — park the current worktree for review:
+  move its board entry into the `# TEAM REVIEW` (`rt`) or
+  `# PROD REVIEW` (`rp`) section (reusing a freed slot there,
+  else adding a new line; creates the heading if missing) and
+  kill its tmux session — but keep the checkout + branch
+  (PR's still open). Frees a speed-dial slot + session for
+  new tickets. Reachable again via `wt :` (shown as
+  `TEAM REVIEW: branch` / `PROD REVIEW: branch`). Unlike
+  `wt rm`, nothing is removed or registered.
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
   prompts
