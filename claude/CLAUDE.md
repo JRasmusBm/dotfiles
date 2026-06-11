@@ -172,8 +172,9 @@ vanish. Every notifier funnels through `bin/notify`
 `notify` is the one chokepoint: alongside the macOS toast +
 sound + tmux bell it appends a row to
 `$LOCAL_CONFIG/notifications`
-(`epoch<TAB>session:window<TAB>title<TAB>message`), capturing
-the calling pane's `#S:#W` as the place to jump back to.
+(`epoch<TAB>session:window<TAB>title<TAB>message<TAB>path`),
+capturing the calling pane's `#S:#W` as the place to jump
+back to, plus its `pane_current_path` as a stable fallback.
 
 - `M-i` (tmux) / `notif next` — jump straight to the *oldest*
   pending notification (FIFO), no picker.
@@ -181,12 +182,20 @@ the calling pane's `#S:#W` as the place to jump back to.
   collapsed to one row per place (latest message + `×N`
   count, newest first); `<Enter>` jumps to that
   session:window.
-- A counter badge (`#(notif count)` → `✉N`, count of distinct
-  pending places) sits in `status-right` before the date.
-  `notify` and `notif seen` call `refresh-client -S` so it
-  updates the moment a notification lands or clears.
-- Clearing is keyed on **arriving** at the place, not on any
-  Enter: the focus/nav hooks (`pane-focus-in`,
+- A counter badge (`#(notif count)` → green `(N)`, count of
+  distinct pending places) sits in `status-right` before the
+  date. `notify` and `notif seen` call `refresh-client -S` so
+  it updates the moment a notification lands or clears.
+- Each row also stores the pane's `pane_current_path`. If the
+  target session was killed since (e.g. by `wt rt`/`rm`) but
+  the worktree's still on disk, `M-i`/`M-o` recreate the
+  session there instead of failing; if the worktree's gone
+  too, the stale entry is cleared (and `M-i` skips to the
+  next). The explicit jump also clears the entry up front,
+  since a recreated session may be renamed and so wouldn't
+  match the arrival hook.
+- Clearing is otherwise keyed on **arriving** at the place,
+  not on any Enter: the focus/nav hooks (`pane-focus-in`,
   `client-session-changed`, `after-select-window`) run
   `notif seen "#{session_name}:#{window_name}"`, so reaching
   a place *any* way (M-i, M-o, speed-dial, `wt :`, manual

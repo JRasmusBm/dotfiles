@@ -30,12 +30,18 @@ if [ -n "$LOCAL_CONFIG" ]; then
   if [ -n "$TMUX_PANE" ]; then
     _ctx="$(tmux display-message -p -t "$TMUX_PANE" '#S:#W' \
       2>/dev/null)"
+    _path="$(tmux display-message -p -t "$TMUX_PANE" \
+      '#{pane_current_path}' 2>/dev/null)"
   else
     _ctx="$(basename "$PWD")"
+    _path="$PWD"
   fi
   mkdir -p "$(dirname "$_inbox")"
-  printf '%s\t%s\t%s\t%s\n' \
-    "$(date +%s)" "$_ctx" "$_title" "$_msg" >> "$_inbox"
+  # Row: epoch  session:window  title  message  path. The path
+  # is the stable anchor `notif` reopens from when the session
+  # has since been killed (e.g. by `wt rt`/`rm`).
+  printf '%s\t%s\t%s\t%s\t%s\n' \
+    "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" >> "$_inbox"
   # Update the status-bar counter (`notif count`) right away.
   if [ -n "$TMUX_PANE" ]; then
     tmux refresh-client -S 2>/dev/null || true

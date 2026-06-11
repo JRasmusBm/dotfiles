@@ -62,8 +62,8 @@ _notif_count() {
 
 # Build the collapsed view: one line per context, newest
 # first, with a ×N count. Output is TSV
-# context<TAB>×N<TAB>title<TAB>message — col 1 (context) is
-# the action key, cols 2-4 are shown.
+# context<TAB>×N<TAB>title<TAB>message<TAB>path — col 1
+# (context) + col 5 (path) are action keys, cols 2-4 shown.
 _notif_list() {
   _f="$(_inbox)"
   test -f "$_f" || return 0
@@ -72,9 +72,10 @@ _notif_list() {
       ctx = $2
       if (!(ctx in seen)) { order[++n] = ctx; seen[ctx] = 1 }
       count[ctx]++
-      # Keep the newest (largest epoch) title/message.
+      # Keep the newest (largest epoch) title/message/path.
       if ($1 + 0 >= ts[ctx] + 0) {
         ts[ctx] = $1; title[ctx] = $3; msg[ctx] = $4
+        path[ctx] = $5
       }
     }
     END {
@@ -92,26 +93,53 @@ _notif_list() {
       for (i = 1; i <= n; i++) {
         c = order[i]
         cnt = (count[c] > 1 ? "\303\227" count[c] : "")
-        printf "%s\t%s\t%s\t%s\n", c, cnt, title[c], msg[c]
+        printf "%s\t%s\t%s\t%s\t%s\n", \
+          c, cnt, title[c], msg[c], path[c]
       }
     }' "$_f"
 }
 
+# Jump to a notification's place. Fast path: its tmux session
+# is still alive → switch to it. If the session is gone (e.g.
+# killed by `wt rt`/`rm`) but the worktree is still on disk,
+# recreate the session at that path (same default-layout path
+# `wt` uses). Returns 0 if we landed somewhere, 1 if the place
+# is truly gone.
+_notif_jump() {
+  _j_ctx="$1"
+  _j_path="$2"
+  tmux switch-client -t "$_j_ctx" 2>/dev/null && return 0
+  if test -n "$_j_path" && test -d "$_j_path"; then
+    _j_sess="$(tmux-session-name-from-path "$_j_path")"
+    if ! tmux has-session -t "$_j_sess" 2>/dev/null; then
+      ( cd "$_j_path" \
+        && INITIATED_EXTERNALLY=true default_tmux_session ) \
+        >/dev/null 2>&1 || true
+    fi
+    tmux switch-client -t "$_j_sess" 2>/dev/null && return 0
+    tmux-attach-to-session "$_j_sess" 2>/dev/null && return 0
+  fi
+  return 1
+}
+
 # Jump straight to the oldest pending notification (FIFO),
 # no picker. Rows are appended chronologically, so the first
-# line is the oldest; `seen` preserves order. Arriving fires
-# the focus hook which clears it.
+# line is the oldest. Clear each as we go (explicitly, since a
+# recreated session may have a different name than the stored
+# context, so the arrival hook wouldn't match); if a place is
+# truly gone (worktree removed), skip to the next one.
 _notif_next() {
   _f="$(_inbox)"
-  _ctx=""
-  test -f "$_f" && _ctx="$(head -1 "$_f" 2>/dev/null | cut -f2)"
-  if test -z "$_ctx"; then
-    tmux display-message "No notifications" 2>/dev/null || true
-    return 0
-  fi
-  tmux switch-client -t "$_ctx" 2>/dev/null \
-    || tmux-attach-to-session "$_ctx" 2>/dev/null \
-    || true
+  while test -f "$_f"; do
+    _line="$(head -1 "$_f" 2>/dev/null)"
+    test -n "$_line" || break
+    _ctx="$(printf '%s' "$_line" | cut -f2)"
+    _path="$(printf '%s' "$_line" | cut -f5)"
+    _notif_seen "$_ctx"
+    _notif_jump "$_ctx" "$_path" && return 0
+    # Place gone — entry already cleared; try the next one.
+  done
+  tmux display-message "No notifications" 2>/dev/null || true
 }
 
 _notif_open() {
@@ -128,12 +156,15 @@ _notif_open() {
   test -z "$_sel" && exit 0
 
   _ctx="$(printf '%s' "$_sel" | cut -f1)"
+  _path="$(printf '%s' "$_sel" | cut -f5)"
   test -n "$_ctx" || exit 0
 
-  # Jump to the place. Arriving fires the focus hook, which
-  # clears the entry — no explicit remove needed here.
-  tmux switch-client -t "$_ctx" 2>/dev/null \
-    || tmux-attach-to-session "$_ctx" 2>/dev/null \
+  # Clear it explicitly (a recreated session may be renamed,
+  # so the arrival hook might not match), then jump — to the
+  # live session or, if it's gone, the worktree on disk.
+  _notif_seen "$_ctx"
+  _notif_jump "$_ctx" "$_path" \
+    || tmux display-message "Place gone; cleared" 2>/dev/null \
     || true
 }
 
