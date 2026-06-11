@@ -55,7 +55,12 @@ local default_options = {
   },
   pattern = {
     ["ts-*"] = "speeddial",
-    [".*/worktrees/[^/]+$"] = "speeddial",
+    -- No `$` anchor: Neovim's filetype engine returns nil for
+    -- a trailing `$` here (plain Lua :match is fine). The
+    -- literal `/worktrees/` can't occur in git worktree paths
+    -- (those use `/.worktrees/`), so this only hits the board
+    -- order files under $LOCAL_CONFIG/worktrees/.
+    [".*/worktrees/[^/]+"] = "speeddial",
     ["%.env.*"] = "sh",
     ["Dockerfile.*"] = "dockerfile",
     [".*%.cy%.ts"] = "typescript.typescript_cypress",

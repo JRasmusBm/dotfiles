@@ -99,9 +99,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   landed on, the Alt-N speed-dial convention) — not the
   branch slug — so `wt fix`/`feat` and a later Alt-N attach
   to the *same* session instead of spawning a duplicate.
-- `wt rt` / `wt rp` — park the current worktree for review:
-  move its board entry into the `# TEAM REVIEW` (`rt`) or
-  `# PROD REVIEW` (`rp`) section (reusing a freed slot there,
+- `wt rt` / `wt rd` / `wt rp` — park the current worktree:
+  move its board entry into the `# TEAM REVIEW` (`rt`),
+  `# READY TO DEPLOY` (`rd`) or `# PROD REVIEW` (`rp`) section
+  (reusing a freed slot there,
   else adding a new line; creates the heading if missing) and
   kill its tmux session — but keep the checkout + branch
   (PR's still open). Frees a speed-dial slot + session for
@@ -121,7 +122,13 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   node_modules into the hardlinks-global store (run once
   after enabling `nmMode`)
 - `wt move [branch]` — stash, create worktree, pop
-- `wt e [repo]` — edit worktree order file
+- `wt e [repo]` — edit worktree order file. In that buffer
+  `<CR>` on an entry runs `wt open` for it (opens/attaches its
+  session under the `<repo>[N]`-or-slug name) and quits vim,
+  so the pane closes and you land in the worktree. Bound only
+  for the worktrees file (ts-*/branch_speeddial keep `<CR>`).
+- `wt open <branch>` — open/attach a board entry's session by
+  name, no fzf (what the `wt e` `<CR>` mapping calls).
 
 Order files at `$LOCAL_CONFIG/worktrees/<repo>`. Line 1 =
 default branch; each later line up to the first heading

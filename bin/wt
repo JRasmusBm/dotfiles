@@ -363,6 +363,21 @@ _wt_open_with_claude() {
     || true
 }
 
+# Open an existing board entry by branch name (no fzf) under
+# its speed-dial-or-slug session name — same naming `wt fix`
+# and Alt-N use, so all entry points share one session. Used
+# by the order-file buffer's <CR> mapping.
+_wt_open() {
+  _branch="$1"
+  if test -z "$_branch"; then
+    echo "Usage: wt open <branch>" >&2
+    exit 1
+  fi
+  _wt_path="$(_resolve_branch_path "$_branch")"
+  _session="$(_speeddial_name "$_branch" "$_wt_path")"
+  _wt_open_with_claude "$_wt_path" "" "$_session"
+}
+
 # `wt fix <url>` / `wt feat <url>`: derive a branch from a
 # Linear URL (or description), create the worktree, then open
 # it and kick off Claude on the issue. The prefix and the
@@ -923,7 +938,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|add|fix|feat|rt|rp|rm|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|rt|rd|rp|rm|clean|resume|forget|dedup|move|e]" >&2
 }
 
 case "${1:-}" in
@@ -931,10 +946,12 @@ case "${1:-}" in
   :) _wt_pick ;;
   .) _wt_evict . ;;
   e|edit) shift; _wt_edit "$@" ;;
+  open) shift; _wt_open "$@" ;;
   add) shift; _wt_add "$@" ;;
   fix) shift; _wt_typed fix "$@" ;;
   feat) shift; _wt_typed feat "$@" ;;
   rt) _wt_review 'TEAM REVIEW' ;;
+  rd) _wt_review 'READY TO DEPLOY' ;;
   rp) _wt_review 'PROD REVIEW' ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
