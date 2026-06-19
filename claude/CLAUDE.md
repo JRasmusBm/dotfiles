@@ -137,8 +137,11 @@ default branch; each later line up to the first heading
 open, else append to the `# IN PROGRESS` section (reusing a
 freed slot there, else a new line at the section's end) —
 never spilling into a later section's blank or the file
-tail. Removed entries are blanked (not deleted) to keep slot
-indices stable for `wt-resolve`. No archiving — removing a
+tail. Removing/moving an entry (`rm`, `rt`/`rd`/`rp`) blanks
+it only if it's a speed-dial slot — there the line number is
+the Alt-N index `wt-resolve` reads, so it must stay stable;
+a row inside a section is deleted outright (not index-
+addressed, so a tidier board wins). No archiving — removing a
 worktree drops it from the board into the registry, where
 `wt resume` brings it back.
 

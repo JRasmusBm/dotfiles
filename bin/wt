@@ -183,6 +183,26 @@ _wt_edit() {
 # the first freed (blank) slot in that section, else insert a
 # new line at the section's end (before the next heading or
 # EOF). Appends the heading at EOF if it doesn't exist yet.
+# Free a removed/moved entry's slot. Above the first heading
+# it's a speed-dial slot whose line number is its Alt-N index
+# (and what wt-resolve reads), so blank it to keep indices
+# stable. Inside a section that addressing doesn't apply, so
+# delete the row outright — tidier board.
+_of_free_slot() {
+  _fs_ln="$1"
+  _fs_of="$2"
+  test -n "$_fs_ln" || return 0
+  _fs_head="$(awk '
+    $0 ~ /^[[:space:]]*#/ || $0 ~ /:[[:space:]]*$/ {
+      print NR; exit
+    }' "$_fs_of")"
+  if test -z "$_fs_head" || test "$_fs_ln" -lt "$_fs_head"; then
+    $_sed -i "${_fs_ln}s/.*//" "$_fs_of"
+  else
+    $_sed -i "${_fs_ln}d" "$_fs_of"
+  fi
+}
+
 _of_place_in_section() {
   _ps_name="$1"
   _ps_entry="$2"
@@ -543,11 +563,10 @@ _wt_evict() {
       "$_wt_path")"
   fi
 
-  # Free the order file slot immediately so a new
-  # `wt add` can reuse the index right away
-  if test -n "$_ln"; then
-    $_sed -i "${_ln}s/.*//" "$_of"
-  fi
+  # Free the order file slot immediately: blank a speed-dial
+  # slot (so a new `wt add` reuses the index), delete a section
+  # row (tidier — section rows aren't index-addressed).
+  _of_free_slot "$_ln" "$_of"
 
   # Free the tmux speed-dial name immediately by
   # renaming — actual kill happens in the bg cleanup
@@ -593,18 +612,16 @@ _wt_evict() {
     >/dev/null 2>&1 </dev/null &
 }
 
-# Move a board entry into a named section: blank its old slot
-# (freeing it — blank, not delete, so indices stay stable) and
-# drop it into the section via _of_place_in_section.
+# Move a board entry into a named section: free its old slot
+# (blank if a speed-dial slot, delete if already in a section)
+# and drop it into the section via _of_place_in_section.
 _move_to_section() {
   _ms_section="$1"
   _ms_entry="$2"
   _ms_oldln="$3"
   _ms_of="$4"
 
-  if test -n "$_ms_oldln"; then
-    $_sed -i "${_ms_oldln}s/.*//" "$_ms_of"
-  fi
+  _of_free_slot "$_ms_oldln" "$_ms_of"
   _of_place_in_section "$_ms_section" "$_ms_entry" "$_ms_of"
 }
 
