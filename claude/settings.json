@@ -15,6 +15,7 @@
       }
     ]
   },
+  "cleanupPeriodDays": 1825,
   "effortLevel": "xhigh",
   "voice": {
     "enabled": true,
