@@ -53,11 +53,14 @@ PATH="$PATH:$HOME/.dotnet"
 PATH="$PATH:$HOME/.fzf/bin"
 PATH="$PATH:$HOME/.poetry/bin"
 PATH="$PATH:$DOTFILES/bin"
-PATH="$PATH:$HOME/.pyenv/bin"
+PATH="$PATH:$HOME/bin"
 PATH="$PATH:$HOME/.rover/bin"
 PATH="$PATH:$FLYCTL_INSTALL/bin"
 PATH="$PATH:$HOME/projects/polar/bin"
 PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$JAVA_HOME/bin
 
+# pyenv shims must come first so its python/pip win over the system
+# ones (equivalent to `pyenv init --path`). Harmless if pyenv absent.
+PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
 
 export PATH=$PATH

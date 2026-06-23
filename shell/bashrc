@@ -28,12 +28,15 @@ if echo "$HOME" | "$grep_cmd" -q 'com.termux' \
   exec proot-distro login ubuntu $proot_args
 fi
 
+# All PATH/MANPATH setup lives in paths.sh (login bash gets it via
+# ~/.profile; source it here too so non-login interactive bash
+# matches — paths.sh rebuilds PATH from scratch, so this is
+# idempotent). paths.sh also exports DOTFILES, used just below.
+source "$HOME/.paths.sh"
+
 export FLYCTL_INSTALL="/home/jrasmusbm/.fly"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export plug="$DOTFILES/vim/pack/bundle/opt"
-export PATH="$PATH:$HOME/bin"
-export PATH="$PATH:$DOTFILES/bin"
-export PATH="$HOME/.pyenv/bin:$PATH"
 
 # Aliases
 alias q="exit"

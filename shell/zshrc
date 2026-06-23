@@ -201,11 +201,9 @@ DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 
 if test -d "$HOME/.pyenv" ; then
   export PYENV_ROOT="$HOME/.pyenv"
-  # Put shims on PATH directly (the part that must happen eagerly so
-  # python/pip resolve through pyenv), but defer the slow
-  # `pyenv init -` (completions + the pyenv shell function) until the
-  # first actual `pyenv` invocation.
-  export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+  # Shims are on PATH via paths.sh; just defer the slow `pyenv init -`
+  # (completions + the pyenv shell function) until the first actual
+  # `pyenv` invocation.
   pyenv() {
     unset -f pyenv
     eval "$(command pyenv init -)"
