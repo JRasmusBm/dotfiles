@@ -13,6 +13,17 @@ case $- in
 esac
 #}}}
 
+# On Termux, drop straight into the Ubuntu proot-distro if it's
+# installed. Guarded so it only fires in Termux's own shell (not
+# inside the proot, where $HOME isn't com.termux and proot-distro
+# is absent). Set NO_PROOT=1 to stay in the bare Termux shell.
+if echo "$HOME" | "$grep_cmd" -q 'com.termux' \
+  && test -z "$NO_PROOT" \
+  && command -v proot-distro > /dev/null \
+  && test -d "$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu" ; then
+  exec proot-distro login ubuntu
+fi
+
 export FLYCTL_INSTALL="/home/jrasmusbm/.fly"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export plug="$DOTFILES/vim/pack/bundle/opt"
