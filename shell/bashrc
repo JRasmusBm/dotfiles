@@ -16,12 +16,16 @@ esac
 # On Termux, drop straight into the Ubuntu proot-distro if it's
 # installed. Guarded so it only fires in Termux's own shell (not
 # inside the proot, where $HOME isn't com.termux and proot-distro
-# is absent). Set NO_PROOT=1 to stay in the bare Termux shell.
+# is absent). Bind Termux's ~/.ssh into the proot so git auth (the
+# one secret not in the dotfiles repo) is shared. Set NO_PROOT=1 to
+# stay in the bare Termux shell.
 if echo "$HOME" | "$grep_cmd" -q 'com.termux' \
   && test -z "$NO_PROOT" \
   && command -v proot-distro > /dev/null \
   && test -d "$PREFIX/var/lib/proot-distro/installed-rootfs/ubuntu" ; then
-  exec proot-distro login ubuntu
+  proot_args=""
+  test -d "$HOME/.ssh" && proot_args="--bind $HOME/.ssh:/root/.ssh"
+  exec proot-distro login ubuntu $proot_args
 fi
 
 export FLYCTL_INSTALL="/home/jrasmusbm/.fly"
