@@ -43,9 +43,7 @@ _link_file() {
       cp -r "$_to_path" "$_backup_path"
     fi
 
-    if test "$_is_dir" != 'True'; then
-      mkdir -p "$(dirname "$_to_path")"
-    fi
+    mkdir -p "$(dirname "$_to_path")"
 
     if test -L "$_to_path"; then
       echo "Skipping $_from_path"
