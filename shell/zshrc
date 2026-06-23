@@ -71,7 +71,13 @@ export SAVEHIST=$HISTSIZE
 fpath=(~/.zsh_completions $fpath)
 compdef g=git
 autoload -Uz compinit
-compinit
+# Rebuild the completion dump at most once a day; otherwise skip the
+# slow security check and load the cached dump (compinit -C).
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then
+  compinit
+else
+  compinit -C
+fi
 
 zstyle ':completion:*' auto-description 'specify: %d'
 zstyle ':completion:*' completer _expand _complete _correct _approximate
@@ -105,12 +111,13 @@ export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/usr/local/lib
 
 # Virtualenvs
 export WORKON_HOME=$HOME/.virtualenvs
-export VIRTUALENVWRAPPER_PYTHON=$(which python3.7)
 export PROJECT_HOME=$HOME/Envs
 
-if [ -f $HOME/.local/bin/virtualenvwrapper.sh ]
-then 
-  source $HOME/.local/bin/virtualenvwrapper.sh
+# Only spawn the python lookup + source the (slow) wrapper on
+# machines that actually have virtualenvwrapper installed.
+if [ -f "$HOME/.local/bin/virtualenvwrapper.sh" ]; then
+  export VIRTUALENVWRAPPER_PYTHON="$(command -v python3.7)"
+  source "$HOME/.local/bin/virtualenvwrapper.sh"
 fi
 
 # fzf
@@ -190,15 +197,34 @@ DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 
 if test -d "$HOME/.pyenv" ; then
   export PYENV_ROOT="$HOME/.pyenv"
-  eval "$(pyenv init --path)"
-  eval "$(pyenv init -)"
+  # Put shims on PATH directly (the part that must happen eagerly so
+  # python/pip resolve through pyenv), but defer the slow
+  # `pyenv init -` (completions + the pyenv shell function) until the
+  # first actual `pyenv` invocation.
+  export PATH="$PYENV_ROOT/bin:$PYENV_ROOT/shims:$PATH"
+  pyenv() {
+    unset -f pyenv
+    eval "$(command pyenv init -)"
+    pyenv "$@"
+  }
 fi
 
 export FLYCTL_INSTALL="/home/jrasmusbm/.fly"
 
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+# Lazy-load nvm: sourcing nvm.sh on every startup is slow, so define
+# stubs that load the real nvm on first use of nvm/node/npm/npx.
+if [ -s "$NVM_DIR/nvm.sh" ]; then
+  _load_nvm() {
+    unset -f nvm node npm npx _load_nvm
+    \. "$NVM_DIR/nvm.sh"
+    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+  }
+  nvm()  { _load_nvm; nvm "$@"; }
+  node() { _load_nvm; node "$@"; }
+  npm()  { _load_nvm; npm "$@"; }
+  npx()  { _load_nvm; npx "$@"; }
+fi
 
 _graphite_yargs_completions()
 {
@@ -214,7 +240,9 @@ compdef _graphite_yargs_completions gt
 # Generated for envman. Do not edit.
 [ -s "$HOME/.config/envman/load.sh" ] && source "$HOME/.config/envman/load.sh"
 
-test -n "$(type zodide)" && eval "$(zoxide init zsh)"
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init zsh)"
+fi
 
 # Speed-dial
 bindkey -s "1" 'tmux-speeddial 1'
