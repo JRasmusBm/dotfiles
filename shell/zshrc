@@ -220,14 +220,17 @@ export NVM_DIR="$HOME/.nvm"
 # stubs that load the real nvm on first use of nvm/node/npm/npx.
 if [ -s "$NVM_DIR/nvm.sh" ]; then
   _load_nvm() {
-    unset -f nvm node npm npx _load_nvm
+    unset -f nvm node npm npx yarn corepack pnpm _load_nvm
     \. "$NVM_DIR/nvm.sh"
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
   }
-  nvm()  { _load_nvm; nvm "$@"; }
-  node() { _load_nvm; node "$@"; }
-  npm()  { _load_nvm; npm "$@"; }
-  npx()  { _load_nvm; npx "$@"; }
+  nvm()     { _load_nvm; nvm "$@"; }
+  node()    { _load_nvm; node "$@"; }
+  npm()     { _load_nvm; npm "$@"; }
+  npx()     { _load_nvm; npx "$@"; }
+  yarn()    { _load_nvm; yarn "$@"; }
+  corepack(){ _load_nvm; corepack "$@"; }
+  pnpm()    { _load_nvm; pnpm "$@"; }
 fi
 
 _graphite_yargs_completions()
