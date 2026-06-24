@@ -211,21 +211,16 @@ fi
 export FLYCTL_INSTALL="/home/jrasmusbm/.fly"
 
 export NVM_DIR="$HOME/.nvm"
-# Lazy-load nvm: sourcing nvm.sh on every startup is slow, so define
-# stubs that load the real nvm on first use of nvm/node/npm/npx.
+# The default node's bin is already on PATH (via paths.sh), so node/
+# npm/npx/yarn work everywhere, including child scripts. Only the
+# `nvm` command itself needs the (slow) nvm.sh, so load it lazily.
 if [ -s "$NVM_DIR/nvm.sh" ]; then
-  _load_nvm() {
-    unset -f nvm node npm npx yarn corepack pnpm _load_nvm
+  nvm() {
+    unset -f nvm
     \. "$NVM_DIR/nvm.sh"
     [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
+    nvm "$@"
   }
-  nvm()     { _load_nvm; nvm "$@"; }
-  node()    { _load_nvm; node "$@"; }
-  npm()     { _load_nvm; npm "$@"; }
-  npx()     { _load_nvm; npx "$@"; }
-  yarn()    { _load_nvm; yarn "$@"; }
-  corepack(){ _load_nvm; corepack "$@"; }
-  pnpm()    { _load_nvm; pnpm "$@"; }
 fi
 
 _graphite_yargs_completions()

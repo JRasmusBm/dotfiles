@@ -59,6 +59,26 @@ PATH="$PATH:$FLYCTL_INSTALL/bin"
 PATH="$PATH:$HOME/projects/polar/bin"
 PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$JAVA_HOME/bin
 
+# Put nvm's default node bin on PATH eagerly so child processes
+# (scripts in PATH, git's pager, etc.) can find node/npm/yarn — the
+# lazy nvm shell functions only cover commands typed interactively.
+# nvm.sh itself stays lazily loaded (see zshrc). Resolves an exact
+# version (v21.7.3) or a major-prefix alias (21 -> newest v21.*);
+# exotic aliases like lts/* aren't resolved here.
+if [ -d "$HOME/.nvm/versions/node" ]; then
+  _nvm_def="$(cat "$HOME/.nvm/alias/default" 2>/dev/null)"
+  _nvm_bin=""
+  if [ -d "$HOME/.nvm/versions/node/v$_nvm_def/bin" ]; then
+    _nvm_bin="$HOME/.nvm/versions/node/v$_nvm_def/bin"
+  else
+    for _d in "$HOME/.nvm/versions/node/v$_nvm_def"*/bin; do
+      [ -d "$_d" ] && _nvm_bin="$_d"   # shell-sorted; last match = newest
+    done
+  fi
+  [ -n "$_nvm_bin" ] && PATH="$_nvm_bin:$PATH"
+  unset _nvm_def _nvm_bin _d
+fi
+
 # pyenv shims must come first so its python/pip win over the system
 # ones (equivalent to `pyenv init --path`). Harmless if pyenv absent.
 PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
