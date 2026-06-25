@@ -10,17 +10,17 @@ fi
 
 _has_git_status() {
   if test -z "$1"; then
-    test -n "$(git status --porcelain)"
+    test -n "$(git --no-optional-locks status --porcelain)"
     return $?
   fi
 
   if test "$1" = 'staged'; then
-    $(git status --porcelain | "$grep_cmd" -Pq '^[MAD]')
+    $(git --no-optional-locks status --porcelain | "$grep_cmd" -Pq '^[MAD]')
     return $?
   fi
 
   if test "$1" = 'unstaged'; then
-    $(git status --porcelain | "$grep_cmd" -Pq '^ +[?MAD]')
+    $(git --no-optional-locks status --porcelain | "$grep_cmd" -Pq '^ +[?MAD]')
     return $?
   fi
 
