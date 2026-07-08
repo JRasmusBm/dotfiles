@@ -34,22 +34,30 @@ _branch_identifier() {
   echo "$_id"
 }
 
-# Open the current branch's Linear ticket in the browser.
-# The slug-less /issue/<ID> URL redirects to the full ticket.
+# Open a Linear ticket in the browser. With an explicit id
+# ($1, e.g. POL-1715) use it directly; otherwise derive it
+# from the current branch. The slug-less /issue/<ID> URL
+# redirects to the full ticket.
 _lin_open() {
-  _id="$(_branch_identifier)" || exit 1
+  if test -n "$1"; then
+    _id="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
+  else
+    _id="$(_branch_identifier)" || exit 1
+  fi
   _url="https://linear.app/$(_workspace)/issue/$_id"
   echo "$_url" >&2
   open "$_url"
 }
 
 _usage() {
-  echo "Usage: lin [o|open]" >&2
+  echo "Usage: lin [o|open] [ID]" >&2
 }
 
-# No args = primary action (open current ticket).
+# No args = primary action (open current ticket). An id like
+# POL-1715 is opened directly; `o`/`open` accept one too.
 case "${1:-o}" in
-  o|open) _lin_open ;;
+  o|open) _lin_open "$2" ;;
   -h|--help|help) _usage ;;
+  [A-Za-z]*-[0-9]*) _lin_open "$1" ;;
   *) _usage; exit 1 ;;
 esac
