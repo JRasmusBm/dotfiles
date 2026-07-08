@@ -1,4 +1,14 @@
 #!/bin/sh
+#
+# lin — open a Linear ticket in the browser.
+#
+#   lin              open the current branch's ticket
+#   lin o | open     same
+#   lin POL-1715     open a specific ticket
+#
+# With no id, the identifier is read from the current branch
+# (e.g. fix/jrb/pol-1527-slug). Workspace defaults to
+# polaranalytics-new; override with $LINEAR_WORKSPACE.
 
 set -e
 
@@ -8,16 +18,10 @@ else
   _grep='grep'
 fi
 
-# Linear workspace slug for issue URLs. Override per machine
-# with $LINEAR_WORKSPACE.
 _workspace() {
   echo "${LINEAR_WORKSPACE:-polaranalytics-new}"
 }
 
-# Pull the Linear identifier (e.g. POL-1527) out of the
-# current branch. Branches made by `wt fix`/`wt feat` look
-# like <type>/<initials>/<id>-<slug> where <id> is lowercase
-# (pol-1527); Linear wants it uppercase.
 _branch_identifier() {
   _br="$(git branch --show-current 2>/dev/null || true)"
   if test -z "$_br"; then
@@ -34,10 +38,6 @@ _branch_identifier() {
   echo "$_id"
 }
 
-# Open a Linear ticket in the browser. With an explicit id
-# ($1, e.g. POL-1715) use it directly; otherwise derive it
-# from the current branch. The slug-less /issue/<ID> URL
-# redirects to the full ticket.
 _lin_open() {
   if test -n "$1"; then
     _id="$(printf '%s' "$1" | tr '[:lower:]' '[:upper:]')"
@@ -53,8 +53,6 @@ _usage() {
   echo "Usage: lin [o|open] [ID]" >&2
 }
 
-# No args = primary action (open current ticket). An id like
-# POL-1715 is opened directly; `o`/`open` accept one too.
 case "${1:-o}" in
   o|open) _lin_open "$2" ;;
   -h|--help|help) _usage ;;
