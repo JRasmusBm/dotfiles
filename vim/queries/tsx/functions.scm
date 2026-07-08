@@ -2,7 +2,7 @@
   name: (identifier) @function.name
 )
 
-(function
+(function_expression
   name: (identifier) @function.name
 )
 
