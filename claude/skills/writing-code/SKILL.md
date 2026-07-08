@@ -33,10 +33,3 @@ anything here. When unsure, match what the surrounding code does.
 
 - Wrap at 80 chars unless the repo's own style config says otherwise
   (then defer to it).
-
-## State
-
-- Act on the explicit input a function is given, not ambient/global
-  state. Handlers, callbacks, and detectors should use their arguments
-  and return values rather than reaching for "the current buffer / cwd /
-  selection" — that silently targets the wrong thing when timing shifts.
