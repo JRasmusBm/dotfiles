@@ -1,7 +1,8 @@
 local M = {}
 
-M.is_typescript_test_file = function()
-  local path_segments = vim.split(vim.api.nvim_buf_get_name(0), "%.")
+M.is_typescript_test_file = function(path)
+  path = path or vim.api.nvim_buf_get_name(0)
+  local path_segments = vim.split(path, "%.")
 
   return path_segments[#path_segments - 1] == "test"
     or path_segments[#path_segments - 1] == "spec"
@@ -19,19 +20,17 @@ local default_options = {
     sql = "sql",
     sh = "sh",
     html = "html",
-    tsx = function()
-      if M.is_typescript_test_file() then
-        vim.bo.filetype = "typescript.tsx.typescript_jest"
-      else
-        vim.bo.filetype = "typescript.tsx"
+    tsx = function(path)
+      if M.is_typescript_test_file(path) then
+        return "typescript.tsx.typescript_jest"
       end
+      return "typescript.tsx"
     end,
-    ts = function()
-      if M.is_typescript_test_file() then
-        vim.bo.filetype = "typescript.typescript_jest"
-      else
-        vim.bo.filetype = "typescript"
+    ts = function(path)
+      if M.is_typescript_test_file(path) then
+        return "typescript.typescript_jest"
       end
+      return "typescript"
     end,
   },
   filename = {
