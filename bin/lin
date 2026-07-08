@@ -39,6 +39,10 @@ _lin_open() {
   else
     _id="$(_branch_identifier)" || exit 1
   fi
+  if test -z "$LINEAR_WORKSPACE"; then
+    echo "Set \$LINEAR_WORKSPACE to your Linear workspace slug" >&2
+    exit 1
+  fi
   _url="https://linear.app/$LINEAR_WORKSPACE/issue/$_id"
   echo "$_url" >&2
   open "$_url"
