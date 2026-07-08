@@ -6,10 +6,10 @@ M.select = {
   keymaps = {
     ["af"] = "@function.outer",
     ["if"] = "@function.inner",
-    ["adc"] = "@test.case.outer",
-    ["ads"] = "@test.suite.outer",
-    ["aP"] = "@statement.outer",
-    ["aa"] = "@argument.inner",
+    [";dc"] = "@test.case.outer",
+    [";ds"] = "@test.suite.outer",
+    [";s"] = "@statement.outer",
+    [";a"] = "@argument.inner",
   },
 }
 
