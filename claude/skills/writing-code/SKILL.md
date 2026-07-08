@@ -21,6 +21,14 @@ anything here. When unsure, match what the surrounding code does.
   deliberately documents (public API docblocks, license headers),
   follow suit.
 
+## Documentation
+
+- A script/tool's usage contract goes in a doc header at the top of that
+  file — what it does and how to invoke it. Not in CLAUDE.md, which
+  should at most point to it.
+- Document the contract, not implementation details obvious from the
+  code.
+
 ## Follow established patterns
 
 - Read the surrounding code first. Match its naming, structure, error

@@ -165,14 +165,9 @@ Always use `wt` commands, never raw `git worktree add`.
 
 ## Linear
 
-`lin o` (or just `lin`) — open the current branch's Linear
-ticket in the browser. Parses the identifier from the branch
-(e.g. `fix/jrb/pol-1527-…` → `POL-1527`) and opens
-`linear.app/<workspace>/issue/<ID>` (slug-less; Linear
-redirects to the full ticket). Workspace defaults to
-`polaranalytics-new`, override with `$LINEAR_WORKSPACE`.
-Pairs with `wt fix`/`wt feat`, which embed the id in the
-branch name.
+`lin` — open Linear tickets in the browser. Pairs with `wt
+fix`/`wt feat`, which embed the id in the branch name. Usage
+in the `bin/lin` doc header.
 
 ## Notifications
 
