@@ -7,8 +7,7 @@
 #   lin POL-1715     open a specific ticket
 #
 # With no id, the identifier is read from the current branch
-# (e.g. fix/jrb/pol-1527-slug). Workspace defaults to
-# polaranalytics-new; override with $LINEAR_WORKSPACE.
+# (e.g. fix/jrb/pol-1527-slug). Requires $LINEAR_WORKSPACE.
 
 set -e
 
@@ -17,10 +16,6 @@ if test "$(uname)" = 'Darwin'; then
 else
   _grep='grep'
 fi
-
-_workspace() {
-  echo "${LINEAR_WORKSPACE:-polaranalytics-new}"
-}
 
 _branch_identifier() {
   _br="$(git branch --show-current 2>/dev/null || true)"
@@ -44,7 +39,7 @@ _lin_open() {
   else
     _id="$(_branch_identifier)" || exit 1
   fi
-  _url="https://linear.app/$(_workspace)/issue/$_id"
+  _url="https://linear.app/$LINEAR_WORKSPACE/issue/$_id"
   echo "$_url" >&2
   open "$_url"
 }

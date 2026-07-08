@@ -163,12 +163,6 @@ outlives the checkout and `wt resume` lands you back on it.
 
 Always use `wt` commands, never raw `git worktree add`.
 
-## Linear
-
-`lin` — open Linear tickets in the browser. Pairs with `wt
-fix`/`wt feat`, which embed the id in the branch name. Usage
-in the `bin/lin` doc header.
-
 ## Notifications
 
 A persistent inbox so notifications don't just flash and
