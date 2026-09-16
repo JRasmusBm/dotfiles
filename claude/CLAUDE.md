@@ -16,6 +16,17 @@ Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
 Be proactive, not permission-seeking. Make changes first, ask later.
 Don't ask "Want me to do X?" — just do it.
 
+Replace, don't accrete. Default edit rewrites what's there; adding
+beside it is the exception. Deleting stale lines is the job, not a
+separate permission. Adding words is not clarifying — unclear wording
+is wrong wording, fix it in place.
+Adding lines? Name what it supersedes first. Nothing superseded → one
+line on why it's load-bearing.
+Append is right for: append-only logs (changelogs, Releases tables,
+decisions logs), genuinely new surface, and a concept that only looks
+like an existing one (a bad merge costs more than a duplicate).
+Can't reconstruct why existing code exists → ask, don't append beside.
+
 ## Questions
 
 Prefer AskUserQuestion with options over plain text

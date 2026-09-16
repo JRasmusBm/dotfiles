@@ -13,6 +13,17 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/accretion-check.sh",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "cleanupPeriodDays": 1825,
