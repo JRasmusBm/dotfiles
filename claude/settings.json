@@ -1,7 +1,9 @@
 {
+  "cleanupPeriodDays": 1825,
   "permissions": {
-    "defaultMode": "plan"
+    "defaultMode": "auto"
   },
+  "model": "opus[1m]",
   "hooks": {
     "Notification": [
       {
@@ -26,18 +28,25 @@
       }
     ]
   },
-  "cleanupPeriodDays": 1825,
+  "statusLine": {
+    "type": "command",
+    "command": "sh ~/.claude/statusline.sh"
+  },
   "effortLevel": "xhigh",
+  "modelSettings": {
+    "claude-fable-5-1": {
+      "effortLevel": "medium"
+    },
+    "claude-fable-5": {
+      "effortLevel": "medium"
+    }
+  },
   "voice": {
     "enabled": true,
     "mode": "hold"
   },
   "theme": "dark-ansi",
   "editorMode": "vim",
-  "voiceEnabled": true,
   "skipAutoPermissionPrompt": true,
-  "statusLine": {
-    "type": "command",
-    "command": "sh ~/.claude/statusline.sh"
-  }
+  "voiceEnabled": true
 }
