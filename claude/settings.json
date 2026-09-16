@@ -32,6 +32,17 @@
     "type": "command",
     "command": "sh ~/.claude/statusline.sh"
   },
+  "enabledPlugins": {
+    "i-have-adhd@i-have-adhd": true
+  },
+  "extraKnownMarketplaces": {
+    "i-have-adhd": {
+      "source": {
+        "source": "github",
+        "repo": "ayghri/i-have-adhd"
+      }
+    }
+  },
   "effortLevel": "xhigh",
   "modelSettings": {
     "claude-fable-5-1": {
