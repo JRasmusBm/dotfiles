@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# claude-penv — Claude SessionStart hook. In an ice-floe checkout or
+# worktree, print `penv info` for the session's resolved Polar env so
+# the agent drives its own stack. Silent elsewhere or without penv.
+# Usage: claude-penv < <hook input json>
+
+_cwd="$(jq -r '.cwd // empty' 2>/dev/null)"
+_cwd="${_cwd:-$PWD}"
+_ice="$HOME/projects/polar/ice-floe"
+case "$_cwd" in
+  "$_ice" | "$_ice"/*) ;;
+  *) exit 0 ;;
+esac
+_penv="$HOME/projects/polar/bin/penv"
+test -x "$_penv" || exit 0
+cd "$_cwd" 2>/dev/null || exit 0
+_info="$("$_penv" info 2>/dev/null)" || exit 0
+
+printf 'Polar env for this session (penv info):\n%s\n\n' "$_info"
+printf '%s\n' \
+  "Use these URLs for this worktree's stack; start/restart it with" \
+  "\`dev up --wait\` (run window), logs in .jrb/logs/<tag>.log." \
+  "Never switch stage to production."
+case "$_info" in
+  *'stage:    production'*)
+    echo 'This env is PRODUCTION: ask jrb before anything that writes.' ;;
+esac

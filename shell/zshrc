@@ -162,6 +162,7 @@ function precmd() {
     export RPROMPT="%F{cyan}${elapsed}ms %{$reset_color%} $RPROMPT_BASE"
     unset timer
   fi
+  (( $+functions[_polar_env_refresh] )) && _polar_env_refresh
 }
 
 # Anonymous function to avoid leaking NBSP variable.

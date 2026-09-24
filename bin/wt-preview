@@ -30,6 +30,15 @@ _branch="$(git -C "$_wt" branch --show-current 2>/dev/null)"
 printf 'branch  %s\n' "${_branch:-(detached)}"
 git -C "$_wt" log -1 \
   --format='commit  %h  %s%n        %an, %cr' 2>/dev/null
+_slug="${_wt##*/}"
+if command -v penv >/dev/null 2>&1 \
+  && test -f "${LOCAL_CONFIG:-$HOME/.local-config}/polar/envs/$_slug.json"
+then
+  penv info "$_slug" --json 2>/dev/null | jq -r '"env     \(.name)·\(.stage)"
+    + "·\(.local | length)local  be :\(.ports.be // "-")"
+    + "  fe :\(.ports.fe // "-")"' \
+    2>/dev/null
+fi
 echo
 
 # PR state (best-effort; needs gh)
