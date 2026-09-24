@@ -102,6 +102,26 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   landed on, the Alt-N speed-dial convention) — not the
   branch slug — so `wt fix`/`feat` and a later Alt-N attach
   to the *same* session instead of spawning a duplicate.
+- `wt review [<pr>|<pr-url>|<branch>]` — review somebody
+  else's work. No arg (or `:`) fzf-picks an open PR that
+  isn't mine (`gh pr list --search -author:@me`); a bare
+  number or a PR URL resolves through `gh`; anything else
+  is taken as a branch name. Their branch usually isn't
+  local yet, so it always fetches first — `refs/pull/<n>/
+  head` for a PR (so fork PRs work too), else the branch
+  from `origin` — then creates the worktree (tracking
+  `origin/<branch>` when that exists, else pinned to the
+  fetched sha), puts it on the board exactly like `add`,
+  and opens a Claude session prompted to give (1) a
+  recommended approach to the review — what to read first,
+  what to focus on, what to verify by running — and (2)
+  its own findings, most serious first. Review-only: the
+  prompt tells it not to change code. A stale local branch
+  of the same name is fast-forwarded to the fetched head;
+  a diverged one (probably mine, not theirs) is left alone
+  with a warning. Re-running on an existing worktree just
+  opens it. Unrelated to `rt`/`rd`/`rp` below, which park
+  *my* worktrees in review sections.
 - `wt rt` / `wt rd` / `wt rp` — park the current worktree:
   move its board entry into the `# TEAM REVIEW` (`rt`),
   `# READY TO DEPLOY` (`rd`) or `# PROD REVIEW` (`rp`) section

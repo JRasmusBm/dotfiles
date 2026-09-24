@@ -6,10 +6,12 @@ set -e
 #   git wc <branch>                 new branch from HEAD
 #   git wc <branch> <start-point>   new branch from start-point
 #   git wc <existing-branch> [...]  check the branch out as-is
-# Used by both `wt add` (no start) and `wt resume` (start =
-# the pinned refs/wt/<slug>), so a resumed worktree lands at
+#   git wc <remote-only-branch>     track origin/<branch>
+# Used by `wt add` (no start), `wt resume` (start = the
+# pinned refs/wt/<slug>), so a resumed worktree lands at
 # the exact same path as the original — preserving the
-# Claude context keyed to that path.
+# Claude context keyed to that path — and `wt review`
+# (start = the fetched PR head).
 git_worktree_create() {
   if test -z "$1"; then
     echo "Usage: git wc <branch> [<start-point>]" >&2
@@ -28,6 +30,10 @@ git_worktree_create() {
       git worktree add "$_worktree_dir" "$_branch"
     elif test -n "$_start"; then
       git worktree add "$_worktree_dir" -b "$_branch" "$_start"
+    elif git show-ref --verify --quiet \
+      "refs/remotes/origin/$_branch"; then
+      git worktree add "$_worktree_dir" --track \
+        -b "$_branch" "origin/$_branch"
     else
       git worktree add "$_worktree_dir" -b "$_branch"
     fi
