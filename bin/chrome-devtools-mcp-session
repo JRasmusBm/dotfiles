@@ -6,9 +6,21 @@
 seed="$HOME/.cache/chrome-devtools-mcp/chrome-profile"
 profile=$(mktemp -d "${TMPDIR:-/tmp}/chrome-devtools-mcp.XXXXXX")
 
+if [ -n "$TMUX_PANE" ]; then
+  label=$(tmux display-message -p -t "$TMUX_PANE" '#S:#W.#P')
+else
+  label=$(basename "$PWD")
+fi
+
 if [ -d "$seed" ]; then
   cp -R "$seed/." "$profile"
   rm -f "$profile"/Singleton*
+  rm -rf "$profile"/Default/Sessions
+  python3 -c 'import json, sys
+p = sys.argv[1]
+d = json.load(open(p))
+d.get("browser", {}).pop("window_placement", None)
+json.dump(d, open(p, "w"))' "$profile/Default/Preferences" 2>/dev/null
 fi
 
 cleanup() {
@@ -21,6 +33,7 @@ trap 'exit 143' TERM INT HUP
 
 exec 3<&0
 npx -y chrome-devtools-mcp@latest --viewport 1440x900 \
-  --userDataDir "$profile" "$@" <&3 3<&- &
+  --userDataDir "$profile" --chromeArg="--window-name=Claude · $label" \
+  "$@" <&3 3<&- &
 child=$!
 wait "$child"
