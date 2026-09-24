@@ -1,0 +1,76 @@
+#!/bin/sh
+
+# jev <type> ... < state   — one typed decision from TypeSafe's
+# System One model. State on stdin, answer on stdout.
+#
+#   jev noul "The diff replaces code rather than adding beside"
+#     -> 0.87   (exit 0 when >= $JEV_YES, else 1)
+#   jev choice "Which team owns this" billing technical=Bugs
+#     -> technical<TAB>0.78
+#   jev score "How risky" "safe" "reversible" "destructive"
+#     -> 2.0<TAB>0.93
+#   jev raw '{"a":{"type":"noul","instructions":"..."}}'
+#     -> the full response, for fanning out many questions
+#
+# Options for `choice` take an optional =description.
+# Env: TYPESAFE_API_KEY (required), JEV_MODEL, JEV_YES,
+# JEV_TIMEOUT.
+
+set -e
+
+_url=${JEV_URL:-https://api.typesafe.ai/v1/systemone}
+_model=${JEV_MODEL:-jev-latest}
+_yes=${JEV_YES:-0.5}
+
+_ask() {
+  : "${TYPESAFE_API_KEY:?jev: TYPESAFE_API_KEY is not set}"
+  _res=$(jq -Rs --argjson q "$1" --arg m "$_model" \
+    '{state: ., model: $m, questions: $q}' |
+    curl -sS --max-time "${JEV_TIMEOUT:-10}" -X POST "$_url" \
+      -H "Authorization: Bearer $TYPESAFE_API_KEY" \
+      -H 'Content-Type: application/json' --data @-)
+  printf '%s' "$_res" | jq -e 'has("answers")' >/dev/null || {
+    printf 'jev: %s\n' "$_res" >&2
+    exit 2
+  }
+  printf '%s' "$_res"
+}
+
+_type=${1:-help}
+[ $# -gt 0 ] && shift
+
+case "$_type" in
+  noul)
+    _q=$(jq -n --arg i "$1" \
+      '{a: {type: "noul", instructions: $i}}')
+    _v=$(_ask "$_q" | jq -r '.answers.a.noul')
+    printf '%s\n' "$_v"
+    awk -v v="$_v" -v y="$_yes" 'BEGIN { exit !(v >= y) }'
+    ;;
+  choice)
+    _i=$1
+    shift
+    _q=$(printf '%s\n' "$@" | jq -Rn --arg i "$_i" \
+      '{a: {type: "choice", instructions: $i, criteria:
+        ([inputs] | map(split("=") | {key: .[0], value:
+          (if length > 1 then .[1:] | join("=") else null end)
+        }) | from_entries)}}')
+    _ask "$_q" |
+      jq -r '.answers.a | "\(.choice)\t\(.confidence)"'
+    ;;
+  score)
+    _i=$1
+    shift
+    _q=$(printf '%s\n' "$@" | jq -Rn --arg i "$_i" \
+      '{a: {type: "score", instructions: $i,
+        criteria: [inputs]}}')
+    _ask "$_q" |
+      jq -r '.answers.a | "\(.score)\t\(.confidence)"'
+    ;;
+  raw)
+    _ask "$1"
+    ;;
+  *)
+    sed -n '3,17p' "$0" | cut -c3-
+    ;;
+esac
