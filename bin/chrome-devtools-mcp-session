@@ -1,0 +1,26 @@
+#!/bin/sh
+# chrome-devtools-mcp on a throwaway copy of the logged-in default profile,
+# so parallel Claude sessions each drive their own browser. The copy is
+# deleted when the server exits.
+
+seed="$HOME/.cache/chrome-devtools-mcp/chrome-profile"
+profile=$(mktemp -d "${TMPDIR:-/tmp}/chrome-devtools-mcp.XXXXXX")
+
+if [ -d "$seed" ]; then
+  cp -R "$seed/." "$profile"
+  rm -f "$profile"/Singleton*
+fi
+
+cleanup() {
+  [ -n "$child" ] && kill "$child" 2>/dev/null
+  wait "$child" 2>/dev/null
+  rm -rf "$profile"
+}
+trap cleanup EXIT
+trap 'exit 143' TERM INT HUP
+
+exec 3<&0
+npx -y chrome-devtools-mcp@latest --viewport 1440x900 \
+  --userDataDir "$profile" "$@" <&3 3<&- &
+child=$!
+wait "$child"
