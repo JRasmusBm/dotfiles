@@ -26,6 +26,17 @@
           }
         ]
       }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.bin/claude-penv",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
