@@ -41,7 +41,7 @@ _work_root() {
 }
 
 _dev_file() {
-  echo "$(_repo_root)/.jrb/dev"
+  echo "${DEV_FILE:-$(_repo_root)/.jrb/dev}"
 }
 
 _log_dir() {
