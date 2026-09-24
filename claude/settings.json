@@ -70,5 +70,6 @@
   "theme": "dark-ansi",
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "feedbackDrafts": "off"
 }
