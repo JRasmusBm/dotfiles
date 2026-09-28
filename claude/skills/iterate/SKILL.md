@@ -78,6 +78,22 @@ further down under "what landed" drifts out of step with the first,
 and a file that contradicts itself is worse than one with no state
 at all.
 
+Keep it live, not just correct at hand-back: I read the queue
+instead of asking for status. An agent working a task appends a
+timestamped line under `## Progress` in that task's file at every
+milestone. A milestone is any point where the next reader would
+learn something new: started, a finding, the change in place, checks
+green, rebased, blocked, handed back. Add "red test written" only
+where the work is test-first; a copy change, a style tweak or a
+sweep has no red step. It updates the line-3 state when the
+state changes. You update the index as soon as you learn something,
+not at the next tick. Isolated agents can't do this: the isolation
+guard blocks every write outside their own worktree, and the queue is
+gitignored, so their worktree doesn't have it. For them you write
+the state and progress lines yourself: at dispatch, on every message
+they send, and at hand-back. Tell them to put their milestones in
+the hand-back so you can copy them in.
+
 You and the agent both want that file, so split it by the clock: a
 task's file belongs to the agent working it, for as long as it runs,
 and goes in its owned list like any source file. The index is never
@@ -120,8 +136,7 @@ your own context on the queue too, but that is the lesser reason.
   spec, a mechanical change across call sites, a sweep for where
   something lives. Write the brief so nothing is left open — name
   the files, the semantics, the verification commands — and give it
-  an owned-file list that is disjoint from every other agent in
-  flight, because they share the tree. Say whether that list is a
+  an owned-file list, the scope it may touch. Say whether that list is a
   hard boundary or only collision avoidance, and say what to do when
   the task cannot be done inside it: stop and report, never widen it
   quietly. An agent told only which file to avoid will treat every
@@ -136,6 +151,54 @@ your own context on the queue too, but that is the lesser reason.
 - Verify what comes back. Agents have reported clean while lint was
   failing, and have been right about a contract while wrong about
   the call site.
+
+## Branch out, come back in
+
+Waiting on an agent because it holds a file is the slowest way to
+share a tree. Give builders their own branch instead, and merge them
+back yourself.
+
+- **Branch out.** Dispatch builders with `isolation: "worktree"`,
+  which gives each one its own checkout on its own branch. That branch
+  can start from the repo's default branch rather than yours, so the brief
+  names the working branch's sha. The agent's first step is
+  `git reset --hard <sha>` on its own branch, and it checks the result
+  with `git log -1`. Then it installs dependencies, commits on its
+  branch with named paths, and hands back the branch name and sha.
+  It never pushes and never touches the working branch. The checkout
+  is deleted when the agent stops with no changes, so an isolated agent
+  can't be paused and resumed. Put every precondition in the first brief. If one
+  stops to ask, dispatch a fresh one.
+- **The builder comes back in, not you.** Rebasing and gating are
+  building, and doing them yourself blocks the conversation. Before it
+  hands back, the builder fetches the working branch's current tip,
+  rebases its branch onto it in its own worktree, and re-runs only the
+  checks its change could have broken: typecheck for the packages it
+  touched, lint on the files it changed, the test suites it wrote or
+  edited. CI runs the full suite on push, so don't duplicate it
+  locally. Your side is one `git merge --ff-only <branch>` in
+  the main checkout, which takes seconds and needs no judgement. Never a merge
+  commit. If the tip moved and the fast-forward fails, send it back to
+  rebase again. Git refuses a fast-forward that would overwrite a
+  shared-tree agent's uncommitted edits, so wait for that agent rather than
+  forcing it. The committer-owns-the-sha rule still holds: the sha
+  that lands is the rebased one, so write that one into the task file.
+- **Overlap is fine; the same lines are not.** Two branches that edit
+  different parts of one file rebase cleanly, so owned lists may
+  overlap at the file level. Keep work serial only when two tasks
+  rewrite the same functions. Then the second one starts from the
+  first one's landed commit, not from a rebase you'll have to untangle.
+  Tell agents sharing a file to add rather than move code, since new tests
+  go in their own block at the end.
+- **Conflicts.** The builder resolves a rebase conflict only when the
+  intent of both sides is plain, and says what it resolved. Otherwise it
+  stops and hands back both hunks. You decide, or move the item under
+  blocked and show them to me.
+- **Some work stays at home.** Anything that needs the running app,
+  a browser or the dev server's state happens in the main checkout,
+  so it stays with you or with an agent working in the shared tree.
+  Agents already in the shared tree finish there; don't move them
+  mid-flight.
 
 ## What you may decide, and what you may not
 
@@ -170,8 +233,9 @@ for.
 - Never `git add -A` or `git add .`. Name every path. Other sessions
   and agents share this worktree and their half-finished files will
   be swept into my commit otherwise; that has already happened once.
-- Never commit a tree that does not build. If a subagent is still
-  editing files the commit would span, wait for it and say why.
+- Never commit a tree that does not build. If a shared-tree
+  subagent is still editing files the commit would span, wait for
+  it and say why.
 - Push only if I asked. Committing is not pushing.
 - Check CodeRabbit and CI for review comments at the status check,
   and again before pushing — never while a run is in flight, since a

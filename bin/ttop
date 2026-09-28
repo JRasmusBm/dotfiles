@@ -1,0 +1,62 @@
+#!/bin/sh
+
+# Memory + CPU per tmux session: sums every process descended
+# from each session's panes (nvim → tsserver, dev servers,
+# claude, …). Memory is the physical footprint incl.
+# compressed pages (what Activity Monitor shows), not RSS.
+# Usage: ttop            — all sessions, heaviest first
+#        ttop <.|:|name> — drill into a session (runs dtop)
+
+test -n "$1" && exec dtop "$1"
+
+_tmp="$(mktemp -d)"
+trap 'rm -rf "$_tmp"' EXIT
+
+tmux list-panes -a -F '#{session_name}	#{pane_pid}' > "$_tmp/panes"
+ps -axo pid=,ppid=,pcpu=,command= > "$_tmp/ps"
+top -l 1 -stats pid,mem | gawk '$1 ~ /^[0-9]+$/' > "$_tmp/mem"
+
+gawk -v self=$$ '
+  function bytes(s,   n, u) {
+    n = s + 0
+    u = substr(s, length(s))
+    if (u == "+" || u == "-") { s = substr(s, 1, length(s) - 1); u = substr(s, length(s)) }
+    if (u == "K") return n * 1024
+    if (u == "M") return n * 1024 ^ 2
+    if (u == "G") return n * 1024 ^ 3
+    return n
+  }
+  function human(b) {
+    if (b >= 1024 ^ 3) return sprintf("%.1fG", b / 1024 ^ 3)
+    return sprintf("%.0fM", b / 1024 ^ 2)
+  }
+  function walk(pid, s,   i) {
+    if (pid in owner) return
+    owner[pid] = s
+    for (i = 1; i <= nkids[pid]; i++) walk(kids[pid, i], s)
+  }
+  FILENAME ~ /panes$/ { split($0, f, "\t"); panes[++np] = f[2]; psess[np] = f[1]; next }
+  FILENAME ~ /mem$/   { mem[$1] = bytes($2); next }
+  {
+    pid = $1; ppid = $2; cpu[pid] = $3
+    if (pid == self) next
+    kids[ppid, ++nkids[ppid]] = pid
+  }
+  END {
+    for (i = 1; i <= np; i++) walk(panes[i], psess[i])
+    for (pid in owner) {
+      s = owner[pid]
+      smem[s] += mem[pid]; scpu[s] += cpu[pid]; sn[s]++
+      tmem += mem[pid]; tcpu += cpu[pid]
+    }
+    for (s in sn)
+      printf "%d\t%s\t%.1f\t%d\t%s\n", smem[s], human(smem[s]), scpu[s], sn[s], s
+    printf "%d\t%s\t%.1f\t%d\t%s\n", -1, human(tmem), tcpu, length(owner), "TOTAL"
+  }
+' "$_tmp/panes" "$_tmp/mem" "$_tmp/ps" > "$_tmp/out" || exit 1
+
+printf '%7s %6s %5s  %s\n' MEM CPU% PROCS SESSION
+sort -rn "$_tmp/out" | gawk -F'\t' '
+  $1 == -1 { total = sprintf("%7s %6s %5s  %s", $2, $3, $4, $5); next }
+  { printf "%7s %6s %5s  %s\n", $2, $3, $4, $5 }
+  END { print total }'

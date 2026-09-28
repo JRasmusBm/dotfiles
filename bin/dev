@@ -7,7 +7,7 @@
 #                    source $(repo_root)/.jrb/dev; --wait polls each
 #                    URL in DEV_WAIT_URLS
 #   dev down         rebuild `run` as a single fresh shell
-#   dev trust        show .jrb/dev and trust its sha256 digest
+#   dev trust [file] show .jrb/dev (or file) and trust its digest
 #   dev ls           list tagged dev panes across all sessions
 #   dev :            fzf a session with dev panes, switch to its `run`
 #   dev logs <tag>   tail -f a tag's log in the current worktree
@@ -241,9 +241,9 @@ _dev_down() {
 }
 
 _dev_trust() {
-  _df="$(_dev_file)"
+  _df="${1:-$(_dev_file)}"
   if ! test -f "$_df"; then
-    echo "No .jrb/dev file at $(_repo_root)" >&2
+    echo "No such file: $_df" >&2
     exit 1
   fi
   if _is_trusted "$_df"; then
@@ -251,7 +251,7 @@ _dev_trust() {
     return
   fi
   cat "$_df"
-  if confirm 'Trust this .jrb/dev file?'; then
+  if confirm "Trust $_df?"; then
     _digest "$_df" >> ~/..dev.digests
     return
   fi
@@ -299,7 +299,7 @@ _usage() {
 case "${1:-}" in
   up) shift; _dev_up "$@" ;;
   down) _dev_down ;;
-  trust) _dev_trust ;;
+  trust) shift; _dev_trust "$@" ;;
   ls) _dev_ls ;;
   :) _dev_pick ;;
   logs) _dev_logs "${2:-}" ;;

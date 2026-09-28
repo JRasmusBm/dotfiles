@@ -56,6 +56,20 @@ _registry_file() {
   echo "$LOCAL_CONFIG/worktrees/$(_repo_name).registry"
 }
 
+# Let the repo react to a worktree leaving (penv frees its ports):
+# runs <main-root>/.jrb/wt-hook <event> <slug> when it is trusted
+# the same way `dev trust` trusts .jrb/dev.
+_repo_hook() {
+  _rh="$(_main_root)/.jrb/wt-hook"
+  test -x "$_rh" || return 0
+  if ! $_grep -qxF "$(openssl sha256 "$_rh")" ~/..dev.digests \
+    2>/dev/null; then
+    echo "wt: skipped untrusted $_rh (run: dev trust $_rh)" >&2
+    return 0
+  fi
+  "$_rh" "$@" || echo "wt: $_rh $* failed" >&2
+}
+
 _registry_append() {
   _ra_slug="$1"
   _ra_branch="$2"
@@ -719,6 +733,7 @@ _wt_evict() {
     git -C "$_root" update-ref "refs/wt/$_slug" "$_sha"
     _registry_append "$_slug" "$_branch" "$_sha"
   fi
+  _repo_hook rm "$_slug"
 
   # Find order file line — try branch name, then
   # worktree dir name (covers worktrees where the
@@ -1032,6 +1047,7 @@ _wt_forget() {
   git -C "$_root" update-ref -d \
     "refs/wt/$_slug" 2>/dev/null || true
   _registry_append "$_slug" "$_branch" "PURGED"
+  _repo_hook forget "$_slug"
   echo "Forgot $_slug (Claude context left intact)" >&2
 }
 

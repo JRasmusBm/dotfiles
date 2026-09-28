@@ -70,7 +70,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt .`/`rm`/`remove` — remove the checkout AND delete the
   branch, but pin `refs/wt/<slug>` + log to the registry
   first, so it's fully reversible via resume. Reclaims GBs.
-  `.` = current, `:` = fzf pick, or `<name>`.
+  `.` = current, `:` = fzf pick, or `<name>`. Then runs the
+  repo's trusted `.jrb/wt-hook rm <slug>` (ice-floe: `penv
+  free`, releasing the worktree's ports); `forget` runs it
+  with `forget` (`penv rm`).
 - `wt :` — fzf pick worktree to switch to. Lists from disk
   (`git worktree list`), so it always reflects reality;
   preview (`wt-preview`) shows branch, last commit, PR state,

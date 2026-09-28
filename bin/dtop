@@ -1,0 +1,109 @@
+#!/bin/sh
+
+# Drill into one tmux session: window → pane → process tree,
+# each line with its subtree's memory + CPU, so you can kill a
+# single LSP / dev server instead of the whole session.
+# Memory is physical footprint incl. compressed pages.
+# Subtrees under DTOP_MIN (MB, default 50) are folded away.
+# Usage: dtop            — current session
+#        dtop :          — fzf-pick a session
+#        dtop <session>  — that session
+
+_session="$1"
+case "$_session" in
+  ''|.) _session="$(tmux display-message -p '#S')" ;;
+  :) _session="$(tmux list-sessions -F '#S' | fzf)" || exit 0 ;;
+esac
+tmux has-session -t "=$_session" 2>/dev/null || {
+  echo "dtop: no session $_session" >&2
+  exit 1
+}
+
+_tmp="$(mktemp -d)"
+trap 'rm -rf "$_tmp"' EXIT
+
+tmux list-panes -s -t "=$_session" \
+  -F '#{window_index}	#{window_name}	#{pane_index}	#{pane_pid}' \
+  > "$_tmp/panes"
+ps -axo pid=,ppid=,pcpu=,command= > "$_tmp/ps"
+top -l 1 -stats pid,mem | gawk '$1 ~ /^[0-9]+$/' > "$_tmp/mem"
+
+gawk -v self=$$ -v min="${DTOP_MIN:-50}" '
+  function bytes(s,   n, u) {
+    n = s + 0
+    u = substr(s, length(s))
+    if (u == "+" || u == "-") { s = substr(s, 1, length(s) - 1); u = substr(s, length(s)) }
+    if (u == "K") return n * 1024
+    if (u == "M") return n * 1024 ^ 2
+    if (u == "G") return n * 1024 ^ 3
+    return n
+  }
+  function human(b) {
+    if (b >= 1024 ^ 3) return sprintf("%.1fG", b / 1024 ^ 3)
+    return sprintf("%.0fM", b / 1024 ^ 2)
+  }
+  function label(cmd,   a, n, i, base, parts, np) {
+    n = split(cmd, a, " ")
+    if (match(cmd, /[^\/]+\.app\/Contents\/MacOS\//)) {
+      base = substr(cmd, RSTART, RLENGTH); sub(/\.app\/.*/, "", base)
+      return base
+    }
+    base = a[1]; sub(/.*\//, "", base)
+    if (base != "node") return base
+    for (i = 2; i <= n; i++) {
+      if (a[i] ~ /^-/) { if (a[i] ~ /^(-r|--require|--import)$/) i++; continue }
+      np = split(a[i], parts, "/")
+      base = parts[np]; sub(/\.c?js$/, "", base)
+      if (base ~ /^(start|index|cli|main)$/ && np > 2)
+        base = parts[np - 2] "/" base
+      return "node " base
+    }
+    return base
+  }
+  function total(pid,   i) {
+    tm[pid] = mem[pid]; tc[pid] = cpu[pid]
+    for (i = 1; i <= nkids[pid]; i++) {
+      total(kids[pid, i])
+      tm[pid] += tm[kids[pid, i]]; tc[pid] += tc[kids[pid, i]]
+    }
+  }
+  function show(pid, depth,   i, j, k, order, n, t) {
+    printf "%7s %6.1f %7d  %*s%s\n", human(tm[pid]), tc[pid], pid,
+      depth * 2, "", label(cmd[pid])
+    n = 0
+    for (i = 1; i <= nkids[pid]; i++) order[++n] = kids[pid, i]
+    for (i = 2; i <= n; i++)
+      for (j = i; j > 1 && tm[order[j]] > tm[order[j - 1]]; j--) {
+        t = order[j]; order[j] = order[j - 1]; order[j - 1] = t
+      }
+    for (k = 1; k <= n; k++)
+      if (tm[order[k]] >= min * 1024 ^ 2) show(order[k], depth + 1)
+  }
+  FILENAME ~ /panes$/ {
+    split($0, f, "\t")
+    np++; wi[np] = f[1]; wn[np] = f[2]; pi[np] = f[3]; pp[np] = f[4]
+    next
+  }
+  FILENAME ~ /mem$/ { mem[$1] = bytes($2); next }
+  {
+    pid = $1; ppid = $2; cpu[pid] = $3
+    if (pid == self) next
+    cmd[pid] = substr($0, index($0, $4))
+    kids[ppid, ++nkids[ppid]] = pid
+  }
+  END {
+    printf "%7s %6s %7s  %s\n", "MEM", "CPU%", "PID", "PROCESS"
+    for (i = 1; i <= np; i++) {
+      total(pp[i]); sm += tm[pp[i]]; sc += tc[pp[i]]
+      wm[wi[i]] += tm[pp[i]]; wc[wi[i]] += tc[pp[i]]
+    }
+    for (i = 1; i <= np; i++) {
+      if (!(wi[i] in seen)) {
+        seen[wi[i]]
+        printf "%7s %6.1f %7s  window %s:%s\n", human(wm[wi[i]]), wc[wi[i]], "", wi[i], wn[i]
+      }
+      show(pp[i], 1)
+    }
+    printf "%7s %6.1f %7s  TOTAL\n", human(sm), sc, ""
+  }
+' "$_tmp/panes" "$_tmp/mem" "$_tmp/ps"
