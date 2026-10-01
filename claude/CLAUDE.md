@@ -243,3 +243,24 @@ at view time in `bin/notif`.
 Use `g s <branch>` to switch branches (not raw
 `git switch`). The `git-s` wrapper refreshes the
 tmux status bar after switching.
+
+## Branch code isn't released code
+
+Only what's in the base branch exists for users. The
+rest of the branch is our draft, and it squash-merges
+into base as one change.
+
+So before treating something as existing behaviour or
+as a source, check whether it's in base (`git log
+origin/<base>..HEAD`). If it isn't:
+
+- It's our work, not a fact. Don't quote it back as
+  evidence, and don't defend it as "what the code
+  does".
+- Nobody depends on it yet. Change it in place. No
+  compat layers, fallbacks, deprecated aliases or
+  "in case someone already uses it" wrappers for
+  shapes that only ever lived on this branch.
+
+Still keep what earns its place in the final change,
+like its tests.
