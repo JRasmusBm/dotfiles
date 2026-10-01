@@ -52,6 +52,18 @@ _resolve_branch_path() {
 # Append-only graveyard of removed worktrees. Never
 # blanked — it's the searchable registry behind
 # `wt resume :`. Rows: slug<TAB>branch<TAB>sha<TAB>date
+# Board line of a worktree: its current branch, else its dir
+# name, else a row whose last path part is the dir name — the
+# dir is the stable anchor when the branch was switched after
+# `wt add` (row fix/jrb/x, dir x, branch fix/jrb/y).
+_board_line() {
+  _bl="$($_grep -nx "$2" "$1" | head -1 | cut -d: -f1)"
+  test -n "$_bl" || _bl="$($_grep -nx "$3" "$1" | head -1 | cut -d: -f1)"
+  test -n "$_bl" || _bl="$(awk -v n="$3" '
+    { b = $0; sub(/.*\//, "", b) } b == n { print NR; exit }' "$1")"
+  echo "$_bl"
+}
+
 _registry_file() {
   echo "$LOCAL_CONFIG/worktrees/$(_repo_name).registry"
 }
@@ -745,19 +757,9 @@ _wt_evict() {
   fi
   _repo_hook rm "$_slug"
 
-  # Find order file line — try branch name, then
-  # worktree dir name (covers worktrees where the
-  # current branch differs from the added one)
   _of="$(_order_file)"
   _ln=""
-  if test -f "$_of"; then
-    _ln="$($_grep -nx "$_branch" "$_of" \
-      | head -1 | cut -d: -f1)"
-    if test -z "$_ln"; then
-      _ln="$($_grep -nx "$_wt_name" "$_of" \
-        | head -1 | cut -d: -f1)"
-    fi
-  fi
+  test -f "$_of" && _ln="$(_board_line "$_of" "$_branch" "$_wt_name")"
 
   # Compute tmux session names before removal
   _speeddial_session=""
@@ -863,12 +865,7 @@ _wt_park() {
   _of="$(_order_file)"
   touch "$_of"
 
-  # Locate the current entry (branch, then worktree dir name).
-  _ln="$($_grep -nx "$_branch" "$_of" | head -1 | cut -d: -f1)"
-  if test -z "$_ln"; then
-    _ln="$($_grep -nx "$_wt_name" "$_of" \
-      | head -1 | cut -d: -f1)"
-  fi
+  _ln="$(_board_line "$_of" "$_branch" "$_wt_name")"
   _entry="$_branch"
   if test -n "$_ln"; then
     _entry="$($_sed -n "${_ln}p" "$_of")"
