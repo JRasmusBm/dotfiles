@@ -4,10 +4,10 @@
 #
 #   lin              open the current branch's ticket
 #   lin o | open     same
-#   lin POL-1715     open a specific ticket
+#   lin EXP-1715     open a specific ticket
 #
 # With no id, the identifier is read from the current branch
-# (e.g. fix/jrb/pol-1527-slug). Requires $LINEAR_WORKSPACE.
+# (e.g. fix/jrb/exp-1527-slug). Requires $LINEAR_WORKSPACE.
 
 set -e
 
