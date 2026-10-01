@@ -157,8 +157,9 @@ _wt_pick() {
             next
           }
           if ($0 ~ /^[[:space:]]*$/) next
-          seen[$0] = 1
-          if (h != "" && ondisk[$0]) print h ": " $0
+          n = split($0, ra, "/"); rdir = ra[n]
+          seen[$0] = 1; seen[rdir] = 1
+          if (h != "" && (ondisk[$0] || ondisk[rdir])) print h ": " $0
         }
         END {
           for (i = 1; i <= c; i++)
