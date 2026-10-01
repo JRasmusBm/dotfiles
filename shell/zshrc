@@ -194,6 +194,50 @@ export SPROMPT="zsh: correct %F{red}'%R'%f to %F{red}'%r'%f [%B%Uy%u%bes, %B%Un%
 
 DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 
+# Name sessions like wt names worktrees, so Remote Control
+# lists them by branch. A second claude in the same checkout
+# gets :<tmux window>. Subcommands, resumes and explicit
+# names pass through untouched.
+function claude() {
+  local a
+  [[ $# -eq 0 || "$1" == -* || "$1" == *" "* ]] \
+    || { command claude "$@"; return; }
+  for a in "$@"; do
+    case "$a" in
+      -n|--name|--name=*|-r|--resume|--resume=*|-c|--continue|\
+      -p|--print|--remote-control|--remote-control=*)
+        command claude "$@"; return ;;
+    esac
+  done
+
+  local top name
+  top="$(git rev-parse --show-toplevel 2>/dev/null)"
+  if [[ "$top" == */.worktrees/* ]]; then
+    name="$(git branch --show-current 2>/dev/null)"
+    name="${name:t}"
+    [[ -n "$name" ]] || name="${top:t}"
+  elif [[ -n "$top" ]]; then
+    name="${top:t}"
+  else
+    name="${PWD:t}"
+  fi
+
+  if [[ -n "$TMUX" && -n "$top" ]] && tmux list-panes -a \
+      -F '#{pane_current_command}	#{pane_current_path}' \
+      | awk -F '\t' -v t="$top" '
+          ($1 == "claude" || $1 ~ /^[0-9]+\.[0-9]+\.[0-9]+$/) \
+            && index($2, t) == 1 {
+            r = substr($2, length(t) + 1)
+            if (r == "" || (r ~ /^\// && r !~ /^\/\.worktrees\//))
+              f = 1
+          }
+          END { exit !f }'; then
+    name="$name:$(tmux display -p -t "$TMUX_PANE" '#{window_index}')"
+  fi
+
+  command claude --name "$name" "$@"
+}
+
 [ -f $HOME/.config/broot/launcher/bash/br ] && source $HOME/.config/broot/launcher/bash/br
 [ -f "/home/jrasmusbm/.ghcup/env" ] && source "/home/jrasmusbm/.ghcup/env" # ghcup-env
 

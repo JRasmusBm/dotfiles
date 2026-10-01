@@ -70,6 +70,7 @@
   },
   "theme": "dark-ansi",
   "editorMode": "vim",
+  "remoteControlAtStartup": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true
 }
