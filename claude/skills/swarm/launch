@@ -1,0 +1,45 @@
+#!/bin/bash
+# launch <worktree-path> <issue-url> [--resume] [extra brief text]
+# Briefs a Claude agent in the worktree's tmux cli window, never
+# attaching. Interrupts a running agent; starts one otherwise.
+set -euo pipefail
+wt_path="$(cd "$1" && pwd)"; url="$2"; shift 2
+resume=""; test "${1:-}" = --resume && { resume="-c"; shift; }
+extra="${*:-}"
+here="$(cd "$(dirname "$0")" && pwd)"
+state="${SWARM_DIR:-$HOME/.cache/swarm}"
+mkdir -p "$state/briefs"
+slug="$(basename "$wt_path")"
+
+sess="$(tmux list-windows -a -F '#S|#W|#{pane_current_path}' \
+  | awk -F'|' -v p="$wt_path" '$2=="cli" && $3==p {print $1; exit}')"
+if test -z "$sess"; then
+  sess="$slug"
+  tmux new-session -d -s "$sess" -n run -c "$wt_path"
+  tmux new-window -t "$sess" -n vim -c "$wt_path"
+  tmux new-window -t "$sess" -n cli -c "$wt_path"
+fi
+
+brief="$state/briefs/$slug.md"
+sed -e "s#{{URL}}#$url#" -e "s#{{EXTRA}}#$extra#" "$here/brief.md" \
+  | tr '\n' ' ' > "$brief"
+
+cmd="$(tmux display -p -t "$sess:cli" '#{pane_current_command}')"
+case "$cmd" in
+  zsh|bash|sh)
+    tmux send-keys -t "$sess:cli" -l "claude $resume \"\$(cat '$brief')\""
+    ;;
+  *)
+    tmux send-keys -t "$sess:cli" Escape
+    sleep 2
+    tmux capture-pane -p -t "$sess:cli" | tail -3 \
+      | grep -q -- '-- NORMAL --' && tmux send-keys -t "$sess:cli" i
+    tmux send-keys -t "$sess:cli" -l "$(cat "$brief")"
+    ;;
+esac
+sleep 1
+tmux send-keys -t "$sess:cli" Enter
+
+grep -qF "$sess	" "$state/sessions.tsv" 2>/dev/null \
+  || printf '%s\t%s\t%s\n' "$sess" "$wt_path" "$url" >> "$state/sessions.tsv"
+echo "$sess"

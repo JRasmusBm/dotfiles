@@ -1,0 +1,27 @@
+#!/bin/sh
+# Run a memory-heavy command (tsc, jest, eslint) in one of
+# HEAVY_SLOTS machine-wide slots, waiting until one is free.
+
+slots="${HEAVY_SLOTS:-3}"
+dir="${HEAVY_DIR:-$HOME/.cache/heavy-slots}"
+mkdir -p "$dir"
+
+while :; do
+  i=1
+  while test "$i" -le "$slots"; do
+    lock="$dir/$i"
+    if mkdir "$lock" 2>/dev/null; then
+      echo $$ > "$lock/pid"
+      trap 'rm -rf "$lock"' EXIT INT TERM HUP
+      "$@"
+      exit $?
+    fi
+    pid="$(cat "$lock/pid" 2>/dev/null)"
+    if test -n "$pid" && ! kill -0 "$pid" 2>/dev/null; then
+      rm -rf "$lock"
+      continue
+    fi
+    i=$((i + 1))
+  done
+  sleep 5
+done

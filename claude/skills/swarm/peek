@@ -1,0 +1,27 @@
+#!/bin/bash
+# peek — one line per briefed session: state, PR, last activity.
+# States: dead (no claude), question, permission, busy, idle.
+state="${SWARM_DIR:-$HOME/.cache/swarm}/sessions.tsv"
+test -f "$state" || { echo "no sessions in $state"; exit 0; }
+while IFS=$'\t' read -r sess wt_path url; do
+  id="$(echo "$url" | sed -E 's#.*/issue/([A-Za-z]+-[0-9]+).*#\1#')"
+  if ! tmux has-session -t "=$sess" 2>/dev/null; then
+    printf '%-10s %-10s\n' "$id" gone; continue
+  fi
+  cmd="$(tmux display -p -t "$sess:cli" '#{pane_current_command}')"
+  pane="$(tmux capture-pane -p -t "$sess:cli")"
+  pr="$(echo "$pane" | grep -oE 'PR #[0-9]+' | tail -1)"
+  case "$cmd" in zsh|bash|sh) st=dead ;; *)
+    if echo "$pane" | grep -q 'Enter to select'; then st=question
+    elif echo "$pane" | grep -q 'Do you want to proceed'; then st=permission
+    elif echo "$pane" | tail -12 \
+      | grep -qE '… \([0-9]|Waiting for [0-9]+ background|^ +◯ '; then st=busy
+    else st=idle; fi ;;
+  esac
+  last="$(echo "$pane" | grep -E '^[^ ] [^ ]+(…| for) ' | tail -1 | cut -c1-50)"
+  printf '%-10s %-10s %-9s %s\n' "$id" "$st" "${pr:--}" "$last"
+done < "$state"
+free="$(vm_stat | awk '/Pages (free|inactive|speculative)/ \
+  {gsub("\\.","",$NF); s+=$NF} END {printf "%.1f", s*16384/2^30}')"
+echo "free+inactive: ${free} GB · heavy slots busy:" \
+  "$(ls "$HOME/.cache/heavy-slots" 2>/dev/null | wc -l | tr -d ' ')"
