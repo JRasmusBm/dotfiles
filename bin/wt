@@ -303,10 +303,11 @@ _of_insert() {
   _of_place_in_section 'IN PROGRESS' "$_entry" "$_of"
 }
 
-# Build "<type>/<initials>/<id>-<slug>" from a Linear URL,
-# or "<type>/<initials>/<slug>" from free text. The Linear
-# URL already carries a lowercase, hyphenated, truncated
-# slug, so no API/token is needed.
+# Build "<type>/<initials>/<id>-<slug>" from a Linear issue
+# URL, "<type>/<initials>/<slug>" from a project URL (its
+# trailing 12-hex slug id dropped) or from free text. The
+# Linear URL already carries a lowercase, hyphenated slug,
+# so no API/token is needed.
 _branch_from() {
   _type="$1"
   _arg="$2"
@@ -323,6 +324,12 @@ _branch_from() {
       else
         echo "${_type}/${_ini}/${_id}"
       fi
+      ;;
+    *linear.app/*project/*)
+      _slug="$(printf '%s' "$_arg" \
+        | $_sed -nE 's#.*/project/([^/?#]+).*#\1#p' \
+        | $_sed -E 's/-[0-9a-f]{12}$//')"
+      echo "${_type}/${_ini}/${_slug}"
       ;;
     *)
       # Free text → slugify (lowercase, non-alnum → -, trim)
@@ -445,6 +452,9 @@ _wt_typed() {
       else
         _prompt="Can you please fix $_arg? Please also examine the video and the images"
       fi
+      ;;
+    *linear.app/*project/*)
+      _prompt="Can you please read the Linear project $_arg — its overview, documents, milestones and issues — and relative feature docs? Then please grill me on the solution."
       ;;
   esac
 
