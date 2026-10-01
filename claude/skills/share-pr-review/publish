@@ -1,0 +1,152 @@
+#!/usr/bin/env python3
+import json
+import re
+import subprocess
+import sys
+
+
+def gh(*args, payload=None):
+    result = subprocess.run(
+        ["gh", *args],
+        input=json.dumps(payload) if payload is not None else None,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        sys.exit(f"gh {' '.join(args)} failed:\n{result.stderr}{result.stdout}")
+    return json.loads(result.stdout) if result.stdout.strip() else None
+
+
+def right_side_lines(patch):
+    lines = set()
+    line = 0
+    for row in (patch or "").splitlines():
+        hunk = re.match(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@", row)
+        if hunk:
+            line = int(hunk.group(1))
+        elif row.startswith("-") or row.startswith("\\"):
+            continue
+        elif line:
+            lines.add(line)
+            line += 1
+    return lines
+
+
+def main():
+    if len(sys.argv) != 3:
+        sys.exit("usage: publish <pr-number|url> <payload.json>")
+    pr_arg, payload_path = sys.argv[1], sys.argv[2]
+    with open(payload_path) as handle:
+        payload = json.load(handle)
+
+    pr = gh("pr", "view", pr_arg, "--json", "number,url,headRefOid")
+    repo = gh("repo", "view", "--json", "nameWithOwner")["nameWithOwner"]
+    base = f"repos/{repo}/pulls/{pr['number']}"
+    head = pr["headRefOid"]
+
+    login = gh("api", "user")["login"]
+    pending = [
+        review
+        for page in gh("api", "--paginate", "--slurp", f"{base}/reviews")
+        for review in page
+        if review["state"] == "PENDING" and review["user"]["login"] == login
+    ]
+    if pending:
+        sys.exit(
+            "You have a pending review on this PR; submit or delete it "
+            f"first: {pending[0]['html_url']}"
+        )
+
+    diff_lines = {
+        changed["filename"]: right_side_lines(changed.get("patch"))
+        for page in gh("api", "--paginate", "--slurp", f"{base}/files")
+        for changed in page
+    }
+
+    inline, outside = [], []
+    for item in payload["items"]:
+        lines = diff_lines.get(item["path"], set())
+        start = item.get("start_line", item["line"])
+        in_diff = all(n in lines for n in range(start, item["line"] + 1))
+        (inline if in_diff else outside).append(item)
+
+    body_parts = [payload.get("body", "").strip()]
+    for item in outside:
+        span = (
+            f"L{item['start_line']}-L{item['line']}"
+            if item.get("start_line")
+            else f"L{item['line']}"
+        )
+        link = f"https://github.com/{repo}/blob/{head}/{item['path']}#{span}"
+        label = f"{item['path']}:{span[1:].replace('-L', '-')}"
+        body_parts.append(
+            f"#### {item['summary']}\n[{label}]({link})\n\n{item['body']}"
+        )
+
+    comments = []
+    for item in inline:
+        comment = {
+            "path": item["path"],
+            "line": item["line"],
+            "side": "RIGHT",
+            "body": item["body"],
+        }
+        if item.get("start_line"):
+            comment["start_line"] = item["start_line"]
+            comment["start_side"] = "RIGHT"
+        comments.append(comment)
+
+    review = gh(
+        "api",
+        "-X",
+        "POST",
+        f"{base}/reviews",
+        "--input",
+        "-",
+        payload={
+            "commit_id": head,
+            "event": payload.get("event", "COMMENT"),
+            "body": "\n\n".join(part for part in body_parts if part),
+            "comments": comments,
+        },
+    )
+
+    posted = [
+        comment
+        for page in gh(
+            "api",
+            "--paginate",
+            "--slurp",
+            f"{base}/reviews/{review['id']}/comments",
+        )
+        for comment in page
+    ]
+    unclaimed = list(posted)
+    links = {}
+    for index, item in enumerate(inline):
+        match = next(
+            (
+                c
+                for c in unclaimed
+                if c["path"] == item["path"]
+                and item["line"] in (c.get("line"), c.get("original_line"))
+            ),
+            None,
+        )
+        if match:
+            unclaimed.remove(match)
+            links[id(item)] = match["html_url"]
+
+    print("I reviewed the PR, here are my review comments:\n")
+    for item in payload["items"]:
+        print(f"- [{item['summary']}]({links.get(id(item), review['html_url'])})")
+    if outside:
+        print(
+            "\n(not on a diff line, so in the review body: "
+            + ", ".join(item["summary"] for item in outside)
+            + ")",
+            file=sys.stderr,
+        )
+
+
+main()
