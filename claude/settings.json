@@ -54,6 +54,7 @@
       }
     }
   },
+  "feedbackDrafts": "off",
   "effortLevel": "xhigh",
   "modelSettings": {
     "claude-fable-5-1": {
@@ -70,6 +71,5 @@
   "theme": "dark-ansi",
   "editorMode": "vim",
   "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
-  "feedbackDrafts": "off"
+  "voiceEnabled": true
 }
