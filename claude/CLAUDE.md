@@ -110,6 +110,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   landed on, the Alt-N speed-dial convention) — not the
   branch slug — so `wt fix`/`feat` and a later Alt-N attach
   to the *same* session instead of spawning a duplicate.
+  `WT_PROMPT_EXTRA="…"` appends to the kickoff prompt;
+  `WT_NO_ATTACH=1` skips attaching (batch kickoffs from
+  Claude). Prompt avoids `"`, `$`, backticks.
 - `wt review [<pr>|<pr-url>|<branch>]` — review somebody
   else's work. No arg (or `:`) fzf-picks an open PR that
   isn't mine (`gh pr list --search -author:@me`); a bare

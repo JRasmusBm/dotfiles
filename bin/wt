@@ -387,7 +387,9 @@ _speeddial_name() {
 # Open (creating if needed) the worktree's tmux session under
 # the given name and, on a freshly created session with a
 # prompt, kick off a Claude session in its third window
-# (`cli`) preloaded with that prompt. Generic: relies on the
+# (`cli`) preloaded with that prompt. $WT_PROMPT_EXTRA is
+# appended to the prompt; $WT_NO_ATTACH skips the attach
+# (batch kickoffs from a script). Generic: relies on the
 # default run/vim/cli layout that worktrees without a .tmux
 # get from default_tmux_session. Exporting TMUX_SESSION_NAME
 # is what makes the new session adopt $_session (see
@@ -413,11 +415,20 @@ _wt_open_with_claude() {
     _created=true
   fi
 
-  if test -n "$_prompt" && test "$_created" = true; then
-    tmux send-keys -t "$_session:cli" \
-      "claude \"$_prompt\"" Enter 2>/dev/null || true
+  if test -n "$_prompt" && test -n "$WT_PROMPT_EXTRA"; then
+    _prompt="$_prompt $WT_PROMPT_EXTRA"
   fi
 
+  # Long prompts get truncated when typed into a shell that's
+  # still starting, so hand Claude the prompt via a file.
+  if test -n "$_prompt" && test "$_created" = true; then
+    _pf="$(mktemp -t wt-prompt)"
+    printf '%s' "$_prompt" >"$_pf"
+    tmux send-keys -t "$_session:cli" \
+      "claude \"\$(cat $_pf)\"" Enter 2>/dev/null || true
+  fi
+
+  test -n "$WT_NO_ATTACH" && return 0
   tmux-attach-to-session "$_session:cli" \
     || tmux-attach-to-session "$_session:vim" \
     || ta "$_session" \
