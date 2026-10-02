@@ -63,25 +63,18 @@ def main():
         for changed in page
     }
 
-    inline, outside = [], []
+    outside = []
     for item in payload["items"]:
         lines = diff_lines.get(item["path"], set())
         start = item.get("start_line", item["line"])
-        in_diff = all(n in lines for n in range(start, item["line"] + 1))
-        (inline if in_diff else outside).append(item)
-
-    body_parts = [payload.get("body", "").strip()]
-    for item in outside:
-        span = (
-            f"L{item['start_line']}-L{item['line']}"
-            if item.get("start_line")
-            else f"L{item['line']}"
+        if not all(n in lines for n in range(start, item["line"] + 1)):
+            outside.append(f"{item['path']}:{start}-{item['line']} ({item['summary']})")
+    if outside:
+        sys.exit(
+            "Not on a diff line, re-anchor these on the nearest related diff "
+            "line (nothing was posted):\n  " + "\n  ".join(outside)
         )
-        link = f"https://github.com/{repo}/blob/{head}/{item['path']}#{span}"
-        label = f"{item['path']}:{span[1:].replace('-L', '-')}"
-        body_parts.append(
-            f"#### {item['summary']}\n[{label}]({link})\n\n{item['body']}"
-        )
+    inline = payload["items"]
 
     comments = []
     for item in inline:
@@ -106,7 +99,7 @@ def main():
         payload={
             "commit_id": head,
             "event": payload.get("event", "COMMENT"),
-            "body": "\n\n".join(part for part in body_parts if part),
+            "body": payload.get("body", "").strip(),
             "comments": comments,
         },
     )
@@ -121,32 +114,24 @@ def main():
         )
         for comment in page
     ]
-    unclaimed = list(posted)
     links = {}
-    for index, item in enumerate(inline):
-        match = next(
-            (
-                c
-                for c in unclaimed
-                if c["path"] == item["path"]
-                and item["line"] in (c.get("line"), c.get("original_line"))
-            ),
-            None,
+    for comment in posted:
+        links.setdefault((comment["path"], comment["body"]), comment["html_url"])
+
+    missing = [
+        item["summary"]
+        for item in inline
+        if (item["path"], item["body"]) not in links
+    ]
+    if missing:
+        sys.exit(
+            f"Posted {review['html_url']} but found no comment for: "
+            + ", ".join(missing)
         )
-        if match:
-            unclaimed.remove(match)
-            links[id(item)] = match["html_url"]
 
     print("I reviewed the PR, here are my review comments:\n")
-    for item in payload["items"]:
-        print(f"- [{item['summary']}]({links.get(id(item), review['html_url'])})")
-    if outside:
-        print(
-            "\n(not on a diff line, so in the review body: "
-            + ", ".join(item["summary"] for item in outside)
-            + ")",
-            file=sys.stderr,
-        )
+    for item in inline:
+        print(f"- [{item['summary']}]({links[(item['path'], item['body'])]})")
 
 
 main()
