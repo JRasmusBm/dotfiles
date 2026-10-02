@@ -1,0 +1,35 @@
+#!/bin/sh
+
+set -e
+
+_changed() {
+  _all=""
+
+  if test "$1" = "-a"; then
+    _all=1
+    shift
+  fi
+
+  _target="${1:-1}"
+
+  case "$_target" in
+  .) _base="$(git merge-base HEAD "$(git remote-main-branch)")" ;;
+  *[!0-9]*) _base="$_target" ;;
+  *) _base="HEAD~$_target" ;;
+  esac
+
+  if test -n "$_all"; then
+    git diff --name-only "$_base"
+  else
+    git log \
+      --author="$(git config user.name)" \
+      --first-parent \
+      --name-only \
+      --format= \
+      "$_base..HEAD"
+  fi |
+    gawk -F/ 'NF { print ($1 == "services" && NF > 2 ? $3 : $1) }' |
+    sort -u
+}
+
+_changed "$@"
