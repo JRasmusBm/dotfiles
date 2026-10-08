@@ -1,0 +1,317 @@
+#!/usr/bin/env python3
+"""One row per piece of my work in the current repo, for /standup.
+
+Joins the wt board (order file), on-disk worktrees and my GitHub
+PRs, and stamps each row with its latest activity: last commit
+not in origin's default branch,
+last Claude session entry on that branch (from the `gitBranch` each
+transcript line records, in any of the repo's session dirs, so a
+session that switched branches or outlived its worktree still
+counts), or PR update, whichever is newest.
+A row is fresh when that is on or after the start of the previous
+workday (Monday looks back to Friday). Branches `wt rm`'d since then
+show as REMOVED rows, so Friday's wrapped-up work isn't lost.
+
+With `--linear <page>...` per Linear list_issues query (its saved
+pages) it also joins each row to its open issue, resolving pre-move IDs by title
+slug, and adds a LINEAR ONLY row per open issue with no branch
+(UNASSIGNED when the issue has no assignee).
+
+Output: a `# since` header, then TSV rows:
+fresh  section  name  ticket  pr  date  source  status  priority
+title-or-commit-subject
+`name` is the branch's last segment minus its ticket ID, blank when
+an issue matched. Stale rows with only merged/closed PRs and no open
+issue collapse into one DONE row per section.
+"""
+
+import datetime as dt
+import glob
+import json
+import os
+import re
+import subprocess
+import sys
+
+
+def sh(*cmd, cwd=None):
+    try:
+        return subprocess.run(
+            cmd, cwd=cwd, capture_output=True, text=True, check=True
+        ).stdout
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return ""
+
+
+def cutoff():
+    today = dt.datetime.now().replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    back = {0: 3, 6: 2}.get(today.weekday(), 1)
+    return today - dt.timedelta(days=back)
+
+
+BRANCH = re.compile(rb'"gitBranch":"([^"]+)"')
+STAMP = re.compile(rb'"timestamp":"([^"]+)"')
+
+
+def sessions(top, since):
+    ctx = os.path.expanduser("~/.claude/projects/") + re.sub(
+        r"[^A-Za-z0-9]", "-", top
+    )
+    latest = {}
+    for f in glob.glob(f"{ctx}*/*.jsonl"):
+        if os.path.getmtime(f) < since:
+            continue
+        with open(f, "rb") as fh:
+            for line in fh:
+                b, t = BRANCH.search(line), STAMP.search(line)
+                if b and t and t.group(1) > latest.get(b.group(1), b""):
+                    latest[b.group(1)] = t.group(1)
+    return {b.decode(): ts(t.decode()) for b, t in latest.items()}
+
+
+def removed(repo, since):
+    base = os.environ.get("LOCAL_CONFIG", os.path.expanduser("~/.local-config"))
+    try:
+        lines = open(f"{base}/worktrees/{repo}.registry").read().splitlines()
+    except OSError:
+        return {}
+    out = {}
+    for line in lines:
+        cols = line.split("\t")
+        if len(cols) >= 4 and ts(cols[3]) >= since:
+            out[cols[1]] = ts(cols[3])
+    return out
+
+
+def worktrees():
+    out, path = {}, None
+    for line in sh("git", "worktree", "list", "--porcelain").splitlines():
+        if line.startswith("worktree "):
+            path = line[len("worktree "):]
+        elif line.startswith("branch ") and path:
+            out[line[len("branch refs/heads/"):]] = path
+    return out
+
+
+def board(repo):
+    base = os.environ.get("LOCAL_CONFIG", os.path.expanduser("~/.local-config"))
+    try:
+        lines = open(f"{base}/worktrees/{repo}").read().splitlines()
+    except OSError:
+        return []
+    rows, section = [], "SPEED-DIAL"
+    for line in lines[1:]:
+        line = line.strip()
+        if not line:
+            continue
+        if line.startswith("#") or line.endswith(":"):
+            section = line.lstrip("# ").rstrip(":")
+            continue
+        rows.append((section, line))
+    return rows
+
+
+def prs():
+    raw = sh(
+        "gh", "pr", "list", "--author", "@me", "--state", "all",
+        "--limit", "400", "--json",
+        "number,headRefName,state,isDraft,updatedAt",
+    )
+    out = {}
+    for p in json.loads(raw or "[]"):
+        out.setdefault(p["headRefName"], []).append(p)
+    return out
+
+
+def ticket(branch):
+    parts = branch.split("/")
+    m = re.match(r"([a-z]{2,5})-(\d+)", parts[-1])
+    return f"{m.group(1).upper()}-{m.group(2)}" if m else ""
+
+
+def ts(iso):
+    return dt.datetime.fromisoformat(iso.replace("Z", "+00:00")).timestamp()
+
+
+def base():
+    ref = sh("git", "symbolic-ref", "refs/remotes/origin/HEAD").strip()
+    return ref.replace("refs/remotes/", "") or "origin/dev"
+
+
+def activity(branch, path, branch_prs, since_ref, recent, since):
+    seen = []
+    c = sh(
+        "git", "log", "-1", "--format=%ct\t%s", f"{since_ref}..{branch}"
+    ).strip()
+    subject = ""
+    if c:
+        t, _, subject = c.partition("\t")
+        seen.append((int(t), "commit"))
+    if branch in recent:
+        seen.append((recent[branch], "claude"))
+    elif path:
+        ctx = os.path.expanduser("~/.claude/projects/") + re.sub(
+            r"[/.]", "-", path
+        )
+        sessions = glob.glob(f"{ctx}/*.jsonl")
+        older = [t for t in map(os.path.getmtime, sessions) if t < since]
+        if older:
+            seen.append((max(older), "claude"))
+    for p in branch_prs:
+        seen.append((ts(p["updatedAt"]), "pr"))
+    if not seen:
+        return 0, "", subject
+    t, src = max(seen)
+    return t, src, subject
+
+
+def pr_label(branch_prs):
+    return ",".join(
+        f"{p['state']}#{p['number']}" + ("(draft)" if p["isDraft"] else "")
+        for p in sorted(branch_prs, key=lambda p: -p["number"])
+    ) or "noPR"
+
+
+CLOSED = {"Done", "Canceled", "Duplicate"}
+
+
+def slug(text):
+    return re.sub(r"[^a-z0-9]+", "-", text.lower()).strip("-")
+
+
+def linear(groups):
+    issues = []
+    for paths in groups:
+        for path in paths:
+            data = json.load(open(path))
+            issues += data["issues"] if isinstance(data, dict) else data
+        if isinstance(data, dict) and data.get("hasNextPage"):
+            sys.exit(f"{path} has more pages: fetch cursor"
+                     f" {data['cursor']} and add it to that --linear")
+    unique = {i["id"]: i for i in issues}
+    return [i for i in unique.values() if i.get("status") not in CLOSED], unique
+
+
+def field(issue, key):
+    v = issue.get(key)
+    return (v.get("name") if isinstance(v, dict) else v) or ""
+
+
+def match(branch, tid, by_id, issues):
+    if tid in by_id:
+        return by_id[tid]
+    tail = re.sub(r"^[a-z]{2,5}-\d+-?", "", branch.split("/")[-1])
+    if not tail:
+        return None
+    hits = [i for i in issues if slug(i["title"]).startswith(tail)
+            or tail.startswith(slug(i["title"]))]
+    return hits[0] if len(hits) == 1 else None
+
+
+def short(branch):
+    tail = branch.split("/")[-1]
+    return re.sub(r"^[a-z]{2,5}-\d+-?", "", tail)[:40] or tail
+
+
+def finished(row):
+    return (
+        row[0] == "stale" and not row[7] and row[4] != "noPR"
+        and "OPEN" not in row[4]
+    )
+
+
+def main():
+    issues, everything = [], {}
+    groups = []
+    for arg in sys.argv[1:]:
+        if arg == "--linear":
+            groups.append([])
+        elif groups:
+            groups[-1].append(arg)
+    if groups:
+        issues, everything = linear(groups)
+    by_id = {i["id"]: i for i in issues}
+    used = set()
+    top = sh("git", "worktree", "list").split("\n")[0].split()[0]
+    repo = os.path.basename(top)
+    since, base_ref = cutoff(), base()
+    wts, by_branch = worktrees(), prs()
+    rows = board(repo)
+    on_board = {b for _, b in rows}
+    rows += [
+        ("ORPHAN", b) for b in wts
+        if b not in on_board and os.path.dirname(wts[b]) != top
+        and "/.worktrees/" in wts[b]
+    ]
+    listed = {b for _, b in rows}
+    since_ts = since.timestamp()
+    recent = sessions(top, since_ts)
+    gone = removed(repo, since_ts)
+    rows += [
+        ("REMOVED", b) for b in gone
+        if b not in listed and b not in wts
+    ]
+    listed = {b for _, b in rows}
+    rows += [
+        ("OPEN PR OFF BOARD", b) for b, ps in by_branch.items()
+        if b not in listed and any(p["state"] == "OPEN" for p in ps)
+    ]
+
+    print(f"# since\t{since:%a %Y-%m-%d}\trepo\t{repo}")
+    out = []
+    for section, branch in rows:
+        bp = by_branch.get(branch, [])
+        t, src, subject = activity(
+            branch, wts.get(branch), bp, base_ref, recent, since_ts
+        )
+        if section == "REMOVED" and gone[branch] > t:
+            t, src = gone[branch], "removed"
+        fresh = "fresh" if t >= since.timestamp() else "stale"
+        when = dt.datetime.fromtimestamp(t).strftime("%m-%d") if t else "-"
+        tid = ticket(branch)
+        issue = match(branch, tid, by_id, issues)
+        if not issue and section == "REMOVED":
+            issue = everything.get(tid)
+        status = priority = ""
+        if issue:
+            used.add(issue["id"])
+            tid, subject = issue["id"], issue["title"]
+            status, priority = field(issue, "status"), field(issue, "priority")
+            if ts(issue["updatedAt"]) >= since.timestamp():
+                fresh = "fresh"
+        out.append((
+            fresh, section, "" if issue else short(branch), tid,
+            pr_label(bp), when, src, status,
+            "" if priority == "No priority" else priority, subject[:60],
+        ))
+    for i in issues:
+        if i["id"] in used:
+            continue
+        t = ts(i["updatedAt"])
+        out.append((
+            "fresh" if t >= since.timestamp() else "stale",
+            "LINEAR ONLY" if i.get("assignee") else "UNASSIGNED",
+            "", i["id"], "-",
+            dt.datetime.fromtimestamp(t).strftime("%m-%d"), "linear",
+            field(i, "status"),
+            "" if field(i, "priority") == "No priority"
+            else field(i, "priority"),
+            i["title"][:60],
+        ))
+    done = {}
+    for r in filter(finished, out):
+        done.setdefault(r[1], []).append(r[2] or r[3])
+    out = [r for r in out if not finished(r)]
+    out.sort(key=lambda r: (r[0] != "fresh", r[1]))
+    for r in out:
+        print("\t".join(r))
+    for section, names in done.items():
+        print(f"stale\t{section}\tDONE\t{len(names)}\t" + ", ".join(
+            n[:25] for n in names
+        ))
+
+
+if __name__ == "__main__":
+    sys.exit(main())
