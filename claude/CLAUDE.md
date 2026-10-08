@@ -201,6 +201,13 @@ outlives the checkout and `wt resume` lands you back on it.
 
 Always use `wt` commands, never raw `git worktree add`.
 
+Where work *runs* is tmux, not `git worktree list`. A
+session can edit in one worktree and run its stack or agent
+from another. For "where is X happening" / "what's spread
+around", start from `tmux list-panes -a -F '#S:#I.#P
+#{pane_current_command} #{pane_current_path}'` and map each
+session → worktree(s) → agent (`ListAgents`).
+
 ## Notifications
 
 A persistent inbox, keyed per tmux **pane**, so
