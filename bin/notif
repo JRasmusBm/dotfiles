@@ -2,42 +2,56 @@
 
 set -e
 
-# Persistent notification inbox. `notify` appends rows
-# (epoch<TAB>context<TAB>title<TAB>message) here; this viewer
-# collapses them to one entry per place, lets you jump to the
-# place (fzf + Enter), and clears entries on arrival.
+# Persistent notification inbox, keyed per tmux pane. `notify`
+# appends rows here; this viewer collapses them to one entry
+# per pane and jumps back to it. Rows:
+#   epoch ctx title message path pane mode
+# mode `sticky` (Claude) survives a visit and clears on reply;
+# anything else clears on arrival. Cleared rows move to the
+# recent file, listed under the pending ones in the picker.
 #
-#   notif              open the inbox picker (primary action)
-#   notif seen <ctx>   drop all rows for a context (focus hook)
-#   notif clear        empty the inbox
-
-if test "$(uname)" = 'Darwin'; then
-  _grep='ggrep'
-else
-  _grep='grep'
-fi
+#   notif               picker: pending, then recent
+#   notif next <pane>   pending pane after <pane>, else oldest
+#   notif later <pane>  re-queue <pane> at the back
+#   notif seen <key>    drop a pane's rows (Claude reply hook)
+#   notif arrive <key>  drop its non-sticky rows (focus hooks)
+#   notif count         status-bar badge
+#   notif clear         empty the inbox
 
 _inbox() {
   echo "${LOCAL_CONFIG:?LOCAL_CONFIG unset}/notifications"
 }
 
-# Remove every row whose context (col 2) matches $1. Fast
-# path: only rewrite the file when there's actually a match,
-# so the focus hooks that call this on every navigation are
-# nearly free. Rewrite via temp + mv so it's atomic.
-_notif_seen() {
-  _ns_ctx="$1"
+_recent() {
+  echo "$(_inbox).recent"
+}
+
+_KEY='function key() { return $6 != "" ? $6 : $2 }'
+
+# Drop rows for key $1 (only non-sticky ones when $2 is
+# `arrive`), logging them to the recent file. Fast no-op when
+# nothing matches, so the focus hooks stay cheap.
+_notif_drop() {
+  _d_key="$1"
+  _d_mode="${2:-all}"
   _f="$(_inbox)"
-  test -n "$_ns_ctx" || return 0
+  test -n "$_d_key" || return 0
   test -f "$_f" || return 0
-  if ! awk -F'\t' -v c="$_ns_ctx" \
-    '$2 == c { found = 1 } END { exit !found }' "$_f"; then
-    return 0
-  fi
+  _d_match="$_KEY"'
+    function hit() {
+      return key() == k && (m != "arrive" || $7 != "sticky")
+    }'
+  awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
+    hit() { found = 1 } END { exit !found }' "$_f" || return 0
+  _now="$(date +%s)"
+  awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
+    hit() { print }' "$_f" \
+    | sed "s/^/$_now	/" >> "$(_recent)"
   _tmp="$(mktemp)"
-  awk -F'\t' -v c="$_ns_ctx" '$2 != c' "$_f" > "$_tmp" \
-    && mv "$_tmp" "$_f"
-  # We changed the inbox → refresh the status-bar badge now.
+  awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
+    !hit()' "$_f" > "$_tmp" && mv "$_tmp" "$_f"
+  _tmp="$(mktemp)"
+  tail -200 "$(_recent)" > "$_tmp" && mv "$_tmp" "$(_recent)"
   tmux refresh-client -S 2>/dev/null || true
 }
 
@@ -46,68 +60,77 @@ _notif_clear() {
   : > "$_f" 2>/dev/null || true
 }
 
-# Status-bar badge: count of distinct pending places. Prints
-# "(N)  " when >0, nothing when empty (so the status segment
-# self-hides). Portable distinct-count (no length(array)).
+# Status-bar badge: count of distinct pending panes. Prints
+# "(N)  " when >0, nothing when empty.
 _notif_count() {
   _f="$(_inbox)"
   test -f "$_f" || return 0
-  _n="$(awk -F'\t' \
-    '{ if ($2 != "" && !($2 in s)) { s[$2]=1; n++ } } \
-     END { print n+0 }' "$_f")"
+  _n="$(awk -F'\t' "$_KEY"'
+    { if (!(key() in s)) { s[key()] = 1; n++ } }
+    END { print n+0 }' "$_f")"
   if test "$_n" -gt 0; then
     printf '(%s)  ' "$_n"
   fi
 }
 
-# Build the collapsed view: one line per context, newest
-# first, with a ×N count. Output is TSV
-# context<TAB>×N<TAB>title<TAB>message<TAB>path — col 1
-# (context) + col 5 (path) are action keys, cols 2-4 shown.
-_notif_list() {
-  _f="$(_inbox)"
-  test -f "$_f" || return 0
-  awk -F'\t' '
+# Collapse rows (on stdin, epoch first) to one line per key,
+# newest first:
+# key<TAB>mark<TAB>ctx<TAB>×N<TAB>message<TAB>path. Keys in
+# `skip` (space-separated) are left out; at most `max` lines.
+_collapse() {
+  awk -F'\t' -v mark="$1" -v skip=" $2 " -v max="${3:-0}" "$_KEY"'
     {
-      ctx = $2
-      if (!(ctx in seen)) { order[++n] = ctx; seen[ctx] = 1 }
-      count[ctx]++
-      # Keep the newest (largest epoch) title/message/path.
-      if ($1 + 0 >= ts[ctx] + 0) {
-        ts[ctx] = $1; title[ctx] = $3; msg[ctx] = $4
-        path[ctx] = $5
+      k = key()
+      if (index(skip, " " k " ")) next
+      if (!(k in ts)) order[++n] = k
+      count[k]++
+      if ($1 + 0 >= ts[k] + 0) {
+        ts[k] = $1; ctx[k] = $2; msg[k] = $4; path[k] = $5
       }
     }
     END {
-      # Emit newest-first by last-seen epoch.
-      for (i = 1; i <= n; i++) {
-        c = order[i]
-        rank[i] = ts[c]
-      }
-      # Simple insertion sort on the small set, desc by ts.
       for (i = 2; i <= n; i++)
-        for (j = i; j > 1 && rank[j] > rank[j-1]; j--) {
-          tr = rank[j]; rank[j] = rank[j-1]; rank[j-1] = tr
-          to = order[j]; order[j] = order[j-1]; order[j-1] = to
+        for (j = i; j > 1 && ts[order[j]] > ts[order[j-1]]; j--) {
+          t = order[j]; order[j] = order[j-1]; order[j-1] = t
         }
+      if (max > 0 && n > max) n = max
       for (i = 1; i <= n; i++) {
-        c = order[i]
-        cnt = (count[c] > 1 ? "\303\227" count[c] : "")
-        printf "%s\t%s\t%s\t%s\t%s\n", \
-          c, cnt, title[c], msg[c], path[c]
+        k = order[i]
+        cnt = (count[k] > 1 ? "\303\227" count[k] : "")
+        printf "%s\t%s\t%s\t%s\t%s\t%s\n", \
+          k, mark, ctx[k], cnt, msg[k], path[k]
       }
-    }' "$_f"
+    }'
 }
 
-# Jump to a notification's place. Fast path: its tmux session
-# is still alive → switch to it. If the session is gone (e.g.
-# killed by `wt rt`/`rm`) but the worktree is still on disk,
-# recreate the session at that path (same default-layout path
-# `wt` uses). Returns 0 if we landed somewhere, 1 if the place
-# is truly gone.
+_pending_keys() {
+  test -f "$(_inbox)" || return 0
+  awk -F'\t' "$_KEY"'{ print key() }' "$(_inbox)" | sort -u \
+    | tr '\n' ' '
+}
+
+_notif_list() {
+  test -f "$(_inbox)" && _collapse '●' < "$(_inbox)"
+  test -f "$(_recent)" || return 0
+  cut -f2- "$(_recent)" | _collapse '·' "$(_pending_keys)" 10
+}
+
+# Jump to a pane: by id while it lives, else its session:window,
+# else recreate the session at its path (e.g. after `wt rt`/
+# `rm` killed it). Returns 1 when the place is truly gone.
 _notif_jump() {
-  _j_ctx="$1"
-  _j_path="$2"
+  _j_key="$1"
+  _j_ctx="$2"
+  _j_path="$3"
+  case "$_j_key" in
+    %*)
+      if tmux switch-client -t "$_j_key" 2>/dev/null; then
+        tmux select-window -t "$_j_key" 2>/dev/null || true
+        tmux select-pane -t "$_j_key" 2>/dev/null || true
+        return 0
+      fi
+      ;;
+  esac
   tmux switch-client -t "$_j_ctx" 2>/dev/null && return 0
   if test -n "$_j_path" && test -d "$_j_path"; then
     _j_sess="$(tmux-session-name-from-path "$_j_path")"
@@ -122,24 +145,64 @@ _notif_jump() {
   return 1
 }
 
-# Jump straight to the oldest pending notification (FIFO),
-# no picker. Rows are appended chronologically, so the first
-# line is the oldest. Clear each as we go (explicitly, since a
-# recreated session may have a different name than the stored
-# context, so the arrival hook wouldn't match); if a place is
-# truly gone (worktree removed), skip to the next one.
+# Arriving clears non-sticky rows explicitly too: a recreated
+# session may be renamed, so the focus hook might not match.
+# A gone place is dropped entirely.
+_go() {
+  _notif_drop "$1" arrive
+  _notif_jump "$1" "$2" "$3" && return 0
+  _notif_drop "$1"
+  return 1
+}
+
+# The pending pane queued after the current one (wrapping), or
+# the oldest if the current one isn't pending, so repeated M-i
+# rotates through sticky entries instead of sticking.
 _notif_next() {
   _f="$(_inbox)"
+  _here_key="${1:-}"
   while test -f "$_f"; do
-    _line="$(head -1 "$_f" 2>/dev/null)"
+    _line="$(awk -F'\t' -v h="$_here_key" "$_KEY"'
+      !(key() in seen) {
+        seen[key()] = 1
+        row[++n] = key() "\t" $2 "\t" $5
+        if (key() == h) at = n
+      }
+      END {
+        if (n == 0 || (at && n == 1)) exit
+        print row[at % n + 1]
+      }' "$_f")"
     test -n "$_line" || break
-    _ctx="$(printf '%s' "$_line" | cut -f2)"
-    _path="$(printf '%s' "$_line" | cut -f5)"
-    _notif_seen "$_ctx"
-    _notif_jump "$_ctx" "$_path" && return 0
-    # Place gone — entry already cleared; try the next one.
+    _go "$(printf '%s' "$_line" | cut -f1)" \
+      "$(printf '%s' "$_line" | cut -f2)" \
+      "$(printf '%s' "$_line" | cut -f3)" && return 0
   done
-  tmux display-message "No notifications" 2>/dev/null || true
+  tmux display-message "No other notifications" 2>/dev/null || true
+}
+
+# Re-queue this pane at the back as sticky: its pending rows
+# move to the end, or a fresh row is added if there were none.
+_notif_later() {
+  _f="$(_inbox)"
+  _l_key="${1:?usage: notif later <pane>}"
+  touch "$_f"
+  _now="$(date +%s)"
+  _tmp="$(mktemp)"
+  awk -F'\t' -v k="$_l_key" -v now="$_now" "$_KEY"'
+    key() != k { print; next }
+    { $1 = now; $7 = "sticky"; held[++n] = $0 }
+    END { for (i = 1; i <= n; i++) print held[i] }
+  ' OFS='\t' "$_f" > "$_tmp" && mv "$_tmp" "$_f"
+  if ! awk -F'\t' -v k="$_l_key" "$_KEY"'
+    key() == k { found = 1 } END { exit !found }' "$_f"; then
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$_now" \
+      "$(tmux display-message -p -t "$_l_key" '#S:#W.#P')" \
+      'Snoozed' 'snoozed' "$(tmux display-message -p \
+        -t "$_l_key" '#{pane_current_path}')" \
+      "$_l_key" sticky >> "$_f"
+  fi
+  tmux refresh-client -S 2>/dev/null || true
+  tmux display-message "Snoozed" 2>/dev/null || true
 }
 
 _notif_open() {
@@ -150,47 +213,50 @@ _notif_open() {
   fi
 
   _sel="$(printf '%s\n' "$_list" | fzf --reverse \
-    --delimiter='\t' --with-nth=2,3,4 \
+    --delimiter='\t' --with-nth=2,3,4,5 \
+    --header 'enter: go  ctrl-x: dismiss' \
+    --bind "ctrl-x:execute-silent($0 seen {1})+reload($0 _list)" \
     --preview "$0 _preview {1}" \
     --preview-window=down,40%,wrap || true)"
-  test -z "$_sel" && exit 0
+  test -n "$_sel" || exit 0
 
-  _ctx="$(printf '%s' "$_sel" | cut -f1)"
-  _path="$(printf '%s' "$_sel" | cut -f5)"
-  test -n "$_ctx" || exit 0
-
-  # Clear it explicitly (a recreated session may be renamed,
-  # so the arrival hook might not match), then jump — to the
-  # live session or, if it's gone, the worktree on disk.
-  _notif_seen "$_ctx"
-  _notif_jump "$_ctx" "$_path" \
+  _go "$(printf '%s' "$_sel" | cut -f1)" \
+    "$(printf '%s' "$_sel" | cut -f3)" \
+    "$(printf '%s' "$_sel" | cut -f6)" \
     || tmux display-message "Place gone; cleared" 2>/dev/null \
     || true
 }
 
-# Preview: the raw rows for a context, oldest→newest, as
-# "HH:MM  title — message".
+# Preview: a pane's rows, oldest→newest, as
+# "HH:MM  title — message"; recent ones if none pending.
 _notif_preview() {
-  _pv_ctx="$1"
-  _f="$(_inbox)"
-  test -f "$_f" || return 0
-  awk -F'\t' -v c="$_pv_ctx" '
-    $2 == c {
-      "date -r " $1 " +%H:%M" | getline t
-      close("date -r " $1 " +%H:%M")
-      printf "%s  %s \342\200\224 %s\n", t, $3, $4
-    }' "$_f"
+  _pv_rows() {
+    awk -F'\t' -v k="$1" "$_KEY"'
+      key() == k {
+        "date -r " $1 " +%H:%M" | getline t
+        close("date -r " $1 " +%H:%M")
+        printf "%s  %s \342\200\224 %s\n", t, $3, $4
+      }'
+  }
+  _pv="$(test -f "$(_inbox)" && _pv_rows "$1" < "$(_inbox)")"
+  if test -z "$_pv" && test -f "$(_recent)"; then
+    _pv="$(cut -f2- "$(_recent)" | _pv_rows "$1" | tail -5)"
+  fi
+  printf '%s\n' "$_pv"
 }
 
 case "${1:-}" in
   ""|:|open) _notif_open ;;
-  next) _notif_next ;;
+  next) shift; _notif_next "$@" ;;
+  later) shift; _notif_later "$@" ;;
   count) _notif_count ;;
-  seen) shift; _notif_seen "$@" ;;
+  seen) shift; _notif_drop "${1:-}" ;;
+  arrive) shift; _notif_drop "${1:-}" arrive ;;
   clear) _notif_clear ;;
+  _list) _notif_list ;;
   _preview) shift; _notif_preview "$@" ;;
   *)
-    echo "Usage: notif [open|next|count|seen <ctx>|clear]" >&2
+    echo "Usage: notif [open|next|later|seen|arrive|count|clear]" >&2
     exit 1
     ;;
 esac

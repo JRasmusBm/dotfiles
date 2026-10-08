@@ -37,6 +37,29 @@
           }
         ]
       }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -z \"$TMUX_PANE\" ] || ~/.bin/notif seen \"$TMUX_PANE\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ -z \"$TMUX_PANE\" ] || ~/.bin/notif seen \"$TMUX_PANE\" 2>/dev/null || true",
+            "timeout": 5
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

@@ -3,12 +3,15 @@
 INPUT=$(cat)
 TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
 
-# Tmux context (session:window) or fallback to cwd
+# Tmux context (session:window.pane) or fallback to cwd
 if [ -n "$TMUX_PANE" ]; then
-  CONTEXT=$(tmux display-message -p -t "$TMUX_PANE" '#S:#W')
+  CONTEXT=$(tmux display-message -p -t "$TMUX_PANE" '#S:#W.#P')
 else
   CONTEXT=$(basename "$PWD")
 fi
+
+# Sticky: stays in the inbox until I reply (notif seen hook)
+export NOTIFY_MODE=sticky
 
 # Map type to message + sound
 case "$TYPE" in

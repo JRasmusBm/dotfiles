@@ -20,15 +20,16 @@ fi
 # Append to the persistent notification inbox (`notif`). This
 # is the one chokepoint every notifier funnels through
 # (claude-notify, git-w8, bw8, ...), so they all land here for
-# free. Capture the place to jump back to: the tmux
-# session:window of the calling pane, else the cwd basename.
+# free. Capture the place to jump back to: the calling tmux
+# pane (id + session:window.pane), else the cwd basename.
+# NOTIFY_MODE=sticky keeps the row past a visit (see `notif`).
 # Plain `>>` of one short line is atomic, so concurrent
 # notifiers don't clobber each other; dedup happens at view
 # time in `notif`.
 if [ -n "$LOCAL_CONFIG" ]; then
   _inbox="$LOCAL_CONFIG/notifications"
   if [ -n "$TMUX_PANE" ]; then
-    _ctx="$(tmux display-message -p -t "$TMUX_PANE" '#S:#W' \
+    _ctx="$(tmux display-message -p -t "$TMUX_PANE" '#S:#W.#P' \
       2>/dev/null)"
     _path="$(tmux display-message -p -t "$TMUX_PANE" \
       '#{pane_current_path}' 2>/dev/null)"
@@ -37,11 +38,12 @@ if [ -n "$LOCAL_CONFIG" ]; then
     _path="$PWD"
   fi
   mkdir -p "$(dirname "$_inbox")"
-  # Row: epoch  session:window  title  message  path. The path
+  # Row: epoch  ctx  title  message  path  pane  mode. The path
   # is the stable anchor `notif` reopens from when the session
   # has since been killed (e.g. by `wt rt`/`rm`).
-  printf '%s\t%s\t%s\t%s\t%s\n' \
-    "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" >> "$_inbox"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" \
+    "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" >> "$_inbox"
   # Update the status-bar counter (`notif count`) right away.
   if [ -n "$TMUX_PANE" ]; then
     tmux refresh-client -S 2>/dev/null || true
