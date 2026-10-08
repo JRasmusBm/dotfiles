@@ -115,9 +115,25 @@ _notif_list() {
   cut -f2- "$(_recent)" | _collapse '·' "$(_pending_keys)" 10
 }
 
+# Move key $1's rows onto the pane we landed on ($2, a tmux
+# target), so M-y and M-i rotation see them as this pane's.
+_notif_rekey() {
+  _r_new="$(tmux display-message -p -t "$2" '#{pane_id}' \
+    2>/dev/null)" || return 0
+  test -n "$_r_new" && test "$_r_new" != "$1" || return 0
+  _r_ctx="$(tmux display-message -p -t "$_r_new" '#S:#W.#P')"
+  _f="$(_inbox)"
+  _tmp="$(mktemp)"
+  awk -F'\t' -v k="$1" -v n="$_r_new" -v c="$_r_ctx" "$_KEY"'
+    key() == k { $2 = c; $6 = n } { print }
+  ' OFS='\t' "$_f" > "$_tmp" && mv "$_tmp" "$_f"
+  tmux refresh-client -S 2>/dev/null || true
+}
+
 # Jump to a pane: by id while it lives, else its session:window,
 # else recreate the session at its path (e.g. after `wt rt`/
-# `rm` killed it). Returns 1 when the place is truly gone.
+# `rm` killed it). A fallback landing re-keys the rows to the
+# pane landed on. Returns 1 when the place is truly gone.
 _notif_jump() {
   _j_key="$1"
   _j_ctx="$2"
@@ -131,7 +147,10 @@ _notif_jump() {
       fi
       ;;
   esac
-  tmux switch-client -t "$_j_ctx" 2>/dev/null && return 0
+  if tmux switch-client -t "$_j_ctx" 2>/dev/null; then
+    _notif_rekey "$_j_key" "$_j_ctx"
+    return 0
+  fi
   if test -n "$_j_path" && test -d "$_j_path"; then
     _j_sess="$(tmux-session-name-from-path "$_j_path")"
     if ! tmux has-session -t "$_j_sess" 2>/dev/null; then
@@ -139,8 +158,11 @@ _notif_jump() {
         && INITIATED_EXTERNALLY=true default_tmux_session ) \
         >/dev/null 2>&1 || true
     fi
-    tmux switch-client -t "$_j_sess" 2>/dev/null && return 0
-    tmux-attach-to-session "$_j_sess" 2>/dev/null && return 0
+    if tmux switch-client -t "$_j_sess" 2>/dev/null \
+      || tmux-attach-to-session "$_j_sess" 2>/dev/null; then
+      _notif_rekey "$_j_key" "$_j_sess"
+      return 0
+    fi
   fi
   return 1
 }
