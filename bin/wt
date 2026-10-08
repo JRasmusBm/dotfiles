@@ -747,10 +747,17 @@ _wt_evict() {
   if test -n "$_wt_path_arg"; then
     _wt_path="$_wt_path_arg"
   else
-    _wt_path="${_root}/.worktrees/$(basename "$_branch")"
-    if ! test -d "$_wt_path"; then
-      _wt_path="${_root}/.worktrees/${_branch}"
+    _match="$(_wt_worktrees | awk -F '\t' -v a="$_branch" '
+      BEGIN { n = a; sub(/.*\//, "", n) }
+      { d = $1; sub(/.*\//, "", d) }
+      $2 == a || d == a || d == n { print; exit }')"
+    if test -z "$_match"; then
+      echo "wt: no worktree for '$_branch'" >&2
+      exit 1
     fi
+    _wt_path="${_match%%$(printf '\t')*}"
+    _match_branch="${_match#*$(printf '\t')}"
+    test -z "$_match_branch" || _branch="$_match_branch"
   fi
   _wt_name="$(basename "$_wt_path")"
   # Key the registry + ref on the actual worktree dir — the
@@ -759,9 +766,9 @@ _wt_evict() {
 
   # Pin the tip + register BEFORE removal so the branch is
   # resurrectable via `wt resume` after we delete it.
-  _sha="$(git -C "$_root" rev-parse "$_branch" \
-    2>/dev/null \
-    || git -C "$_wt_path" rev-parse HEAD 2>/dev/null \
+  _sha="$(git -C "$_root" rev-parse -q --verify \
+    "refs/heads/$_branch^{commit}" \
+    || git -C "$_wt_path" rev-parse -q --verify HEAD \
     || true)"
   if test -n "$_sha"; then
     git -C "$_root" update-ref "refs/wt/$_slug" "$_sha"
@@ -801,6 +808,9 @@ _wt_evict() {
       "$_speeddial_rename" 2>/dev/null \
       || _speeddial_rename=""
   fi
+
+  echo "wt: removing $_wt_name ($_branch) in background;" \
+    "undo with: wt resume $_slug" >&2
 
   # Heavy cleanup in the background, detached so it
   # survives the tmux kill-session at the end. The branch
