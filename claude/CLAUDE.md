@@ -242,6 +242,12 @@ the calling pane's id, its `#S:#W.#P` for display, and its
 across concurrent Claude sessions); the dedup/count happens
 at view time in `bin/notif`.
 
+## Dev stack
+
+Off by default; many sessions share the RAM. Load the
+`dev-stack` skill before `dev up`, stop what you started,
+never stop what you didn't.
+
 ## Git
 
 Use `g s <branch>` to switch branches (not raw

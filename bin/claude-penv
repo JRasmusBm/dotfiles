@@ -19,8 +19,9 @@ _info="$("$_penv" info 2>/dev/null)" || exit 0
 
 printf 'Polar env for this session (penv info):\n%s\n\n' "$_info"
 printf '%s\n' \
-  "Use these URLs for this worktree's stack; start/restart it with" \
-  "\`dev up --wait\` (run window), logs in .jrb/logs/<tag>.log." \
+  "Use these URLs for this worktree's stack. It is off by default:" \
+  "load the dev-stack skill before \`dev up\`, and \`dev down\` when" \
+  "done if you started it. Logs in .jrb/logs/<tag>.log." \
   "Never switch stage to production."
 case "$_info" in
   *'stage:    production'*)
