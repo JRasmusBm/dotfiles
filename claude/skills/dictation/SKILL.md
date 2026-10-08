@@ -32,4 +32,9 @@ To adjust how many dictation entries to keep, change `MAX_DICTATION_ITEMS` in th
 
 - **"Dictation failed" alert:** The macOS Shortcut failed. Check Shortcuts.app.
 - **Clipboard not cleaned up:** CopyQ may not be running, or the path `/Applications/CopyQ.app/Contents/MacOS/CopyQ` is wrong.
+- **"CopyQ not responding" alert / CopyQ seems crashed:** usually a hung
+  server, not a crash (no `.ips` report; `open -a CopyQ` fails with
+  -1712). `pgrep -lx CopyQ` shows it alive with stuck `eval` children.
+  Fix: `pkill -x CopyQ; open -a CopyQ`. App Nap is disabled via
+  `defaults write io.github.hluk.CopyQ NSAppSleepDisabled -bool YES`.
 - **Changes not taking effect:** Reload Hammerspoon after editing the spoon.

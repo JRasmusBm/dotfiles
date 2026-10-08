@@ -3,6 +3,24 @@ local M = {}
 local COPYQ = "/Applications/CopyQ.app/Contents/MacOS/CopyQ"
 local MAX_DICTATION_ITEMS = 2
 local MARK_DELAY = 0.3
+local EVAL_TIMEOUT = 5
+
+local function copyqEval(script, callback)
+  local timer
+  local task = hs.task.new(COPYQ, function()
+    timer:stop()
+    if callback then
+      callback()
+    end
+  end, { "eval", script })
+  timer = hs.timer.doAfter(EVAL_TIMEOUT, function()
+    if task:isRunning() then
+      task:terminate()
+      hs.alert.show("CopyQ not responding")
+    end
+  end)
+  task:start()
+end
 
 local function cleanupDictationHistory()
   local script = string.format([[
@@ -23,16 +41,14 @@ if (dictationRows.length > maxToKeep) {
 }
 ]], MAX_DICTATION_ITEMS)
 
-  hs.task.new(COPYQ, nil, { "eval", script }):start()
+  copyqEval(script)
 end
 
 local function markAsDictation()
   local script = [[
 change(0, "application/x-dictation", "1");
 ]]
-  hs.task.new(COPYQ, function()
-    cleanupDictationHistory()
-  end, { "eval", script }):start()
+  copyqEval(script, cleanupDictationHistory)
 end
 
 hs.hotkey.bind({ "cmd", "shift" }, "d", function()
