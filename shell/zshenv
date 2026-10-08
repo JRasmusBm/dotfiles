@@ -20,6 +20,7 @@ alias 4..="cd ../../../.."
 alias 5..="cd ../../../../.."
 
 
+alias claude2="CLAUDE_CONFIG_DIR=$HOME/.claude-2 claude"
 alias ssh="ssh -R 127.0.0.1:2222:127.0.0.1:22"
 
 function scpb() {

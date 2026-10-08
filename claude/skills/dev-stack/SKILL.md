@@ -47,8 +47,12 @@ own. Don't `dev up` again just for that.
   opened.
 - Point it at the local fe URL from `penv info`, not the deployed app.
 - Login screen: load `polar-agent-login`.
-- The stack talks to the stage `penv info` shows. Look, don't write,
-  unless jrb asked. Never switch stage to production.
+- The stack talks to the stage `penv info` shows. On staging, writing
+  through the app UI (create, edit, delete, restore) is fine without
+  asking; use throwaway objects and delete them when done. Never write
+  to the staging database directly (SQL, insert/update scripts). On
+  production, look only unless jrb asked. Never switch stage to
+  production.
 - Close your page when done (`close_page`).
 
 ## Other heavy things you start
