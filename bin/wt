@@ -130,16 +130,15 @@ _wt_pick() {
   test -f "$_of" || touch "$_of"
   _tab="$(printf '\t')"
 
-  # Show on-disk worktrees that sit under a heading (a FOO:
-  # line) in the order file, prefixed with that heading.
-  # Speed-dial entries (above the first heading) are hidden —
-  # they're on Alt-N already. On-disk worktrees not on the
-  # board show as ⊘ and can be adopted.
+  # Show on-disk worktrees on the board, prefixed with their
+  # speed-dial slot (the Alt-N line) or their heading (a FOO:
+  # line). On-disk worktrees not on the board show as ⊘ and
+  # can be adopted.
   _list="$( { printf '#DISK\n'; _wt_worktrees; \
     printf '#ORDER\n'; cat "$_of"; } \
     | awk -F"$_tab" '
         $0 == "#DISK"  { sec = "D"; next }
-        $0 == "#ORDER" { sec = "O"; h = ""; next }
+        $0 == "#ORDER" { sec = "O"; h = ""; ln = 0; next }
         sec == "D" {
           n = split($1, pa, "/"); dir = pa[n]
           br = $2; name = (br != "" ? br : dir)
@@ -149,6 +148,7 @@ _wt_pick() {
           next
         }
         sec == "O" {
+          ln++
           # Heading: a "# Foo" or "Foo:" line.
           if ($0 ~ /^[[:space:]]*#/ || $0 ~ /:[[:space:]]*$/) {
             h = $0
@@ -159,7 +159,7 @@ _wt_pick() {
           if ($0 ~ /^[[:space:]]*$/) next
           n = split($0, ra, "/"); rdir = ra[n]
           seen[$0] = 1; seen[rdir] = 1
-          if (h != "" && (ondisk[$0] || ondisk[rdir])) print h ": " $0
+          if (ondisk[$0] || ondisk[rdir]) print (h != "" ? h : ln) ": " $0
         }
         END {
           for (i = 1; i <= c; i++)
@@ -193,11 +193,11 @@ _wt_pick() {
           fi
           ;;
       esac
-      _switch_to "$_target"
+      _wt_open_with_claude "$_target" "" \
+        "$(_speeddial_name "$_name" "$_target")"
       ;;
     *)
-      _branch="$(echo "$_sel" | $_sed 's/^[^:]*: //')"
-      _switch_to "$(_resolve_branch_path "$_branch")"
+      _wt_open "$(echo "$_sel" | $_sed 's/^[^:]*: //')"
       ;;
   esac
 }

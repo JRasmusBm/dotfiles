@@ -83,11 +83,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   preview (`wt-preview`) shows branch, last commit, PR state,
   and the first prompt of the worktree's last AI session.
   Speed-dial entries (above the first heading — a `# Foo` or
-  `Foo:` line — in the order file) are hidden, they're on
-  Alt-N already. Worktrees under a heading show as
-  `HEADING: branch`; on-disk worktrees not on the board show
-  as `⊘ branch`. Selecting either opens its tmux session;
-  picking an orphan also offers to adopt it onto the board.
+  `Foo:` line — in the order file) show as `N: branch`,
+  worktrees under a heading as `HEADING: branch`, on-disk
+  worktrees not on the board as `⊘ branch`. Selecting one
+  opens its session under the same `<repo>[N]`-or-slug name
+  as Alt-N/`wt open`, so no duplicate session; picking an
+  orphan also offers to adopt it onto the board.
 - `wt add <branch>` — create worktree + register
 - `wt fix <url|text>` / `wt feat <url|text>` — Linear-aware
   add. A Linear issue URL becomes
