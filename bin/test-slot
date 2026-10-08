@@ -1,0 +1,229 @@
+#!/bin/sh
+#
+# test-slot — cap how many agent sessions run a dev stack or drive the
+# chrome-devtools browser at once (RAM; swap fills the disk). Only
+# agents (CLAUDECODE=1) take slots; jrb's own stacks never do.
+#
+#   test-slot acquire   take a slot for this session; exit 0 when held,
+#                       75 when busy (prints when to retry)
+#   test-slot wait      sleep until the retry time `acquire` printed,
+#                       then acquire again (run it in the background)
+#   test-slot release   free this session's slot
+#   test-slot touch     mark this session's slot as in use now
+#   test-slot ls        list slots
+#   test-slot hook      PreToolUse hook for chrome-devtools tools:
+#                       acquire or block the call with a wait message
+#
+# Slots: TEST_SLOTS (default 2). A slot is freed on release, when its
+# tmux session is gone, or when it is idle for TEST_SLOT_IDLE seconds
+# (default 1800) with no dev stack running in that session.
+# Busy retries back off 30s, 60s, 120s ... capped at 1200s.
+
+set -e
+
+_max="${TEST_SLOTS:-2}"
+_idle="${TEST_SLOT_IDLE:-1800}"
+_dir="${LOCAL_CONFIG:-$HOME/.config}/test-slots"
+_tab="$(printf '\t')"
+mkdir -p "$_dir"
+
+_now() {
+  date +%s
+}
+
+_clock() {
+  date -r "$1" +%H:%M:%S
+}
+
+_holder() {
+  if test -n "${TEST_SLOT_HOLDER:-}"; then
+    echo "$TEST_SLOT_HOLDER"
+  elif test -n "${TMUX_PANE:-}"; then
+    tmux display-message -p -t "$TMUX_PANE" '#S'
+  else
+    echo "pid-$PPID"
+  fi
+}
+
+_file() {
+  printf '%s/%s.slot' "$_dir" "$(printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_')"
+}
+
+_wait_file() {
+  printf '%s/%s.wait' "$_dir" "$(printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_')"
+}
+
+_lock() {
+  _tries=0
+  until mkdir "$_dir/.lock" 2>/dev/null; do
+    _tries=$((_tries + 1))
+    if test "$_tries" -ge 50; then
+      rm -rf "$_dir/.lock"
+      _tries=0
+    fi
+    sleep 0.2
+  done
+  trap 'rmdir "$_dir/.lock" 2>/dev/null || true' EXIT
+}
+
+_unlock() {
+  rmdir "$_dir/.lock" 2>/dev/null || true
+  trap - EXIT
+}
+
+_session_alive() {
+  case "$1" in
+    pid-*) kill -0 "${1#pid-}" 2>/dev/null ;;
+    *) tmux has-session -t "=$1" 2>/dev/null ;;
+  esac
+}
+
+_stack_running() {
+  tmux list-panes -s -t "=$1" -F '#{@dev}' 2>/dev/null |
+    awk 'NF { found = 1 } END { exit !found }'
+}
+
+_reap() {
+  for _f in "$_dir"/*.slot; do
+    test -f "$_f" || continue
+    IFS="$_tab" read -r _r_who _r_since _r_seen < "$_f"
+    if ! _session_alive "$_r_who"; then
+      rm -f "$_f"
+      continue
+    fi
+    _quiet=$(( $(_now) - _r_seen ))
+    if test "$_quiet" -gt "$_idle" && ! _stack_running "$_r_who"; then
+      rm -f "$_f"
+    fi
+  done
+}
+
+_holders() {
+  for _f in "$_dir"/*.slot; do
+    test -f "$_f" || continue
+    IFS="$_tab" read -r _h_who _h_since _h_seen < "$_f"
+    printf '%s since %s' "$_h_who" "$(_clock "$_h_since")"
+    if _stack_running "$_h_who"; then
+      printf ' (stack up)'
+    fi
+    printf '\n'
+  done
+}
+
+_count() {
+  find "$_dir" -name '*.slot' | wc -l | tr -d ' '
+}
+
+_take() {
+  _t="$(_now)"
+  printf '%s\t%s\t%s\n' "$1" "$_t" "$_t" > "$(_file "$1")"
+  rm -f "$(_wait_file "$1")"
+}
+
+_schedule_retry() {
+  _wf="$(_wait_file "$1")"
+  _attempt=1
+  if test -f "$_wf"; then
+    IFS="$_tab" read -r _prev _until < "$_wf"
+    _attempt=$((_prev + 1))
+  fi
+  _delay=30
+  _i=1
+  while test "$_i" -lt "$_attempt" && test "$_delay" -lt 1200; do
+    _delay=$((_delay * 2))
+    _i=$((_i + 1))
+  done
+  test "$_delay" -le 1200 || _delay=1200
+  _until=$(( $(_now) + _delay ))
+  printf '%s\t%s\n' "$_attempt" "$_until" > "$_wf"
+  echo "test-slot: all $_max slots busy:"
+  _holders | sed 's/^/  /'
+  echo "WAITING until $(_clock "$_until") ($((_delay / 60))m$((_delay % 60))s, attempt $_attempt)."
+  echo "Tell the user you are waiting and until when, then run"
+  echo "\`test-slot wait\` in the background and retry when it exits 0."
+}
+
+_acquire() {
+  _who="$(_holder)"
+  _lock
+  _reap
+  if test -f "$(_file "$_who")"; then
+    _touch_locked "$_who"
+    _unlock
+    return 0
+  fi
+  if test "$(_count)" -lt "$_max"; then
+    _take "$_who"
+    _unlock
+    echo "test-slot: $_who holds a slot ($(_count)/$_max)."
+    return 0
+  fi
+  _schedule_retry "$_who"
+  _unlock
+  return 75
+}
+
+_wait() {
+  _who="$(_holder)"
+  _wf="$(_wait_file "$_who")"
+  if test -f "$_wf"; then
+    IFS="$_tab" read -r _attempt _until < "$_wf"
+    _left=$((_until - $(_now)))
+    if test "$_left" -gt 0; then
+      sleep "$_left"
+    fi
+  fi
+  _acquire
+}
+
+_touch_locked() {
+  _f="$(_file "$1")"
+  test -f "$_f" || return 0
+  IFS="$_tab" read -r _t_who _t_since _t_seen < "$_f"
+  printf '%s\t%s\t%s\n' "$1" "$_t_since" "$(_now)" > "$_f"
+}
+
+_touch() {
+  _lock
+  _touch_locked "$(_holder)"
+  _unlock
+}
+
+_release() {
+  _who="$(_holder)"
+  _lock
+  rm -f "$(_file "$_who")" "$(_wait_file "$_who")"
+  _unlock
+  test "${1:-}" = '--quiet' ||
+    echo "test-slot: released $_who. Close your devtools pages (close_page) if you have not."
+}
+
+_ls() {
+  _lock
+  _reap
+  echo "slots: $(_count)/$_max"
+  _holders | sed 's/^/  /'
+  _unlock
+}
+
+_hook() {
+  cat > /dev/null
+  if _out="$(_acquire 2>&1)"; then
+    return 0
+  fi
+  echo "$_out" >&2
+  exit 2
+}
+
+case "${1:-}" in
+  acquire) _acquire ;;
+  wait) _wait ;;
+  release) shift; _release "$@" ;;
+  touch) _touch ;;
+  ls) _ls ;;
+  hook) _hook ;;
+  *)
+    echo "Usage: test-slot [acquire|wait|release|touch|ls|hook]" >&2
+    exit 1
+    ;;
+esac

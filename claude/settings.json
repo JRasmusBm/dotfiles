@@ -60,6 +60,29 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "mcp__chrome-devtools__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.bin/test-slot hook",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.bin/test-slot release --quiet",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   },
   "statusLine": {

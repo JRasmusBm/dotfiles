@@ -22,22 +22,17 @@ local MCP servers: `chrome-devtools`, `polar-mcp` (global),
 3. claude.ai connectors — target set (connected on main
    account as of 2026-10-08):
    - Slack, Notion, HubSpot
-   - Pylon, Polar Analytics, OpenRAG (org/custom)
+   - Pylon, Polar Analytics, OpenRAG, Aurora (org-added,
+     log in with Polar Google account)
    - Gmail, Google Calendar — with the **second** Google
      account (main account had these unauthenticated)
-   For each one present as `mcp__claude_ai_<Name>__authenticate`:
-   call it, give me the URL, wait for my "done", call
-   `complete_authentication`. One at a time.
+   claude.ai connectors can't be authed from a tool call:
+   list the ones present as `mcp__claude_ai_<Name>__authenticate`
+   and have me run `/mcp` → pick each. Then verify.
 4. Connectors missing entirely (no tools at all) must be
    added on claude.ai → Settings → Connectors. List them for
    me; custom ones need a URL (fill in below once known).
 5. Report: table of connector → connected / needs me.
-
-## Custom connector URLs
-
-- Polar Analytics: ?
-- OpenRAG: ?
-- Pylon: ?
 
 ## Not carried over
 

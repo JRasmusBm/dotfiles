@@ -214,6 +214,9 @@ _dev_up() {
   fi
 
   _s="$(_session)"
+  if test "${CLAUDECODE:-}" = 1; then
+    test-slot acquire || exit $?
+  fi
   _detach_if_inside_run up "$@"
   _tags=''
   _rebuild
@@ -238,6 +241,9 @@ _dev_down() {
   _detach_if_inside_run down
   _rebuild
   echo "session: $_s run window reset"
+  if test "${CLAUDECODE:-}" = 1; then
+    test-slot release
+  fi
 }
 
 _dev_trust() {
