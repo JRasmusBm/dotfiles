@@ -202,43 +202,41 @@ Always use `wt` commands, never raw `git worktree add`.
 
 ## Notifications
 
-A persistent inbox so notifications don't just flash and
-vanish. Every notifier funnels through `bin/notify`
-(Claude's hook via `claude-notify`, `git-w8`, `bw8`, …), so
-`notify` is the one chokepoint: alongside the macOS toast +
-sound + tmux bell it appends a row to
-`$LOCAL_CONFIG/notifications`
-(`epoch<TAB>session:window<TAB>title<TAB>message<TAB>path`),
-capturing the calling pane's `#S:#W` as the place to jump
-back to, plus its `pane_current_path` as a stable fallback.
+A persistent inbox, keyed per tmux **pane**, so
+notifications don't flash and vanish. Every notifier funnels
+through `bin/notify` (Claude's hook via `claude-notify`,
+`git-w8`, `bw8`, …), so `notify` is the one chokepoint:
+alongside the macOS toast + sound + tmux bell it appends a
+row to `$LOCAL_CONFIG/notifications`
+(`epoch ctx title message path pane mode`, tab-separated):
+the calling pane's id, its `#S:#W.#P` for display, and its
+`pane_current_path` as a stable fallback.
 
-- `M-i` (tmux) / `notif next` — jump straight to the *oldest*
-  pending notification (FIFO), no picker.
-- `M-o` (tmux) / `notif` — pop a temp pane with an fzf list,
-  collapsed to one row per place (latest message + `×N`
-  count, newest first); `<Enter>` jumps to that
-  session:window.
-- A counter badge (`#(notif count)` → green `(N)`, count of
-  distinct pending places) sits in `status-right` before the
-  date. `notify` and `notif seen` call `refresh-client -S` so
-  it updates the moment a notification lands or clears.
-- Each row also stores the pane's `pane_current_path`. If the
-  target session was killed since (e.g. by `wt rt`/`rm`) but
-  the worktree's still on disk, `M-i`/`M-o` recreate the
-  session there instead of failing; if the worktree's gone
-  too, the stale entry is cleared (and `M-i` skips to the
-  next). The explicit jump also clears the entry up front,
-  since a recreated session may be renamed and so wouldn't
-  match the arrival hook.
-- Clearing is otherwise keyed on **arriving** at the place,
-  not on any Enter: the focus/nav hooks (`pane-focus-in`,
-  `client-session-changed`, `after-select-window`) run
-  `notif seen "#{session_name}:#{window_name}"`, so reaching
-  a place *any* way (M-i, M-o, speed-dial, `wt :`, manual
-  nav, mouse) clears its entries.
-- `notif seen <ctx>` — drop a context's rows (hook-driven;
-  fast no-op when nothing matches). `notif count` — badge.
-  `notif clear` — empty it.
+- Two clear modes. Claude rows are `sticky`
+  (`NOTIFY_MODE=sticky`): visiting doesn't clear them; my
+  reply does (`UserPromptSubmit` hook), as does an approved
+  tool running (`PostToolUse`, covers permission prompts).
+  Everything else clears on **arrival** at the pane: the
+  focus/nav hooks (`pane-focus-in`, `client-session-changed`,
+  `after-select-window`) run `notif arrive "#{pane_id}"`.
+- `M-i` / `notif next <pane>` — jump to the pending pane
+  queued after the current one (oldest if here isn't
+  pending), so repeated `M-i` rotates through them.
+- `M-u` / `notif later <pane>` — snooze: move this pane to
+  the back of the queue as sticky (adds a row if none was
+  pending). For "come back to this".
+- `M-o` / `notif` — fzf picker: pending panes (`●`, latest
+  message + `×N`, newest first), then the last 10 cleared
+  ones (`·`) from `notifications.recent`, so "where was I"
+  is one pick away. `<Enter>` jumps to the exact pane;
+  `ctrl-x` dismisses a pending one.
+- Jumps go by pane id, then `session:window`, then recreate
+  the session at the stored path (e.g. after `wt rt`/`rm`);
+  a truly gone place is cleared (`M-i` skips to the next).
+- A counter badge (`#(notif count)` → green `(N)`, distinct
+  pending panes) sits in `status-right` before the date.
+- `notif seen <pane>` — drop a pane's rows (reply hooks).
+  `notif clear` — empty the inbox.
 
 `bin/notify` only appends (atomic single-line `>>`, safe
 across concurrent Claude sessions); the dedup/count happens
