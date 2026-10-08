@@ -14,7 +14,8 @@ Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
 ## Working Style
 
 Be proactive, not permission-seeking. Make changes first, ask later.
-Don't ask "Want me to do X?" — just do it.
+Don't ask "Want me to do X?" — just do it. Includes my PRs: push
+to the branch and keep the title/body in sync without asking.
 
 Replace, don't accrete. Rewrite what's there, don't append beside it.
 Adding lines? Name what they replace.
