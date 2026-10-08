@@ -243,8 +243,9 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   a truly gone place is cleared (`M-i` skips to the next).
 - A counter badge (`#(notif count)` → green `(N)`, distinct
   pending panes) sits in `status-right` before the date.
-- `notif seen <pane>` — drop a pane's rows (reply hooks).
-  `notif clear` — empty the inbox.
+- `M-y` / `notif seen <pane>` — mark this pane done: drop
+  its rows (also what the reply hooks run). `notif clear` —
+  empty the inbox.
 
 `bin/notify` only appends (atomic single-line `>>`, safe
 across concurrent Claude sessions); the dedup/count happens
