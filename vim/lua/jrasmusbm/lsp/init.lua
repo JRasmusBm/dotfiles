@@ -14,6 +14,8 @@ M.ensure_setup = function()
       / "lsp"
       / "filetypes"
 
+  require("jrasmusbm.lsp.idle").setup()
+
   require("jrasmusbm.lsp.efm").setup {
     on_attach = on_attach,
     capabilities = capabilities,
