@@ -1,0 +1,41 @@
+#!/usr/bin/env python3
+
+# mem-top [HH:MM] [YYYY-MM-DD] — memory per tmux session at the snapshot
+# nearest HH:MM (default: latest), plus the biggest processes.
+
+import os
+import re
+import sys
+from collections import defaultdict
+from datetime import date
+
+args = sys.argv[1:]
+at = next((a for a in args if re.fullmatch(r"\d\d:\d\d", a)), None)
+day = next((a for a in args if re.fullmatch(r"\d{4}-\d\d-\d\d", a)), None)
+base = os.environ.get("LOCAL_CONFIG", os.path.expanduser("~/.config/jrasmusbm"))
+path = os.path.join(base, "memlog", f"{day or date.today().isoformat()}.log")
+
+snaps = open(path).read().split("=== ")[1:]
+
+
+def minutes(hhmm):
+    return int(hhmm[:2]) * 60 + int(hhmm[3:5])
+
+
+snap = (min(snaps, key=lambda s: abs(minutes(s[11:16]) - minutes(at)))
+        if at else snaps[-1])
+
+lines = snap.splitlines()
+procs = [l.split(None, 4) for l in lines if re.match(r"\d+ \d+ ", l)]
+
+by_sess = defaultdict(int)
+for mb, _, _, sess, _ in procs:
+    by_sess[sess] += int(mb)
+
+print("\n".join(l for l in lines if not re.match(r"\d+ \d+ ", l)))
+print("\n--- MB per tmux session (top 60 procs)")
+for sess, mb in sorted(by_sess.items(), key=lambda x: -x[1])[:15]:
+    print(f"{mb:7} {sess}")
+print("\n--- biggest processes")
+for mb, pid, etime, sess, cmd in procs[:15]:
+    print(f"{mb:>7} {etime:>11} {sess[:22]:<22} {cmd[:90]}")

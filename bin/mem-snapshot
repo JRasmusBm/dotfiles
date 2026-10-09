@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# mem-snapshot — append top memory users to $LOCAL_CONFIG/memlog/<date>.log
+# Read back with `mem-top`.
+
+_dir="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog"
+mkdir -p "$_dir"
+_log="$_dir/$(date +%F).log"
+
+{
+  printf '=== %s\n' "$(date '+%F %T')"
+  vm_stat | awk '/Pages (free|active|wired|occupied by compressor)/'
+  {
+    tmux list-panes -a -F 'pane #{pane_pid} #S' 2>/dev/null
+    ps -axo pid=,ppid=,rss=,etime=,command=
+  } | awk '
+    $1 == "pane" { sess[$2] = $3; next }
+    {
+      ppid[$1] = $2; rss[$1] = $3; et[$1] = $4
+      c = $0; sub(/^ *[0-9]+ +[0-9]+ +[0-9]+ +[^ ]+ +/, "", c); cmd[$1] = c
+    }
+    END {
+      for (p in rss) {
+        q = p; n = 0
+        while (!(q in sess) && q > 1 && n++ < 50) q = ppid[q]
+        printf "%d %s %s %s %s\n", rss[p] / 1024, p, et[p],
+          (q in sess) ? sess[q] : "-", substr(cmd[p], 1, 250)
+      }
+    }' | sort -rn | head -60
+} >>"$_log"
+
+find "$_dir" -name '*.log' -mtime +7 -delete
