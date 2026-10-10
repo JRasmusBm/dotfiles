@@ -1,0 +1,42 @@
+#!/bin/sh
+
+# lsp-reclaim [-f] [-n] — under memory pressure, :LspSuspend the nvim
+# unfocused the longest. -f ignores pressure, -n only prints.
+
+_force= _dry=
+while getopts fn _o; do
+  case $_o in
+    f) _force=1 ;;
+    n) _dry=1 ;;
+    *) exit 2 ;;
+  esac
+done
+
+_level=$(sysctl -n kern.memorystatus_vm_pressure_level)
+[ -n "$_force" ] || [ "$_level" -ge 2 ] || exit 0
+
+_min_idle=${LSP_RECLAIM_MIN_IDLE:-300}
+_now=$(date +%s)
+_expr='luaeval("require(\"jrasmusbm.lsp.idle\").status()")'
+
+_pick=$(
+  for _s in /tmp/nvim-server-* "${TMPDIR:-/tmp/}"nvim."$USER"/*/nvim.*; do
+    [ -S "$_s" ] || continue
+    _st=$(timeout 2 nvim --server "$_s" --remote-expr "$_expr" 2>/dev/null)
+    set -- $_st
+    case "$1$2" in ('' | *[!0-9]*) continue ;; esac
+    [ "${1:-0}" -gt 0 ] && [ "${2:-0}" -gt 0 ] &&
+      [ $((_now - $1)) -ge "$_min_idle" ] && echo "$1 $_s"
+  done | sort -n | head -1 | cut -d' ' -f2-
+)
+[ -n "$_pick" ] || exit 0
+
+_line="### $(date '+%F %T') lsp-reclaim level=$_level suspend $_pick"
+if [ -n "$_dry" ]; then
+  echo "$_line"
+  exit 0
+fi
+echo "$_line" >>"${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog/$(date +%F).log"
+timeout 2 nvim --server "$_pick" \
+  --remote-expr 'luaeval("require(\"jrasmusbm.lsp.idle\").suspend()")' \
+  >/dev/null 2>&1
