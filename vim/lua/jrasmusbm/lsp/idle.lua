@@ -3,7 +3,6 @@ local M = {}
 local HEAVY = { "ts_ls", "eslint" }
 
 local timer = assert(vim.uv.new_timer())
-local suspended = false
 local unfocused_since = 0
 
 local function idle_ms()
@@ -19,20 +18,15 @@ function M.suspend()
           client.rpc.terminate()
         end
       end, 10000)
-      suspended = true
     end
   end
 end
 
 function M.resume()
-  if not suspended then
-    return
-  end
-  suspended = false
   for _, name in ipairs(HEAVY) do
     local manager = require("lspconfig")[name].manager
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do
-      if vim.api.nvim_buf_is_loaded(buf) then
+      if manager and vim.api.nvim_buf_is_loaded(buf) then
         manager:try_add_wrapper(buf)
       end
     end
