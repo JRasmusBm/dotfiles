@@ -2,6 +2,8 @@
 
 # mem-top [HH:MM] [YYYY-MM-DD] — memory per tmux session at the snapshot
 # nearest HH:MM (default: latest), plus the biggest processes.
+# mem-top day [YYYY-MM-DD] — hourly peaks, pressure events and
+# lsp-reclaim actions for a whole day.
 
 import os
 import re
@@ -9,33 +11,77 @@ import sys
 from collections import defaultdict
 from datetime import date
 
+PAGE = 16384
+PROC = re.compile(r"\d+ \d+ ")
+
 args = sys.argv[1:]
 at = next((a for a in args if re.fullmatch(r"\d\d:\d\d", a)), None)
 day = next((a for a in args if re.fullmatch(r"\d{4}-\d\d-\d\d", a)), None)
 base = os.environ.get("LOCAL_CONFIG", os.path.expanduser("~/.config/jrasmusbm"))
 path = os.path.join(base, "memlog", f"{day or date.today().isoformat()}.log")
-
-snaps = open(path).read().split("=== ")[1:]
+text = open(path).read()
+snaps = text.split("=== ")[1:]
 
 
 def minutes(hhmm):
     return int(hhmm[:2]) * 60 + int(hhmm[3:5])
 
 
-snap = (min(snaps, key=lambda s: abs(minutes(s[11:16]) - minutes(at)))
-        if at else snaps[-1])
+def parse(snap):
+    lines = snap.splitlines()
+    pressure = re.search(r"pressure=(\d+)", lines[0])
+    compressor = re.search(r"compressor:\s+(\d+)", snap)
+    procs = [l.split(None, 4) for l in lines if PROC.match(l)]
+    by_sess = defaultdict(int)
+    for mb, _, _, sess, _ in procs:
+        by_sess[sess] += int(mb)
+    return {
+        "time": lines[0][11:16],
+        "pressure": int(pressure.group(1)) if pressure else 0,
+        "compressor_gb": int(compressor.group(1)) * PAGE / 2**30
+        if compressor else 0,
+        "total_gb": sum(int(p[0]) for p in procs) / 1024,
+        "procs": procs,
+        "by_sess": by_sess,
+        "lines": lines,
+    }
 
-lines = snap.splitlines()
-procs = [l.split(None, 4) for l in lines if re.match(r"\d+ \d+ ", l)]
 
-by_sess = defaultdict(int)
-for mb, _, _, sess, _ in procs:
-    by_sess[sess] += int(mb)
+def top_sessions(s, n=3):
+    return ", ".join(
+        f"{k} {v / 1024:.1f}G"
+        for k, v in sorted(s["by_sess"].items(), key=lambda x: -x[1])[:n])
 
-print("\n".join(l for l in lines if not re.match(r"\d+ \d+ ", l)))
+
+if args[:1] == ["day"]:
+    parsed = [parse(s) for s in snaps]
+    by_hour = defaultdict(list)
+    for s in parsed:
+        by_hour[s["time"][:2]].append(s)
+    print(f"{path}: {len(parsed)} snapshots "
+          f"{parsed[0]['time']}–{parsed[-1]['time']}")
+    print("\nhour  peak(top60)  compressor  pressure  top sessions at peak")
+    for hour, ss in sorted(by_hour.items()):
+        peak = max(ss, key=lambda s: s["total_gb"])
+        print(f"{hour}h  {peak['total_gb']:9.1f}G"
+              f"  {max(s['compressor_gb'] for s in ss):9.1f}G"
+              f"  {max(s['pressure'] for s in ss):8}"
+              f"  {top_sessions(peak)}")
+    events = [s for s in parsed if s["pressure"] > 1]
+    print(f"\npressure > normal: {len(events)} snapshots")
+    for s in events[:20]:
+        print(f"  {s['time']} level={s['pressure']}  {top_sessions(s)}")
+    print("\nlsp-reclaim:")
+    print("\n".join(l for l in text.splitlines() if l.startswith("### "))
+          or "  none")
+    sys.exit()
+
+snap = parse(min(snaps, key=lambda s: abs(minutes(s[11:16]) - minutes(at)))
+             if at else snaps[-1])
+print("\n".join(l for l in snap["lines"] if not PROC.match(l)))
 print("\n--- MB per tmux session (top 60 procs)")
-for sess, mb in sorted(by_sess.items(), key=lambda x: -x[1])[:15]:
+for sess, mb in sorted(snap["by_sess"].items(), key=lambda x: -x[1])[:15]:
     print(f"{mb:7} {sess}")
 print("\n--- biggest processes")
-for mb, pid, etime, sess, cmd in procs[:15]:
+for mb, pid, etime, sess, cmd in snap["procs"][:15]:
     print(f"{mb:>7} {etime:>11} {sess[:22]:<22} {cmd[:90]}")
