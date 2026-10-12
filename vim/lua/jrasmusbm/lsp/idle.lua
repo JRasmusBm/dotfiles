@@ -6,7 +6,7 @@ local timer = assert(vim.uv.new_timer())
 local unfocused_since = 0
 
 local function idle_ms()
-  return (vim.g.lsp_idle_minutes or 30) * 60 * 1000
+  return (vim.g.lsp_idle_minutes or 10) * 60 * 1000
 end
 
 function M.suspend()
