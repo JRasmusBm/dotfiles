@@ -38,10 +38,12 @@ stacks never take a slot and are never blocked.
   exits 0 you hold the slot; carry on. When it exits 75 it printed the
   next wait (backoff doubles from 30s, capped at 20 minutes): say the
   new time and wait again. Keep working on other things meanwhile.
-- **Done:** close your pages (`close_page`) and `dev down` if you
-  started the stack, or `test-slot release` if you only used the
-  browser. Slots are also freed when the tmux session ends or after 30
-  idle minutes with no stack up, but don't rely on that.
+- **Done:** `dev down` if you started the stack, else `test-slot
+  release`. Either one quits your devtools Chrome (only yours, other
+  agents in this session keep theirs) and frees the slot once no agent
+  in the session still claims it. Slots also free when your pane or
+  session ends, or after 30 idle minutes with no stack up, but don't
+  rely on that.
 - `test-slot ls` shows who holds what.
 
 ## Start, test, stop
@@ -78,8 +80,7 @@ own. Don't `dev up` again just for that.
   to the staging database directly (SQL, insert/update scripts). On
   production, look only unless jrb asked. Never switch stage to
   production.
-- Close your page when done (`close_page`), then free the slot (see
-  Test slots).
+- When done, free the slot (see Test slots); that quits your Chrome.
 
 ## Other heavy things you start
 

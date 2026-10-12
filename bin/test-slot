@@ -8,15 +8,19 @@
 #                       75 when busy (prints when to retry)
 #   test-slot wait      sleep until the retry time `acquire` printed,
 #                       then acquire again (run it in the background)
-#   test-slot release   free this session's slot
+#   test-slot release   drop this pane's claim and quit its devtools
+#                       Chrome (the MCP relaunches it on the next call);
+#                       the slot frees when no pane claims it
 #   test-slot touch     mark this session's slot as in use now
 #   test-slot ls        list slots
 #   test-slot hook      PreToolUse hook for chrome-devtools tools:
 #                       acquire or block the call with a wait message
 #
-# Slots: TEST_SLOTS (default 2). A slot is freed on release, when its
-# tmux session is gone, or when it is idle for TEST_SLOT_IDLE seconds
-# (default 1800) with no dev stack running in that session.
+# Slots: TEST_SLOTS (default 2), one per tmux session, claimed by the
+# panes (agents) using it. A slot is freed when its last claim is
+# released or its pane is gone, when its session is gone, or when it
+# is idle for TEST_SLOT_IDLE seconds (default 1800) with no dev stack
+# running in that session.
 # Busy retries back off 30s, 60s, 120s ... capped at 1200s.
 
 set -e
@@ -45,8 +49,16 @@ _holder() {
   fi
 }
 
+_pane() {
+  echo "${TEST_SLOT_PANE:-${TMUX_PANE:-pid-$PPID}}"
+}
+
 _file() {
   printf '%s/%s.slot' "$_dir" "$(printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_')"
+}
+
+_claims_file() {
+  printf '%s/%s.claims' "$_dir" "$(printf '%s' "$1" | tr -c 'A-Za-z0-9._-' '_')"
 }
 
 _wait_file() {
@@ -71,6 +83,16 @@ _unlock() {
   trap - EXIT
 }
 
+_pane_alive() {
+  case "$1" in
+    pid-*) kill -0 "${1#pid-}" 2>/dev/null ;;
+    *)
+      tmux list-panes -a -F '#{pane_id}' 2>/dev/null |
+        awk -v p="$1" '$0 == p { found = 1 } END { exit !found }'
+      ;;
+  esac
+}
+
 _session_alive() {
   case "$1" in
     pid-*) kill -0 "${1#pid-}" 2>/dev/null ;;
@@ -83,17 +105,84 @@ _stack_running() {
     awk 'NF { found = 1 } END { exit !found }'
 }
 
+_browser_pids() {
+  _chromes="$(ps -axo pid=,comm= |
+    awk '/\/Contents\/MacOS\/Google Chrome$/ { printf "%s%s", sep, $1; sep = "," }')"
+  test -n "$_chromes" || return 0
+  ps -o pid=,command= -p "$_chromes" |
+    awk -v needle="$1" '
+      index($0, "--window-name=Claude ") && index($0, needle) { print $1 }'
+}
+
+_kill_browsers() {
+  for _pid in $(_browser_pids "$1"); do
+    kill "$_pid" 2>/dev/null || true
+  done
+}
+
+_close_pane_browser() {
+  case "$1" in
+    pid-*) return 0 ;;
+  esac
+  _kill_browsers "--window-name=Claude · $1 · "
+}
+
+_close_session_browsers() {
+  case "$1" in
+    pid-*) return 0 ;;
+  esac
+  _kill_browsers " · $1:"
+}
+
+_claim() {
+  _cf="$(_claims_file "$1")"
+  touch "$_cf"
+  awk -v p="$2" '$0 == p { found = 1 } END { exit !found }' "$_cf" ||
+    echo "$2" >> "$_cf"
+}
+
+_unclaim() {
+  _cf="$(_claims_file "$1")"
+  test -f "$_cf" || return 0
+  awk -v p="$2" '$0 != p' "$_cf" > "$_cf.tmp"
+  mv "$_cf.tmp" "$_cf"
+}
+
+_prune_claims() {
+  _cf="$(_claims_file "$1")"
+  test -f "$_cf" || return 0
+  : > "$_cf.tmp"
+  while read -r _p; do
+    if _pane_alive "$_p"; then
+      echo "$_p" >> "$_cf.tmp"
+    fi
+  done < "$_cf"
+  mv "$_cf.tmp" "$_cf"
+}
+
+_claimed() {
+  test -s "$(_claims_file "$1")"
+}
+
+_free() {
+  rm -f "$(_file "$1")" "$(_claims_file "$1")"
+  _close_session_browsers "$1"
+}
+
 _reap() {
   for _f in "$_dir"/*.slot; do
     test -f "$_f" || continue
     IFS="$_tab" read -r _r_who _r_since _r_seen < "$_f"
     if ! _session_alive "$_r_who"; then
-      rm -f "$_f"
+      rm -f "$_f" "$(_claims_file "$_r_who")"
       continue
     fi
+    _prune_claims "$_r_who"
     _quiet=$(( $(_now) - _r_seen ))
-    if test "$_quiet" -gt "$_idle" && ! _stack_running "$_r_who"; then
-      rm -f "$_f"
+    if ! _stack_running "$_r_who"; then
+      if ! _claimed "$_r_who" || test "$_quiet" -gt "$_idle"; then
+        _free "$_r_who"
+      fi
     fi
   done
 }
@@ -102,7 +191,8 @@ _holders() {
   for _f in "$_dir"/*.slot; do
     test -f "$_f" || continue
     IFS="$_tab" read -r _h_who _h_since _h_seen < "$_f"
-    printf '%s since %s' "$_h_who" "$(_clock "$_h_since")"
+    printf '%s since %s, panes: %s' "$_h_who" "$(_clock "$_h_since")" \
+      "$(cat "$(_claims_file "$_h_who")" 2>/dev/null | tr '\n' ' ')"
     if _stack_running "$_h_who"; then
       printf ' (stack up)'
     fi
@@ -149,11 +239,13 @@ _acquire() {
   _reap
   if test -f "$(_file "$_who")"; then
     _touch_locked "$_who"
+    _claim "$_who" "$(_pane)"
     _unlock
     return 0
   fi
   if test "$(_count)" -lt "$_max"; then
     _take "$_who"
+    _claim "$_who" "$(_pane)"
     _unlock
     echo "test-slot: $_who holds a slot ($(_count)/$_max)."
     return 0
@@ -192,10 +284,19 @@ _touch() {
 _release() {
   _who="$(_holder)"
   _lock
-  rm -f "$(_file "$_who")" "$(_wait_file "$_who")"
+  rm -f "$(_wait_file "$_who")"
+  _unclaim "$_who" "$(_pane)"
+  _close_pane_browser "$(_pane)"
+  _prune_claims "$_who"
+  if _claimed "$_who"; then
+    _msg="other panes still claim $_who's slot"
+  else
+    _free "$_who"
+    _msg="slot freed"
+  fi
   _unlock
   test "${1:-}" = '--quiet' ||
-    echo "test-slot: released $_who. Close your devtools pages (close_page) if you have not."
+    echo "test-slot: released $(_pane) and closed its devtools Chrome; $_msg."
 }
 
 _ls() {

@@ -7,7 +7,7 @@ seed="$HOME/.cache/chrome-devtools-mcp/chrome-profile"
 profile=$(mktemp -d "${TMPDIR:-/tmp}/chrome-devtools-mcp.XXXXXX")
 
 if [ -n "$TMUX_PANE" ]; then
-  label=$(tmux display-message -p -t "$TMUX_PANE" '#S:#W.#P')
+  label="$TMUX_PANE · $(tmux display-message -p -t "$TMUX_PANE" '#S:#W.#P')"
 else
   label=$(basename "$PWD")
 fi
