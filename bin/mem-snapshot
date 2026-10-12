@@ -13,9 +13,15 @@ _log="$_dir/$(date +%F).log"
   vm_stat | awk '/Pages (free|active|wired|occupied by compressor)/'
   {
     tmux list-panes -a -F 'pane #{pane_pid} #S' 2>/dev/null
+    top -l 1 -o mem -n 120 -stats pid,mem | awk '
+      $1 ~ /^[0-9]+$/ && $2 ~ /^[0-9.]+[KMG]/ {
+        v = $2 + 0; u = $2; sub(/^[0-9.]+/, "", u); u = substr(u, 1, 1)
+        print "fp", $1, (u == "G" ? v * 1048576 : u == "M" ? v * 1024 : v)
+      }'
     ps -axo pid=,ppid=,rss=,etime=,command=
   } | awk '
     $1 == "pane" { sess[$2] = $3; next }
+    $1 == "fp" { fp[$2] = $3; next }
     {
       ppid[$1] = $2; rss[$1] = $3; et[$1] = $4
       c = $0; sub(/^ *[0-9]+ +[0-9]+ +[0-9]+ +[^ ]+ +/, "", c); cmd[$1] = c
@@ -24,7 +30,7 @@ _log="$_dir/$(date +%F).log"
       for (p in rss) {
         q = p; n = 0
         while (!(q in sess) && q > 1 && n++ < 50) q = ppid[q]
-        printf "%d %s %s %s %s\n", rss[p] / 1024, p, et[p],
+        printf "%d %s %s %s %s\n", (p in fp ? fp[p] : rss[p]) / 1024, p, et[p],
           (q in sess) ? sess[q] : "-", substr(cmd[p], 1, 250)
       }
     }' | sort -rn | head -60

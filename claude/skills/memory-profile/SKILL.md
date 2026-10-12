@@ -14,8 +14,11 @@ type-aware eslint server 1.2–2.6 GB per ice-floe nvim) were the bulk.
 
 - **memlog** — `$LOCAL_CONFIG/memlog/<YYYY-MM-DD>.log`, one snapshot
   a minute, 7 days kept. Snapshot = `=== <date> <time> pressure=<n>`,
-  vm_stat pages (16 KB), then the top 60 processes by RSS as
-  `<MB> <pid> <etime> <tmux session or -> <command>`. Session is
+  vm_stat pages (16 KB), then the top 60 processes as
+  `<MB> <pid> <etime> <tmux session or -> <command>`. MB is phys
+  footprint (Activity Monitor's Memory, incl. compressed) from
+  2026-10-12 15:27; before that it was RSS, which hides idle hogs
+  whose pages got compressed (a 4.2 GB tsserver showed as 266 MB). Session is
   resolved by ppid chain at capture time. `### … lsp-reclaim` lines
   mark watchdog suspends. Gaps = machine asleep.
 - Written by launchd agent `com.jrasmusbm.memlog`
@@ -40,6 +43,20 @@ type-aware eslint server 1.2–2.6 GB per ice-floe nvim) were the bulk.
   the biggest processes.
 - `lsp-reclaim -f -n` — dry run: which nvim the watchdog would
   suspend now.
+
+## Known consumers
+
+- Claude Code's `typescript-lsp@claude-plugins-official` plugin,
+  enabled in ice-floe's committed `.claude/settings.json`: each
+  Claude session in ice-floe runs `typescript-language-server` +
+  a full tsserver (up to ~4 GB), held for the session's life (days).
+  Killing the tsserver leaves the server answering null forever (no
+  restart). Agents barely use it: 0 `LSP` tool calls and 36 passive
+  `<new-diagnostics>` in 364 ice-floe transcripts (2026-10-05..12) vs
+  146 tsc/check-types runs.
+- Spotlight `mds` ~2.4 GB footprint (worktrees + node_modules).
+- Agents' devtools Chromes, Brave tabs, 13–15 Claude sessions
+  (~300–900 MB each, growing with age).
 
 ## Mitigations already in place
 
