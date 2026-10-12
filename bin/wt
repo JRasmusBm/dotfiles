@@ -68,7 +68,8 @@ _registry_file() {
   echo "$LOCAL_CONFIG/worktrees/$(_repo_name).registry"
 }
 
-# Let the repo react to a worktree leaving (penv frees its ports):
+# Let the repo react to a worktree arriving or leaving (penv frees
+# its ports on rm):
 # runs <main-root>/.jrb/wt-hook <event> <slug> when it is trusted
 # the same way `dev trust` trusts .jrb/dev.
 _repo_hook() {
@@ -504,6 +505,7 @@ _wt_add() {
   else
     git wc "$_branch"
   fi
+  _repo_hook add "$(basename "$_branch")"
 
   _ensure_order_dir
   _of="$(_order_file)"
@@ -959,6 +961,7 @@ _wt_move() {
 
   # Create worktree with existing branch (no -b)
   git worktree add "$_wt_path" "$_branch"
+  _repo_hook add "$(basename "$_branch")"
 
   # Add to order file
   _ensure_order_dir
