@@ -11,3 +11,4 @@ vim/view
 shada*
 bin-src/*/target
 claude/skills/synced/
+claude/skills/.trash/
