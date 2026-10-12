@@ -48,43 +48,61 @@ matters for the board; never guess.
 
 ## Shape
 
-Two top sections, `**Updated since <weekday>**` and
-`**Stale**`. Each has these subsections, in this order, with
-empty ones skipped:
+I read from the bottom up: the terminal leaves me at the end of
+the post. So the order goes from least to most actionable, and
+the things to act on come last.
 
-- **Needs action**: mismatches. Merged PR but the ticket isn't
-  Needs live verification/Done, or the entry is still on
-  speed-dial or IN PROGRESS. Ticket in review but its PR is
-  closed. Ready to deploy. Merged/closed board sections that
-  `wt clean` would clear (collapse them to a count).
-- **Wrapped up**: REMOVED rows, fresh only. Merged + removed
-  work from the last workday, so it isn't missing from Monday's
-  board. A REMOVED row whose ticket is still open and not
-  Needs live verification goes under Needs action instead.
-- **Owner review, PR open**
-- **In progress, no PR**
-- **Needs live verification**
-- **Worktree started, ticket still Backlog/Todo**
-- **No ticket**: board branches with no issue.
-- **Off the board**: open PRs and orphan worktrees not on the
-  board.
+Four top sections, in this order, with empty ones skipped:
+`**Stale**`, `**Updated since <weekday>**`, `**Needs action**`
+and `**Unresolved**`.
+
+Stale and Updated each have these subsections, in this order,
+with empty ones skipped:
+
+- **Paused**: one line.
+- **Backlog**: count only, grouped by project, plus any High
+  or Urgent items by ID.
+- **Todo / Blocked**
 - **Unassigned in my teams**: UNASSIGNED rows. A branch row
   whose ticket has no assignee also gets flagged in its own
   subsection.
-- **Todo / Blocked**
-- **Backlog**: count only, grouped by project, plus any High
-  or Urgent items by ID.
-- **Paused**: one line.
+- **Off the board**: open PRs and orphan worktrees not on the
+  board. An OPEN PR OFF BOARD row never has a worktree (the
+  collector emits it only for branches not on disk), so wherever
+  its line lands, write `no worktree` in what's off and leave
+  out the backticked slug: `C-w` has nothing to jump to.
+- **No ticket**: board branches with no issue.
+- **Wrapped up**: REMOVED rows, Updated only. Merged + removed
+  work from the last workday, so it isn't missing from Monday's
+  board. A REMOVED row whose ticket is still open and not
+  Needs live verification goes under Needs action instead.
+- **Worktree started, ticket still Backlog/Todo**
+- **Needs live verification**
+- **In progress, no PR**
+- **Owner review, PR open**
+
+**Needs action** holds the mismatches from both, fresh ones
+last: merged PR but the ticket isn't Needs live
+verification/Done, or the entry is still on speed-dial or IN
+PROGRESS. Ticket in review but its PR is closed. Ready to
+deploy. Merged/closed board sections that `wt clean` would
+clear, collapsed to a count.
+
+**Unresolved** holds questions only, e.g. a closed PR that
+might have been superseded. Don't change tickets or the board;
+offer it as a question.
 
 One item per line, never several IDs merged into one line:
 `- **<title>** · what's off · #PR · ID`. Lead with the title,
 because I recognise work by what it is, not by its ID. The
 title is the ticket title from the TSV, shortened to about 45
 characters and rephrased plainly if the original is garbled.
-The ID goes last, for lookup only. A branch with no ticket uses
-a plain description from its name and commit subject. Mark
-High or Urgent priority with a leading `‼`. Put the date on stale items so their age shows.
-The only exceptions are the collapsed DONE rows and the
-Backlog/Paused counts. End with unresolved questions only, e.g. a closed PR
-that might have been superseded. Don't change tickets or the
-board; offer it as a question.
+The ID goes last, for lookup and for `tmux-open-worktree`
+(Option-click or copy-mode `C-w` on a line jumps to its
+worktree), which resolves a line by branch/slug, ID, or #PR.
+A branch with no ticket uses a plain description from its name
+and commit subject, plus its worktree slug in backticks, so
+every on-disk item stays resolvable. Mark
+High or Urgent priority with a leading `‼`. Put the date on
+stale items so their age shows. The only exceptions are the
+collapsed DONE rows and the Backlog/Paused counts.

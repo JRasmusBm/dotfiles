@@ -1,0 +1,127 @@
+#!/usr/bin/env python3
+
+# Open the worktree an item in pane output refers to (a standup
+# board line, a PR list, ...) via `wt open`: switches to its
+# tmux session, or creates it. The item is the line at <y> plus
+# its wrapped continuation lines. Resolution order: a branch or
+# worktree slug named on the line (backticked first), then a
+# ticket ID (EXP-238) inside a branch name, then a `#123` PR's
+# head branch via gh.
+#
+# Usage: tmux-open-worktree <pane> <path> <row> <line>
+#   path  pane_current_path, to find the repo
+#   row   history_size + y - scroll_position: the line's row
+#         counted from the top of history (a hint)
+#   line  copy_cursor_line / mouse_line: the text itself
+
+import os
+import re
+import subprocess
+import sys
+
+
+def run(cmd, cwd=None):
+    r = subprocess.run(cmd, capture_output=True, text=True, cwd=cwd)
+    return r.stdout if r.returncode == 0 else ""
+
+
+def message(text):
+    subprocess.run(["tmux", "display-message", "-d", "4000", text])
+
+
+def item_text(pane, line, near):
+    """The bullet item containing `line`: its wrapped lines joined.
+    Finds `line` in the scrollback closest to row `near` (counted
+    from the top of history), since copy mode shows a frozen
+    snapshot while the pane keeps scrolling underneath."""
+    lines = run(["tmux", "capture-pane", "-p", "-t", pane,
+                 "-S", "-", "-E", "-"]).split("\n")
+    want = line.rstrip()
+    hits = [n for n, l in enumerate(lines) if l.rstrip() == want]
+    if not want.strip() or not hits:
+        return line.strip()
+    i = min(hits, key=lambda n: abs(n - near))
+    bullet = re.compile(r"^\s*([-*•]|\d+\.)\s")
+
+    def indent(s):
+        return len(s) - len(s.lstrip())
+
+    start = i
+    while start > max(0, i - 8) and lines[start].strip() and not (
+        bullet.match(lines[start])
+    ):
+        start -= 1
+    if not lines[start].strip():
+        start += 1
+    base = indent(lines[start])
+    end = i
+    while end + 1 < min(len(lines), i + 8):
+        nxt = lines[end + 1]
+        if not nxt.strip() or bullet.match(nxt) or indent(nxt) <= base:
+            break
+        end += 1
+    return " ".join(l.strip() for l in lines[start:end + 1])
+
+
+def worktrees(root):
+    out = run(["git", "-C", root, "worktree", "list", "--porcelain"])
+    trees, path = [], None
+    for line in out.splitlines():
+        if line.startswith("worktree "):
+            path = line[len("worktree "):]
+        elif line.startswith("branch ") and "/.worktrees/" in (
+            path or ""
+        ):
+            branch = line[len("branch refs/heads/"):]
+            trees.append((branch, os.path.basename(path)))
+    return trees
+
+
+def resolve(text, trees, root):
+    by_name = {}
+    for branch, slug in trees:
+        by_name.setdefault(branch, branch)
+        by_name.setdefault(slug, branch)
+
+    ticked = re.findall(r"`([^`]+)`", text)
+    words = re.findall(r"[\w./-]+", text)
+    for word in ticked + words:
+        if word in by_name:
+            return by_name[word]
+
+    for ticket in re.findall(r"\b[A-Z][A-Z0-9]*-\d+\b", text):
+        pat = re.compile(
+            rf"(^|[/_-]){re.escape(ticket.lower())}([_-]|$)"
+        )
+        for branch, slug in trees:
+            if pat.search(branch.lower()) or pat.search(slug.lower()):
+                return branch
+
+    for pr in re.findall(r"#(\d+)", text):
+        head = run(
+            ["gh", "pr", "view", pr, "--json", "headRefName",
+             "-q", ".headRefName"],
+            cwd=root,
+        ).strip()
+        if head and any(b == head for b, _ in trees):
+            return head
+    return None
+
+
+def main():
+    pane, path, row = sys.argv[1:4]
+    line = " ".join(sys.argv[4:])
+    text = item_text(pane, line, int(row or 0))
+    root = run(["git", "-C", path, "rev-parse", "--show-toplevel"]).strip()
+    if not root:
+        message(f"open-worktree: {path} isn't in a git repo")
+        return
+    branch = resolve(text, worktrees(root), root)
+    if not branch:
+        message(f"open-worktree: no worktree for: {text[:60]}")
+        return
+    subprocess.run(["wt", "open", branch], cwd=root)
+
+
+if __name__ == "__main__":
+    main()
