@@ -8,7 +8,8 @@ mkdir -p "$_dir"
 _log="$_dir/$(date +%F).log"
 
 {
-  printf '=== %s\n' "$(date '+%F %T')"
+  printf '=== %s pressure=%s\n' "$(date '+%F %T')" \
+    "$(sysctl -n kern.memorystatus_vm_pressure_level)"
   vm_stat | awk '/Pages (free|active|wired|occupied by compressor)/'
   {
     tmux list-panes -a -F 'pane #{pane_pid} #S' 2>/dev/null

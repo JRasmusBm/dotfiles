@@ -41,3 +41,4 @@ False,claude/accretion-check.sh,.claude-2/accretion-check.sh
 False,games/wc3/CustomKeys.txt,Library/Application Support/Blizzard/Warcraft III/CustomKeyBindings/CustomKeys.txt
 False,yarn/yarnrc.yml,.yarnrc.yml
 False,claude/accretion-check.sh,.claude/accretion-check.sh
+False,launchd/com.jrasmusbm.memlog.plist,Library/LaunchAgents/com.jrasmusbm.memlog.plist
