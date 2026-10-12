@@ -56,7 +56,10 @@ stacks never take a slot and are never blocked.
 2. URLs and stage come from `penv info` (be, fe, admin ports). Logs:
    `.jrb/logs/<tag>.log`, or `dev logs <tag>`. Only services listed
    under `local:` run your branch; the fe calls every other service on
-   the deployed stage. To test backend changes, `penv local add <svc>`
+   the deployed stage. Their logs are in CloudWatch, not
+   `.jrb/logs`: read them yourself, without asking (read-only, any
+   stage), via the repo's `cloudwatch-logs` skill
+   (`run-cloudwatch-logs.js --staging --service synth ...`). To test backend changes, `penv local add <svc>`
    before `dev up`, and `penv local rm <svc>` when done.
 3. Test. Batch your checks so the stack is up once, not toggled per
    check.
@@ -81,6 +84,35 @@ own. Don't `dev up` again just for that.
   production, look only unless jrb asked. Never switch stage to
   production.
 - When done, free the slot (see Test slots); that quits your Chrome.
+
+## Show what you tested
+
+jrb should see the result without starting a stack. For any change a
+user can see, screenshot each key state during the run, not after:
+the before state, the action, the result, and any error message.
+
+- `take_screenshot` with `filePath` set to
+  `<worktree>/.jrb/screenshots/<nn>-<what>.png` (ignored by git).
+  Crop to the relevant element (`uid`) when the page is busy.
+- Publish one Artifact page with every screenshot in order, each with
+  a one-line caption saying what it shows and what to look for. Add
+  non-visual results (API or MCP responses) as short text blocks.
+- Give jrb the link in your report and put it in the PR's "How to
+  test" section.
+
+## Testing Polar MCP tools
+
+- Call a tool with `polar-mcp-call <tool> '<json args>'` (no args
+  lists tools). It goes through `polar-mcp`, so no `/mcp` reconnect
+  and no key in your hands. Start with `get_context` for a
+  `conversation_id`.
+- Your branch's tool code runs only with `penv local add ai-service`
+  before `dev up`.
+- Auth is the env's `penv key`. On staging use
+  `staging-food-and-beverage` (the agent user's workspace):
+  `penv key staging-food-and-beverage`. `default` gets a 401 there.
+- Ask Polar in the app runs on Hermes against the deployed
+  ai-service, so it never tests your branch.
 
 ## Other heavy things you start
 
