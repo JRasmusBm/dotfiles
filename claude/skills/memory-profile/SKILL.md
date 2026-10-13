@@ -56,9 +56,18 @@ type-aware eslint server 1.2–2.6 GB per ice-floe nvim) were the bulk.
   364 transcripts, ~80% of its passive diagnostics were false errors
   (no root tsconfig). Killing its tsserver leaves the server
   answering null forever — don't reap it.
+- Docker Desktop's background SBOM indexing (`docker-scout scout
+  sbom`, session `-`): 3.4–12 GB for ~2 min right after Docker
+  starts — the only pressure event on 2026-10-13. Off since then
+  (`"UseBackgroundIndexing": false` in `~/Library/Group Containers/
+  group.com.docker/settings-store.json`; Settings → General).
+- Forgotten dev stacks: a `react-scripts start` frontend detached
+  from tmux (session `-`) ran 2.5 days, peaking 5.7 GB. One-shot `tsc`
+  runs by agents reach ~4.3 GB for under a minute (normal).
 - Spotlight `mds` ~2.4 GB footprint (worktrees + node_modules).
-- Agents' devtools Chromes, Brave tabs, 13–15 Claude sessions
-  (~300–900 MB each, growing with age).
+- Biggest by GB-minutes after the LSP fixes: Brave, then 13–15 Claude
+  sessions (~300–900 MB each, growing with age), then agents'
+  devtools Chromes.
 
 ## Mitigations already in place
 
