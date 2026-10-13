@@ -22,10 +22,10 @@ dev ls | awk -v s="$(tmux display-message -p '#S')" 'NR==1 || $1==s'
 
 Remember which case you're in. Only the owner stops it.
 
-## Test slots: at most 2 agents at once
+## Test slots: at most 3 agents at once
 
 Running a stack or driving the devtools browser takes a **test slot**
-(`test-slot`, one per tmux session). Only 2 agent sessions hold one at
+(`test-slot`, one per tmux session). Only 3 agent sessions hold one at
 a time; past that the laptop swaps until the disk fills. jrb's own
 stacks never take a slot and are never blocked.
 

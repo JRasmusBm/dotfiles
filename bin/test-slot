@@ -16,7 +16,7 @@
 #   test-slot hook      PreToolUse hook for chrome-devtools tools:
 #                       acquire or block the call with a wait message
 #
-# Slots: TEST_SLOTS (default 2), one per tmux session, claimed by the
+# Slots: TEST_SLOTS (default 3), one per tmux session, claimed by the
 # panes (agents) using it. A slot is freed when its last claim is
 # released or its pane is gone, when its session is gone, or when it
 # is idle for TEST_SLOT_IDLE seconds (default 1800) with no dev stack
@@ -25,7 +25,7 @@
 
 set -e
 
-_max="${TEST_SLOTS:-2}"
+_max="${TEST_SLOTS:-3}"
 _idle="${TEST_SLOT_IDLE:-1800}"
 _dir="${LOCAL_CONFIG:-$HOME/.config}/test-slots"
 _tab="$(printf '\t')"
