@@ -58,9 +58,11 @@ type-aware eslint server 1.2–2.6 GB per ice-floe nvim) were the bulk.
   answering null forever — don't reap it.
 - Docker Desktop's background SBOM indexing (`docker-scout scout
   sbom`, session `-`): 3.4–12 GB for ~2 min right after Docker
-  starts — the only pressure event on 2026-10-13. Off since then
-  (`"UseBackgroundIndexing": false` in `~/Library/Group Containers/
-  group.com.docker/settings-store.json`; Settings → General).
+  starts — the only pressure event on 2026-10-13 morning, and 13 GB
+  again at 17:00 even with `"UseBackgroundIndexing": false` in
+  `~/Library/Group Containers/group.com.docker/settings-store.json`,
+  so that isn't the switch. `pkill -f 'docker-scout scout sbom'` is
+  safe and frees it at once.
 - Forgotten dev stacks: a `react-scripts start` frontend detached
   from tmux (session `-`) ran 2.5 days, peaking 5.7 GB. One-shot `tsc`
   runs by agents reach ~4.3 GB for under a minute (normal).
