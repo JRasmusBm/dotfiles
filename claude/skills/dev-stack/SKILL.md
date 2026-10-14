@@ -56,7 +56,10 @@ stacks never take a slot and are never blocked.
 2. URLs and stage come from `penv info` (be, fe, admin ports). Logs:
    `.jrb/logs/<tag>.log`, or `dev logs <tag>`. Only services listed
    under `local:` run your branch; the fe calls every other service on
-   the deployed stage. Their logs are in CloudWatch, not
+   the deployed stage. With `local:` empty, `dev up` starts no backend
+   (an empty `SERVICE_LIST` used to start every service, workers
+   included). On production, never `penv local add` anything unless
+   jrb asked. Their logs are in CloudWatch, not
    `.jrb/logs`: read them yourself, without asking (read-only, any
    stage), via the repo's `cloudwatch-logs` skill
    (`run-cloudwatch-logs.js --staging --service synth ...`). To test backend changes, `penv local add <svc>`
@@ -77,6 +80,10 @@ own. Don't `dev up` again just for that.
   opened.
 - Point it at the local fe URL from `penv info`, not the deployed app.
 - Login screen: load `polar-agent-login`.
+- Handing a page to jrb (to log in, to look): many Chrome windows are
+  open, so lead with the ports, then what each tab is, e.g.
+  "`:3066` admin + `:3036` fe — devtools window for `<tmux session>`".
+  Bring it to the front first (`select_page` with `bringToFront`).
 - The stack talks to the stage `penv info` shows. On staging, writing
   through the app UI (create, edit, delete, restore) is fine without
   asking; use throwaway objects and delete them when done. Never write
@@ -97,6 +104,8 @@ the before state, the action, the result, and any error message.
 - Publish one Artifact page with every screenshot in order, each with
   a one-line caption saying what it shows and what to look for. Add
   non-visual results (API or MCP responses) as short text blocks.
+  Every image opens full size on click (a lightbox closed by click
+  or Escape); thumbnails alone are too small to review.
 - Give jrb the link in your report and put it in the PR's "How to
   test" section.
 
