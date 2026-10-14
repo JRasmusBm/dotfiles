@@ -81,11 +81,6 @@ stopped until morning.
 - Claude's input uses vim mode, so a single Escape can leave it in
   NORMAL. `launch` sends `i` before typing. Never send a double
   Escape: on an empty prompt it opens rewind.
-- `wt` speed-dial collision: if a slot is blank but its `<repo>[N]`
-  session is still alive, `wt fix` takes the slot, attaches to the
-  stale session and starts no Claude. `launch` finds sessions by
-  path, so the agent still starts, but move the board entry into
-  `# IN PROGRESS`.
 - `wt rm` and messaging another agent can be refused by the auto-mode
   classifier. Leave those for the user and don't route around them.
 - tmux comes back after a reboot, but the sessions only have shells

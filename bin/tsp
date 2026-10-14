@@ -8,10 +8,72 @@ else
   _find='find'
 fi
 
+# Current profile's file (lines = Alt-1..Alt-0).
+_profile_file() {
+  _pf="$($_find "$LOCAL_CONFIG/ts-profiles" -type f \
+    -name "$(cat "$LOCAL_CONFIG/ts-profile")" | head -1)"
+  if test -z "$_pf"; then
+    echo 'First run `tsp e <profile>` to create a profile' >&2
+    return 1
+  fi
+  echo "$_pf"
+}
+
+# Pin <entry> to Alt-<N> (0 = 10), else the first empty key.
+# Moves it if already pinned. Unpinned keys stay blank lines,
+# so the other keys keep their numbers.
+_pin() {
+  _entry="$1"
+  _n="${2:-}"
+  test "$_n" = 0 && _n=10
+  if test -z "$_entry"; then
+    echo "Usage: tsp pin <entry> [N]" >&2
+    return 1
+  fi
+  _pf="$(_profile_file)"
+  _unpin "$_entry" 2>/dev/null
+  if test -z "$_n"; then
+    _n="$(awk 'NR <= 10 && $0 == "" { print NR; exit }
+      END { if (NR < 10) print NR + 1 }' "$_pf" | head -1)"
+  fi
+  if test -z "$_n"; then
+    echo "tsp: no free Alt key; pass N to replace one" >&2
+    return 1
+  fi
+  awk -v n="$_n" -v e="$_entry" '
+    { l[NR] = $0 }
+    END {
+      m = NR > n ? NR : n
+      for (i = 1; i <= m; i++) print (i == n ? e : l[i])
+    }' "$_pf" | sponge "$_pf"
+  echo "Alt-$((_n % 10)) → $_entry" >&2
+}
+
+# Unpin <entry> (or the key <N>): blank its line.
+_unpin() {
+  if test -z "$1"; then
+    echo "Usage: tsp unpin <entry|N>" >&2
+    return 1
+  fi
+  _pf="$(_profile_file)"
+  _k="$1"
+  test "$_k" = 0 && _k=10
+  awk -v k="$_k" '
+    $0 == k || NR "" == k { print ""; next } { print }' \
+    "$_pf" | sponge "$_pf"
+  echo "unpinned $1" >&2
+}
+
 _tmux_speeddial_profile() {
   (
     _config_file="$LOCAL_CONFIG/ts-profile"
     cd $LOCAL_CONFIG/ts-profiles || return 1
+
+    case "$1" in
+      pin) shift; _pin "$@"; return ;;
+      unpin) shift; _unpin "$@"; return ;;
+      path) _profile_file; return ;;
+    esac
 
     if test "$1" = 'edit' -o "$1" = 'e'; then
       shift 1

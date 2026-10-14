@@ -84,13 +84,11 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   (`git worktree list`), so it always reflects reality;
   preview (`wt-preview`) shows branch, last commit, PR state,
   and the first prompt of the worktree's last AI session.
-  Speed-dial entries (above the first heading — a `# Foo` or
-  `Foo:` line — in the order file) show as `N: branch`,
-  worktrees under a heading as `HEADING: branch`, on-disk
-  worktrees not on the board as `⊘ branch`. Selecting one
-  opens its session under the same `<repo>[N]`-or-slug name
-  as Alt-N/`wt open`, so no duplicate session; picking an
-  orphan also offers to adopt it onto the board.
+  Worktrees under a heading (a `# Foo` or `Foo:` line in the
+  order file) show as `HEADING: branch`, on-disk worktrees
+  not on the board as `⊘ branch`. Selecting one opens its
+  session (named by slug, like every entry point); picking
+  an orphan also offers to adopt it onto the board.
 - `wt add <branch>` — create worktree + register
 - `wt fix <url|text>` / `wt feat <url|text>` — Linear-aware
   add. A Linear issue URL becomes
@@ -112,11 +110,7 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   solution."; a project URL (either command) gets the feat
   prompt, widened to the project's overview, documents,
   milestones and issues. Generic (not per-repo) — relies on
-  the default run/vim/cli layout worktrees get with no `.tmux`. The
-  session is named `<repo>[<line>]` (the order-file row it
-  landed on, the Alt-N speed-dial convention) — not the
-  branch slug — so `wt fix`/`feat` and a later Alt-N attach
-  to the *same* session instead of spawning a duplicate.
+  the default run/vim/cli layout worktrees get with no `.tmux`.
   `WT_PROMPT_EXTRA="…"` appends to the kickoff prompt;
   `WT_NO_ATTACH=1` skips attaching (batch kickoffs from
   Claude). Prompt avoids `"`, `$`, backticks.
@@ -140,16 +134,20 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   with a warning. Re-running on an existing worktree just
   opens it. Unrelated to `rt`/`rd`/`rp` below, which park
   *my* worktrees in review sections.
-- `wt rt` / `wt rd` / `wt rp` — park the current worktree:
-  move its board entry into the `# TEAM REVIEW` (`rt`),
-  `# READY TO DEPLOY` (`rd`) or `# PROD REVIEW` (`rp`) section
-  (reusing a freed slot there,
-  else adding a new line; creates the heading if missing) and
-  kill its tmux session — but keep the checkout + branch
-  (PR's still open). Frees a speed-dial slot + session for
-  new tickets. Reachable again via `wt :` (shown as
-  `TEAM REVIEW: branch` / `PROD REVIEW: branch`). Unlike
-  `wt rm`, nothing is removed or registered.
+- `wt rt` / `wt rd` / `wt rp` — move the current worktree's
+  board entry into `# TEAM REVIEW` (`rt`), `# READY TO
+  DEPLOY` (`rd`) or `# PROD REVIEW` (`rp`) (reusing a freed
+  slot there, else a new line; creates the heading if
+  missing), so `wt :` shows it as `TEAM REVIEW: branch`.
+  Only the board changes: checkout, branch and tmux session
+  stay.
+- `wt id` — print the current worktree's slug (= its tmux
+  session name) and copy it, to point other agents at it.
+- `wt pin [N]` / `wt unpin` — put the current worktree on
+  Alt-N (`N` 1–9, 0 = Alt-0; default the first empty key) /
+  take it off. Just edits the ts profile (`tsp pin|unpin`)
+  as `<repo>:<slug>`; Alt-N attaches the existing session,
+  no rebuild. `wt rm` unpins too.
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
   prompts
@@ -165,26 +163,29 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt move [branch]` — stash, create worktree, pop
 - `wt e [repo]` — edit worktree order file. In that buffer
   `<CR>` on an entry runs `wt open` for it (opens/attaches its
-  session under the `<repo>[N]`-or-slug name) and quits vim,
+  session) and quits vim,
   so the pane closes and you land in the worktree. Bound only
   for the worktrees file (ts-*/branch_speeddial keep `<CR>`).
 - `wt open <branch>` — open/attach a board entry's session by
   name, no fzf (what the `wt e` `<CR>` mapping calls).
 
-Order files at `$LOCAL_CONFIG/worktrees/<repo>`. Line 1 =
-default branch; each later line up to the first heading
-(`# Foo`/`Foo:`) = a speed-dial slot (Alt-N). `add`/`fix`/
-`feat` insert into the first freed speed-dial slot if one's
-open, else append to the `# IN PROGRESS` section (reusing a
-freed slot there, else a new line at the section's end) —
-never spilling into a later section's blank or the file
-tail. Removing/moving an entry (`rm`, `rt`/`rd`/`rp`) blanks
-it only if it's a speed-dial slot — there the line number is
-the Alt-N index `wt-resolve` reads, so it must stay stable;
-a row inside a section is deleted outright (not index-
-addressed, so a tidier board wins). No archiving — removing a
-worktree drops it from the board into the registry, where
-`wt resume` brings it back.
+Sessions are always named by worktree slug (the main
+checkout by repo name).
+
+Order files at `$LOCAL_CONFIG/worktrees/<repo>` are the
+board: sections under `# Foo`/`Foo:` headings. `add`/`fix`/
+`feat` append to `# IN PROGRESS` (reusing a freed slot
+there, else a new line at the section's end). Removing/
+moving an entry (`rm`, `rt`/`rd`/`rp`) deletes its row. No
+archiving — removing a worktree drops it from the board into
+the registry, where `wt resume` brings it back.
+
+Alt-N speed-dial is separate: line N of the current ts
+profile (`tsp`, `$LOCAL_CONFIG/ts-profiles/…`; Alt-0 = line
+10). A line is a zoxide name (`notes`, `dotfiles`, `ice-floe`
+= main checkout) or `<repo>:<slug>` for a worktree. Blank
+lines are empty keys, so numbers stay put. Pin with `wt pin`,
+edit with `M-t` (`tsp e`).
 
 Removed worktrees append to `<repo>.registry` (append-only,
 never blanked): `slug<TAB>branch<TAB>sha<TAB>date`. The

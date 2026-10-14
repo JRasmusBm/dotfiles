@@ -54,27 +54,17 @@ _tmux_speeddial() {
       exit 1
     fi
 
-    # Parse repo[N] syntax
-    if echo "$_entry" | "$grep_cmd" -qP '\[\d+\]$'; then
-      _repo="$(echo "$_entry" | sed 's/\[.*$//')"
-      _index="$(echo "$_entry" | "$grep_cmd" -oP '\[\K\d+')"
-      _wt_status=0
-      root_folder="$(wt-resolve "$_repo" "$_index")" \
-        || _wt_status=$?
-      if test "$_wt_status" -eq 0; then
-        session_name="$_entry"
+    # repo:slug pins a worktree; its session is the slug.
+    case "$_entry" in
+      *:*)
+        root_folder="$(wt-resolve "${_entry%%:*}" "${_entry#*:}")"
+        session_name="${_entry#*:}"
         export TMUX_SESSION_NAME="$session_name"
-      elif test "$_wt_status" -eq 2; then
-        session_name="$_repo"
-        export TMUX_SESSION_NAME="$session_name"
-      else
-        exit "$_wt_status"
-      fi
-    else
-      session_name="$_entry"
-    fi
+        ;;
+      *) session_name="$_entry" ;;
+    esac
 
-    if tmux has-session -t "$session_name" 2>/dev/null; then
+    if tmux has-session -t "=$session_name" 2>/dev/null; then
       tmux-attach-to-session "$session_name:cli" || tmux-attach-to-session "$session_name:vim" || ta "$session_name" || true
       return 0
     fi

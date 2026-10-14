@@ -83,8 +83,7 @@ with empty ones skipped:
 
 **Needs action** holds the mismatches from both, fresh ones
 last: merged PR but the ticket isn't Needs live
-verification/Done, or the entry is still on speed-dial or IN
-PROGRESS. Ticket in review but its PR is closed. Ready to
+verification/Done, or the entry is still in IN PROGRESS. Ticket in review but its PR is closed. Ready to
 deploy. Merged/closed board sections that `wt clean` would
 clear, collapsed to a count.
 
