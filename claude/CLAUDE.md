@@ -1,6 +1,8 @@
 # Personal Preferences
 
-At conversation end, propose CLAUDE.md updates if patterns discovered.
+At conversation end, propose CLAUDE.md/skill updates if patterns
+discovered. Before that reflection, and before editing any skill or
+CLAUDE.md, load the repo's `save-learnings` skill if it has one.
 Only write to auto memory for cross-project notes.
 Per-project knowledge goes in repo CLAUDE.md or related skills/docs where it
 can be committed and shared.
