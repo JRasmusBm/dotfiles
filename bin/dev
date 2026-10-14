@@ -155,6 +155,7 @@ dev_pane() {
   _last="$_pane"
   tmux set-option -p -t "$_pane" @dev "$_tag"
   tmux set-option -p -t "$_pane" @dev_log "$_plog"
+  test "${CLAUDECODE:-}" = 1 && tmux set-option -p -t "$_pane" @dev_agent 1
   tmux select-pane -t "$_pane" -T "$_tag"
   tmux send-keys -t "$_pane" -l "( $_cmd ) 2>&1 | tee '$_plog'"
   tmux send-keys -t "$_pane" Enter
