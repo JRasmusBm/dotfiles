@@ -219,6 +219,9 @@ _dev_up() {
     test-slot acquire || exit $?
   fi
   _detach_if_inside_run up "$@"
+  mkdir -p "$(_log_dir)"
+  echo "$$" > "$(_up_pidfile)"
+  trap 'rm -f "$(_up_pidfile)"' EXIT
   _tags=''
   _rebuild
   _source_dev_file "$_df"
@@ -237,11 +240,79 @@ _dev_up() {
   return "$_failed"
 }
 
+_up_pidfile() {
+  echo "$(_log_dir)/dev-up.pid"
+}
+
+_tree() {
+  _queue="$*"
+  _all=''
+  while test -n "$_queue"; do
+    set -- $_queue
+    _all="$_all $1"
+    _p="$1"
+    shift
+    _queue="$* $(pgrep -P "$_p" | tr '\n' ' ')"
+    _queue="$(echo $_queue)"
+  done
+  echo $_all
+}
+
+_alive() {
+  for _p in "$@"; do
+    kill -0 "$_p" 2>/dev/null && printf '%s ' "$_p"
+  done
+  return 0
+}
+
+_stop_inflight_up() {
+  _pf="$(_up_pidfile)"
+  test -f "$_pf" || return 0
+  _up="$(cat "$_pf")"
+  rm -f "$_pf"
+  test -n "$_up" && test "$_up" != "$$" || return 0
+  kill -0 "$_up" 2>/dev/null || return 0
+  echo "dev down: stopping in-flight dev up ($_up)"
+  _reap $(_tree "$_up")
+}
+
+_run_window_pids() {
+  set -- $(_run_window "$_s")
+  test -n "${1:-}" || return 0
+  _tree $(tmux list-panes -t "$1" -F '#{pane_pid}')
+}
+
+_reap() {
+  _left="$(_alive "$@")"
+  for _i in 1 2 3 4 5 6 7 8 9 10; do
+    test -n "$_left" || return 0
+    sleep 0.5
+    _left="$(_alive $_left)"
+  done
+  echo "dev down: TERM $_left"
+  kill -TERM $_left 2>/dev/null || true
+  sleep 3
+  _left="$(_alive $_left)"
+  test -n "$_left" || return 0
+  echo "dev down: KILL $_left"
+  kill -KILL $_left 2>/dev/null || true
+  sleep 1
+  _left="$(_alive $_left)"
+  test -z "$_left" || {
+    echo "dev down: still running: $_left" >&2
+    return 1
+  }
+}
+
 _dev_down() {
   _s="$(_session)"
   _detach_if_inside_run down
+  _stop_inflight_up
+  _old="$(_run_window_pids)"
   _rebuild
-  echo "session: $_s run window reset"
+  _reap $_old
+  echo "session: $_s run window reset, $(echo $_old | wc -w | tr -d ' ') \
+processes stopped"
   if test "${CLAUDECODE:-}" = 1; then
     test-slot release
   fi
