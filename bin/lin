@@ -1,13 +1,21 @@
 #!/bin/sh
 #
-# lin — open a Linear ticket in the browser.
+# lin — open a Linear ticket, or move it along.
 #
 #   lin              open the current branch's ticket
 #   lin o | open     same
 #   lin EXP-1715     open a specific ticket
+#   lin id [BRANCH]  print the branch's ticket id
+#   lin state STATE [ID]
+#                    move the ticket to the team's state named
+#                    STATE (case-insensitive), e.g. "In Progress"
+#   lin block BLOCKER [ID]
+#                    mark the ticket as blocked by BLOCKER
 #
 # With no id, the identifier is read from the current branch
-# (e.g. fix/jrb/exp-1527-slug). Requires $LINEAR_WORKSPACE.
+# (e.g. fix/jrb/exp-1527-slug). Opening requires
+# $LINEAR_WORKSPACE; state/block a personal API key:
+# $LINEAR_API_KEY, else read from polar's secrets/common.
 
 set -e
 
@@ -18,7 +26,7 @@ else
 fi
 
 _branch_identifier() {
-  _br="$(git branch --show-current 2>/dev/null || true)"
+  _br="${1:-$(git branch --show-current 2>/dev/null || true)}"
   if test -z "$_br"; then
     echo "Not on a branch" >&2
     return 1
@@ -48,12 +56,90 @@ _lin_open() {
   open "$_url"
 }
 
+_id() {
+  if test -n "$1"; then
+    printf '%s' "$1" | tr '[:lower:]' '[:upper:]'
+  else
+    _branch_identifier
+  fi
+}
+
+_gql() {
+  test -n "$LINEAR_API_KEY" || LINEAR_API_KEY="$(sed -n \
+    "s/^export LINEAR_API_KEY=['\"]*\([^'\"]*\).*/\1/p" \
+    "${POLAR_DIR:-$HOME/projects/polar}/secrets/common" 2>/dev/null)"
+  if test -z "$LINEAR_API_KEY"; then
+    echo "Set \$LINEAR_API_KEY (polar secrets/common)" >&2
+    return 1
+  fi
+  _q="$1"
+  shift
+  _res="$(jq -n --arg q "$_q" "$@" '{query: $q, variables: $ARGS.named}' \
+    | curl -s https://api.linear.app/graphql \
+      -H 'Content-Type: application/json' \
+      -H "Authorization: $LINEAR_API_KEY" -d @-)"
+  if printf '%s' "$_res" | jq -e '.errors' >/dev/null; then
+    printf '%s' "$_res" | jq -r '.errors[0].message' >&2
+    return 1
+  fi
+  printf '%s' "$_res"
+}
+
+_lin_state() {
+  _want="$1"
+  if test -z "$_want"; then
+    _usage
+    exit 1
+  fi
+  _id="$(_id "$2")" || exit 1
+  _issue="$(_gql 'query($id: String!) { issue(id: $id) {
+    id state { name } team { states { nodes { id name } } } } }' \
+    --arg id "$_id")" || exit 1
+  _uuid="$(printf '%s' "$_issue" | jq -r '.data.issue.id')"
+  _sid="$(printf '%s' "$_issue" | jq -r --arg w "$_want" '
+    .data.issue.team.states.nodes[]
+    | select((.name | ascii_downcase) == ($w | ascii_downcase))
+    | .id + "\t" + .name' | head -1)"
+  _sname="${_sid#*$(printf '\t')}"
+  _sid="${_sid%%$(printf '\t')*}"
+  if test -z "$_sid"; then
+    echo "$_id: no state '$_want' in its team" >&2
+    exit 1
+  fi
+  _cur="$(printf '%s' "$_issue" | jq -r '.data.issue.state.name')"
+  if test "$_cur" = "$_sname"; then
+    echo "$_id: already $_sname" >&2
+    return 0
+  fi
+  _gql 'mutation($id: String!, $s: String!) {
+    issueUpdate(id: $id, input: {stateId: $s}) { success } }' \
+    --arg id "$_uuid" --arg s "$_sid" >/dev/null || exit 1
+  echo "$_id: $_cur → $_sname" >&2
+}
+
+_lin_block() {
+  if test -z "$1"; then
+    _usage
+    exit 1
+  fi
+  _blocker="$(_id "$1")"
+  _id="$(_id "$2")" || exit 1
+  _gql 'mutation($a: String!, $b: String!) {
+    issueRelationCreate(input: {issueId: $a, relatedIssueId: $b,
+      type: blocks}) { success } }' \
+    --arg a "$_blocker" --arg b "$_id" >/dev/null || exit 1
+  echo "$_id: blocked by $_blocker" >&2
+}
+
 _usage() {
-  echo "Usage: lin [o|open] [ID]" >&2
+  sed -n '2,/^$/s/^# \{0,1\}//p' "$0" >&2
 }
 
 case "${1:-o}" in
   o|open) _lin_open "$2" ;;
+  id) _branch_identifier "$2" ;;
+  state) _lin_state "$2" "$3" ;;
+  block) _lin_block "$2" "$3" ;;
   -h|--help|help) _usage ;;
   [A-Za-z]*-[0-9]*) _lin_open "$1" ;;
   *) _usage; exit 1 ;;
