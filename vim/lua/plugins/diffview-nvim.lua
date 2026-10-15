@@ -28,7 +28,9 @@ return {
 
       if #options.fargs <= 0 then
         args = {
-          vim.trim(vim.fn.system "git merge-base `git local-main-branch` HEAD"),
+          vim.trim(
+            vim.fn.system "git merge-base `git remote-main-branch` HEAD"
+          ),
         }
       end
 
