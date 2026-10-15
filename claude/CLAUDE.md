@@ -139,8 +139,24 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   DEPLOY` (`rd`) or `# PROD REVIEW` (`rp`) (reusing a freed
   slot there, else a new line; creates the heading if
   missing), so `wt :` shows it as `TEAM REVIEW: branch`.
-  Only the board changes: checkout, branch and tmux session
-  stay.
+  Checkout, branch and tmux session stay. The branch's Linear
+  ticket, if any, moves to Team review / Ready to deploy /
+  Needs live verification (`lin state`; needs
+  `$LINEAR_API_KEY` from polar `secrets/common`; a Linear
+  failure never stops `wt`).
+- `wt rb [<worktree>|:]` — current worktree is blocked by
+  another (branch or dir; none/`:` = fzf): moves it to
+  `# BLOCKED` and records it in `<repo>.blocked`. When the
+  blocker is removed (`wt rm`/`clean`), it moves back to
+  `# IN PROGRESS` and gets an inbox notification (on its
+  `cli` pane, else its path, so `M-i` lands there). `wt :` preview shows `blocked by`. Linear:
+  ticket → Blocked plus a blocked-by relation when the
+  blocker has a ticket; back to In Progress on unblock.
+- `wt ip` — move the current worktree back to `# IN
+  PROGRESS`, ticket → In Progress (clears a block;
+  `rt`/`rd`/`rp` clear it too).
+- `wt done [:|<name>]` — `wt rm` that first moves the
+  ticket to Done. No arg = the current worktree.
 - `wt id` — print the current worktree's slug (= its tmux
   session name) and copy it, to point other agents at it.
 - `wt pin [N]` / `wt unpin` — put the current worktree on
@@ -152,8 +168,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   whose PR is merged (via `gh`), confirming each; `-f` skips
   prompts
 - `wt resume <slug>`/`:` — re-materialise a removed
-  worktree at the same path (so `claude -r` finds its
-  context). `:` opens the registry graveyard in fzf.
+  worktree at the same path and run `claude --continue` in
+  its new session's `cli` (context is keyed by path). `:`
+  opens the registry graveyard in fzf.
 - `wt forget <slug>` — the only true destroy: drop branch
   + `refs/wt/<slug>` so it leaves the resurrectable set.
   Claude context dir left intact.
@@ -242,13 +259,18 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   ones (`·`) from `notifications.recent`, so "where was I"
   is one pick away. `<Enter>` jumps to the exact pane;
   `ctrl-x` dismisses a pending one.
-- Jumps go by pane id, then `session:window`, then recreate
-  the session at the stored path (e.g. after `wt rt`/`rm`);
-  a truly gone place is cleared (`M-i` skips to the next).
+- Jumps go by pane id, then `session:window` (exact name),
+  then recreate the session at the stored path (its worktree
+  root). A removed worktree comes back first via `wt resume`
+  (Claude continues in `cli`); a place with nothing to
+  resume is cleared (`M-i` skips to the next).
 - A counter badge (`#(notif count)` → green `(N)`, distinct
   pending panes) sits in `status-right` before the date.
 - `M-y` / `notif seen <pane>` — mark this pane done: drop
-  its rows (also what the reply hooks run). `notif clear` —
+  its rows (also what the reply hooks run). `notif seen-path
+  <dir>` drops every row at or under a dir; `wt rm`/`done`/
+  `clean`/`rb`/`rt`/`rd`/`rp` run it for the worktree (not
+  `ip`: that's picking work back up). `notif clear` —
   empty the inbox.
 
 `bin/notify` only appends (atomic single-line `>>`, safe

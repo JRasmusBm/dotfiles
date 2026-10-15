@@ -39,6 +39,10 @@ then
     + "  fe :\(.ports.fe // "-")"' \
     2>/dev/null
 fi
+_bf="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_root##*/}.blocked"
+if test -f "$_bf"; then
+  awk -F '\t' -v s="$_slug" '$1 == s { print "blocked by  " $3 }' "$_bf"
+fi
 echo
 
 # PR state (best-effort; needs gh)

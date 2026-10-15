@@ -34,21 +34,6 @@ _ensure_order_dir() {
   mkdir -p "$LOCAL_CONFIG/worktrees"
 }
 
-_resolve_branch_path() {
-  _branch="$1"
-  _root="$(_main_root)"
-  _slug="$(basename "$_branch")"
-  _wt_path="${_root}/.worktrees/${_slug}"
-
-  if test -d "$_wt_path"; then
-    echo "$_wt_path"
-  elif test -d "${_root}/.worktrees/${_branch}"; then
-    echo "${_root}/.worktrees/${_branch}"
-  else
-    echo "$_root"
-  fi
-}
-
 # Append-only graveyard of removed worktrees. Never
 # blanked — it's the searchable registry behind
 # `wt resume :`. Rows: slug<TAB>branch<TAB>sha<TAB>date
@@ -81,6 +66,68 @@ _repo_hook() {
     return 0
   fi
   "$_rh" "$@" || echo "wt: $_rh $* failed" >&2
+}
+
+# Who blocks whom: slug<TAB>branch<TAB>blocker-slug, one row
+# per blocked worktree.
+_blocked_file() {
+  echo "$LOCAL_CONFIG/worktrees/$(_repo_name).blocked"
+}
+
+_block_drop() {
+  _bf="$(_blocked_file)"
+  test -f "$_bf" || return 0
+  awk -F '\t' -v s="$1" '$1 != s' "$_bf" | sponge "$_bf"
+}
+
+# Move the board entry of <branch>/<dir> into <section>.
+_board_move() {
+  _ensure_order_dir
+  _bm_of="$(_order_file)"
+  touch "$_bm_of"
+  _bm_ln="$(_board_line "$_bm_of" "$1" "$2")"
+  _bm_entry="$1"
+  if test -n "$_bm_ln"; then
+    _bm_entry="$($_sed -n "${_bm_ln}p" "$_bm_of")"
+  fi
+  _of_drop_line "$_bm_ln" "$_bm_of"
+  _of_place_in_section "$3" "$_bm_entry" "$_bm_of"
+  echo "wt: $_bm_entry → # $3" >&2
+}
+
+# Clear the notification inbox for a worktree.
+_notif_clear() {
+  case "$1" in
+    */.worktrees/?*) notif seen-path "$1" >/dev/null 2>&1 || true ;;
+  esac
+}
+
+# Move <branch>'s Linear ticket to state $1, if it has one.
+# Fails only when there is a ticket and Linear wasn't updated.
+_linear() {
+  _li_id="$(lin id "$2" 2>/dev/null)" || return 0
+  lin state "$1" "$_li_id" && return 0
+  echo "wt: Linear not updated" >&2
+  return 1
+}
+
+# The blocker went away: send what it blocked back to
+# # IN PROGRESS and ping it in the notification inbox.
+_unblock_dependents() {
+  _bf="$(_blocked_file)"
+  test -f "$_bf" || return 0
+  awk -F '\t' -v b="$1" '$3 == b { print $1 "\t" $2 }' "$_bf" \
+    | while IFS="$(printf '\t')" read -r _ud_slug _ud_branch; do
+      echo "wt: $1 is gone, unblocking $_ud_slug" >&2
+      _board_move "$_ud_branch" "$_ud_slug" 'IN PROGRESS'
+      _linear 'In Progress' "$_ud_branch" || true
+      _ud_pane="$(tmux display-message -p -t "=$_ud_slug:cli" \
+        '#{pane_id}' 2>/dev/null || true)"
+      ( cd "$(_main_root)/.worktrees/$_ud_slug" 2>/dev/null \
+        && TMUX_PANE="$_ud_pane" notify "Unblocked: $_ud_slug" \
+          "$1 is gone; back in progress" ) >/dev/null 2>&1 || true
+    done
+  awk -F '\t' -v b="$1" '$3 != b && $1 != b' "$_bf" | sponge "$_bf"
 }
 
 _registry_append() {
@@ -123,6 +170,14 @@ _wt_worktrees() {
     /^$/{ if (p ~ /\/\.worktrees\//) print p "\t" b; p=""; b="" }
     END{ if (p != "" && p ~ /\/\.worktrees\//) print p "\t" b }
   '
+}
+
+# "<path>\t<branch>" of the worktree a branch or dir names.
+_wt_match() {
+  _wt_worktrees | awk -F '\t' -v a="$1" '
+    BEGIN { n = a; sub(/.*\//, "", n) }
+    { d = $1; sub(/.*\//, "", d) }
+    $2 == a || d == a || d == n { print; exit }'
 }
 
 _wt_pick() {
@@ -181,8 +236,7 @@ _wt_pick() {
       # Orphan: open its session regardless, and offer to
       # adopt it onto the board.
       _name="${_sel#⊘ }"
-      _target="${_root}/.worktrees/$(basename "$_name")"
-      test -d "$_target" || _target="${_root}/.worktrees/$_name"
+      _target="$(_wt_match "$_name" | cut -f1)"
       printf 'Adopt %s onto the board? [Y/n] ' "$_name" >&2
       { read -r _ans </dev/tty || _ans=y; } 2>/dev/null
       case "${_ans:-y}" in
@@ -347,6 +401,9 @@ _wt_open_with_claude() {
     printf '%s' "$_prompt" >"$_pf"
     tmux send-keys -t "$_session:cli" \
       "claude \"\$(cat $_pf)\"" Enter 2>/dev/null || true
+  elif test -n "${_WT_CONTINUE:-}" && test "$_created" = true; then
+    tmux send-keys -t "$_session:cli" "claude --continue" Enter \
+      2>/dev/null || true
   fi
 
   test -n "$WT_NO_ATTACH" && return 0
@@ -364,7 +421,12 @@ _wt_open() {
     echo "Usage: wt open <branch>" >&2
     exit 1
   fi
-  _wt_open_with_claude "$(_resolve_branch_path "$_branch")" ""
+  _m="$(_wt_match "$_branch")"
+  if test -z "$_m"; then
+    echo "wt: no worktree for '$_branch'" >&2
+    exit 1
+  fi
+  _wt_open_with_claude "${_m%%$(printf '\t')*}" ""
 }
 
 # `wt fix <url>` / `wt feat <url>`: derive a branch from a
@@ -637,6 +699,13 @@ _wt_evict_current() {
   _cur_session="$(tmux display-message -p '#{session_name}' \
     2>/dev/null || true)"
   test -n "$_cur_session" || _cur_session="${TMUX_SESSION_NAME:-}"
+  if test -n "${_WT_DONE:-}"; then
+    if ! _linear Done "$_branch"; then
+      echo "wt: not removing $(basename "$_wt_path")" >&2
+      exit 1
+    fi
+    _WT_DONE=''
+  fi
   cd "$_root"
   _switch_to "$_root"
   _wt_evict "$_branch" "$_wt_path" "$_cur_session"
@@ -661,10 +730,7 @@ _wt_evict() {
   if test -n "$_wt_path_arg"; then
     _wt_path="$_wt_path_arg"
   else
-    _match="$(_wt_worktrees | awk -F '\t' -v a="$_branch" '
-      BEGIN { n = a; sub(/.*\//, "", n) }
-      { d = $1; sub(/.*\//, "", d) }
-      $2 == a || d == a || d == n { print; exit }')"
+    _match="$(_wt_match "$_branch")"
     if test -z "$_match"; then
       echo "wt: no worktree for '$_branch'" >&2
       exit 1
@@ -674,6 +740,10 @@ _wt_evict() {
     test -z "$_match_branch" || _branch="$_match_branch"
   fi
   _wt_name="$(basename "$_wt_path")"
+  if test -n "${_WT_DONE:-}" && ! _linear Done "$_branch"; then
+    echo "wt: not removing $_wt_name" >&2
+    exit 1
+  fi
   # Key the registry + ref on the actual worktree dir — the
   # Claude-context anchor — not on the branch name.
   _slug="$_wt_name"
@@ -701,6 +771,8 @@ _wt_evict() {
   fi
 
   _of_drop_line "$_ln" "$_of"
+  _unblock_dependents "$_slug"
+  _notif_clear "$_wt_path"
 
   echo "wt: removing $_wt_name ($_branch) in background;" \
     "undo with: wt resume $_slug" >&2
@@ -730,12 +802,7 @@ _wt_evict() {
     >/dev/null 2>&1 </dev/null &
 }
 
-# Park the current worktree under a review section ($1, e.g.
-# "TEAM REVIEW" / "PROD REVIEW"): move its board entry there.
-# Checkout, branch and tmux session stay; `wt :` then shows it
-# under that heading.
-_wt_park() {
-  _section="$1"
+_require_worktree() {
   _git_dir="$(cd "$(git rev-parse --git-dir)" && pwd)"
   _common="$(cd "$(git rev-parse --git-common-dir)" \
     && pwd)"
@@ -743,23 +810,59 @@ _wt_park() {
     echo "Not in a worktree" >&2
     exit 1
   fi
+}
 
-  _branch="$(git branch --show-current)"
+# Move the current worktree's board entry into section $1
+# (review sections, back to IN PROGRESS) and its Linear ticket
+# to state $2. Checkout, branch and tmux session stay; `wt :`
+# then shows it under that heading. Clears any block on it.
+_wt_park() {
+  _require_worktree
   _wt_name="$(basename "$(git rev-parse --show-toplevel)")"
+  _branch="$(git branch --show-current)"
+  _block_drop "$_wt_name"
+  _board_move "$_branch" "$_wt_name" "$1"
+  _linear "$2" "$_branch" || true
+  test "$1" = 'IN PROGRESS' \
+    || _notif_clear "$(git rev-parse --show-toplevel)"
+}
 
-  _ensure_order_dir
-  _of="$(_order_file)"
-  touch "$_of"
-
-  _ln="$(_board_line "$_of" "$_branch" "$_wt_name")"
-  _entry="$_branch"
-  if test -n "$_ln"; then
-    _entry="$($_sed -n "${_ln}p" "$_of")"
+# Park the current worktree under # BLOCKED until the blocker
+# (a branch or dir; `:`/none = fzf) is removed, which sends it
+# back to # IN PROGRESS.
+_wt_block() {
+  _require_worktree
+  _self="$(basename "$(git rev-parse --show-toplevel)")"
+  _branch="$(git branch --show-current)"
+  _arg="${1:-:}"
+  if test "$_arg" = ':'; then
+    _arg="$(_wt_worktrees | cut -f1 | xargs -n1 basename \
+      | $_grep -vxF "$_self" \
+      | fzf --reverse --prompt='blocked by> ' \
+        --preview "wt-preview '$(_main_root)' {}" \
+        --preview-window=right,55%,wrap || true)"
+    test -n "$_arg" || exit 0
   fi
-
-  _of_drop_line "$_ln" "$_of"
-  _of_place_in_section "$_section" "$_entry" "$_of"
-  echo "wt: $_entry → # $_section" >&2
+  _m="$(_wt_match "$_arg")"
+  if test -z "$_m"; then
+    echo "wt: no worktree for '$_arg'" >&2
+    exit 1
+  fi
+  _blocker="$(basename "${_m%%$(printf '\t')*}")"
+  if test "$_blocker" = "$_self"; then
+    echo "wt: a worktree can't block itself" >&2
+    exit 1
+  fi
+  _block_drop "$_self"
+  printf '%s\t%s\t%s\n' "$_self" "$_branch" "$_blocker" \
+    >> "$(_blocked_file)"
+  _board_move "$_branch" "$_self" 'BLOCKED'
+  _notif_clear "$(git rev-parse --show-toplevel)"
+  echo "wt: blocked by $_blocker" >&2
+  _linear Blocked "$_branch" || true
+  _bl_id="$(lin id "${_m#*$(printf '\t')}" 2>/dev/null)" || return 0
+  _self_id="$(lin id "$_branch" 2>/dev/null)" || return 0
+  lin block "$_bl_id" "$_self_id" || echo "wt: Linear not updated" >&2
 }
 
 # Pin the current worktree to Alt-N (`tsp pin`), as
@@ -888,6 +991,7 @@ _wt_resume() {
   fi
 
   git wc "$_branch" $_start
+  _repo_hook add "$_slug"
 
   # Put it back on the active board (same as `wt add`)
   _ensure_order_dir
@@ -897,7 +1001,8 @@ _wt_resume() {
     _of_insert "$_branch" "$_of"
   fi
 
-  _switch_to "$_wt_path"
+  # Its Claude context is keyed by this path, so pick it up.
+  _WT_CONTINUE=1 _wt_open_with_claude "$_wt_path" ""
 }
 
 # Hard-forget a slug: drop branch + refs/wt/<slug> so it
@@ -1029,7 +1134,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rt|rd|rp|rm|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|ip|rt|rd|rp|rm|done|clean|resume|forget|dedup|move|e]" >&2
 }
 
 case "${1:-}" in
@@ -1045,9 +1150,12 @@ case "${1:-}" in
   id) _wt_id ;;
   pin) shift; _wt_pin "$@" ;;
   unpin) shift; _wt_unpin "$@" ;;
-  rt) _wt_park 'TEAM REVIEW' ;;
-  rd) _wt_park 'READY TO DEPLOY' ;;
-  rp) _wt_park 'PROD REVIEW' ;;
+  rb) shift; _wt_block "$@" ;;
+  ip) _wt_park 'IN PROGRESS' 'In Progress' ;;
+  rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
+  rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
+  rp) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
+  done) shift; _WT_DONE=1; _wt_evict "${1:-.}" ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
   resume) shift; _wt_resume "$@" ;;

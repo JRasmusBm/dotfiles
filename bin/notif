@@ -39,6 +39,7 @@ _notif_drop() {
   test -f "$_f" || return 0
   _d_match="$_KEY"'
     function hit() {
+      if (m == "path") return $5 == k || index($5, k "/") == 1
       return key() == k && (m != "arrive" || $7 != "sticky")
     }'
   awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
@@ -131,9 +132,10 @@ _notif_rekey() {
 }
 
 # Jump to a pane: by id while it lives, else its session:window,
-# else recreate the session at its path (e.g. after `wt rt`/
-# `rm` killed it). A fallback landing re-keys the rows to the
-# pane landed on. Returns 1 when the place is truly gone.
+# else recreate the session at its path (its worktree root, for
+# a worktree; a removed one comes back via `wt resume`, Claude
+# continuing). A fallback landing re-keys the rows to the pane
+# landed on. Returns 1 when the place is truly gone.
 _notif_jump() {
   _j_key="$1"
   _j_ctx="$2"
@@ -147,18 +149,33 @@ _notif_jump() {
       fi
       ;;
   esac
-  if tmux switch-client -t "$_j_ctx" 2>/dev/null; then
+  if tmux switch-client -t "=$_j_ctx" 2>/dev/null; then
     _notif_rekey "$_j_key" "$_j_ctx"
     return 0
   fi
-  if test -n "$_j_path" && test -d "$_j_path"; then
-    _j_sess="$(tmux-session-name-from-path "$_j_path")"
-    if ! tmux has-session -t "$_j_sess" 2>/dev/null; then
-      ( cd "$_j_path" \
+  _j_home="$_j_path"
+  case "$_j_path" in
+    */.worktrees/*)
+      _j_wt="${_j_path%%/.worktrees/*}/.worktrees/"
+      _j_slug="${_j_path#"$_j_wt"}"
+      _j_wt="$_j_wt${_j_slug%%/*}"
+      if ! test -d "$_j_wt"; then
+        tmux display-message "Resuming ${_j_slug%%/*}…" 2>/dev/null
+        ( cd "${_j_path%%/.worktrees/*}" \
+          && WT_NO_ATTACH=1 wt resume "${_j_slug%%/*}" ) \
+          >/dev/null 2>&1 || true
+      fi
+      _j_home="$_j_wt"
+      ;;
+  esac
+  if test -n "$_j_home" && test -d "$_j_home"; then
+    _j_sess="$(tmux-session-name-from-path "$_j_home")"
+    if ! tmux has-session -t "=$_j_sess" 2>/dev/null; then
+      ( cd "$_j_home" \
         && INITIATED_EXTERNALLY=true default_tmux_session ) \
         >/dev/null 2>&1 || true
     fi
-    if tmux switch-client -t "$_j_sess" 2>/dev/null \
+    if tmux switch-client -t "=$_j_sess" 2>/dev/null \
       || tmux-attach-to-session "$_j_sess" 2>/dev/null; then
       _notif_rekey "$_j_key" "$_j_sess"
       return 0
@@ -273,6 +290,7 @@ case "${1:-}" in
   later) shift; _notif_later "$@" ;;
   count) _notif_count ;;
   seen) shift; _notif_drop "${1:-}" ;;
+  seen-path) shift; _notif_drop "${1:-}" path ;;
   arrive) shift; _notif_drop "${1:-}" arrive ;;
   clear) _notif_clear ;;
   _list) _notif_list ;;
