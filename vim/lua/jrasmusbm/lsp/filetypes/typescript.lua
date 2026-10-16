@@ -19,6 +19,16 @@ function M.setup(options)
   }
   require("lspconfig").eslint.setup {
     filetypes = filetypes,
+    settings = {
+      options = {
+        overrideConfig = {
+          rules = {
+            ["import/no-unused-modules"] = "off",
+            ["import/no-cycle"] = "off",
+          },
+        },
+      },
+    },
   }
 end
 
