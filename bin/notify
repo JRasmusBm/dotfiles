@@ -6,6 +6,19 @@ _title="${1:-Notification}"
 _msg="${2:-done}"
 _sound="${3:-/System/Library/Sounds/Glass.aiff}"
 
+_here="$PWD"
+[ -n "$TMUX_PANE" ] && _here="$(tmux display-message -p -t "$TMUX_PANE" \
+  '#{pane_current_path}' 2>/dev/null || echo "$PWD")"
+case "$_here" in
+  */.worktrees/?*)
+    _wt="${_here#*/.worktrees/}"
+    _repo="${_here%%/.worktrees/*}"
+    _sf="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_repo##*/}.snoozed"
+    [ -f "$_sf" ] && awk -F '\t' -v s="${_wt%%/*}" '$1 == s { f = 1 }
+      END { exit !f }' "$_sf" && exit 0
+    ;;
+esac
+
 osascript -e "display notification \"$_msg\" with title \"$_title\""
 afplay "$_sound" &
 

@@ -27,6 +27,7 @@ asked for each. Steps with no arrow between them run in parallel.
 | Approved | `wt rd` | READY TO DEPLOY | Ready to deploy |
 | Deployed, check prod | `wt rp` | PROD REVIEW | Needs live verification |
 | Waiting on other work | `wt rb <blocker>` | BLOCKED | Blocked + relation |
+| Waiting on a date | `wt sz <when>` | SNOOZED | unchanged |
 | Picking it back up | `wt ip` | IN PROGRESS | In Progress |
 | Finished | `wt done` | (removed) | Done |
 | Abandon, keep history | `wt rm` | (removed) | unchanged |
@@ -36,6 +37,10 @@ asked for each. Steps with no arrow between them run in parallel.
   session: `tmux send-keys -t <slug>:1 'wt …' Enter`.
 - Unblocking is automatic: removing the blocker (`rm`/`done`/
   `clean`) moves the blocked one back and notifies its `cli` pane.
+  Waking is the same, driven by the date instead: any `wt` run on
+  or after it moves the worktree back to the section it was snoozed
+  from and pings it; a blocked one also wakes when unblocked. Snooze is for
+  "not before Monday"; `rb` is for "not until that ships".
 - `wt done` refuses to remove anything if Linear isn't updated;
   the others are best-effort, so check their output.
 - Pointing another agent at this work: `wt id` (the slug).
@@ -46,10 +51,19 @@ When he asks to start something ("please start it", "kick this off")
 and I'm on the main checkout, or on a feature branch that has nothing
 to do with the ask. Never build it in the current checkout.
 
-1. **Ticket.** Create it in Linear and assign it to him: right team,
-   with the problem and anything we decided in chat. If one exists
-   already (e.g. a colleague filed it), reassign it to him instead.
-   Either way, set it to In Progress.
+1. **Ticket.** First look for one that already exists. Colleagues
+   file tickets from Slack (the Linear bot, customer requests), and
+   those get moved between teams and renumbered, so search:
+   - `list_issues` with `query` = the ask's key nouns (e.g. `views`
+     and `MCP`), across teams, every state except Done/Canceled
+   - the board and the disk: `wt :` rows plus `git worktree list |
+     grep <noun>`, since an In Progress ticket has a worktree
+   A hit that covers the ask, or a subset of it, is the ticket:
+   reassign it to him and widen its scope if needed, rather than
+   filing a second one. Partial overlap: link it as related and say
+   so in the report. Only with no hit, create one: right team, with
+   the problem and anything we decided in chat. Either way, set it
+   to In Progress.
 2. → **Worktree + agent** (needs 1): `WT_NO_ATTACH=1 wt fix|feat
    <url>`. The branch starts at the current checkout's HEAD.
 3. → **Brief it** (needs 2): `ListAgents` and find the new session
@@ -82,7 +96,8 @@ so it always becomes a ticket with its own worktree and agent.
    left for the follow-up.
 2. **This ticket.** Patch its description with one short line:
    what was split out and why. Patch, don't rewrite.
-3. **Follow-up ticket.** Same team, project and assignee; blocked
+3. **Follow-up ticket.** Search for an existing one first, as in
+   Start new work step 1. Same team, project and assignee; blocked
    by this ticket. Says what to do, where (files), what stays, and
    what unblocks it (merged, deployed, Rasmus's OK after prod…).
 4. → **Worktree + agent** (needs 3): `WT_NO_ATTACH=1

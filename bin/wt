@@ -80,6 +80,57 @@ _block_drop() {
   awk -F '\t' -v s="$1" '$1 != s' "$_bf" | sponge "$_bf"
 }
 
+# When each snoozed worktree comes back, and to which board section:
+# slug<TAB>branch<TAB>date (YYYY-MM-DD)<TAB>section, one row each.
+_snoozed_file() {
+  echo "$LOCAL_CONFIG/worktrees/$(_repo_name).snoozed"
+}
+
+# The board section (heading) <branch>/<dir> sits under; empty if
+# it isn't on the board.
+_board_section() {
+  _bs_of="$(_order_file)"
+  _bs_ln="$(_board_line "$_bs_of" "$1" "$2")"
+  test -n "$_bs_ln" || return 0
+  awk -v n="$_bs_ln" '
+    NR > n { exit }
+    /^[[:space:]]*#/ || /:[[:space:]]*$/ {
+      h = $0
+      sub(/^[[:space:]]*#+[[:space:]]*/, "", h)
+      sub(/:[[:space:]]*$/, "", h)
+    }
+    END { print h }' "$_bs_of"
+}
+
+# Whether the board still has a heading named $1.
+_board_has_section() {
+  awk -v want="$1" '
+    /^[[:space:]]*#/ || /:[[:space:]]*$/ {
+      h = $0
+      sub(/^[[:space:]]*#+[[:space:]]*/, "", h)
+      sub(/:[[:space:]]*$/, "", h)
+      if (toupper(h) == toupper(want)) f = 1
+    }
+    END { exit !f }' "$(_order_file)"
+}
+
+_snooze_drop() {
+  _sf="$(_snoozed_file)"
+  test -f "$_sf" || return 0
+  awk -F '\t' -v s="$1" '$1 != s' "$_sf" | sponge "$_sf"
+}
+
+# Read a human date ("monday", "tomorrow", "+3 days", "2026-10-19")
+# as YYYY-MM-DD; empty when it is not a date.
+_snooze_date() {
+  _sd=''
+  if command -v gdate >/dev/null 2>&1; then
+    _sd="$(gdate -d "$1" +%F 2>/dev/null || true)"
+  fi
+  test -n "$_sd" || _sd="$(date -d "$1" +%F 2>/dev/null || true)"
+  echo "$_sd"
+}
+
 # Move the board entry of <branch>/<dir> into <section>.
 _board_move() {
   _ensure_order_dir
@@ -120,6 +171,7 @@ _unblock_dependents() {
   awk -F '\t' -v b="$1" '$3 == b { print $1 "\t" $2 }' "$_bf" \
     | while IFS="$(printf '\t')" read -r _ud_slug _ud_branch; do
       echo "wt: $1 is gone, unblocking $_ud_slug" >&2
+      _snooze_drop "$_ud_slug"
       _board_move "$_ud_branch" "$_ud_slug" 'IN PROGRESS'
       _linear 'In Progress' "$_ud_branch" || true
       _ud_pane="$(tmux display-message -p -t "=$_ud_slug:cli" \
@@ -129,6 +181,34 @@ _unblock_dependents() {
           "$1 is gone; back in progress" ) >/dev/null 2>&1 || true
     done
   awk -F '\t' -v b="$1" '$3 != b && $1 != b' "$_bf" | sponge "$_bf"
+}
+
+# A snoozed worktree whose date has arrived goes back to the
+# section it was snoozed from (else # IN PROGRESS) and gets a ping in its notification inbox. Runs on
+# every wt invocation, so the board corrects itself the next time
+# wt is used on or after the date.
+_wt_wake() {
+  git rev-parse --git-dir >/dev/null 2>&1 || return 0
+  _sf="$(_snoozed_file)"
+  test -f "$_sf" || return 0
+  _today="$(date +%F)"
+  _due="$(awk -F '\t' -v t="$_today" '$3 <= t' "$_sf")"
+  test -n "$_due" || return 0
+  awk -F '\t' -v t="$_today" '$3 > t' "$_sf" | sponge "$_sf"
+  echo "$_due" \
+    | while IFS="$(printf '\t')" read -r _wk_slug _wk_branch _wk_date _wk_sec; do
+      test -n "$_wk_slug" || continue
+      echo "wt: $_wk_slug was snoozed until $_wk_date — waking it" >&2
+      test -n "$_wk_sec" && _board_has_section "$_wk_sec" \
+        || _wk_sec='IN PROGRESS'
+      _board_move "$_wk_branch" "$_wk_slug" "$_wk_sec"
+      _wk_pane="$(tmux display-message -p -t "=$_wk_slug:cli" \
+        '#{pane_id}' 2>/dev/null || true)"
+      ( cd "$(_main_root)/.worktrees/$_wk_slug" 2>/dev/null \
+        && TMUX_PANE="$_wk_pane" notify "Awake: $_wk_slug" \
+          "snoozed until $_wk_date; back in $_wk_sec" ) \
+        >/dev/null 2>&1 || true
+    done
 }
 
 _registry_append() {
@@ -773,6 +853,7 @@ _wt_evict() {
 
   _of_drop_line "$_ln" "$_of"
   _unblock_dependents "$_slug"
+  _snooze_drop "$_slug"
   _notif_clear "$_wt_path"
 
   echo "wt: removing $_wt_name ($_branch) in background;" \
@@ -816,12 +897,13 @@ _require_worktree() {
 # Move the current worktree's board entry into section $1
 # (review sections, back to IN PROGRESS) and its Linear ticket
 # to state $2. Checkout, branch and tmux session stay; `wt :`
-# then shows it under that heading. Clears any block on it.
+# then shows it under that heading. Clears any block or snooze on it.
 _wt_park() {
   _require_worktree
   _wt_name="$(basename "$(git rev-parse --show-toplevel)")"
   _branch="$(git branch --show-current)"
   _block_drop "$_wt_name"
+  _snooze_drop "$_wt_name"
   _board_move "$_branch" "$_wt_name" "$1"
   _linear "$2" "$_branch" || true
   test "$1" = 'IN PROGRESS' \
@@ -864,6 +946,41 @@ _wt_block() {
   _bl_id="$(lin id "${_m#*$(printf '\t')}" 2>/dev/null)" || return 0
   _self_id="$(lin id "$_branch" 2>/dev/null)" || return 0
   lin block "$_bl_id" "$_self_id" || echo "wt: Linear not updated" >&2
+}
+
+# Park the current worktree under # SNOOZED until <when>
+# ("monday", "tomorrow", "+3 days", "2026-10-19"). The next wt run
+# on or after that date sends it back to the section it came from
+# and pings its cli pane; a block stays, and unblocking wakes it. Linear is left alone: snoozing is when I plan to
+# look at it again, not a state the team shares.
+_wt_snooze() {
+  _require_worktree
+  _self="$(basename "$(git rev-parse --show-toplevel)")"
+  _branch="$(git branch --show-current)"
+  if test -z "${1:-}"; then
+    echo "wt: snooze needs a date (monday, tomorrow, +3 days," \
+      "2026-10-19)" >&2
+    exit 1
+  fi
+  _until="$(_snooze_date "$1")"
+  if test -z "$_until"; then
+    echo "wt: can't read '$1' as a date" >&2
+    exit 1
+  fi
+  if test "$(echo "$_until" | tr -d '-')" -le "$(date +%Y%m%d)"; then
+    echo "wt: $_until is not in the future" >&2
+    exit 1
+  fi
+  _from="$(_board_section "$_branch" "$_self")"
+  case "$(echo "$_from" | tr 'a-z' 'A-Z')" in
+    SNOOZED) _from='' ;;
+  esac
+  _snooze_drop "$_self"
+  printf '%s\t%s\t%s\t%s\n' "$_self" "$_branch" "$_until" "$_from" \
+    >> "$(_snoozed_file)"
+  _board_move "$_branch" "$_self" 'SNOOZED'
+  _notif_clear "$(git rev-parse --show-toplevel)"
+  echo "wt: snoozed until $_until" >&2
 }
 
 # Pin the current worktree to Alt-N (`tsp pin`), as
@@ -1135,8 +1252,14 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|ip|rt|rd|rp|rm|done|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|sz|wake|ip|rt|rd|rp|rm|done|clean|resume|forget|dedup|move|e]" >&2
 }
+
+# Snoozed worktrees whose date has come wake up on any wt run.
+case "${1:-}" in
+  wake|"") : ;;
+  *) _wt_wake || true ;;
+esac
 
 case "${1:-}" in
   "") _usage; exit 1 ;;
@@ -1152,6 +1275,8 @@ case "${1:-}" in
   pin) shift; _wt_pin "$@" ;;
   unpin) shift; _wt_unpin "$@" ;;
   rb) shift; _wt_block "$@" ;;
+  sz|snooze) shift; _wt_snooze "$@" ;;
+  wake) _wt_wake ;;
   ip) _wt_park 'IN PROGRESS' 'In Progress' ;;
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
