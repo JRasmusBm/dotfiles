@@ -1,0 +1,46 @@
+#!/bin/sh
+
+# tmux status badge: the current worktree's board section
+# (`wt` order file), as coloured text. Blocked wins over
+# the section. Prints nothing outside a worktree.
+# Usage: wt-badge [dir]
+
+cd "${1:-.}" 2>/dev/null || exit 0
+_top="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
+case "$_top" in
+  */.worktrees/?*) ;;
+  *) exit 0 ;;
+esac
+_root="${_top%%/.worktrees/*}"
+_slug="${_top##*/}"
+_branch="$(git branch --show-current 2>/dev/null)"
+_cfg="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_root##*/}"
+
+if test -f "$_cfg.blocked" \
+  && awk -F '\t' -v s="$_slug" '$1 == s { f = 1 } END { exit !f }' \
+    "$_cfg.blocked"; then
+  echo '#[fg=red]blocked '
+  exit 0
+fi
+
+_section="$(test -f "$_cfg" && awk -v b="$_branch" -v s="$_slug" '
+  /^[[:space:]]*#/ || /:[[:space:]]*$/ {
+    h = $0
+    sub(/^[[:space:]]*#+[[:space:]]*/, "", h)
+    sub(/:[[:space:]]*$/, "", h)
+    next
+  }
+  { e = $0; gsub(/^[[:space:]]+|[[:space:]]+$/, "", e) }
+  e != "" && (e == b || e == s) { print toupper(h); exit }
+' "$_cfg")"
+
+case "$_section" in
+  'IN PROGRESS') _c=yellow ;;
+  'TEAM REVIEW') _c=cyan ;;
+  'READY TO DEPLOY') _c=green ;;
+  'PROD REVIEW') _c=magenta ;;
+  BLOCKED) _c=red ;;
+  '') _c='#aaaaaa' _section='OFF BOARD' ;;
+  *) _c='#aaaaaa' ;;
+esac
+echo "#[fg=$_c]$(echo "$_section" | tr 'A-Z' 'a-z') "

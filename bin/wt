@@ -93,6 +93,7 @@ _board_move() {
   _of_drop_line "$_bm_ln" "$_bm_of"
   _of_place_in_section "$3" "$_bm_entry" "$_bm_of"
   echo "wt: $_bm_entry → # $3" >&2
+  tmux refresh-client -S 2>/dev/null || true
 }
 
 # Clear the notification inbox for a worktree.

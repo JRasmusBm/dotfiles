@@ -197,6 +197,10 @@ moving an entry (`rm`, `rt`/`rd`/`rp`) deletes its row. No
 archiving — removing a worktree drops it from the board into
 the registry, where `wt resume` brings it back.
 
+`wt-badge` puts the current worktree's section in tmux
+`status-right`, before the inbox count, as coloured text
+(`in progress`, `team review`, `blocked`, `off board`, …).
+
 Alt-N speed-dial is separate: line N of the current ts
 profile (`tsp`, `$LOCAL_CONFIG/ts-profiles/…`; Alt-0 = line
 10). A line is a zoxide name (`notes`, `dotfiles`, `ice-floe`
