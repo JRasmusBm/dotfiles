@@ -306,6 +306,13 @@ Off by default; many sessions share the RAM. Load the
 `dev-stack` skill before `dev up`, stop what you started,
 never stop what you didn't.
 
+Type-aware eslint/tsc builds a full TS program (1.5–4 GB) per
+run. A `PreToolUse` hook (`heavy-slot hook`) prefixes agents'
+`eslint`/`tsc`/`yarn lint*`/`check-ts*` commands with
+`heavy-slot take $$`: at most `HEAVY_SLOTS` (2) run at once,
+the rest wait ("heavy-slot: … waiting" on stderr). Give such
+commands a long `timeout`. `heavy-slot ls` shows holders.
+
 ## Git
 
 Use `g s <branch>` to switch branches (not raw

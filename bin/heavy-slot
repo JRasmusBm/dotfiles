@@ -1,0 +1,92 @@
+#!/bin/sh
+#
+# heavy-slot — cap how many type-aware eslint / tsc runs go at once.
+# Each builds a full TypeScript program (1.5–4 GB), and agents in
+# separate worktrees share nothing, so a few at once swap the laptop.
+#
+#   heavy-slot run CMD...  wait for a free slot, run CMD, free it
+#   heavy-slot take PID    wait for a free slot and hold it for PID
+#   heavy-slot ls          list held slots
+#   heavy-slot hook        PreToolUse hook for Bash: prefixes agents'
+#                          eslint/tsc/lint commands with
+#                          `heavy-slot take $$`, so the slot lives
+#                          as long as the tool's shell
+#
+# Slots: HEAVY_SLOTS (default 2). A slot is a dir holding the pid that
+# holds it; a dead pid frees it.
+
+set -e
+
+_max="${HEAVY_SLOTS:-2}"
+_dir="${LOCAL_CONFIG:-$HOME/.config}/heavy-slots"
+mkdir -p "$_dir"
+
+_take() {
+  _i=1
+  while test "$_i" -le "$_max"; do
+    _s="$_dir/$_i"
+    if mkdir "$_s" 2>/dev/null; then
+      echo "$_owner" > "$_s/pid"
+      _held="$_s"
+      return 0
+    fi
+    _p="$(cat "$_s/pid" 2>/dev/null || true)"
+    if test -n "$_p" && ! kill -0 "$_p" 2>/dev/null; then
+      rm -rf "$_s"
+      continue
+    fi
+    _i=$((_i + 1))
+  done
+  return 1
+}
+
+_wait() {
+  _held=''
+  _said=''
+  until _take; do
+    if test -z "$_said"; then
+      echo "heavy-slot: $_max eslint/tsc runs going, waiting" >&2
+      _said=1
+    fi
+    sleep 3
+  done
+}
+
+_run() {
+  _owner=$$
+  _wait
+  trap 'rm -rf "$_held"' EXIT
+  trap 'exit 130' INT TERM
+  _status=0
+  "$@" || _status=$?
+  exit "$_status"
+}
+
+_hook() {
+  jq -c '
+    .tool_input as $in
+    | ($in.command // "") as $c
+    | if ($c | test("^heavy-slot take ")) then empty
+      elif ($c | test("(^|[;&|({]|\\n)\\s*([A-Za-z_]+=\\S*\\s+)*((npx|yarn|pnpm|exec|time)\\s+)*(\\S*/)?(eslint|tsc)(\\s|$)")
+        or ($c | test("(^|[;&|({]|\\n)\\s*([A-Za-z_]+=\\S*\\s+)*(yarn|pnpm|npm run)\\s+([^;&|]*\\s)?(lint|check-ts)(:[a-z:-]+)?(\\s|$)")))
+      then {hookSpecificOutput: {hookEventName: "PreToolUse",
+        updatedInput: ($in + {command: ("heavy-slot take $$\n" + $c)})}}
+      else empty end'
+}
+
+_ls() {
+  for _s in "$_dir"/*; do
+    test -d "$_s" || continue
+    _p="$(cat "$_s/pid" 2>/dev/null || true)"
+    printf '%s\t%s\t%s\n' "${_s##*/}" "$_p" \
+      "$(ps -o command= -p "$_p" 2>/dev/null | cut -c1-80)"
+  done
+}
+
+case "${1:-}" in
+  run) shift; _run "$@" ;;
+  take) _owner="${2:?usage: heavy-slot take PID}"; _wait ;;
+  hook) _hook ;;
+  ls) _ls ;;
+  *) sed -n '2,/^$/s/^# \{0,1\}//p' "$0" >&2; exit 1 ;;
+esac

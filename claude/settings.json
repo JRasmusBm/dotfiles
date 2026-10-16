@@ -1,10 +1,10 @@
 {
   "cleanupPeriodDays": 1825,
   "permissions": {
-    "defaultMode": "auto",
     "allow": [
       "Bash(gh pr ready *)"
-    ]
+    ],
+    "defaultMode": "auto"
   },
   "model": "opus[1m]",
   "hooks": {
@@ -74,6 +74,16 @@
             "timeout": 15
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.bin/heavy-slot hook",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SessionEnd": [
@@ -113,6 +123,7 @@
       "effortLevel": "medium"
     }
   },
+  "tui": "default",
   "voice": {
     "enabled": true,
     "mode": "hold"
@@ -120,13 +131,13 @@
   "theme": "dark-ansi",
   "editorMode": "vim",
   "remoteControlAtStartup": true,
-  "skipAutoPermissionPrompt": true,
-  "voiceEnabled": true,
   "agentPushNotifEnabled": false,
+  "skipAutoPermissionPrompt": true,
   "autoMode": {
     "allow": [
       "$defaults",
       "Marking the user's own pull requests ready for review with `gh pr ready` (never merging them)"
     ]
-  }
+  },
+  "voiceEnabled": true
 }
