@@ -12,7 +12,10 @@ set -e
 #
 #   notif               picker: pending, then recent
 #   notif next <pane>   pending pane after <pane>, else oldest
-#   notif later <pane>  re-queue <pane> at the back
+#   notif later <pane>  re-queue <pane> at the back; if it runs
+#                       a command (not a shell, Claude or an
+#                       interactive app like vim), notify
+#                       when that finishes instead (zsh precmd)
 #   notif seen <key>    drop a pane's rows (Claude reply hook)
 #   notif arrive <key>  drop its non-sticky rows (focus hooks)
 #   notif count         status-bar badge
@@ -226,6 +229,18 @@ _notif_later() {
   _l_key="${1:?usage: notif later <pane>}"
   touch "$_f"
   _now="$(date +%s)"
+  _cmd="$(tmux display-message -p -t "$_l_key" '#{pane_current_command}')"
+  case "$_cmd" in
+    zsh|bash|sh|[0-9]*) ;;
+    vi|vim|nvim|less|more|man|top|htop|btop|lazygit|tig|fzf|ssh|mosh) ;;
+    psql|mysql|sqlite3|redis-cli|python*|ipython|irb|ghci|watch) ;;
+    *)
+      tmux set -p -t "$_l_key" @notif_done 1
+      tmux display-message "Will notify when $_cmd finishes" 2>/dev/null \
+        || true
+      return 0
+      ;;
+  esac
   _tmp="$(mktemp)"
   awk -F'\t' -v k="$_l_key" -v now="$_now" "$_KEY"'
     key() != k { print; next }

@@ -253,7 +253,11 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   pending), so repeated `M-i` rotates through them.
 - `M-u` / `notif later <pane>` — snooze: move this pane to
   the back of the queue as sticky (adds a row if none was
-  pending). For "come back to this".
+  pending). For "come back to this". If the pane is running
+  a command (not a shell, Claude or an interactive app
+  like vim/less/lazygit, see `bin/notif`), it instead sets
+  `@notif_done` and zsh's `precmd` notifies when that
+  command finishes ("done" / "FAILED (exit N)").
 - `M-o` / `notif` — fzf picker: pending panes (`●`, latest
   message + `×N`, newest first), then the last 10 cleared
   ones (`·`) from `notifications.recent`, so "where was I"

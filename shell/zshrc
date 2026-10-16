@@ -152,15 +152,27 @@ fi
 
 function preexec() {
   timer=$(($($date_cmd +%s%0N)/1000000))
+  _last_cmd="$1"
 }
 
 function precmd() {
+  local _status=$?
   if [ $timer ]; then
     now=$(($($date_cmd +%s%0N)/1000000))
     elapsed=$(($now-$timer))
 
     export RPROMPT="%F{cyan}${elapsed}ms %{$reset_color%} $RPROMPT_BASE"
     unset timer
+    if (( elapsed > 1000 )) && [[ -n "$TMUX_PANE" ]] \
+      && [[ -n "$(tmux show -pqv -t "$TMUX_PANE" @notif_done)" ]]; then
+      tmux set -pu -t "$TMUX_PANE" @notif_done
+      if (( _status == 0 )); then
+        notify "$_last_cmd" "done"
+      else
+        notify "$_last_cmd" "FAILED (exit $_status)" \
+          /System/Library/Sounds/Basso.aiff
+      fi
+    fi
   fi
   (( $+functions[_polar_env_refresh] )) && _polar_env_refresh
 }
