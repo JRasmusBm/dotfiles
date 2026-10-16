@@ -1,7 +1,10 @@
 {
   "cleanupPeriodDays": 1825,
   "permissions": {
-    "defaultMode": "auto"
+    "defaultMode": "auto",
+    "allow": [
+      "Bash(gh pr ready *)"
+    ]
   },
   "model": "opus[1m]",
   "hooks": {
@@ -119,5 +122,11 @@
   "remoteControlAtStartup": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "agentPushNotifEnabled": false
+  "agentPushNotifEnabled": false,
+  "autoMode": {
+    "allow": [
+      "$defaults",
+      "Marking the user's own pull requests ready for review with `gh pr ready` (never merging them)"
+    ]
+  }
 }
