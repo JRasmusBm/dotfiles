@@ -22,7 +22,8 @@ asked for each. Steps with no arrow between them run in parallel.
 |---|---|---|---|
 | Start a ticket | `wt fix\|feat <url>` | IN PROGRESS | (kickoff prompt) |
 | Review someone's PR | `wt review <pr>` | IN PROGRESS | — |
-| PR up for review | `wt rt` | TEAM REVIEW | Team review |
+| My PR ready (green) | `lin state "Owner review"` | IN PROGRESS | Owner review |
+| He sends it to the team | `wt rt` | TEAM REVIEW | Team review |
 | Approved | `wt rd` | READY TO DEPLOY | Ready to deploy |
 | Deployed, check prod | `wt rp` | PROD REVIEW | Needs live verification |
 | Waiting on other work | `wt rb <blocker>` | BLOCKED | Blocked + relation |
@@ -62,14 +63,19 @@ to do with the ask. Never build it in the current checkout.
    - to rebase onto origin/dev if HEAD wasn't dev
    - "decided, don't grill" when the design is settled
 
-Report: ticket link, slug, the gist of the brief.
+Report: ticket link, slug, the gist of the brief. The brief ends my
+part. Don't watch the agent (no `notify_when_idle`, no asking it to
+report back to me): its own notifications reach Rasmus's inbox.
 
 ## Follow-up ticket and PR
 
-Whenever we agree, or he asks, that something is done in a
-follow-up rather than in the current PR. A follow-up that only
-lives in chat or a PR comment gets lost, so it always becomes a
-ticket with its own worktree and agent.
+Only when he asks, or explicitly agrees in chat, that
+something is done in a follow-up rather than in the current
+PR. Never split on my own: a ticket step that waits on
+another PR stays in this ticket (hold the PR, or add it after
+a rebase). Unsure → ask with options, don't split. A
+follow-up that only lives in chat or a PR comment gets lost,
+so it always becomes a ticket with its own worktree and agent.
 
 1. **This PR.** Do whatever makes the split work here (e.g. a
    temporary flag), commit, push, and say in the PR body what is
