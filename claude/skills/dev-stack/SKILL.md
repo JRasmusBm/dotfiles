@@ -92,6 +92,30 @@ own. Don't `dev up` again just for that.
   production.
 - When done, free the slot (see Test slots); that quits your Chrome.
 
+## Turn repeat browser checks into tests
+
+A devtools run proves the change once; a test proves it on every PR.
+Before or after a devtools session, ask whether the check should live
+on as a test, and pick the cheapest layer that covers it:
+
+- **Logic, data shaping, a hook, a resolver** → unit or component test
+  (jest / testing-library). Cheapest, no stack, no flake.
+- **A user flow a regression would silently break** (navigate, edit,
+  save, see the result) on seeded `techtests` fixtures → Cypress e2e,
+  via the repo's `end-to-end-tests` skill. Extend the nearest existing
+  spec before adding a new one.
+- **Stay manual** for one-off or visual checks, anything that depends on
+  one tenant's data, and backend-only changes: the PR e2e gate builds
+  only the frontend and calls deployed staging, so it never runs the
+  PR's backend; cover those with service tests.
+
+Weigh the e2e cost before adding: every spec adds minutes to all 3 CI
+shards, leans on the one small shared staging synth task, and is a new
+flake source. A spec earns its place when the flow is user-critical and
+has broken before, or would otherwise need a devtools re-check on every
+change. Say in the PR which checks became tests and which stayed
+manual, and why.
+
 ## Show what you tested
 
 jrb should see the result without starting a stack. For any change a
