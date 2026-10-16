@@ -15,7 +15,7 @@ install_node() {
   sudo npm install npm@latest -g
   sudo npm install neovim@latest -g
   sudo npm install typescript@latest -g
-  sudo npm install prettier@latest -g
+  sudo npm install prettier@3.5.2 -g
 }
 
 install_node
