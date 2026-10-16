@@ -1,6 +1,6 @@
 ---
 name: work-management
-description: "How Rasmus manages work: one unit of work = Linear ticket + branch + worktree + tmux session + agent + board row, kept in sync by `wt`. MUST load when starting, parking, blocking, finishing or splitting work: picking up a ticket, moving it to review/deploy/prod check, 'this is blocked by X', 'it's done', or whenever you and Rasmus agree (or he asks) that something goes in a follow-up ticket or PR ('do that in a follow-up', 'split it', 'once this ships', 'put it behind a release flag and create a follow-up PR to release to everybody', 'stack a PR on this one'), or you're about to propose one."
+description: "How Rasmus manages work: one unit of work = Linear ticket + branch + worktree + tmux session + agent + board row, kept in sync by `wt`. MUST load when starting (including a code fix asked for mid-chat, before the first `wt`), parking, blocking, finishing or splitting work: picking up a ticket, moving it to review/deploy/prod check, 'this is blocked by X', 'snooze it until monday', 'it's done', or whenever you and Rasmus agree (or he asks) that something goes in a follow-up ticket or PR ('do that in a follow-up', 'split it', 'once this ships', 'put it behind a release flag and create a follow-up PR to release to everybody', 'stack a PR on this one'), or you're about to propose one."
 ---
 
 # Work management
@@ -27,7 +27,7 @@ asked for each. Steps with no arrow between them run in parallel.
 | Approved | `wt rd` | READY TO DEPLOY | Ready to deploy |
 | Deployed, check prod | `wt rp` | PROD REVIEW | Needs live verification |
 | Waiting on other work | `wt rb <blocker>` | BLOCKED | Blocked + relation |
-| Waiting on a date | `wt sz <when>` | SNOOZED | unchanged |
+| Waiting on a date ("snooze it until monday") | `wt sz <when>` | SNOOZED | unchanged |
 | Picking it back up | `wt ip` | IN PROGRESS | In Progress |
 | Finished | `wt done` | (removed) | Done |
 | Abandon, keep history | `wt rm` | (removed) | unchanged |
@@ -47,9 +47,12 @@ asked for each. Steps with no arrow between them run in parallel.
 
 ## Start new work
 
-When he asks to start something ("please start it", "kick this off")
-and I'm on the main checkout, or on a feature branch that has nothing
-to do with the ask. Never build it in the current checkout.
+When he asks to start something ("please start it", "kick this off"),
+or asks for a code change mid-chat ("can we fix that?", "can we
+convert it instead?") while I'm on the main checkout or a feature
+branch that has nothing to do with the ask. A fix that grows out of
+an investigation is new work too. Never build it in the current
+checkout, and never run `wt add` with free text in place of a ticket.
 
 1. **Ticket.** First look for one that already exists. Colleagues
    file tickets from Slack (the Linear bot, customer requests), and
@@ -76,6 +79,20 @@ to do with the ask. Never build it in the current checkout.
    - files and line pointers
    - to rebase onto origin/dev if HEAD wasn't dev
    - "decided, don't grill" when the design is settled
+   - when he's away ("I'm off for the weekend"): never block,
+     use `iterate`, go to a ready PR against dev and run
+     `/iterate-review` until clean, ticket → Owner review,
+     open questions in the PR body, never merge. It's how he spends
+     spare tokens: on a 5h/session limit, wake at the reset and
+     go on; stop only when the weekly limit runs out. Keep the
+     Mac awake (`caffeinate -ims -t <secs>`, detached). A turn
+     cut by sleep leaves the agent idle: nudge its `cli` pane
+     with `send-keys "<text>"`, then a separate `send-keys C-m`
+     (Enter in the same call lands as a newline). That
+     brief is enough; no `swarm` babysitting. Slack saved-for-
+     later items and his Linear Todos are one queue: triage both.
+     Prod/staging infra changes, purchases and date-gated steps
+     stay with him.
 
 Report: ticket link, slug, the gist of the brief. The brief ends my
 part. Don't watch the agent (no `notify_when_idle`, no asking it to
