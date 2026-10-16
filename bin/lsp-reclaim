@@ -22,7 +22,7 @@ _expr='luaeval("require(\"jrasmusbm.lsp.idle\").status()")'
 _pick=$(
   for _s in /tmp/nvim-server-* "${TMPDIR:-/tmp/}"nvim."$USER"/*/nvim.*; do
     [ -S "$_s" ] || continue
-    _st=$(timeout 2 nvim --server "$_s" --remote-expr "$_expr" 2>/dev/null)
+    _st=$(timeout -k 1 2 nvim --server "$_s" --remote-expr "$_expr" 2>/dev/null)
     set -- $_st
     case "$1$2" in ('' | *[!0-9]*) continue ;; esac
     [ "${1:-0}" -gt 0 ] && [ "${2:-0}" -gt 0 ] &&
@@ -37,6 +37,6 @@ if [ -n "$_dry" ]; then
   exit 0
 fi
 echo "$_line" >>"${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog/$(date +%F).log"
-timeout 2 nvim --server "$_pick" \
+timeout -k 1 2 nvim --server "$_pick" \
   --remote-expr 'luaeval("require(\"jrasmusbm.lsp.idle\").suspend()")' \
   >/dev/null 2>&1
