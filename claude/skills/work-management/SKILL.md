@@ -61,6 +61,10 @@ checkout, and never run `wt add` with free text in place of a ticket.
      and `MCP`), across teams, every state except Done/Canceled
    - the board and the disk: `wt :` rows plus `git worktree list |
      grep <noun>`, since an In Progress ticket has a worktree
+   - colleagues' open PRs: `gh pr list --search <noun>`
+   Linear is mostly his own list, a bit Jamie's; others track work
+   elsewhere. So no ticket doesn't mean nobody's on it: never report
+   it that way.
    A hit that covers the ask, or a subset of it, is the ticket:
    reassign it to him and widen its scope if needed, rather than
    filing a second one. Partial overlap: link it as related and say
