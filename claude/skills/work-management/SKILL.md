@@ -81,7 +81,8 @@ checkout, and never run `wt add` with free text in place of a ticket.
    - "decided, don't grill" when the design is settled
    - when he's away ("I'm off for the weekend"): never block,
      use `iterate`, go to a ready PR against dev and run
-     `/iterate-review` until clean, ticket → Owner review,
+     `/iterate-review` until clean (it marks the PR ready, and
+     that beats any "draft" wording), ticket → Owner review,
      open questions in the PR body, never merge. It's how he spends
      spare tokens: on a 5h/session limit, wake at the reset and
      go on; stop only when the weekly limit runs out. Keep the
