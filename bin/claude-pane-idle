@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+# claude-pane-idle <pane> — succeed when <pane> runs Claude with an
+# empty prompt in vim INSERT mode, not in tmux copy mode, so keys
+# sent to it land as a new prompt and touch nothing typed.
+
+_p="$1"
+test -n "$_p" || { sed -n '3,5s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+
+set -- $(tmux display-message -p -t "$_p" \
+  '#{pane_in_mode} #{pane_current_command}' 2>/dev/null) || exit 1
+test "${1:-}" = 0 || exit 1
+case "${2:-}" in
+  claude|[0-9]*.[0-9]*.[0-9]*) ;;
+  *) exit 1 ;;
+esac
+
+tmux capture-pane -p -e -t "$_p" -S -80 | LC_ALL=C awk '
+  { r = $0; s = $0; gsub(/\033\[[0-9;]*m/, "", s) }
+  s ~ /^❯/ { p = r }
+  s ~ /-- INSERT --/ { i = 1 }
+  END {
+    sub(/^(\033\[[0-9;]*m)*❯(\302\240| )*/, "", p)
+    sub(/\033\[2m.*/, "", p)
+    gsub(/\033\[[0-9;]*m|[[:space:]]/, "", p)
+    exit !(p == "" && i)
+  }'
