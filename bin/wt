@@ -121,13 +121,18 @@ _snooze_drop() {
 }
 
 # Read a human date ("monday", "tomorrow", "+3 days", "2026-10-19")
-# as YYYY-MM-DD; empty when it is not a date.
+# as YYYY-MM-DD, or a time ("+3 hours", "15:00", "tomorrow 9am")
+# as YYYY-MM-DDTHH:MM; empty when it is not a date.
 _snooze_date() {
   _sd=''
-  if command -v gdate >/dev/null 2>&1; then
-    _sd="$(gdate -d "$1" +%F 2>/dev/null || true)"
+  _sd_fmt=+%F
+  if echo "$1" | grep -Eiq 'hour|min|noon|[0-9] ?(am|pm)|[0-9]:[0-9]'; then
+    _sd_fmt=+%FT%H:%M
   fi
-  test -n "$_sd" || _sd="$(date -d "$1" +%F 2>/dev/null || true)"
+  if command -v gdate >/dev/null 2>&1; then
+    _sd="$(gdate -d "$1" "$_sd_fmt" 2>/dev/null || true)"
+  fi
+  test -n "$_sd" || _sd="$(date -d "$1" "$_sd_fmt" 2>/dev/null || true)"
   echo "$_sd"
 }
 
@@ -183,7 +188,7 @@ _unblock_dependents() {
   awk -F '\t' -v b="$1" '$3 != b && $1 != b' "$_bf" | sponge "$_bf"
 }
 
-# A snoozed worktree whose date has arrived goes back to the
+# A snoozed worktree whose date or time has arrived goes back to the
 # section it was snoozed from (else # IN PROGRESS) and gets a ping in its notification inbox. Runs on
 # every wt invocation, so the board corrects itself the next time
 # wt is used on or after the date.
@@ -191,13 +196,14 @@ _wt_wake() {
   git rev-parse --git-dir >/dev/null 2>&1 || return 0
   _sf="$(_snoozed_file)"
   test -f "$_sf" || return 0
-  _today="$(date +%F)"
-  _due="$(awk -F '\t' -v t="$_today" '$3 <= t' "$_sf")"
+  _now="$(date +%FT%H:%M)"
+  _due="$(awk -F '\t' -v t="$_now" '$3 <= t' "$_sf")"
   test -n "$_due" || return 0
-  awk -F '\t' -v t="$_today" '$3 > t' "$_sf" | sponge "$_sf"
+  awk -F '\t' -v t="$_now" '$3 > t' "$_sf" | sponge "$_sf"
   echo "$_due" \
     | while IFS="$(printf '\t')" read -r _wk_slug _wk_branch _wk_date _wk_sec; do
       test -n "$_wk_slug" || continue
+      _wk_date="$(echo "$_wk_date" | tr T ' ')"
       echo "wt: $_wk_slug was snoozed until $_wk_date — waking it" >&2
       test -n "$_wk_sec" && _board_has_section "$_wk_sec" \
         || _wk_sec='IN PROGRESS'
@@ -949,9 +955,10 @@ _wt_block() {
 }
 
 # Park the current worktree under # SNOOZED until <when>
-# ("monday", "tomorrow", "+3 days", "2026-10-19"). The next wt run
-# on or after that date sends it back to the section it came from
-# and pings its cli pane; a block stays, and unblocking wakes it. Linear is left alone: snoozing is when I plan to
+# ("monday", "tomorrow", "+3 days", "2026-10-19", "+3 hours",
+# "15:00"). The next wt run on or after that date sends it back to
+# the section it came from and pings its cli pane; a time also
+# starts a detached timer that runs `wt wake` then; a block stays, and unblocking wakes it. Linear is left alone: snoozing is when I plan to
 # look at it again, not a state the team shares.
 _wt_snooze() {
   _require_worktree
@@ -959,7 +966,7 @@ _wt_snooze() {
   _branch="$(git branch --show-current)"
   if test -z "${1:-}"; then
     echo "wt: snooze needs a date (monday, tomorrow, +3 days," \
-      "2026-10-19)" >&2
+      "+3 hours, 15:00, 2026-10-19)" >&2
     exit 1
   fi
   _until="$(_snooze_date "$1")"
@@ -967,8 +974,14 @@ _wt_snooze() {
     echo "wt: can't read '$1' as a date" >&2
     exit 1
   fi
-  if test "$(echo "$_until" | tr -d '-')" -le "$(date +%Y%m%d)"; then
-    echo "wt: $_until is not in the future" >&2
+  case "$_until" in
+    *T*) _future="$(awk -v a="$_until" -v b="$(date +%FT%H:%M)" \
+      'BEGIN { print (a > b) }')" ;;
+    *) _future="$(test "$(echo "$_until" | tr -d '-')" -gt \
+      "$(date +%Y%m%d)" && echo 1 || echo 0)" ;;
+  esac
+  if test "$_future" != 1; then
+    echo "wt: $(echo "$_until" | tr T ' ') is not in the future" >&2
     exit 1
   fi
   _from="$(_board_section "$_branch" "$_self")"
@@ -980,7 +993,20 @@ _wt_snooze() {
     >> "$(_snoozed_file)"
   _board_move "$_branch" "$_self" 'SNOOZED'
   _notif_clear "$(git rev-parse --show-toplevel)"
-  echo "wt: snoozed until $_until" >&2
+  case "$_until" in
+    *T*) _snooze_timer "$_until" "$(git rev-parse --show-toplevel)" ;;
+  esac
+  echo "wt: snoozed until $(echo "$_until" | tr T ' ')" >&2
+}
+
+# Detached timer: at <when> run `wt wake` from <dir>, so a timed
+# snooze wakes even when nobody runs wt.
+_snooze_timer() {
+  _st_secs=$(( $(gdate -d "$1" +%s) - $(date +%s) ))
+  test "$_st_secs" -ge 0 || _st_secs=0
+  _st_wt="$(command -v wt || echo "$0")"
+  nohup sh -c 'sleep "$1"; cd "$2" && exec "$3" wake' \
+    sh "$_st_secs" "$2" "$_st_wt" >/dev/null 2>&1 &
 }
 
 # Pin the current worktree to Alt-N (`tsp pin`), as

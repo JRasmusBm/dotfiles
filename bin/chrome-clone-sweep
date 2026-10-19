@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# chrome-clone-sweep [-n] — delete Google Chrome's code_sign_clone
+# copies (~1.4 GB each) that no running Chrome can be using. Chrome
+# copies its bundle there at launch and only removes it on a clean
+# quit, so every killed devtools Chrome leaks one. -n only prints.
+
+_dry=
+while getopts n _o; do
+  case $_o in
+    n) _dry=1 ;;
+    *) exit 2 ;;
+  esac
+done
+
+_tmp=$(getconf DARWIN_USER_TEMP_DIR)
+_dir="${_tmp%/T/}/X/com.google.Chrome.code_sign_clone"
+[ -d "$_dir" ] || exit 0
+
+_now=$(date +%s)
+_keep_from=$((_now - ${CHROME_CLONE_MIN_AGE:-600}))
+_oldest=$(
+  ps -axo pid=,comm= |
+    awk '/\/Contents\/MacOS\/Google Chrome$/ { print $1 }' |
+    while read -r _pid; do
+      _start=$(ps -o lstart= -p "$_pid") || continue
+      date -j -f '%a %b %d %T %Y' "$_start" +%s 2>/dev/null
+    done | sort -n | head -1
+)
+[ -n "$_oldest" ] && [ $((_oldest - 120)) -lt "$_keep_from" ] &&
+  _keep_from=$((_oldest - 120))
+_min=$(((_now - _keep_from) / 60 + 1))
+
+_old=$(find "$_dir" -mindepth 1 -maxdepth 1 -name 'code_sign_clone.*' \
+  -mmin +"$_min")
+[ -n "$_old" ] || exit 0
+
+_line="### $(date '+%F %T') chrome-clone-sweep $(echo "$_old" | wc -l | tr -d ' ') clones older than ${_min}m"
+if [ -n "$_dry" ]; then
+  echo "$_line"
+  echo "$_old"
+  exit 0
+fi
+echo "$_line" >>"${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog/$(date +%F).log"
+echo "$_old" | while read -r _c; do rm -rf "$_c"; done

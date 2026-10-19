@@ -153,9 +153,11 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   ticket → Blocked plus a blocked-by relation when the
   blocker has a ticket; back to In Progress on unblock.
 - `wt sz <when>` (`snooze`) — park the current worktree under
-  `# SNOOZED` until a date: `monday`, `tomorrow`, `+3 days`,
-  `2026-10-19` (parsed by `gdate -d`, must be in the future),
-  recorded in `<repo>.snoozed` as slug/branch/date/section.
+  `# SNOOZED` until a date or time: `monday`, `tomorrow`,
+  `+3 days`, `2026-10-19`, `+3 hours`, `15:00` (parsed by
+  `gdate -d`, must be in the future), recorded in
+  `<repo>.snoozed` as slug/branch/date[Ttime]/section. A time
+  also starts a detached timer that runs `wt wake` then.
   Every `wt` run wakes whatever is due — back to the section it
   was snoozed from (else `# IN PROGRESS`) with an inbox
   notification, same path as unblocking — so the board
