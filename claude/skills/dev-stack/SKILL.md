@@ -1,6 +1,6 @@
 ---
 name: dev-stack
-description: Load before starting, using or stopping a worktree's local dev stack (`dev up`/`dev down`, penv, the be/fe/admin panes) or testing in the browser through chrome-devtools — 'run the app', 'test it in the browser', 'check it in devtools', 'start the stack', 'dev up'. The stack is off by default; start it only to test, stop it when done, and never stop a stack you didn't start.
+description: Load before starting, using or stopping a worktree's local dev stack (`dev up`/`dev down`, penv, the be/fe/admin panes) or testing in the browser through chrome-devtools, local or on staging/production after a deploy — 'run the app', 'test it in the browser', 'check it in devtools', 'start the stack', 'dev up'. The stack is off by default; start it only to test, stop it when done, and never stop a stack you didn't start.
 ---
 
 # Dev stack: off unless you're testing
@@ -38,12 +38,18 @@ stacks never take a slot and are never blocked.
   exits 0 you hold the slot; carry on. When it exits 75 it printed the
   next wait (backoff doubles from 30s, capped at 20 minutes): say the
   new time and wait again. Keep working on other things meanwhile.
-- **Done:** `dev down` if you started the stack, else `test-slot
-  release`. Either one quits your devtools Chrome (only yours, other
-  agents in this session keep theirs) and frees the slot once no agent
-  in the session still claims it. Slots also free when your pane or
-  session ends, or after 30 idle minutes with no stack up, but don't
-  rely on that.
+- **Done, pausing or blocked** (the moment you stop actively using the
+  browser — including when you give up on it, hit a blocker you need
+  the user to resolve, or pause for an AskUserQuestion / open-ended
+  reply — not when the whole task ends): `dev down` if you started
+  the stack, else `test-slot release`. "I'll need the browser again
+  in a few minutes" is still a release — the slot is scarce and a
+  user reply is open-ended. Reacquire with `dev up` when you resume;
+  it's cheap. Either command quits your devtools Chrome (only yours,
+  other agents in this session keep theirs) and frees the slot once
+  no agent in the session still claims it. Slots also free when your
+  pane or session ends, or after 30 idle minutes with no stack up,
+  but don't rely on that.
 - `test-slot ls` shows who holds what.
 
 ## Start, test, stop
