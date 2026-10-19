@@ -12,7 +12,8 @@
 #                       Chrome (the MCP relaunches it on the next call);
 #                       the slot frees when no pane claims it
 #   test-slot touch     mark this session's slot as in use now
-#   test-slot ls        list slots
+#   test-slot ls        list slots (also the default)
+#   test-slot :         fzf-pick a slot holder, switch to its pane
 #   test-slot hook      PreToolUse hook for chrome-devtools tools:
 #                       acquire or block the call with a wait message
 #
@@ -307,6 +308,18 @@ _ls() {
   _unlock
 }
 
+_pick() {
+  _line="$(_ls | sed 1d | fzf --prompt='slot> ')"
+  test -n "$_line" || exit 1
+  _t="$(echo "$_line" | grep -o '%[0-9]*' | head -1)"
+  test -n "$_t" || _t="=$(echo "$_line" | awk '{ print $1 }')"
+  if test -n "${TMUX:-}"; then
+    tmux switch-client -t "$_t"
+  else
+    tmux attach-session -t "$_t"
+  fi
+}
+
 _hook() {
   cat > /dev/null
   if _out="$(_acquire 2>&1)"; then
@@ -321,10 +334,11 @@ case "${1:-}" in
   wait) _wait ;;
   release) shift; _release "$@" ;;
   touch) _touch ;;
-  ls) _ls ;;
+  ''|ls) _ls ;;
+  :) _pick ;;
   hook) _hook ;;
   *)
-    echo "Usage: test-slot [acquire|wait|release|touch|ls|hook]" >&2
+    echo "Usage: test-slot [acquire|wait|release|touch|ls|:|hook]" >&2
     exit 1
     ;;
 esac
