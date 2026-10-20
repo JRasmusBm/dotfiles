@@ -172,8 +172,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt ip` — move the current worktree back to `# IN
   PROGRESS`, ticket → In Progress (clears a block;
   `rt`/`rd`/`rp` clear it too).
-- `wt done [:|<name>]` — `wt rm` that first moves the
-  ticket to Done. No arg = the current worktree.
+- `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
+  that first moves the ticket to Done / Canceled (refuses
+  to remove if Linear fails). No arg = the current worktree.
 - `wt id` — print the current worktree's slug (= its tmux
   session name) and copy it, to point other agents at it.
 - `wt pin [N]` / `wt unpin` — put the current worktree on

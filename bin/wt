@@ -786,12 +786,12 @@ _wt_evict_current() {
   _cur_session="$(tmux display-message -p '#{session_name}' \
     2>/dev/null || true)"
   test -n "$_cur_session" || _cur_session="${TMUX_SESSION_NAME:-}"
-  if test -n "${_WT_DONE:-}"; then
-    if ! _linear Done "$_branch"; then
+  if test -n "${_WT_STATE:-}"; then
+    if ! _linear "$_WT_STATE" "$_branch"; then
       echo "wt: not removing $(basename "$_wt_path")" >&2
       exit 1
     fi
-    _WT_DONE=''
+    _WT_STATE=''
   fi
   cd "$_root"
   _switch_to "$_root"
@@ -827,7 +827,7 @@ _wt_evict() {
     test -z "$_match_branch" || _branch="$_match_branch"
   fi
   _wt_name="$(basename "$_wt_path")"
-  if test -n "${_WT_DONE:-}" && ! _linear Done "$_branch"; then
+  if test -n "${_WT_STATE:-}" && ! _linear "$_WT_STATE" "$_branch"; then
     echo "wt: not removing $_wt_name" >&2
     exit 1
   fi
@@ -1278,7 +1278,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|sz|wake|ip|rt|rd|rp|rm|done|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|sz|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
 }
 
 # Snoozed worktrees whose date has come wake up on any wt run.
@@ -1307,7 +1307,8 @@ case "${1:-}" in
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
   rp) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
-  done) shift; _WT_DONE=1; _wt_evict "${1:-.}" ;;
+  done) shift; _WT_STATE=Done; _wt_evict "${1:-.}" ;;
+  cancel) shift; _WT_STATE=Canceled; _wt_evict "${1:-.}" ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
   resume) shift; _wt_resume "$@" ;;

@@ -30,18 +30,19 @@ asked for each. Steps with no arrow between them run in parallel.
 | Waiting on a date ("snooze it until monday") | `wt sz <when>` | SNOOZED | unchanged |
 | Picking it back up | `wt ip` | IN PROGRESS | In Progress |
 | Finished | `wt done` | (removed) | Done |
+| Dropped, won't do | `wt cancel` | (removed) | Canceled |
 | Abandon, keep history | `wt rm` | (removed) | unchanged |
 | Bring back | `wt resume <slug>` | — | — |
 
 - These act on the worktree of the pane they run in. For another
   session: `tmux send-keys -t <slug>:1 'wt …' Enter`.
 - Unblocking is automatic: removing the blocker (`rm`/`done`/
-  `clean`) moves the blocked one back and notifies its `cli` pane.
+  `cancel`/`clean`) moves the blocked one back and notifies its `cli` pane.
   Waking is the same, driven by the date instead: any `wt` run on
   or after it moves the worktree back to the section it was snoozed
   from and pings it; a blocked one also wakes when unblocked. Snooze is for
   "not before Monday"; `rb` is for "not until that ships".
-- `wt done` refuses to remove anything if Linear isn't updated;
+- `wt done`/`cancel` refuse to remove anything if Linear isn't updated;
   the others are best-effort, so check their output.
 - Pointing another agent at this work: `wt id` (the slug).
 
