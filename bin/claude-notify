@@ -43,7 +43,20 @@ _pr_class() {
         else empty end' 2>/dev/null
 }
 
+_after_local_command() {
+  test -f "$TRANSCRIPT" || return 1
+  tail -40 "$TRANSCRIPT" | jq -rs '
+    [ .[] | select(.type == "user" or .type == "assistant"
+        or .subtype == "local_command") ]
+    | last | .subtype // ""' 2>/dev/null | grep -qx local_command
+}
+
 case "$TYPE" in
+  idle_prompt)
+    # A slash command like cswap-auto's /remote-control left no
+    # reply to wait for.
+    _after_local_command && exit 0
+    ;;
   permission_prompt)
     NOTIFY_CLASS=blocked notify "Claude: $CONTEXT" "needs permission" \
       /System/Library/Sounds/Funk.aiff
