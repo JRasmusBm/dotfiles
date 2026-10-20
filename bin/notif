@@ -11,7 +11,9 @@ set -e
 # recent file, listed under the pending ones in the picker.
 #
 #   notif               picker: pending, then recent
-#   notif next <pane>   pending pane after <pane>, else oldest
+#   notif next <pane>   pending pane after <pane> in rank order
+#                       (class, see notify: env, merge, blocked,
+#                       fail, check, unset, fyi; then oldest)
 #   notif later <pane>  re-queue <pane> at the back; if it runs
 #                       a command (not a shell, Claude or an
 #                       interactive app like vim), notify
@@ -29,7 +31,11 @@ _recent() {
   echo "$(_inbox).recent"
 }
 
-_KEY='function key() { return $6 != "" ? $6 : $2 }'
+_KEY='function key() { return $6 != "" ? $6 : $2 }
+function rank(c) {
+  return c == "env" ? 1 : c == "merge" ? 2 : c == "blocked" ? 3 \
+    : c == "fail" ? 4 : c == "check" ? 5 : c == "fyi" ? 7 : 6
+}'
 
 # Drop rows for key $1 (only non-sticky ones when $2 is
 # `arrive`), logging them to the recent file. Fast no-op when
@@ -86,7 +92,8 @@ _collapse() {
     {
       k = key()
       if (index(skip, " " k " ")) next
-      if (!(k in ts)) order[++n] = k
+      if (!(k in ts)) { order[++n] = k; r[k] = 9 }
+      if (rank($8) < r[k]) r[k] = rank($8)
       count[k]++
       if ($1 + 0 >= ts[k] + 0) {
         ts[k] = $1; ctx[k] = $2; msg[k] = $4; path[k] = $5
@@ -94,7 +101,9 @@ _collapse() {
     }
     END {
       for (i = 2; i <= n; i++)
-        for (j = i; j > 1 && ts[order[j]] > ts[order[j-1]]; j--) {
+        for (j = i; j > 1 && (r[order[j]] < r[order[j-1]] \
+            || (r[order[j]] == r[order[j-1]] \
+              && ts[order[j]] > ts[order[j-1]])); j--) {
           t = order[j]; order[j] = order[j-1]; order[j-1] = t
         }
       if (max > 0 && n > max) n = max
@@ -205,14 +214,22 @@ _notif_next() {
   _here_key="${1:-}"
   while test -f "$_f"; do
     _line="$(awk -F'\t' -v h="$_here_key" "$_KEY"'
-      !(key() in seen) {
-        seen[key()] = 1
-        row[++n] = key() "\t" $2 "\t" $5
-        if (key() == h) at = n
+      {
+        k = key()
+        if (!(k in r)) { o[++n] = k; r[k] = 9; t[k] = $1 }
+        if (rank($8) < r[k]) r[k] = rank($8)
+        if ($1 + 0 < t[k] + 0) t[k] = $1
+        row[k] = k "\t" $2 "\t" $5
       }
       END {
+        for (i = 2; i <= n; i++)
+          for (j = i; j > 1 && (r[o[j]] < r[o[j-1]] \
+              || (r[o[j]] == r[o[j-1]] && t[o[j]] < t[o[j-1]])); j--) {
+            x = o[j]; o[j] = o[j-1]; o[j-1] = x
+          }
+        for (i = 1; i <= n; i++) if (o[i] == h) at = i
         if (n == 0 || (at && n == 1)) exit
-        print row[at % n + 1]
+        print row[o[at % n + 1]]
       }' "$_f")"
     test -n "$_line" || break
     _go "$(printf '%s' "$_line" | cut -f1)" \

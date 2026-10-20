@@ -1,7 +1,17 @@
 #!/bin/sh
 
+# Claude's Notification hook. Classifies what the agent needs from
+# me from facts, not from its wording, so `notif next` (M-i) can
+# take the most valuable stop first (see NOTIFY_CLASS in notify):
+#   merge    its PR is open, not draft, CLEAN and green (wins over
+#            a question: the agent's offer rides along in the text)
+#   blocked  a permission prompt, or its last message asks me
+#   fail     its PR has a failing check
+#   fyi      anything else ("done", nothing for me)
+
 INPUT=$(cat)
 TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
+TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // empty')
 
 # Tmux context (session:window.pane) or fallback to cwd
 if [ -n "$TMUX_PANE" ]; then
@@ -13,13 +23,54 @@ fi
 # Sticky: stays in the inbox until I reply (notif seen hook)
 export NOTIFY_MODE=sticky
 
-# Map type to message + sound
+_last_text() {
+  test -f "$TRANSCRIPT" || return 0
+  tail -40 "$TRANSCRIPT" | jq -rs '
+    [ .[] | select(.type == "assistant")
+      | .message.content[]? | select(.type == "text") | .text ]
+    | last // ""' 2>/dev/null
+}
+
+_pr_class() {
+  timeout 5 gh pr view --json number,isDraft,mergeStateStatus,statusCheckRollup,body \
+    2>/dev/null | jq -r '
+      ([.statusCheckRollup[]? | (.conclusion // .state // "")]) as $c
+      | if ($c | any(. == "FAILURE" or . == "ERROR" or . == "TIMED_OUT"))
+          then "fail\tCI red on #\(.number)"
+        elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
+          and ((.body // "") | test("do not merge"; "i") | not)
+          then "merge\tREADY TO MERGE #\(.number)"
+        else empty end' 2>/dev/null
+}
+
 case "$TYPE" in
   permission_prompt)
-    notify "Claude: $CONTEXT" "needs permission" \
+    NOTIFY_CLASS=blocked notify "Claude: $CONTEXT" "needs permission" \
       /System/Library/Sounds/Funk.aiff
+    exit 0
+    ;;
+esac
+
+_text="$(_last_text | sed -e 's/[[:space:]]*$//')"
+_q=""
+case "$_text" in
+  *\?) _q="$(printf '%s\n' "$_text" | tail -1 | cut -c1-80)" ;;
+esac
+
+_pr="$(_pr_class)"
+case "$_pr" in
+  merge*)
+    NOTIFY_CLASS=merge notify "Claude: $CONTEXT" \
+      "${_pr#*	}${_q:+ (asks: $_q)}"
     ;;
   *)
-    notify "Claude: $CONTEXT" "done"
+    if [ -n "$_q" ]; then
+      NOTIFY_CLASS=blocked notify "Claude: $CONTEXT" "asks: $_q" \
+        /System/Library/Sounds/Funk.aiff
+    elif [ -n "$_pr" ]; then
+      NOTIFY_CLASS="${_pr%%	*}" notify "Claude: $CONTEXT" "${_pr#*	}"
+    else
+      NOTIFY_CLASS=fyi notify "Claude: $CONTEXT" "done"
+    fi
     ;;
 esac

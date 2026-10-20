@@ -1,6 +1,13 @@
 #!/bin/sh
 
 # notify "title" "message" [sound]
+#
+# NOTIFY_CLASS ranks it for `notif next` (M-i), most valuable stop
+# first: env (machine-wide: VPN, disk; one fix unblocks many
+# agents), merge (one keystroke ships a PR), blocked (an agent
+# waits on my answer), fail, check (verify after deploy), fyi
+# (nothing needed: inbox only, no toast, sound or bell). Unset
+# (git-w8, bw8, ...) pings as before and ranks after check.
 
 _title="${1:-Notification}"
 _msg="${2:-done}"
@@ -19,11 +26,14 @@ case "$_here" in
     ;;
 esac
 
+_class="${NOTIFY_CLASS:-}"
+[ "$_class" = fyi ] || {
 osascript -e "display notification \"$_msg\" with title \"$_title\""
 afplay "$_sound" &
+}
 
 # Tmux bell for status bar highlight
-if [ -n "$TMUX_PANE" ]; then
+if [ -n "$TMUX_PANE" ] && [ "$_class" != fyi ]; then
   _tty="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_tty}')"
   if [ -n "$_tty" ]; then
     printf '\a' > "$_tty"
@@ -51,12 +61,12 @@ if [ -n "$LOCAL_CONFIG" ]; then
     _path="$PWD"
   fi
   mkdir -p "$(dirname "$_inbox")"
-  # Row: epoch  ctx  title  message  path  pane  mode. The path
+  # Row: epoch  ctx  title  message  path  pane  mode  class. The path
   # is the stable anchor `notif` reopens from when the session
   # has since been killed (e.g. by `wt rt`/`rm`).
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" \
-    "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" >> "$_inbox"
+    "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" >> "$_inbox"
   focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
   # Update the status-bar counter (`notif count`) right away.
   if [ -n "$TMUX_PANE" ]; then
