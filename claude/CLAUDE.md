@@ -34,9 +34,11 @@ Adding lines? Name what they replace.
 
 ## Questions
 
-Prefer AskUserQuestion with options over plain text
-questions. Easier to pick + annotate a 90% correct
-suggestion than retype from scratch.
+Questions stall work. Default: don't ask; act on the
+cheap-to-undo option and say what you assumed. When a
+question is unavoidable, ask it in plain text, once, at the
+end, with your recommended answer. No AskUserQuestion
+dialogs unless I ask to pick between options.
 
 ## Communication
 
