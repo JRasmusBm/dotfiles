@@ -1,6 +1,6 @@
 ---
 name: work-management
-description: "How Rasmus manages work: one unit of work = Linear ticket + branch + worktree + tmux session + agent + board row, kept in sync by `wt`. MUST load when starting (including a code fix asked for mid-chat, before the first `wt`), parking, blocking, finishing or splitting work: picking up a ticket, moving it to review/deploy/prod check, 'this is blocked by X', 'snooze it until monday', 'it's done', or whenever you and Rasmus agree (or he asks) that something goes in a follow-up ticket or PR ('do that in a follow-up', 'split it', 'once this ships', 'put it behind a release flag and create a follow-up PR to release to everybody', 'stack a PR on this one'), or you're about to propose one."
+description: "How Rasmus manages work: one unit of work = Linear ticket + branch + worktree + tmux session + agent + board row, kept in sync by `wt`. MUST load when starting (including a code fix asked for mid-chat, before the first `wt`; loads alongside claim-work, never instead of it), parking, blocking, finishing or splitting work: picking up a ticket, moving it to review/deploy/prod check, 'this is blocked by X', 'snooze it until monday', 'it's done', or whenever you and Rasmus agree (or he asks) that something goes in a follow-up ticket or PR ('do that in a follow-up', 'split it', 'once this ships', 'put it behind a release flag and create a follow-up PR to release to everybody', 'stack a PR on this one'), or you're about to propose one."
 ---
 
 # Work management
@@ -54,23 +54,25 @@ branch that has nothing to do with the ask. A fix that grows out of
 an investigation is new work too. Never build it in the current
 checkout, and never run `wt add` with free text in place of a ticket.
 
-1. **Ticket.** First look for one that already exists. Colleagues
-   file tickets from Slack (the Linear bot, customer requests), and
-   those get moved between teams and renumbered, so search:
-   - `list_issues` with `query` = the ask's key nouns (e.g. `views`
-     and `MCP`), across teams, every state except Done/Canceled
+1. **Claim.** Nobody else may already be doing it. If the repo has
+   a `claim-work` skill (ice-floe does), load it and run its check
+   and claim; it's the team's shared rule on who owns what, so it
+   wins there. Not on where a new ticket goes: a POL subteam, never
+   POL itself unless he asks. EXP (Experience: agents, dashboards,
+   connectors, UX) or PLA (Platform: data infrastructure), picked
+   by the team description. Search wider than it does, too:
+   - `list_issues` across every team, not only POL: tickets get
+     moved and renumbered (EXP-, PLA-)
    - the board and the disk: `wt :` rows plus `git worktree list |
      grep <noun>`, since an In Progress ticket has a worktree
    - colleagues' open PRs: `gh pr list --search <noun>`
-   Linear is mostly his own list, a bit Jamie's; others track work
-   elsewhere. So no ticket doesn't mean nobody's on it: never report
-   it that way.
-   A hit that covers the ask, or a subset of it, is the ticket:
-   reassign it to him and widen its scope if needed, rather than
-   filing a second one. Partial overlap: link it as related and say
-   so in the report. Only with no hit, create one: right team, with
-   the problem and anything we decided in chat. Either way, set it
-   to In Progress.
+   Someone else owns it → stop before any `wt`, tell him who, with
+   the evidence (when he's away: park it as blocked, don't ask).
+   A ticket of his, or one with no owner, that covers the ask, or
+   part of it, is the ticket: assign it to him and widen its scope
+   rather than filing a second one. Partial overlap: link it as
+   related and say so in the report. No hit: create one, with the
+   problem and what we decided in chat. Either way, In Progress.
 2. → **Worktree + agent** (needs 1): `WT_NO_ATTACH=1 wt fix|feat
    <url>`. The branch starts at the current checkout's HEAD.
 3. → **Brief it** (needs 2): `ListAgents` and find the new session
@@ -83,6 +85,8 @@ checkout, and never run `wt add` with free text in place of a ticket.
    - files and line pointers
    - to rebase onto origin/dev if HEAD wasn't dev
    - "decided, don't grill" when the design is settled
+   - "already claimed as <ticket>": its `claim-work` check finds
+     his own ticket and carries on, without claiming a second time
    - when he's away ("I'm off for the weekend"): never block,
      use `iterate`, go to a ready PR against dev and run
      `/iterate-review` until clean (it marks the PR ready, and
