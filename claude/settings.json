@@ -136,7 +136,8 @@
   "autoMode": {
     "allow": [
       "$defaults",
-      "Marking the user's own pull requests ready for review with `gh pr ready` (never merging them)"
+      "Marking the user's own pull requests ready for review with `gh pr ready` (never merging them)",
+      "Commenting `@coderabbitai review` on the user's own pull requests to trigger a review"
     ]
   },
   "voiceEnabled": true
