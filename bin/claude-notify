@@ -3,7 +3,8 @@
 # Claude's Notification hook. Classifies what the agent needs from
 # me from facts, not from its wording, so `notif next` (M-i) can
 # take the most valuable stop first (see NOTIFY_CLASS in notify):
-#   merge    its PR is open, not draft, CLEAN and green (wins over
+#   merge    its PR is open, not draft, CLEAN, green and based on dev
+#            (a stacked PR is fyi until its base merges; wins over
 #            a question: the agent's offer rides along in the text)
 #   blocked  a permission prompt, or its last message asks me
 #   fail     its PR has a failing check
@@ -32,11 +33,15 @@ _last_text() {
 }
 
 _pr_class() {
-  timeout 5 gh pr view --json number,isDraft,mergeStateStatus,statusCheckRollup,body \
+  timeout 5 gh pr view --json number,isDraft,mergeStateStatus,statusCheckRollup,body,baseRefName \
     2>/dev/null | jq -r '
       ([.statusCheckRollup[]? | (.conclusion // .state // "")]) as $c
       | if ($c | any(. == "FAILURE" or . == "ERROR" or . == "TIMED_OUT"))
           then "fail\tCI red on #\(.number)"
+        elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
+          and ((.body // "") | test("do not merge"; "i") | not)
+          and .baseRefName != "dev"
+          then "fyi\tstacked on \(.baseRefName)"
         elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
           and ((.body // "") | test("do not merge"; "i") | not)
           then "merge\tREADY TO MERGE #\(.number)"

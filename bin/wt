@@ -1235,8 +1235,9 @@ _wt_clean_agents() {
   while IFS="$(printf '\t')" read -r _p _b; do
     _id="$(basename "$_p")"
     _at="$(git -C "$_p" log -1 --format=%ct 2>/dev/null || echo 0)"
-    _mt="$(stat -f %m "$_p" 2>/dev/null || echo 0)"
-    test "$_mt" -gt "$_at" && _at="$_mt"
+    _mt="$(cd "$_p" && git status --porcelain 2>/dev/null \
+      | cut -c4- | xargs stat -f %m 2>/dev/null | sort -n | tail -1)"
+    test "${_mt:-0}" -gt "$_at" && _at="$_mt"
     test $((_now - _at)) -ge "$_ttl" || continue
     if test -n "$(git -C "$_p" status --porcelain 2>/dev/null)"; then
       git -C "$_p" add -A
