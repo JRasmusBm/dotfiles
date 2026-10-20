@@ -8,6 +8,7 @@
 #            a question: the agent's offer rides along in the text)
 #   blocked  a permission prompt, or its last message asks me
 #   fail     its PR has a failing check
+#   check    its PR is merged: verify it live and move it on the board
 #   fyi      anything else ("done", nothing for me)
 
 INPUT=$(cat)
@@ -33,10 +34,13 @@ _last_text() {
 }
 
 _pr_class() {
-  timeout 5 gh pr view --json number,isDraft,mergeStateStatus,statusCheckRollup,body,baseRefName \
+  timeout 5 gh pr view --json number,state,isDraft,mergeStateStatus,statusCheckRollup,body,baseRefName \
     2>/dev/null | jq -r '
       ([.statusCheckRollup[]? | (.conclusion // .state // "")]) as $c
-      | if ($c | any(. == "FAILURE" or . == "ERROR" or . == "TIMED_OUT"))
+      | if .state == "MERGED"
+          then "check\tmerged #\(.number): verify it live, then wt rp or wt done"
+        elif .state == "CLOSED" then empty
+        elif ($c | any(. == "FAILURE" or . == "ERROR" or . == "TIMED_OUT"))
           then "fail\tCI red on #\(.number)"
         elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
           and ((.body // "") | test("do not merge"; "i") | not)
@@ -76,6 +80,11 @@ case "$_text" in
 esac
 
 _pr="$(_pr_class)"
+# Any newer ping supersedes this pane's old merge ping.
+case "$_pr" in
+  merge*) ;;
+  *) [ -z "$TMUX_PANE" ] || notif seen "$TMUX_PANE" all >/dev/null 2>&1 || true ;;
+esac
 case "$_pr" in
   merge*)
     NOTIFY_CLASS=merge notify "Claude: $CONTEXT" \

@@ -18,7 +18,8 @@ set -e
 #                       a command (not a shell, Claude or an
 #                       interactive app like vim), notify
 #                       when that finishes instead (zsh precmd)
-#   notif seen <key>    drop a pane's rows (Claude reply hook)
+#   notif seen <key> [all]  drop a pane's rows; without `all` (the
+#                       Claude reply hooks) merge pings stay
 #   notif arrive <key>  drop its non-sticky rows (focus hooks)
 #   notif count         status-bar badge
 #   notif clear         empty the inbox
@@ -37,8 +38,10 @@ function rank(c) {
     : c == "fail" ? 4 : c == "check" ? 5 : c == "fyi" ? 7 : 6
 }'
 
-# Drop rows for key $1 (only non-sticky ones when $2 is
-# `arrive`), logging them to the recent file. Fast no-op when
+# Drop rows for key $1 (only non-sticky ones when $2 is `arrive`;
+# all but `merge` rows when it is `reply`, since a merge ping is
+# done when the PR merges, not when I talk to the agent), logging
+# them to the recent file. Fast no-op when
 # nothing matches, so the focus hooks stay cheap.
 _notif_drop() {
   _d_key="$1"
@@ -49,7 +52,8 @@ _notif_drop() {
   _d_match="$_KEY"'
     function hit() {
       if (m == "path") return $5 == k || index($5, k "/") == 1
-      return key() == k && (m != "arrive" || $7 != "sticky")
+      return key() == k && (m != "arrive" || $7 != "sticky") \
+        && (m != "reply" || $8 != "merge")
     }'
   awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
     hit() { found = 1 } END { exit !found }' "$_f" || return 0
@@ -330,7 +334,7 @@ case "${1:-}" in
   next) shift; _notif_next "$@" ;;
   later) shift; _notif_later "$@" ;;
   count) _notif_count ;;
-  seen) shift; _notif_drop "${1:-}" ;;
+  seen) shift; _notif_drop "${1:-}" "${2:-reply}" ;;
   seen-path) shift; _notif_drop "${1:-}" path ;;
   arrive) shift; _notif_drop "${1:-}" arrive ;;
   clear) _notif_clear ;;
