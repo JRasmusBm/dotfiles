@@ -323,6 +323,8 @@ _pick() {
 _hook() {
   cat > /dev/null
   if _out="$(_acquire 2>&1)"; then
+    test -n "$_out" || return 0
+    printf '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"%s You now hold a test slot (only 2 for all agents). Run `test-slot release` as soon as you are done with the browser, including when you give up on it (e.g. no login), not at the end of the task."}}\n' "$_out"
     return 0
   fi
   echo "$_out" >&2
