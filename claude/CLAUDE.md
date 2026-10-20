@@ -315,6 +315,17 @@ run. A `PreToolUse` hook (`heavy-slot hook`) prefixes agents'
 the rest wait ("heavy-slot: … waiting" on stderr). Give such
 commands a long `timeout`. `heavy-slot ls` shows holders.
 
+## Claude accounts
+
+Logins are managed by `cswap` (claude-swap, pipx); all accounts
+share `~/.claude`. launchd `com.jrasmusbm.cswap-auto` runs
+`cswap-auto` every minute: `cswap auto --once` (switch at 90%
+of the 5h/7d limit), then `/remote-control` into every idle
+Claude pane whose Remote Control dropped from the login change,
+so the phone sees it under the new account (log:
+`$LOCAL_CONFIG/cswap-auto.log`; `cswap-auto -n` lists targets). `cswap list` shows usage; add an
+account with `/login` then `cswap add --alias <name>`.
+
 ## Git
 
 Use `g s <branch>` to switch branches (not raw

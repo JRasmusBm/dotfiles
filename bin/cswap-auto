@@ -1,0 +1,51 @@
+#!/bin/sh
+#
+# cswap-auto — `cswap auto`, plus reconnecting Remote Control in
+# running Claude sessions after the login changes (by cswap or a
+# manual /login). Each tick: `cswap auto --once`, then every idle
+# Claude pane whose last Remote Control notice is "disconnected" gets
+# `/remote-control`. Idle as in `claude-pane-idle`, so nothing typed
+# is touched.
+#
+#   cswap-auto           loop (launchd com.jrasmusbm.cswap-auto)
+#   cswap-auto --once    one tick
+#   cswap-auto -n        list panes it would reconnect
+
+_interval="${CSWAP_AUTO_INTERVAL:-60}"
+
+_stale_panes() {
+  tmux list-panes -a -F '#{pane_id}' 2>/dev/null \
+  | while read -r _p; do
+      claude-pane-idle "$_p" || continue
+      tmux capture-pane -p -t "$_p" -S -80 | LC_ALL=C awk '
+        /^⏺ Remote Control disconnected/ { d = NR }
+        /^  \/remote-control is active/ { a = NR }
+        END { exit !(d > a) }' && echo "$_p"
+    done
+}
+
+_reconnect() {
+  for _p in $(_stale_panes); do
+    tmux send-keys -t "$_p" -l '/remote-control'
+    sleep 0.5
+    tmux send-keys -t "$_p" Enter
+    echo "$(date +%H:%M:%S)  reconnected Remote Control in $_p"
+  done
+}
+
+_tick() {
+  cswap auto --once
+  _reconnect
+}
+
+case "${1:-}" in
+  -n) _stale_panes ;;
+  --once) _tick ;;
+  '')
+    while :; do
+      _tick
+      sleep "$_interval"
+    done
+    ;;
+  *) sed -n '2,/^$/s/^# \{0,1\}//p' "$0" >&2; exit 1 ;;
+esac
