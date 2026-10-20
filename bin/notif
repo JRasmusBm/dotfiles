@@ -299,6 +299,15 @@ _notif_preview() {
   printf '%s\n' "$_pv"
 }
 
+# My inbox actions feed the my-impact focus log, to tell jumps the
+# inbox called me to from ones I made on my own.
+case "${1:-}" in
+  ""|:|open|next|later|seen)
+    _sess="$(tmux display-message -p -t "${2:-}" '#S' 2>/dev/null)"
+    focus-log notif "${1:-open}" "$_sess" 2>/dev/null || true
+    ;;
+esac
+
 case "${1:-}" in
   ""|:|open) _notif_open ;;
   next) shift; _notif_next "$@" ;;

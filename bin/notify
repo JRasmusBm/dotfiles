@@ -57,6 +57,7 @@ if [ -n "$LOCAL_CONFIG" ]; then
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" \
     "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" >> "$_inbox"
+  focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
   # Update the status-bar counter (`notif count`) right away.
   if [ -n "$TMUX_PANE" ]; then
     tmux refresh-client -S 2>/dev/null || true

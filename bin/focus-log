@@ -1,0 +1,11 @@
+#!/bin/sh
+
+# Append one focus change to $LOCAL_CONFIG/focus.log for the
+# my-impact dashboard: epoch, source (tmux|app|notif|notif-in),
+# what, detail.
+# Usage: focus-log tmux <session> <pane_current_command>
+#        focus-log notif-in <session> <title>   (from notify)
+#        focus-log notif <open|next|later|seen> <session>
+
+printf '%s\t%s\t%s\t%s\n' "$(date +%s)" "$1" "$2" "$3" \
+  >> "${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/focus.log"
