@@ -96,6 +96,11 @@ own. Don't `dev up` again just for that.
   to the staging database directly (SQL, insert/update scripts). On
   production, look only unless jrb asked. Never switch stage to
   production.
+- Feature behind a flag you can't toggle: hardcode it on locally
+  rather than toggling it in admin or writing to staging. Do it in
+  every gate (frontend hook and the backend check, with that service
+  in `penv local`), never commit it, and `git checkout --` it before
+  `dev down`. List the gate files in the agent brief's owned files.
 - When done, free the slot (see Test slots); that quits your Chrome.
 
 ## Turn repeat browser checks into tests
