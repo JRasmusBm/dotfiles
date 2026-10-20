@@ -1216,14 +1216,56 @@ _wt_dedup() {
   ' sh {}
 }
 
+# Remove Claude Code's isolated subagent worktrees
+# (`.claude/worktrees/agent-*`) untouched for WT_AGENT_TTL hours
+# (default 24). Claude only auto-removes the unchanged ones, and
+# `wt` never shows them, so the rest are invisible work that
+# piles up GBs. Uncommitted changes get a snapshot commit; every
+# head is pinned to refs/wt/<id> and logged to the registry first.
+_wt_clean_agents() {
+  _root="$(_main_root)"
+  _ttl=$(( ${WT_AGENT_TTL:-24} * 3600 ))
+  _now="$(date +%s)"
+  _n=0
+  git -C "$_root" worktree list --porcelain | awk '
+    /^worktree /{ p=$2; b=""; next }
+    /^branch /{ b=$2; sub(/^refs\/heads\//, "", b); next }
+    /^$/{ if (p ~ /\/\.claude\/worktrees\/agent-/) print p "\t" b; p="" }
+  ' > "${TMPDIR:-/tmp}/wt-agents.$$"
+  while IFS="$(printf '\t')" read -r _p _b; do
+    _id="$(basename "$_p")"
+    _at="$(git -C "$_p" log -1 --format=%ct 2>/dev/null || echo 0)"
+    _mt="$(stat -f %m "$_p" 2>/dev/null || echo 0)"
+    test "$_mt" -gt "$_at" && _at="$_mt"
+    test $((_now - _at)) -ge "$_ttl" || continue
+    if test -n "$(git -C "$_p" status --porcelain 2>/dev/null)"; then
+      git -C "$_p" add -A
+      git -C "$_p" commit -q --no-verify \
+        -m "wip: snapshot of $_id before wt clean"
+    fi
+    _sha="$(git -C "$_p" rev-parse -q --verify HEAD || true)"
+    test -n "$_sha" || continue
+    git -C "$_root" update-ref "refs/wt/$_id" "$_sha"
+    _registry_append "$_id" "${_b:-DETACHED}" "$_sha"
+    git -C "$_root" worktree remove --force "$_p" || continue
+    test -z "$_b" || git -C "$_root" branch -D -q "$_b" || true
+    _n=$((_n + 1))
+  done < "${TMPDIR:-/tmp}/wt-agents.$$"
+  rm -f "${TMPDIR:-/tmp}/wt-agents.$$"
+  test "$_n" -eq 0 || echo "removed $_n agent worktrees" \
+    "(heads pinned in refs/wt/)" >&2
+}
+
 # Remove every active worktree whose PR is merged. Confirms
 # each (read from /dev/tty); `-f`/`--force` skips prompts.
 # Needs gh. Safe to run — removal is reversible via resume.
+# Sweeps stale subagent worktrees first (_wt_clean_agents).
 _wt_clean() {
   _force=false
   case "${1:-}" in
     -f|--force) _force=true ;;
   esac
+  _wt_clean_agents
 
   if ! command -v gh >/dev/null 2>&1; then
     echo "wt clean needs the gh CLI" >&2

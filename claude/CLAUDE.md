@@ -188,7 +188,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   no rebuild. `wt rm` unpins too.
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
-  prompts
+  prompts. First sweeps subagent worktrees
+  (`.claude/worktrees/agent-*`, invisible to `wt`) untouched
+  for `WT_AGENT_TTL` hours (24): pinned to `refs/wt/<id>`,
+  then removed. So when an isolated agent returns,
+  cherry-pick what you keep into your branch right away —
+  its worktree is scratch.
 - `wt resume <slug>`/`:` — re-materialise a removed
   worktree at the same path and run `claude --continue` in
   its new session's `cli` (context is keyed by path). `:`
