@@ -13,7 +13,10 @@
 #                          as long as the tool's shell
 #
 # Slots: HEAVY_SLOTS (default 2). A slot is a dir holding the pid that
-# holds it; a dead pid frees it.
+# holds it; a dead pid frees it. The holder renews its lease by using
+# CPU: a holder whose process tree used none for HEAVY_SLOT_STALL
+# seconds (default 600) is hung (e.g. tsc after a full disk), so its
+# tree is TERMed and the slot freed; the agent sees the command fail.
 
 set -e
 
@@ -21,6 +24,26 @@ _max="${HEAVY_SLOTS:-2}"
 _dir="${LOCAL_CONFIG:-$HOME/.config}/heavy-slots"
 mkdir -p "$_dir"
 
+_stall="${HEAVY_SLOT_STALL:-600}"
+_tree() {
+  echo "$1"
+  for _c in $(pgrep -P "$1" 2>/dev/null); do _tree "$_c"; done
+}
+_cpu() {
+  _tree "$1" | xargs ps -o time= -p 2>/dev/null \
+    | awk -F'[:.]' '{ s += $1 * 60 + $2 } END { print s + 0 }'
+}
+_stalled() {
+  _now="$(date +%s)"
+  _c="$(_cpu "$2")"
+  _seen='' _at=''
+  test -f "$1/cpu" && read -r _seen _at < "$1/cpu"
+  if test "${_seen:-}" != "$_c"; then
+    echo "$_c $_now" > "$1/cpu"
+    return 1
+  fi
+  test $((_now - ${_at:-$_now})) -ge "$_stall"
+}
 _take() {
   _i=1
   while test "$_i" -le "$_max"; do
@@ -32,6 +55,13 @@ _take() {
     fi
     _p="$(cat "$_s/pid" 2>/dev/null || true)"
     if test -n "$_p" && ! kill -0 "$_p" 2>/dev/null; then
+      rm -rf "$_s"
+      continue
+    fi
+    if test -n "$_p" && _stalled "$_s" "$_p"; then
+      _tree "$_p" | xargs kill -TERM 2>/dev/null || true
+      echo "heavy-slot: freed slot ${_s##*/}, pid $_p used no CPU" \
+        "for ${_stall}s" >&2
       rm -rf "$_s"
       continue
     fi
