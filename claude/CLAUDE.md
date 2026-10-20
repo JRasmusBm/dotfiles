@@ -107,9 +107,13 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   "Can you please fix <url>? Please also examine the video
   and the images"; `feat` → "Can you please read <url> and
   relative feature docs? Then please grill me on the
-  solution."; a project URL (either command) gets the feat
-  prompt, widened to the project's overview, documents,
-  milestones and issues. Generic (not per-repo) — relies on
+  solution."; both then add the hand-back bar: test on
+  every surface the change touches, publish an artifact of
+  how it was tested, run `/iterate-review` until green, hand
+  back with PR, artifact and what could bite us. A project
+  URL (either command) gets the plain feat prompt, widened
+  to the project's overview, documents, milestones and
+  issues. Generic (not per-repo) — relies on
   the default run/vim/cli layout worktrees get with no `.tmux`.
   `WT_PROMPT_EXTRA="…"` appends to the kickoff prompt;
   `WT_NO_ATTACH=1` skips attaching (batch kickoffs from

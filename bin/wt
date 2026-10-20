@@ -534,13 +534,14 @@ _wt_typed() {
 
   # Only Linear URLs get a Claude kickoff prompt; free text
   # just opens the worktree session.
+  _done="Before you hand back to me: test the change on every surface it touches (unit, API, MCP, the app in the browser, Cypress - whichever apply), publish an artifact showing how it was tested and what you saw, then run /iterate-review until the PR is green. Hand back with the PR link, the artifact link and what could bite us."
   _prompt=""
   case "$_arg" in
     *linear.app/*issue/*)
       if test "$_type" = feat; then
-        _prompt="Can you please read $_arg and relative feature docs? Then please grill me on the solution."
+        _prompt="Can you please read $_arg and relative feature docs? Then please grill me on the solution. Once we agree and it is built: $_done"
       else
-        _prompt="Can you please fix $_arg? Please also examine the video and the images"
+        _prompt="Can you please fix $_arg? Please also examine the video and the images. $_done"
       fi
       ;;
     *linear.app/*project/*)
