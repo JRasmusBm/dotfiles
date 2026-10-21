@@ -25,7 +25,10 @@ claude-pane-idle "$_pane" || exit 1
 
 echo "$_root	$_pr" >> "$_told"
 notif seen "$_pane" all >/dev/null 2>&1 || true
-tmux send-keys -t "$_pane" -l "PR #$_pr is merged into dev. Run wt \
+_by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
+  --jq '.mergedBy.login' 2>/dev/null)"
+tmux send-keys -t "$_pane" -l "PR #$_pr is merged into dev${_by:+ (merged by \
+$_by)}. Run wt \
 merged (board and ticket to Ready to deploy; the follow-ups blocked \
 on this worktree get unblocked). Then load the deploy skill and give \
 me three deploy commands for this change: staging, production, and \
