@@ -29,6 +29,11 @@ _reconnect() {
     tmux send-keys -t "$_p" -l '/remote-control'
     sleep 0.5
     tmux send-keys -t "$_p" Enter
+    sleep 3
+    if tmux capture-pane -p -t "$_p" | grep -v '^[[:space:]]*$' \
+      | tail -1 | grep -q 'Enter to select · Esc to continue'; then
+      tmux send-keys -t "$_p" Enter
+    fi
     echo "$(date +%H:%M:%S)  reconnected Remote Control in $_p"
   done
 }
