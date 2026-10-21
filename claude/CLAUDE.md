@@ -193,7 +193,7 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   it; an idle one's agent is told to rebase onto dev and carry
   on. I don't run it: when a PR merges, its agent is told
   (`pr-merged-tell`, from `claude-notify` or the `wt-sync`
-  launchd job every 5 min) to run it and hand me staging,
+  launchd job every minute) to run it and hand me staging,
   production and both deploy commands. No inbox ping for it.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
   that first moves the ticket to Done / Canceled (refuses

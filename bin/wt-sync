@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# wt-sync — launchd (com.jrasmusbm.wt-sync, every 5 min): for each
+# wt-sync — launchd (com.jrasmusbm.wt-sync, every minute): for each
 # worktree of $WT_SYNC_REPOS whose PR merged in the last 3 days, tell
 # its agent (pr-merged-tell), so a merge reaches an agent that was
 # already idle when it happened.
