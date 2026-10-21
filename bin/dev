@@ -108,6 +108,9 @@ _detach_if_inside_run() {
   if test -n "${POLAR_ENV:-}"; then
     _envs="$_envs POLAR_ENV='$POLAR_ENV'"
   fi
+  if test -n "${CLAUDECODE:-}"; then
+    _envs="$_envs CLAUDECODE='$CLAUDECODE'"
+  fi
   tmux run-shell -b "cd '$(_work_root)' &&
     $_envs '$(_self)' $* > '$_log' 2>&1;
     tmux display-message 'dev $1 finished: $_log'"

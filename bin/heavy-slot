@@ -89,17 +89,22 @@ _take() {
 _wait() {
   _held=''
   _said=''
-  until _take; do
+  until "${1:-_take}"; do
     if test -z "$_said"; then
       echo "heavy-slot: all $_max slots held (heavy-slot ls), waiting" >&2
       _said=1
     fi
     sleep 3
   done
+  test -n "$_said" && test "${CLAUDECODE:-}" != 1 || return 0
+  NOTIFY_CLASS=env notify "heavy-slot" \
+    "got a slot: ${_tag:-$_owner}; others queue until it's freed" \
+    >/dev/null 2>&1 || true
 }
 
 _run() {
   _owner=$$
+  _tag="$*"
   _wait
   trap 'rm -rf "$_held"' EXIT
   trap 'exit 130' INT TERM
@@ -155,15 +160,11 @@ _hold() {
   _until=$(( $(date +%s) + ${1:?usage: heavy-slot hold [--try] SECS TAG} ))
   _tag="${2:?usage: heavy-slot hold [--try] SECS TAG}"
   _owner=hold
-  _said=''
-  until _hold_once; do
-    test -z "$_try" || return 1
-    if test -z "$_said"; then
-      echo "heavy-slot: all $_max slots held (heavy-slot ls), waiting" >&2
-      _said=1
-    fi
-    sleep 3
-  done
+  if test -n "$_try"; then
+    _hold_once
+  else
+    _wait _hold_once
+  fi
 }
 
 _ls() {
