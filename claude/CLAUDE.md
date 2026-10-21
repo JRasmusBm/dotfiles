@@ -198,6 +198,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
   that first moves the ticket to Done / Canceled (refuses
   to remove if Linear fails). No arg = the current worktree.
+  Reversible (`wt resume`), so an agent whose ticket is
+  finished (merged, and live where it runs) runs `wt done`
+  itself and reports it; never "Should I run it?".
 - `wt id` — print the current worktree's slug (= its tmux
   session name) and copy it, to point other agents at it.
 - `wt pin [N]` / `wt unpin` — put the current worktree on
