@@ -76,8 +76,11 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
   _pending="$LOCAL_CONFIG/wt-sync.pending.$(basename "$_repo")"
   _retry="$(cat "$_pending" 2>/dev/null)"
   : > "$_pending"
+  # Ids of the last 20 successful runs, not just the newest: a run
+  # started earlier can finish after one already seen.
   _last="$(timeout 30 gh run list --workflow deploy.yaml --status success \
-    --limit 1 --json databaseId --jq '.[0].databaseId')" || _last=""
+    --limit 20 --json databaseId --jq '[.[].databaseId] | sort | join(",")')" \
+    || _last=""
   _new_deploy=""
   if test -n "$_last" && test "$_last" != "$(cat "$_seen" 2>/dev/null)"; then
     _new_deploy=1
