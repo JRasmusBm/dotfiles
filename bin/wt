@@ -1257,7 +1257,8 @@ _wt_clean_agents() {
     "(heads pinned in refs/wt/)" >&2
 }
 
-# Remove every active worktree whose PR is merged. Confirms
+# Remove every active worktree whose PR is merged, except
+# # PROD REVIEW entries (still to check in prod). Confirms
 # each (read from /dev/tty); `-f`/`--force` skips prompts.
 # Needs gh. Safe to run — removal is reversible via resume.
 # Sweeps stale subagent worktrees first (_wt_clean_agents).
@@ -1307,6 +1308,11 @@ _wt_clean() {
     # dir name differs from basename(branch).
     _p="$(_wt_worktrees \
       | awk -F"$_tab" -v b="$_b" '$2==b{print $1; exit}')"
+    if test "$(_board_section "$_b" "${_p##*/}")" = 'PROD REVIEW'
+    then
+      echo "  kept $_b (PROD REVIEW: wt done once verified)" >&2
+      continue
+    fi
     if test "$_force" = true; then
       echo "removing $_b" >&2
       _wt_evict "$_b" "$_p"

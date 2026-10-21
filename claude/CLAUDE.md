@@ -200,7 +200,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   no rebuild. `wt rm` unpins too.
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
-  prompts. First sweeps subagent worktrees
+  prompts. Keeps `# PROD REVIEW` entries: a merged PR there
+  still needs checking in prod, so `wt done` removes them.
+  First sweeps subagent worktrees
   (`.claude/worktrees/agent-*`, invisible to `wt`) untouched
   for `WT_AGENT_TTL` hours (24): pinned to `refs/wt/<id>`,
   then removed. So when an isolated agent returns,
