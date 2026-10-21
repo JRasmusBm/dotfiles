@@ -14,5 +14,6 @@ exec wt-tell "$_root" "merged:$_pr" \
   "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Run wt merged \
 (board and ticket to Ready to deploy; the follow-ups blocked on this \
 worktree get unblocked). Then load the deploy skill, record its targets \
-with pr-where $_pr <targets>, and give me three deploy commands for \
-this change: staging, production, and both."
+with pr-where $_pr <targets> (only services whose non-test files \
+change: a service with only test changes needs no deploy), and give me \
+three deploy commands for this change: staging, production, and both."
