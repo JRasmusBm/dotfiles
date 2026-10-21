@@ -21,6 +21,7 @@ alias 5..="cd ../../../../.."
 
 
 alias ssh="ssh -R 127.0.0.1:2222:127.0.0.1:22"
+alias hsl="heavy-slot ls"
 
 function scpb() {
   scp -r -P2222 "$1" rasmus@127.0.0.1:"$2"
