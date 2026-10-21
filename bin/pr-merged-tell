@@ -17,7 +17,7 @@ _pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
   '#{pane_id}' 2>/dev/null)" || _pane=""
 if test -z "$_pane"; then
   echo "$_root	$_pr" >> "$_told"
-  ( cd "$_root" && NOTIFY_CLASS=check notify "Merged: $(basename "$_root")" \
+  ( cd "$_root" && TMUX_PANE= NOTIFY_CLASS=check notify "Merged: $(basename "$_root")" \
     "#$_pr merged, no agent session: wt merged, then deploy" )
   exit 0
 fi
