@@ -159,8 +159,7 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   missing), so `wt :` shows it as `TEAM REVIEW: branch`.
   Checkout, branch and tmux session stay. The branch's Linear
   ticket, if any, moves to Team review / Ready to deploy /
-  Needs live verification / Done (`lin state`; verified is
-  Done in Linear, the announcement is board-only; needs
+  Needs live verification / Needs announcement (`lin state`; needs
   `$LINEAR_API_KEY` from polar `secrets/common`; a Linear
   failure never stops `wt`).
 - `wt rb [<worktree>|:]` — current worktree is blocked by

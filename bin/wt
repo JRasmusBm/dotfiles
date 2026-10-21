@@ -1379,7 +1379,7 @@ case "${1:-}" in
       merged
     ;;
   rp) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
-  ra) _wt_park 'TO ANNOUNCE' 'Done' ;;
+  ra) _wt_park 'TO ANNOUNCE' 'Needs announcement' ;;
   done) shift; _WT_STATE=Done; _wt_evict "${1:-.}" ;;
   cancel) shift; _WT_STATE=Canceled; _wt_evict "${1:-.}" ;;
   rm|remove) shift; _wt_evict "$@" ;;
