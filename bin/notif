@@ -12,8 +12,11 @@ set -e
 #
 #   notif               picker: pending, then recent
 #   notif next <pane>   pending pane after <pane> in rank order
-#                       (class, see notify: env, merge, blocked,
-#                       fail, check, unset, fyi; then oldest)
+#                       (a worktree `wt rb` blocked on another
+#                       goes last; then class, see notify: env,
+#                       merge, blocked, fail, check, unset, fyi;
+#                       then most follow-ups blocked on it; then
+#                       oldest)
 #   notif later <pane>  re-queue <pane> at the back; if it runs
 #                       a command (not a shell, Claude or an
 #                       interactive app like vim), notify
@@ -36,7 +39,30 @@ _KEY='function key() { return $6 != "" ? $6 : $2 }
 function rank(c) {
   return c == "env" ? 1 : c == "merge" ? 2 : c == "blocked" ? 3 \
     : c == "fail" ? 4 : c == "check" ? 5 : c == "fyi" ? 7 : 6
+}
+function slug(p,  i, s) {
+  i = index(p, "/.worktrees/")
+  if (!i) return ""
+  s = substr(p, i + 12); sub(/\/.*/, "", s)
+  return s
+}
+function prio(c, p,  s, kids, rest, j) {
+  s = slug(p)
+  if (s != "" && index(blk, " " s ">")) return 100 + rank(c) * 10
+  kids = 0; rest = blk
+  while (s != "" && (j = index(rest, ">" s " "))) {
+    kids++; rest = substr(rest, j + 1)
+  }
+  return rank(c) * 10 + 9 - (kids > 9 ? 9 : kids)
 }'
+
+# " child>blocker ..." from every board's `wt rb` records, so a
+# follow-up blocked on a worktree queues behind it.
+_blocked() {
+  printf ' '
+  cat "${LOCAL_CONFIG:?}"/worktrees/*.blocked 2>/dev/null \
+    | awk -F'\t' '$3 != "" { printf "%s>%s ", $1, $3 }'
+}
 
 # Drop rows for key $1 (only non-sticky ones when $2 is `arrive`;
 # all but `merge` rows when it is `reply`, since a merge ping is
@@ -92,12 +118,13 @@ _notif_count() {
 # key<TAB>mark<TAB>ctx<TAB>×N<TAB>message<TAB>path. Keys in
 # `skip` (space-separated) are left out; at most `max` lines.
 _collapse() {
-  awk -F'\t' -v mark="$1" -v skip=" $2 " -v max="${3:-0}" "$_KEY"'
+  awk -F'\t' -v mark="$1" -v skip=" $2 " -v max="${3:-0}" \
+    -v blk="$(_blocked)" "$_KEY"'
     {
       k = key()
       if (index(skip, " " k " ")) next
-      if (!(k in ts)) { order[++n] = k; r[k] = 9 }
-      if (rank($8) < r[k]) r[k] = rank($8)
+      if (!(k in ts)) { order[++n] = k; r[k] = 999 }
+      if (prio($8, $5) < r[k]) r[k] = prio($8, $5)
       count[k]++
       if ($1 + 0 >= ts[k] + 0) {
         ts[k] = $1; ctx[k] = $2; msg[k] = $4; path[k] = $5
@@ -217,11 +244,11 @@ _notif_next() {
   _f="$(_inbox)"
   _here_key="${1:-}"
   while test -f "$_f"; do
-    _line="$(awk -F'\t' -v h="$_here_key" "$_KEY"'
+    _line="$(awk -F'\t' -v h="$_here_key" -v blk="$(_blocked)" "$_KEY"'
       {
         k = key()
-        if (!(k in r)) { o[++n] = k; r[k] = 9; t[k] = $1 }
-        if (rank($8) < r[k]) r[k] = rank($8)
+        if (!(k in r)) { o[++n] = k; r[k] = 999; t[k] = $1 }
+        if (prio($8, $5) < r[k]) r[k] = prio($8, $5)
         if ($1 + 0 < t[k] + 0) t[k] = $1
         row[k] = k "\t" $2 "\t" $5
       }
