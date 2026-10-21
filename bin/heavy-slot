@@ -177,9 +177,24 @@ _ls() {
       continue
     fi
     _p="$(cat "$_s/pid" 2>/dev/null || true)"
-    printf '%s\t%s\t%s\n' "${_s##*/}" "$_p" \
-      "$(ps -o command= -p "$_p" 2>/dev/null | cut -c1-80)"
+    _cwd="$(lsof -a -p "$_p" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')"
+    case "$_cwd" in
+      */.worktrees/*) _cwd="${_cwd#*/.worktrees/}" ;;
+      *) _cwd="${_cwd##*/}" ;;
+    esac
+    printf '%s\t%s\t%s\t%s\t%s\n' "${_s##*/}" "$_p" \
+      "$(ps -o etime= -p "$_p" 2>/dev/null | tr -d ' ')" "$_cwd" \
+      "$(ps -o command= -p "$_p" 2>/dev/null | _line)"
   done
+}
+
+# An agent's Bash call shows as `zsh -c source <snapshot> ... eval
+# 'heavy-slot take $$\012<command>' ...`: keep the command.
+_line() {
+  sed -e 's/.*heavy-slot take \$\$\\012//' \
+    -e "s/' < \/dev\/null && pwd -P.*//" -e 's/\\012/; /g' \
+    -e "s/'\"'\"'/'/g" \
+    | cut -c1-160
 }
 
 case "${1:-}" in
