@@ -107,16 +107,21 @@ of why something was tried and reverted.
 
 1. Schedule the next tick with `ScheduleWakeup`. Carry the whole
    queue in the `prompt` — the next firing continues from that text,
-   not from memory.
+   not from memory. The wakeup is a stall guard, not a clock: every
+   tick re-reads the whole context and burns weekly quota. Pick the
+   delay from what unblocks the next chunk: work ready now → 60s;
+   CI, a deploy or a review bot → when it should finish; a
+   background task or agent that notifies you → 1800s fallback.
+   Each consecutive no-op doubles the delay, up to 3600s.
 2. Work items in the order I set, one or more per tick.
-3. Reconcile before reporting, every tick, no exceptions: grep every
+3. Reconcile before reporting, every tick that did work: grep every
    task file's state line, compare it with the index, and let the
    tree break any tie — check the sha, not the prose. Fix what
    drifted. A board reported off an unreconciled queue is a board
    reported from memory, and it will be confidently wrong.
-4. End every tick by invoking the `work-status` skill and giving
-   its board. That board is the tick's output — the queue state
-   lives there, not in prose.
+4. End every tick that did work by invoking the `work-status`
+   skill and giving its board. That board is the tick's output —
+   the queue state lives there, not in prose.
 5. Reschedule with the queue rewritten: items done, items newly
    blocked, items discovered.
 6. Stop with `stop: true` only when every remaining item is either
@@ -243,8 +248,10 @@ for.
   the board as its own item rather than fixing it silently.
 - Do not start work that is not on the queue. Discoveries go under
   **Found along the way** on the board, not into the tree.
-- A tick that produced nothing says so and is marked a no-op. Never
-  invent progress to fill a tick.
+- A tick that produced nothing says so in one line and is marked a
+  no-op: check what it waits on, reschedule, done. No reconcile, no
+  board, no skill loads — nothing changed, so there is nothing to
+  reconcile or report. Never invent progress to fill a tick.
 - Lead every board with what is blocked and what needs me, not with
   what got done. That holds whether I have been away or watching.
 - A blocker goes to me the moment it appears, not at the next tick.
