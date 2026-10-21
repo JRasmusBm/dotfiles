@@ -32,6 +32,6 @@ $_by)}. Run wt \
 merged (board and ticket to Ready to deploy; the follow-ups blocked \
 on this worktree get unblocked). Then load the deploy skill and give \
 me three deploy commands for this change: staging, production, and \
-both."
+both, and record its targets with pr-where $_pr <targets>."
 sleep 0.5
 tmux send-keys -t "$_pane" Enter
