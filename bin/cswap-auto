@@ -39,7 +39,7 @@ _reconnect() {
 }
 
 _tick() {
-  cswap auto --once
+  cswap auto --once --threshold "${CSWAP_AUTO_THRESHOLD:-98}"
   _reconnect
 }
 

@@ -374,8 +374,8 @@ frees it), so a stack left alone gives its slot back.
 
 Logins are managed by `cswap` (claude-swap, pipx); all accounts
 share `~/.claude`. launchd `com.jrasmusbm.cswap-auto` runs
-`cswap-auto` every minute: `cswap auto --once` (switch at 90%
-of the 5h/7d limit), then `/remote-control` into every idle
+`cswap-auto` every minute: `cswap auto --once` (switch at 98%
+of the 5h/7d limit, `CSWAP_AUTO_THRESHOLD`), then `/remote-control` into every idle
 Claude pane whose Remote Control dropped from the login change,
 so the phone sees it under the new account (log:
 `$LOCAL_CONFIG/cswap-auto.log`; `cswap-auto -n` lists targets). `cswap list` shows usage; add an
