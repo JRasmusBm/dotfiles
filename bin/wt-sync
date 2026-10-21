@@ -5,9 +5,11 @@
 # days:
 #   - merged in the last 3 days: tell its agent (pr-merged-tell), so a
 #     merge reaches an agent that was already idle when it happened;
-#   - all the targets it needs deployed to a stage after it reached
-#     that stage's branch (pr-where --status, the same rule as
-#     deploy-plan): tell its agent to verify it there, once per stage.
+#   - some of the targets it needs deployed to a stage after it
+#     reached that stage's branch (pr-where --status, the same rule
+#     as deploy-plan): tell its agent which part is out, once per set
+#     of deployed targets; all of them: tell it it's shipped there,
+#     once per stage.
 #     Checked only when a new successful deploy run appeared, whoever
 #     dispatched it.
 # On a phone hotspot it polls every 5th minute only; a poll without a
@@ -29,7 +31,22 @@ _deployed() {
   _root="$1" _pr="$2"
   pr-where --status "$_pr" 2>/dev/null \
     | while IFS="$(printf '\t')" read -r _stage _cover _targets; do
-      case "$_cover" in "✓"*) ;; *) continue ;; esac
+      case "$_cover" in
+        "✓"*) ;;
+        [1-9]*/*"(missing "*)
+          _miss="$(printf '%s' "$_cover" | sed -E 's/.*\(missing ([^)]*)\).*/\1/')"
+          _done="$(printf '%s\n' $(echo "$_targets" | tr ',' ' ') \
+            | grep -vxF "$(echo "$_miss" | tr ',' '\n')" | grep -v '^+shared$' \
+            | paste -sd, -)"
+          wt-tell "$_root" "partly:$_stage:$_pr:$_done" \
+            "#$_pr partly on $_stage ($_done; missing $_miss)" \
+            "Part of PR #$_pr is deployed to $_stage: $_done. Still \
+missing: $_miss, so it isn't shipped yet. Check read-only that the \
+deployed part works on $_stage and doesn't break anything without the \
+rest, and tell me what you verified." || true
+          continue ;;
+        *) continue ;;
+      esac
       wt-tell "$_root" "deployed:$_stage:$_pr" \
         "#$_pr is on $_stage ($_targets), no agent session: verify it" \
         "PR #$_pr is now deployed to $_stage with all its targets \
@@ -60,7 +77,8 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
     /^worktree / { w = substr($0, 10) }
     /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }' \
     | while IFS="$(printf '\t')" read -r _wt _branch; do
-      printf '%s\n' "$_merged" | awk -F'\t' -v b="$_branch" '$1 == b' \
+      printf '%s\n' "$_merged" | awk -F'\t' -v b="$_branch" -v w="${_wt##*/}" '
+        { n = split($1, a, "/") } $1 == b || a[n] == w' \
         | while IFS="$(printf '\t')" read -r _ _pr _at; do
           test "$_at" \< "$_recent" || pr-merged-tell "$_wt" "$_pr"
           test -z "$_new_deploy" || _deployed "$_wt" "$_pr"
