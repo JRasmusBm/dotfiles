@@ -117,6 +117,12 @@ another PR stays in this ticket (hold the PR, or add it after
 a rebase). Unsure → ask with options, don't split. A
 follow-up that only lives in chat or a PR comment gets lost,
 so it always becomes a ticket with its own worktree and agent.
+Same for tickets I file for findings outside this PR's scope
+(review leftovers, bugs seen along the way): start each one
+in the same turn I file it. A ticket with no agent is the
+failure here, never the cautious choice, since an unwanted
+one costs him one `wt cancel`; filing before he steps away
+and leaving them idle wastes the whole night.
 
 1. **This PR.** Do whatever makes the split work here (e.g. a
    temporary flag), commit, push, and say in the PR body what is
