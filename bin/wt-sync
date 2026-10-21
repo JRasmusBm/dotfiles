@@ -3,12 +3,19 @@
 # wt-sync — launchd (com.jrasmusbm.wt-sync, every minute): for each
 # worktree of $WT_SYNC_REPOS whose PR merged in the last 3 days, tell
 # its agent (pr-merged-tell), so a merge reaches an agent that was
-# already idle when it happened. On an iPhone hotspot (gateway
-# 172.20.10.1) it polls every 5th minute only; each poll is ~10 KB
-# (TLS + my merged PRs of the last 3 days).
+# already idle when it happened. On a phone hotspot it polls every
+# 5th minute only; each poll is ~10 KB (TLS + my merged PRs of the
+# last 3 days). Android marks its hotspot's DHCP lease with vendor
+# option ANDROID_METERED; an iPhone's gateway is 172.20.10.1.
 
-if route -n get default 2>/dev/null | grep -q 'gateway: 172\.20\.10\.1$' \
-  && test "$(( $(date +%M) % 5 ))" != 0; then
+_metered() {
+  _if="$(route -n get default 2>/dev/null | awk '/interface:/ { print $2 }')"
+  test -n "$_if" || return 1
+  ipconfig getpacket "$_if" 2>/dev/null | grep -q ANDROID_METERED \
+    || route -n get default | grep -q 'gateway: 172\.20\.10\.1$'
+}
+
+if _metered && test "$(( $(date +%M) % 5 ))" != 0; then
   exit 0
 fi
 
