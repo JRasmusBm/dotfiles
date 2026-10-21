@@ -129,21 +129,41 @@ _tagged() {
   return 1
 }
 
+_lock() {
+  until mkdir "$_dir/.lock" 2>/dev/null; do
+    find "$_dir/.lock" -maxdepth 0 -mmin +1 -exec rmdir {} \; 2>/dev/null
+    sleep 0.1
+  done
+}
+
+_hold_once() {
+  _lock
+  _r=1
+  if _s="$(_tagged "$_tag")"; then
+    echo "$_until $_tag" > "$_s/until"
+    _r=0
+  elif _take; then
+    _r=0
+  fi
+  rmdir "$_dir/.lock"
+  return "$_r"
+}
+
 _hold() {
   _try=''
   test "$1" != --try || { _try=1; shift; }
   _until=$(( $(date +%s) + ${1:?usage: heavy-slot hold [--try] SECS TAG} ))
   _tag="${2:?usage: heavy-slot hold [--try] SECS TAG}"
-  if _s="$(_tagged "$_tag")"; then
-    echo "$_until $_tag" > "$_s/until"
-    return 0
-  fi
   _owner=hold
-  if test -n "$_try"; then
-    _take
-  else
-    _wait
-  fi
+  _said=''
+  until _hold_once; do
+    test -z "$_try" || return 1
+    if test -z "$_said"; then
+      echo "heavy-slot: all $_max slots held (heavy-slot ls), waiting" >&2
+      _said=1
+    fi
+    sleep 3
+  done
 }
 
 _ls() {
