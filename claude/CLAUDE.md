@@ -318,10 +318,10 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   queued after the current one (oldest if here isn't
   pending), so repeated `M-i` rotates through them.
 - `M-k` / `notif focus <pane>` — toggle focus on this pane's
-  worktree: a sticky `focus` row keeps it queued (cleared only by
-  `M-y` or unfocusing), its pings rank above every class, and
-  `M-i` from anywhere else comes straight back to it. For "this
-  one matters most, don't lose it behind 30 others".
+  worktree: when it pings, it ranks above every class and `M-i`
+  from anywhere goes there first. No ping, no pull: it only calls
+  me back when it needs me. For "this one matters most, don't
+  lose it behind 30 others".
 - `M-u` / `notif later <pane>` — snooze: move this pane to
   the back of the queue as sticky (adds a row if none was
   pending). For "come back to this". If the pane is running

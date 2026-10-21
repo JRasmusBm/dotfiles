@@ -12,17 +12,15 @@ set -e
 #
 #   notif               picker: pending, then recent
 #   notif next <pane>   pending pane after <pane> in rank order
-#                       (a focused worktree first, and from
-#                       anywhere else straight back to it; a
+#                       (a focused worktree's pings first, and
+#                       from anywhere else straight to them; a
 #                       worktree `wt rb` blocked on another goes
 #                       last; then class, see notify: env, merge,
 #                       blocked, fail, check, unset, fyi; then
 #                       most follow-ups blocked on it; then
 #                       oldest)
 #   notif focus <pane>  toggle focus on <pane>'s worktree (else
-#                       the pane): it stays queued (a sticky
-#                       `focus` row only M-y or unfocusing clears)
-#                       and its pings rank above everything
+#                       the pane): its pings rank above everything
 #   notif later <pane>  re-queue <pane> at the back; if it runs
 #                       a command (not a shell, Claude or an
 #                       interactive app like vim), notify
@@ -100,7 +98,7 @@ _notif_drop() {
     function hit() {
       if (m == "path") return $5 == k || index($5, k "/") == 1
       return key() == k && (m != "arrive" || $7 != "sticky") \
-        && (m != "reply" || ($8 != "merge" && $8 != "focus"))
+        && (m != "reply" || $8 != "merge")
     }'
   awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
     hit() { found = 1 } END { exit !found }' "$_f" || return 0
@@ -341,23 +339,15 @@ _notif_focus() {
       _fo_id="${_fo_path#*/.worktrees/}"; _fo_id="${_fo_id%%/*}" ;;
   esac
   _ff="$(_focus_file)"
-  touch "$_ff" "$(_inbox)"
+  touch "$_ff"
   if grep -qxF "$_fo_id" "$_ff"; then
     _tmp="$(mktemp)"
     grep -vxF "$_fo_id" "$_ff" > "$_tmp" || true
     mv "$_tmp" "$_ff"
-    _tmp="$(mktemp)"
-    awk -F'\t' -v k="$_fo_key" "$_KEY"'
-      !(key() == k && $8 == "focus")' "$(_inbox)" > "$_tmp"
-    mv "$_tmp" "$(_inbox)"
     tmux display-message "Unfocused $_fo_id" 2>/dev/null || true
   else
     echo "$_fo_id" >> "$_ff"
-    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" \
-      "$(tmux display-message -p -t "$_fo_key" '#S:#W.#P')" \
-      'Focus' 'focused: come back here' "$_fo_path" "$_fo_key" \
-      sticky focus >> "$(_inbox)"
-    tmux display-message "Focused $_fo_id: M-i comes back here first" \
+    tmux display-message "Focused $_fo_id: its pings come first" \
       2>/dev/null || true
   fi
   tmux refresh-client -S 2>/dev/null || true
