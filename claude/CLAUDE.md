@@ -345,6 +345,9 @@ run. A `PreToolUse` hook (`heavy-slot hook`) prefixes agents'
 `heavy-slot take $$`: at most `HEAVY_SLOTS` (2) run at once,
 the rest wait ("heavy-slot: … waiting" on stderr). Give such
 commands a long `timeout`. `heavy-slot ls` shows holders.
+A running dev stack holds one too (`dev:<session>`, 1h,
+renewed by any tmux focus on that session; `dev down`
+frees it), so a stack left alone gives its slot back.
 
 ## Claude accounts
 

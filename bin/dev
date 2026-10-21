@@ -7,6 +7,8 @@
 #                    source $(repo_root)/.jrb/dev; --wait polls each
 #                    URL in DEV_WAIT_URLS
 #   dev down         rebuild `run` as a single fresh shell
+#   dev touch <sess> renew the session's heavy slot while its stack
+#                    runs (tmux focus hooks call it)
 #   dev trust [file] show .jrb/dev (or file) and trust its digest
 #   dev ls           list tagged dev panes across all sessions
 #   dev :            fzf a session with dev panes, switch to its `run`
@@ -20,6 +22,10 @@
 #   dev_wait <url> [s]     poll url until any HTTP response (default
 #                          300s), nonzero on timeout
 #   DEV_WAIT_URLS          set it for `dev up --wait`
+#
+# A running stack holds a heavy-slot (`dev:<session>`) for
+# DEV_SLOT_TTL seconds (3600), renewed by every focus on the session,
+# so a stack left alone hands its slot back to eslint/tsc runs.
 
 set -e
 
@@ -219,6 +225,7 @@ _dev_up() {
     test-slot acquire || exit $?
   fi
   _detach_if_inside_run up "$@"
+  heavy-slot hold "${DEV_SLOT_TTL:-3600}" "dev:$_s"
   mkdir -p "$(_log_dir)"
   echo "$$" > "$(_up_pidfile)"
   trap 'rm -f "$(_up_pidfile)"' EXIT
@@ -313,9 +320,17 @@ _dev_down() {
   _reap $_old
   echo "session: $_s run window reset, $(echo $_old | wc -w | tr -d ' ') \
 processes stopped"
+  heavy-slot free "dev:$_s" || true
   if test "${CLAUDECODE:-}" = 1; then
     test-slot release
   fi
+}
+
+_dev_touch() {
+  _s="${1:?usage: dev touch <session>}"
+  tmux list-panes -s -t "=$_s" -F '#{@dev}' 2>/dev/null \
+    | $_grep -q . || return 0
+  heavy-slot hold --try "${DEV_SLOT_TTL:-3600}" "dev:$_s" || true
 }
 
 _dev_trust() {
@@ -370,13 +385,14 @@ _dev_logs() {
 }
 
 _usage() {
-  echo "Usage: dev [up [--wait]|down|trust|ls|:|logs <tag>]" >&2
+  echo "Usage: dev [up [--wait]|down|touch <sess>|trust|ls|:|logs <tag>]" >&2
   exit 1
 }
 
 case "${1:-}" in
   up) shift; _dev_up "$@" ;;
   down) _dev_down ;;
+  touch) _dev_touch "${2:-}" ;;
   trust) shift; _dev_trust "$@" ;;
   ls) _dev_ls ;;
   :) _dev_pick ;;

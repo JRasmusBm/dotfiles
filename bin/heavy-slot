@@ -6,6 +6,11 @@
 #
 #   heavy-slot run CMD...  wait for a free slot, run CMD, free it
 #   heavy-slot take PID    wait for a free slot and hold it for PID
+#   heavy-slot hold [--try] SECS TAG
+#                          hold a slot for SECS under TAG, or renew
+#                          TAG's; --try takes one only if it's free
+#                          now, else waits (dev up: a running stack)
+#   heavy-slot free TAG    release TAG's slot
 #   heavy-slot ls          list held slots
 #   heavy-slot hook        PreToolUse hook for Bash: prefixes agents'
 #                          eslint/tsc/lint commands with
@@ -17,6 +22,7 @@
 # CPU: a holder whose process tree used none for HEAVY_SLOT_STALL
 # seconds (default 600) is hung (e.g. tsc after a full disk), so its
 # tree is TERMed and the slot freed; the agent sees the command fail.
+# A `hold` slot has no pid: it expires at its `until` time instead.
 
 set -e
 
@@ -49,9 +55,19 @@ _take() {
   while test "$_i" -le "$_max"; do
     _s="$_dir/$_i"
     if mkdir "$_s" 2>/dev/null; then
+      test -z "${_until:-}" || echo "$_until $_tag" > "$_s/until"
       echo "$_owner" > "$_s/pid"
       _held="$_s"
       return 0
+    fi
+    if test -f "$_s/until"; then
+      read -r _u _t < "$_s/until" || true
+      if test "$(date +%s)" -ge "${_u:-0}"; then
+        rm -rf "$_s"
+        continue
+      fi
+      _i=$((_i + 1))
+      continue
     fi
     _p="$(cat "$_s/pid" 2>/dev/null || true)"
     if test -n "$_p" && ! kill -0 "$_p" 2>/dev/null; then
@@ -75,7 +91,7 @@ _wait() {
   _said=''
   until _take; do
     if test -z "$_said"; then
-      echo "heavy-slot: $_max eslint/tsc runs going, waiting" >&2
+      echo "heavy-slot: all $_max slots held (heavy-slot ls), waiting" >&2
       _said=1
     fi
     sleep 3
@@ -104,9 +120,41 @@ _hook() {
       else empty end'
 }
 
+_tagged() {
+  for _s in "$_dir"/*; do
+    test -f "$_s/until" || continue
+    read -r _u _t < "$_s/until" || true
+    test "$_t" = "$1" && echo "$_s" && return 0
+  done
+  return 1
+}
+
+_hold() {
+  _try=''
+  test "$1" != --try || { _try=1; shift; }
+  _until=$(( $(date +%s) + ${1:?usage: heavy-slot hold [--try] SECS TAG} ))
+  _tag="${2:?usage: heavy-slot hold [--try] SECS TAG}"
+  if _s="$(_tagged "$_tag")"; then
+    echo "$_until $_tag" > "$_s/until"
+    return 0
+  fi
+  _owner=hold
+  if test -n "$_try"; then
+    _take
+  else
+    _wait
+  fi
+}
+
 _ls() {
   for _s in "$_dir"/*; do
     test -d "$_s" || continue
+    if test -f "$_s/until"; then
+      read -r _u _t < "$_s/until" || true
+      printf '%s\thold\t%s until %s\n' "${_s##*/}" "$_t" \
+        "$(date -r "${_u:-0}" +%H:%M:%S)"
+      continue
+    fi
     _p="$(cat "$_s/pid" 2>/dev/null || true)"
     printf '%s\t%s\t%s\n' "${_s##*/}" "$_p" \
       "$(ps -o command= -p "$_p" 2>/dev/null | cut -c1-80)"
@@ -116,6 +164,8 @@ _ls() {
 case "${1:-}" in
   run) shift; _run "$@" ;;
   take) _owner="${2:?usage: heavy-slot take PID}"; _wait ;;
+  hold) shift; _hold "$@" ;;
+  free) _s="$(_tagged "${2:?usage: heavy-slot free TAG}")" && rm -rf "$_s" ;;
   hook) _hook ;;
   ls) _ls ;;
   *) sed -n '2,/^$/s/^# \{0,1\}//p' "$0" >&2; exit 1 ;;
