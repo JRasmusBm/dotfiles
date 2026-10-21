@@ -107,12 +107,21 @@ of why something was tried and reverted.
 
 1. Schedule the next tick with `ScheduleWakeup`. Carry the whole
    queue in the `prompt` — the next firing continues from that text,
-   not from memory. The wakeup is a stall guard, not a clock: every
-   tick re-reads the whole context and burns weekly quota. Pick the
-   delay from what unblocks the next chunk: work ready now → 60s;
-   CI, a deploy or a review bot → when it should finish; a
-   background task or agent that notifies you → 1800s fallback.
-   Each consecutive no-op doubles the delay, up to 3600s.
+   not from memory. Each blocked item carries its unblock check
+   there (`gh pr checks 123`, "Pascal replied in #thread", the
+   blocker's branch merged), so a firing after a long gap, or after
+   a compaction, still knows what it was doing and what to look at.
+   The wakeup is a stall guard, not a clock: every tick re-reads
+   the whole context and burns weekly quota. Pick the delay from
+   what unblocks the next chunk: work ready now → 60s; CI, a deploy
+   or a review bot → when it should finish; a background task or
+   agent that notifies you → 1800s fallback. Each consecutive no-op
+   doubles the delay, up to 1800s while anything waits on a check
+   only you can run (a person's reply, an external state), else
+   3600s. Unblocks through `wt` (a `wt rb` blocker merged or gone)
+   don't wait for the tick: `wt` types the news into an idle
+   agent's pane, and a merged PR reaches its own agent the same way
+   (`pr-merged-tell`).
 2. Work items in the order I set, one or more per tick.
 3. Reconcile before reporting, every tick that did work: grep every
    task file's state line, compare it with the index, and let the
@@ -249,9 +258,11 @@ for.
 - Do not start work that is not on the queue. Discoveries go under
   **Found along the way** on the board, not into the tree.
 - A tick that produced nothing says so in one line and is marked a
-  no-op: check what it waits on, reschedule, done. No reconcile, no
-  board, no skill loads — nothing changed, so there is nothing to
-  reconcile or report. Never invent progress to fill a tick.
+  no-op: run every blocked item's unblock check, reschedule, done.
+  No reconcile, no board, no skill loads — nothing changed, so
+  there is nothing to reconcile or report. A check that passes
+  means the item is unblocked, so it's not a no-op: work it.
+  Never invent progress to fill a tick.
 - Lead every board with what is blocked and what needs me, not with
   what got done. That holds whether I have been away or watching.
 - A blocker goes to me the moment it appears, not at the next tick.
