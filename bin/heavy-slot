@@ -193,14 +193,17 @@ _ls() {
   _gap=''
   for _s in "$_dir"/*; do
     test -d "$_s" || continue
-    _gap=1
     if test -f "$_s/until"; then
       read -r _u _t < "$_s/until" || true
+      test "$(date +%s)" -lt "${_u:-0}" || continue
+      _gap=1
       printf '%s\thold\t%s until %s\n' "${_s##*/}" "$_t" \
         "$(date -r "${_u:-0}" +%H:%M:%S)"
       continue
     fi
     _p="$(cat "$_s/pid" 2>/dev/null || true)"
+    kill -0 "$_p" 2>/dev/null || continue
+    _gap=1
     _row "${_s##*/}" "$_p" \
       "$(ps -o etime= -p "$_p" 2>/dev/null | tr -d ' ')"
   done
