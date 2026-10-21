@@ -12,11 +12,17 @@ set -e
 #
 #   notif               picker: pending, then recent
 #   notif next <pane>   pending pane after <pane> in rank order
-#                       (a worktree `wt rb` blocked on another
-#                       goes last; then class, see notify: env,
-#                       merge, blocked, fail, check, unset, fyi;
-#                       then most follow-ups blocked on it; then
+#                       (a focused worktree first, and from
+#                       anywhere else straight back to it; a
+#                       worktree `wt rb` blocked on another goes
+#                       last; then class, see notify: env, merge,
+#                       blocked, fail, check, unset, fyi; then
+#                       most follow-ups blocked on it; then
 #                       oldest)
+#   notif focus <pane>  toggle focus on <pane>'s worktree (else
+#                       the pane): it stays queued (a sticky
+#                       `focus` row only M-y or unfocusing clears)
+#                       and its pings rank above everything
 #   notif later <pane>  re-queue <pane> at the back; if it runs
 #                       a command (not a shell, Claude or an
 #                       interactive app like vim), notify
@@ -46,8 +52,13 @@ function slug(p,  i, s) {
   s = substr(p, i + 12); sub(/\/.*/, "", s)
   return s
 }
-function prio(c, p,  s, kids, rest, j) {
+function focused(k, p,  s) {
   s = slug(p)
+  return index(foc, " " (s != "" ? s : k) " ") > 0
+}
+function prio(c, p, k,  s, kids, rest, j) {
+  s = slug(p)
+  if (focused(k, p)) return rank(c)
   if (s != "" && index(blk, " " s ">")) return 100 + rank(c) * 10
   kids = 0; rest = blk
   while (s != "" && (j = index(rest, ">" s " "))) {
@@ -55,6 +66,16 @@ function prio(c, p,  s, kids, rest, j) {
   }
   return rank(c) * 10 + 9 - (kids > 9 ? 9 : kids)
 }'
+
+_focus_file() {
+  echo "$(_inbox).focus"
+}
+
+# " slug-or-pane ..." of focused places.
+_focused() {
+  printf ' '
+  cat "$(_focus_file)" 2>/dev/null | tr '\n' ' '
+}
 
 # " child>blocker ..." from every board's `wt rb` records, so a
 # follow-up blocked on a worktree queues behind it.
@@ -79,7 +100,7 @@ _notif_drop() {
     function hit() {
       if (m == "path") return $5 == k || index($5, k "/") == 1
       return key() == k && (m != "arrive" || $7 != "sticky") \
-        && (m != "reply" || $8 != "merge")
+        && (m != "reply" || ($8 != "merge" && $8 != "focus"))
     }'
   awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
     hit() { found = 1 } END { exit !found }' "$_f" || return 0
@@ -119,12 +140,12 @@ _notif_count() {
 # `skip` (space-separated) are left out; at most `max` lines.
 _collapse() {
   awk -F'\t' -v mark="$1" -v skip=" $2 " -v max="${3:-0}" \
-    -v blk="$(_blocked)" "$_KEY"'
+    -v blk="$(_blocked)" -v foc="$(_focused)" "$_KEY"'
     {
       k = key()
       if (index(skip, " " k " ")) next
       if (!(k in ts)) { order[++n] = k; r[k] = 999 }
-      if (prio($8, $5) < r[k]) r[k] = prio($8, $5)
+      if (prio($8, $5, k) < r[k]) r[k] = prio($8, $5, k)
       count[k]++
       if ($1 + 0 >= ts[k] + 0) {
         ts[k] = $1; ctx[k] = $2; msg[k] = $4; path[k] = $5
@@ -244,11 +265,13 @@ _notif_next() {
   _f="$(_inbox)"
   _here_key="${1:-}"
   while test -f "$_f"; do
-    _line="$(awk -F'\t' -v h="$_here_key" -v blk="$(_blocked)" "$_KEY"'
+    _line="$(awk -F'\t' -v h="$_here_key" -v blk="$(_blocked)" \
+      -v foc="$(_focused)" "$_KEY"'
       {
         k = key()
         if (!(k in r)) { o[++n] = k; r[k] = 999; t[k] = $1 }
-        if (prio($8, $5) < r[k]) r[k] = prio($8, $5)
+        if (prio($8, $5, k) < r[k]) r[k] = prio($8, $5, k)
+        if (focused(k, $5)) fk[k] = 1
         if ($1 + 0 < t[k] + 0) t[k] = $1
         row[k] = k "\t" $2 "\t" $5
       }
@@ -260,6 +283,7 @@ _notif_next() {
           }
         for (i = 1; i <= n; i++) if (o[i] == h) at = i
         if (n == 0 || (at && n == 1)) exit
+        if (!fk[h] && fk[o[1]]) { print row[o[1]]; exit }
         print row[o[at % n + 1]]
       }' "$_f")"
     test -n "$_line" || break
@@ -307,6 +331,38 @@ _notif_later() {
   tmux display-message "Snoozed" 2>/dev/null || true
 }
 
+# Toggle focus on this pane's worktree (its slug), else the pane.
+_notif_focus() {
+  _fo_key="${1:?usage: notif focus <pane>}"
+  _fo_path="$(tmux display-message -p -t "$_fo_key" '#{pane_current_path}')"
+  _fo_id="$_fo_key"
+  case "$_fo_path" in
+    */.worktrees/*)
+      _fo_id="${_fo_path#*/.worktrees/}"; _fo_id="${_fo_id%%/*}" ;;
+  esac
+  _ff="$(_focus_file)"
+  touch "$_ff" "$(_inbox)"
+  if grep -qxF "$_fo_id" "$_ff"; then
+    _tmp="$(mktemp)"
+    grep -vxF "$_fo_id" "$_ff" > "$_tmp" || true
+    mv "$_tmp" "$_ff"
+    _tmp="$(mktemp)"
+    awk -F'\t' -v k="$_fo_key" "$_KEY"'
+      !(key() == k && $8 == "focus")' "$(_inbox)" > "$_tmp"
+    mv "$_tmp" "$(_inbox)"
+    tmux display-message "Unfocused $_fo_id" 2>/dev/null || true
+  else
+    echo "$_fo_id" >> "$_ff"
+    printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" \
+      "$(tmux display-message -p -t "$_fo_key" '#S:#W.#P')" \
+      'Focus' 'focused: come back here' "$_fo_path" "$_fo_key" \
+      sticky focus >> "$(_inbox)"
+    tmux display-message "Focused $_fo_id: M-i comes back here first" \
+      2>/dev/null || true
+  fi
+  tmux refresh-client -S 2>/dev/null || true
+}
+
 _notif_open() {
   _list="$(_notif_list)"
   if test -z "$_list"; then
@@ -350,7 +406,7 @@ _notif_preview() {
 # My inbox actions feed the my-impact focus log, to tell jumps the
 # inbox called me to from ones I made on my own.
 case "${1:-}" in
-  ""|:|open|next|later|seen)
+  ""|:|open|next|later|seen|focus)
     _sess="$(tmux display-message -p -t "${2:-}" '#S' 2>/dev/null)"
     focus-log notif "${1:-open}" "$_sess" 2>/dev/null || true
     ;;
@@ -360,6 +416,7 @@ case "${1:-}" in
   ""|:|open) _notif_open ;;
   next) shift; _notif_next "$@" ;;
   later) shift; _notif_later "$@" ;;
+  focus) shift; _notif_focus "$@" ;;
   count) _notif_count ;;
   seen) shift; _notif_drop "${1:-}" "${2:-reply}" ;;
   seen-path) shift; _notif_drop "${1:-}" path ;;
@@ -368,7 +425,7 @@ case "${1:-}" in
   _list) _notif_list ;;
   _preview) shift; _notif_preview "$@" ;;
   *)
-    echo "Usage: notif [open|next|later|seen|arrive|count|clear]" >&2
+    echo "Usage: notif [open|next|later|focus|seen|arrive|count|clear]" >&2
     exit 1
     ;;
 esac

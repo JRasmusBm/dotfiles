@@ -317,6 +317,11 @@ the calling pane's id, its `#S:#W.#P` for display, and its
 - `M-i` / `notif next <pane>` — jump to the pending pane
   queued after the current one (oldest if here isn't
   pending), so repeated `M-i` rotates through them.
+- `M-k` / `notif focus <pane>` — toggle focus on this pane's
+  worktree: a sticky `focus` row keeps it queued (cleared only by
+  `M-y` or unfocusing), its pings rank above every class, and
+  `M-i` from anywhere else comes straight back to it. For "this
+  one matters most, don't lose it behind 30 others".
 - `M-u` / `notif later <pane>` — snooze: move this pane to
   the back of the queue as sticky (adds a row if none was
   pending). For "come back to this". If the pane is running
