@@ -32,4 +32,13 @@ _changed() {
     sort -u
 }
 
+# In a repo with a deploy-plan (ice-floe: .github/deploy/targets.json
+# and polar's deploy-plan on PATH), no args = what to deploy per
+# service; args keep the plain changed-areas listing.
+if test $# -eq 0 \
+  && test -f "$(git rev-parse --show-toplevel)/.github/deploy/targets.json" \
+  && command -v deploy-plan >/dev/null; then
+  exec deploy-plan
+fi
+
 _changed "$@"
