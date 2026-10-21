@@ -54,6 +54,11 @@ convert it instead?") while I'm on the main checkout or a feature
 branch that has nothing to do with the ask. A fix that grows out of
 an investigation is new work too. Never build it in the current
 checkout, and never run `wt add` with free text in place of a ticket.
+A scoping or ideation ticket is work too: it gets a worktree and
+agent in the same turn, and that agent's output is started build
+tickets (Follow-up flow, steps 3–4), not a doc. It may kick off a
+brilliant idea before he picks, briefed to `/iterate` to a ready
+PR; an unwanted one costs a `wt cancel`.
 
 1. **Claim.** Nobody else may already be doing it. If the repo has
    a `claim-work` skill (ice-floe does), load it and run its check
