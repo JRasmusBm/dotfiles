@@ -200,7 +200,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   Once every target the PR needs is deployed to a stage after
   it reached that branch (`pr-where --status`, the rule
   `deploy-plan` uses; whoever dispatched the runs), `wt-sync`
-  tells the agent once per stage to verify it there. Both go
+  tells the agent once per stage to verify it there; a PR that
+  needs no deploy (tests, docs, CI only) gets one tell at merge to
+  check it where it runs and close the ticket. Both go
   through `wt-tell`: idle Claude gets the prompt, a worktree
   with no session gets me a `check` ping.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`

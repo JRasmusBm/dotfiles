@@ -9,9 +9,11 @@
 #     reached that stage's branch (pr-where --status, the same rule
 #     as deploy-plan): tell its agent which part is out, once per set
 #     of deployed targets; all of them: tell it it's shipped there,
-#     once per stage.
-#     Checked when a new successful deploy run appeared, whoever
-#     dispatched it, and again each run while its Claude was busy.
+#     once per stage. Nothing to deploy (tests, docs, CI only): tell
+#     it so once, so it closes the ticket.
+#     Checked when it merges, when a new successful deploy run
+#     appeared (whoever dispatched it), and again each run while its
+#     Claude was busy.
 # On a phone hotspot it polls every 5th minute only; a poll without a
 # new deploy is ~10 KB. Android marks its hotspot's DHCP lease with
 # vendor option ANDROID_METERED; an iPhone's gateway is 172.20.10.1.
@@ -45,6 +47,16 @@ missing: $_miss, so it isn't shipped yet. Check read-only that the \
 deployed part works on $_stage and doesn't break anything without the \
 rest, and tell me what you verified." || _retry_later "$_root" "$_pr"
           continue ;;
+        "nothing to deploy")
+          wt-tell "$_root" "nodeploy:$_pr" \
+            "#$_pr needs no deploy, no agent session: wt done or wt ra" \
+            "PR #$_pr needs no deploy: none of its changes reach a \
+deployed service (tests, docs or CI only), so it took effect when it \
+merged. Check that it does what it should where it runs (CI on dev, for \
+a test fix), then: wt ra if users or the team should hear about it \
+(and draft the release post), else wt done." \
+            || _retry_later "$_root" "$_pr"
+          return ;;
         *) continue ;;
       esac
       wt-tell "$_root" "deployed:$_stage:$_pr" \
@@ -92,7 +104,14 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
       printf '%s\n' "$_merged" | awk -F'\t' -v b="$_branch" -v w="${_wt##*/}" '
         { n = split($1, a, "/") } $1 == b || a[n] == w' \
         | while IFS="$(printf '\t')" read -r _ _pr _at; do
-          test "$_at" \< "$_recent" || pr-merged-tell "$_wt" "$_pr"
+          if ! test "$_at" \< "$_recent"; then
+            # Checked right away the first time, so one needing no
+            # deploy doesn't wait for somebody's next run.
+            grep -qxF "$_wt	merged:$_pr" "$LOCAL_CONFIG/wt-told" \
+              || _retry="$_retry
+$_wt	$_pr"
+            pr-merged-tell "$_wt" "$_pr"
+          fi
           if test -n "$_new_deploy" \
             || printf '%s\n' "$_retry" | grep -qxF "$_wt	$_pr"; then
             _deployed "$_wt" "$_pr"
