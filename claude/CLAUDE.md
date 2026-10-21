@@ -150,14 +150,17 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   with a warning. Re-running on an existing worktree just
   opens it. Unrelated to `rt`/`rd`/`rp` below, which park
   *my* worktrees in review sections.
-- `wt rt` / `wt rd` / `wt rp` — move the current worktree's
-  board entry into `# TEAM REVIEW` (`rt`), `# READY TO
-  DEPLOY` (`rd`) or `# PROD REVIEW` (`rp`) (reusing a freed
+- `wt rt` / `wt rd` / `wt rp` / `wt ra` — move the current
+  worktree's board entry into `# TEAM REVIEW` (`rt`), `# READY
+  TO DEPLOY` (`rd`), `# PROD REVIEW` (`rp`) or `# TO
+  ANNOUNCE` (`ra`: verified live, release post not yet out)
+  (reusing a freed
   slot there, else a new line; creates the heading if
   missing), so `wt :` shows it as `TEAM REVIEW: branch`.
   Checkout, branch and tmux session stay. The branch's Linear
   ticket, if any, moves to Team review / Ready to deploy /
-  Needs live verification (`lin state`; needs
+  Needs live verification / Done (`lin state`; verified is
+  Done in Linear, the announcement is board-only; needs
   `$LINEAR_API_KEY` from polar `secrets/common`; a Linear
   failure never stops `wt`).
 - `wt rb [<worktree>|:]` — current worktree is blocked by
@@ -199,8 +202,11 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   that first moves the ticket to Done / Canceled (refuses
   to remove if Linear fails). No arg = the current worktree.
   Reversible (`wt resume`), so an agent whose ticket is
-  finished (merged, and live where it runs) runs `wt done`
-  itself and reports it; never "Should I run it?".
+  finished runs `wt done` itself and reports it; never
+  "Should I run it?". Finished = merged, verified live, and
+  announced if users or the team see it (a release post in
+  #what-did-we-ship / #shipped-fixes, `release` skill);
+  verified but not announced → `wt ra` and draft the post.
 - `wt id` — print the current worktree's slug (= its tmux
   session name) and copy it, to point other agents at it.
 - `wt pin [N]` / `wt unpin` — put the current worktree on

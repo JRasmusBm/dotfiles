@@ -1268,7 +1268,8 @@ _wt_clean_agents() {
 }
 
 # Remove every active worktree whose PR is merged, except
-# # PROD REVIEW entries (still to check in prod). Confirms
+# # PROD REVIEW / # TO ANNOUNCE entries (still to verify or
+# announce). Confirms
 # each (read from /dev/tty); `-f`/`--force` skips prompts.
 # Needs gh. Safe to run — removal is reversible via resume.
 # Sweeps stale subagent worktrees first (_wt_clean_agents).
@@ -1318,9 +1319,10 @@ _wt_clean() {
     # dir name differs from basename(branch).
     _p="$(_wt_worktrees \
       | awk -F"$_tab" -v b="$_b" '$2==b{print $1; exit}')"
-    if test "$(_board_section "$_b" "${_p##*/}")" = 'PROD REVIEW'
+    _sec="$(_board_section "$_b" "${_p##*/}")"
+    if test "$_sec" = 'PROD REVIEW' || test "$_sec" = 'TO ANNOUNCE'
     then
-      echo "  kept $_b (PROD REVIEW: wt done once verified)" >&2
+      echo "  kept $_b ($_sec: wt done once verified and announced)" >&2
       continue
     fi
     if test "$_force" = true; then
@@ -1370,13 +1372,14 @@ case "${1:-}" in
     _require_worktree
     case "$(_board_section "$(git branch --show-current)" \
       "$(basename "$(git rev-parse --show-toplevel)")")" in
-      'READY TO DEPLOY'|'PROD REVIEW') ;;
+      'READY TO DEPLOY'|'PROD REVIEW'|'TO ANNOUNCE') ;;
       *) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
     esac
     _unblock_dependents "$(basename "$(git rev-parse --show-toplevel)")" \
       merged
     ;;
   rp) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
+  ra) _wt_park 'TO ANNOUNCE' 'Done' ;;
   done) shift; _WT_STATE=Done; _wt_evict "${1:-.}" ;;
   cancel) shift; _WT_STATE=Canceled; _wt_evict "${1:-.}" ;;
   rm|remove) shift; _wt_evict "$@" ;;
