@@ -197,6 +197,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   (`pr-merged-tell`, from `claude-notify` or the `wt-sync`
   launchd job every minute) to run it and hand me staging,
   production and both deploy commands. No inbox ping for it.
+  Once every target the PR needs is deployed to a stage after
+  it reached that branch (`pr-where --status`, the rule
+  `deploy-plan` uses; whoever dispatched the runs), `wt-sync`
+  tells the agent once per stage to verify it there. Both go
+  through `wt-tell`: idle Claude gets the prompt, a worktree
+  with no session gets me a `check` ping.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
   that first moves the ticket to Done / Canceled (refuses
   to remove if Linear fails). No arg = the current worktree.

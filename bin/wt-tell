@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# wt-tell <worktree> <key> <ping> <prompt> — tell the worktree's idle
+# Claude (its `cli` pane) <prompt>, once per worktree and key
+# ($LOCAL_CONFIG/wt-told). No session: pings me (check) with <ping>
+# instead. Claude busy: fails, so the caller's next run retries.
+
+_root="$1" _key="$2" _msg="$3" _prompt="$4"
+test -n "$_root" && test -n "$_key" && test -n "$_prompt" \
+  || { sed -n '3,6s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+_told="${LOCAL_CONFIG:?}/wt-told"
+grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
+
+_pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
+  '#{pane_id}' 2>/dev/null)" || _pane=""
+if test -z "$_pane"; then
+  echo "$_root	$_key" >> "$_told"
+  ( cd "$_root" && TMUX_PANE= NOTIFY_CLASS=check \
+    notify "$(basename "$_root")" "$_msg" )
+  exit 0
+fi
+claude-pane-idle "$_pane" || exit 1
+
+echo "$_root	$_key" >> "$_told"
+notif seen "$_pane" all >/dev/null 2>&1 || true
+tmux send-keys -t "$_pane" -l "$_prompt"
+sleep 0.5
+tmux send-keys -t "$_pane" Enter

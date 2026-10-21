@@ -1,12 +1,18 @@
 #!/bin/sh
 #
-# wt-sync — launchd (com.jrasmusbm.wt-sync, every minute): for each
-# worktree of $WT_SYNC_REPOS whose PR merged in the last 3 days, tell
-# its agent (pr-merged-tell), so a merge reaches an agent that was
-# already idle when it happened. On a phone hotspot it polls every
-# 5th minute only; each poll is ~10 KB (TLS + my merged PRs of the
-# last 3 days). Android marks its hotspot's DHCP lease with vendor
-# option ANDROID_METERED; an iPhone's gateway is 172.20.10.1.
+# wt-sync — launchd (com.jrasmusbm.wt-sync, every minute), for each
+# worktree of $WT_SYNC_REPOS with a PR of mine merged in the last 7
+# days:
+#   - merged in the last 3 days: tell its agent (pr-merged-tell), so a
+#     merge reaches an agent that was already idle when it happened;
+#   - all the targets it needs deployed to a stage after it reached
+#     that stage's branch (pr-where --status, the same rule as
+#     deploy-plan): tell its agent to verify it there, once per stage.
+#     Checked only when a new successful deploy run appeared, whoever
+#     dispatched it.
+# On a phone hotspot it polls every 5th minute only; a poll without a
+# new deploy is ~10 KB. Android marks its hotspot's DHCP lease with
+# vendor option ANDROID_METERED; an iPhone's gateway is 172.20.10.1.
 
 _metered() {
   _if="$(route -n get default 2>/dev/null | awk '/interface:/ { print $2 }')"
@@ -19,18 +25,46 @@ if _metered && test "$(( $(date +%M) % 5 ))" != 0; then
   exit 0
 fi
 
+_deployed() {
+  _root="$1" _pr="$2"
+  pr-where --status "$_pr" 2>/dev/null \
+    | while IFS="$(printf '\t')" read -r _stage _cover _targets; do
+      case "$_cover" in "✓"*) ;; *) continue ;; esac
+      wt-tell "$_root" "deployed:$_stage:$_pr" \
+        "#$_pr is on $_stage ($_targets), no agent session: verify it" \
+        "PR #$_pr is now deployed to $_stage with all its targets \
+($_targets). Check read-only that the change works on $_stage and \
+tell me what you verified. Once it's verified in production: wt ra if \
+users or the team should hear about it (and draft the release post), \
+else wt done."
+    done
+}
+
 for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
   cd "$_repo" || continue
-  _since="$(gdate -u -d '3 days ago' +%F)"
+  _since="$(gdate -u -d '7 days ago' +%F)"
+  _recent="$(gdate -u -d '3 days ago' +%FT%TZ)"
   _merged="$(timeout 30 gh pr list --state merged --author @me \
-    --search "merged:>=$_since" --limit 100 --json number,headRefName \
-    --jq '.[] | [.headRefName, .number] | @tsv')" || continue
+    --search "merged:>=$_since" --limit 100 \
+    --json number,headRefName,mergedAt \
+    --jq '.[] | [.headRefName, .number, .mergedAt] | @tsv')" || continue
   test -n "$_merged" || continue
+  _seen="${LOCAL_CONFIG:?}/wt-sync.deploy.$(basename "$_repo")"
+  _last="$(timeout 30 gh run list --workflow deploy.yaml --status success \
+    --limit 1 --json databaseId --jq '.[0].databaseId')" || _last=""
+  _new_deploy=""
+  if test -n "$_last" && test "$_last" != "$(cat "$_seen" 2>/dev/null)"; then
+    _new_deploy=1
+  fi
   git worktree list --porcelain | awk '
     /^worktree / { w = substr($0, 10) }
     /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }' \
     | while IFS="$(printf '\t')" read -r _wt _branch; do
-      printf '%s\n' "$_merged" | awk -F'\t' -v b="$_branch" '$1 == b { print $2 }' \
-        | while read -r _pr; do pr-merged-tell "$_wt" "$_pr"; done
+      printf '%s\n' "$_merged" | awk -F'\t' -v b="$_branch" '$1 == b' \
+        | while IFS="$(printf '\t')" read -r _ _pr _at; do
+          test "$_at" \< "$_recent" || pr-merged-tell "$_wt" "$_pr"
+          test -z "$_new_deploy" || _deployed "$_wt" "$_pr"
+        done
     done
+  test -z "$_new_deploy" || echo "$_last" > "$_seen"
 done

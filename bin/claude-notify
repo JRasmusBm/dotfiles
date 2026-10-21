@@ -85,7 +85,7 @@ case "$_pr" in
   check*)
     _num="${_pr#*#}" _root="$(git rev-parse --show-toplevel)"
     _pr=""
-    if ! grep -qxF "$_root	${_num%%:*}" "${LOCAL_CONFIG:?}/merged-told" \
+    if ! grep -qxF "$_root	merged:${_num%%:*}" "${LOCAL_CONFIG:?}/wt-told" \
       2>/dev/null; then
       ( sleep 2; pr-merged-tell "$_root" "${_num%%:*}" ) \
         >/dev/null 2>&1 &

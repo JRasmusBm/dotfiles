@@ -1,37 +1,18 @@
 #!/bin/sh
 #
-# pr-merged-tell <worktree> <pr> — tell the worktree's idle Claude
-# (its `cli` pane) that <pr> merged: run `wt merged`, then hand me
-# deploy commands. Once per worktree and PR
-# ($LOCAL_CONFIG/merged-told). No session: pings me (check) instead.
-# Claude busy: fails, so the next run (claude-notify, wt-sync)
-# retries.
+# pr-merged-tell <worktree> <pr> — tell the worktree's agent that <pr>
+# merged: run `wt merged`, record its targets, hand me deploy
+# commands (wt-tell: once, idle Claude, else a check ping).
 
 _root="$1" _pr="$2"
 test -n "$_root" && test -n "$_pr" \
-  || { sed -n '3,7s/^# \{0,1\}//p' "$0" >&2; exit 2; }
-_told="${LOCAL_CONFIG:?}/merged-told"
-grep -qxF "$_root	$_pr" "$_told" 2>/dev/null && exit 0
-
-_pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
-  '#{pane_id}' 2>/dev/null)" || _pane=""
-if test -z "$_pane"; then
-  echo "$_root	$_pr" >> "$_told"
-  ( cd "$_root" && TMUX_PANE= NOTIFY_CLASS=check notify "Merged: $(basename "$_root")" \
-    "#$_pr merged, no agent session: wt merged, then deploy" )
-  exit 0
-fi
-claude-pane-idle "$_pane" || exit 1
-
-echo "$_root	$_pr" >> "$_told"
-notif seen "$_pane" all >/dev/null 2>&1 || true
+  || { sed -n '3,5s/^# \{0,1\}//p' "$0" >&2; exit 2; }
 _by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
   --jq '.mergedBy.login' 2>/dev/null)"
-tmux send-keys -t "$_pane" -l "PR #$_pr is merged into dev${_by:+ (merged by \
-$_by)}. Run wt \
-merged (board and ticket to Ready to deploy; the follow-ups blocked \
-on this worktree get unblocked). Then load the deploy skill and give \
-me three deploy commands for this change: staging, production, and \
-both, and record its targets with pr-where $_pr <targets>."
-sleep 0.5
-tmux send-keys -t "$_pane" Enter
+exec wt-tell "$_root" "merged:$_pr" \
+  "#$_pr merged, no agent session: wt merged, then deploy" \
+  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Run wt merged \
+(board and ticket to Ready to deploy; the follow-ups blocked on this \
+worktree get unblocked). Then load the deploy skill, record its targets \
+with pr-where $_pr <targets>, and give me three deploy commands for \
+this change: staging, production, and both."
