@@ -190,8 +190,10 @@ _ago() {
 }
 
 _ls() {
+  _gap=''
   for _s in "$_dir"/*; do
     test -d "$_s" || continue
+    _gap=1
     if test -f "$_s/until"; then
       read -r _u _t < "$_s/until" || true
       printf '%s\thold\t%s until %s\n' "${_s##*/}" "$_t" \
@@ -209,6 +211,7 @@ _ls() {
       continue
     fi
     read -r _at _o _t < "$_w" || true
+    test -z "$_gap" || { echo; _gap=''; }
     case "$_o" in
       hold) _row wait "${_w##*/}" "$(_ago "$_at")" "$_t" ;;
       *) _row wait "$_o" "$(_ago "$_at")" ;;
