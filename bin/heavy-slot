@@ -89,13 +89,17 @@ _take() {
 _wait() {
   _held=''
   _said=''
-  until "${1:-_take}"; do
+  until _locked "${1:-_take}"; do
     if test -z "$_said"; then
       echo "heavy-slot: all $_max slots held (heavy-slot ls), waiting" >&2
       _said=1
+      mkdir -p "$_dir/.wait"
+      printf '%s %s %s\n' "$(date +%s)" "$_owner" "${_tag:-}" \
+        > "$_dir/.wait/$$"
     fi
     sleep 3
   done
+  rm -f "$_dir/.wait/$$"
   test -n "$_said" && test "${CLAUDECODE:-}" != 1 || return 0
   NOTIFY_CLASS=env notify "heavy-slot" \
     "got a slot: ${_tag:-$_owner}; others queue until it's freed" \
@@ -141,17 +145,20 @@ _lock() {
   done
 }
 
-_hold_once() {
+_locked() {
   _lock
-  _r=1
-  if _s="$(_tagged "$_tag")"; then
-    echo "$_until $_tag" > "$_s/until"
-    _r=0
-  elif _take; then
-    _r=0
-  fi
+  _r=0
+  "$@" || _r=$?
   rmdir "$_dir/.lock"
   return "$_r"
+}
+
+_hold_once() {
+  if _s="$(_tagged "$_tag")"; then
+    echo "$_until $_tag" > "$_s/until"
+    return 0
+  fi
+  _take
 }
 
 _hold() {
@@ -161,10 +168,25 @@ _hold() {
   _tag="${2:?usage: heavy-slot hold [--try] SECS TAG}"
   _owner=hold
   if test -n "$_try"; then
-    _hold_once
+    _locked _hold_once
   else
     _wait _hold_once
   fi
+}
+
+_row() {
+  _cwd="$(lsof -a -p "$2" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')"
+  case "$_cwd" in
+    */.worktrees/*) _cwd="${_cwd#*/.worktrees/}" ;;
+    *) _cwd="${_cwd##*/}" ;;
+  esac
+  printf '%s\t%s\t%s\t%s\t%s\n' "$1" "$2" "$3" "$_cwd" \
+    "${4:-$(ps -o command= -p "$2" 2>/dev/null | _line)}"
+}
+
+_ago() {
+  _d=$(( $(date +%s) - $1 ))
+  printf '%d:%02d' $((_d / 60)) $((_d % 60))
 }
 
 _ls() {
@@ -177,17 +199,22 @@ _ls() {
       continue
     fi
     _p="$(cat "$_s/pid" 2>/dev/null || true)"
-    _cwd="$(lsof -a -p "$_p" -d cwd -Fn 2>/dev/null | sed -n 's/^n//p')"
-    case "$_cwd" in
-      */.worktrees/*) _cwd="${_cwd#*/.worktrees/}" ;;
-      *) _cwd="${_cwd##*/}" ;;
+    _row "${_s##*/}" "$_p" \
+      "$(ps -o etime= -p "$_p" 2>/dev/null | tr -d ' ')"
+  done
+  for _w in "$_dir"/.wait/*; do
+    test -f "$_w" || continue
+    if ! kill -0 "${_w##*/}" 2>/dev/null; then
+      rm -f "$_w"
+      continue
+    fi
+    read -r _at _o _t < "$_w" || true
+    case "$_o" in
+      hold) _row wait "${_w##*/}" "$(_ago "$_at")" "$_t" ;;
+      *) _row wait "$_o" "$(_ago "$_at")" ;;
     esac
-    printf '%s\t%s\t%s\t%s\t%s\n' "${_s##*/}" "$_p" \
-      "$(ps -o etime= -p "$_p" 2>/dev/null | tr -d ' ')" "$_cwd" \
-      "$(ps -o command= -p "$_p" 2>/dev/null | _line)"
   done
 }
-
 # An agent's Bash call shows as `zsh -c source <snapshot> ... eval
 # 'heavy-slot take $$\012<command>' ...`: keep the command.
 _line() {
