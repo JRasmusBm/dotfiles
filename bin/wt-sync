@@ -1,0 +1,23 @@
+#!/bin/sh
+#
+# wt-sync — launchd (com.jrasmusbm.wt-sync, every 5 min): for each
+# worktree of $WT_SYNC_REPOS whose PR merged in the last 3 days, tell
+# its agent (pr-merged-tell), so a merge reaches an agent that was
+# already idle when it happened.
+
+for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
+  cd "$_repo" || continue
+  _since="$(gdate -u -d '3 days ago' +%FT%TZ)"
+  _merged="$(timeout 30 gh pr list --state merged --limit 100 \
+    --json number,headRefName,mergedAt \
+    --jq ".[] | select(.mergedAt > \"$_since\")
+      | [.headRefName, .number] | @tsv")" || continue
+  test -n "$_merged" || continue
+  git worktree list --porcelain | awk '
+    /^worktree / { w = substr($0, 10) }
+    /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }' \
+    | while IFS="$(printf '\t')" read -r _wt _branch; do
+      printf '%s\n' "$_merged" | awk -F'\t' -v b="$_branch" '$1 == b { print $2 }' \
+        | while read -r _pr; do pr-merged-tell "$_wt" "$_pr"; done
+    done
+done

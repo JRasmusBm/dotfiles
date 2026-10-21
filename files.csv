@@ -39,3 +39,4 @@ False,yarn/yarnrc.yml,.yarnrc.yml
 False,claude/accretion-check.sh,.claude/accretion-check.sh
 False,launchd/com.jrasmusbm.memlog.plist,Library/LaunchAgents/com.jrasmusbm.memlog.plist
 False,launchd/com.jrasmusbm.cswap-auto.plist,Library/LaunchAgents/com.jrasmusbm.cswap-auto.plist
+False,launchd/com.jrasmusbm.wt-sync.plist,Library/LaunchAgents/com.jrasmusbm.wt-sync.plist

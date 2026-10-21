@@ -8,7 +8,8 @@
 #            a question: the agent's offer rides along in the text)
 #   blocked  a permission prompt, or its last message asks me
 #   fail     its PR has a failing check
-#   check    its PR is merged: verify it live and move it on the board
+#   (merged) its PR is merged: the agent, not me, is told
+#            (pr-merged-tell; wt-sync retries)
 #   fyi      anything else ("done", nothing for me)
 
 INPUT=$(cat)
@@ -80,6 +81,18 @@ case "$_text" in
 esac
 
 _pr="$(_pr_class)"
+case "$_pr" in
+  check*)
+    _num="${_pr#*#}" _root="$(git rev-parse --show-toplevel)"
+    _pr=""
+    if ! grep -qxF "$_root	${_num%%:*}" "${LOCAL_CONFIG:?}/merged-told" \
+      2>/dev/null; then
+      ( sleep 2; pr-merged-tell "$_root" "${_num%%:*}" ) \
+        >/dev/null 2>&1 &
+      exit 0
+    fi
+    ;;
+esac
 # Any newer ping supersedes this pane's old merge ping.
 case "$_pr" in
   merge*) ;;

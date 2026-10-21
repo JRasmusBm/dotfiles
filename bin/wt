@@ -168,22 +168,32 @@ _linear() {
   return 1
 }
 
-# The blocker went away: send what it blocked back to
-# # IN PROGRESS and ping it in the notification inbox.
+# The blocker went away (or merged, $2): send what it blocked
+# back to # IN PROGRESS and tell its agent to rebase and carry on
+# (idle Claude), else ping it in the notification inbox.
 _unblock_dependents() {
+  _ud_why="${2:-is gone}"
   _bf="$(_blocked_file)"
   test -f "$_bf" || return 0
   awk -F '\t' -v b="$1" '$3 == b { print $1 "\t" $2 }' "$_bf" \
     | while IFS="$(printf '\t')" read -r _ud_slug _ud_branch; do
-      echo "wt: $1 is gone, unblocking $_ud_slug" >&2
+      echo "wt: $1 $_ud_why, unblocking $_ud_slug" >&2
       _snooze_drop "$_ud_slug"
       _board_move "$_ud_branch" "$_ud_slug" 'IN PROGRESS'
       _linear 'In Progress' "$_ud_branch" || true
       _ud_pane="$(tmux display-message -p -t "=$_ud_slug:cli" \
         '#{pane_id}' 2>/dev/null || true)"
+      if test -n "$_ud_pane" && claude-pane-idle "$_ud_pane"; then
+        tmux send-keys -t "$_ud_pane" -l "$1 $_ud_why, which unblocks \
+this worktree. Rebase onto origin/dev (retarget its PR to dev if it \
+was stacked on $1) and carry on."
+        sleep 0.5
+        tmux send-keys -t "$_ud_pane" Enter
+        continue
+      fi
       ( cd "$(_main_root)/.worktrees/$_ud_slug" 2>/dev/null \
         && TMUX_PANE="$_ud_pane" notify "Unblocked: $_ud_slug" \
-          "$1 is gone; back in progress" ) >/dev/null 2>&1 || true
+          "$1 $_ud_why; back in progress" ) >/dev/null 2>&1 || true
     done
   awk -F '\t' -v b="$1" '$3 != b && $1 != b' "$_bf" | sponge "$_bf"
 }
@@ -1356,6 +1366,14 @@ case "${1:-}" in
   ip) _wt_park 'IN PROGRESS' 'In Progress' ;;
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
+  merged)
+    _require_worktree
+    test "$(_board_section "$(git branch --show-current)" \
+      "$(basename "$(git rev-parse --show-toplevel)")")" = 'PROD REVIEW' \
+      || _wt_park 'READY TO DEPLOY' 'Ready to deploy'
+    _unblock_dependents "$(basename "$(git rev-parse --show-toplevel)")" \
+      merged
+    ;;
   rp) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
   done) shift; _WT_STATE=Done; _wt_evict "${1:-.}" ;;
   cancel) shift; _WT_STATE=Canceled; _wt_evict "${1:-.}" ;;
