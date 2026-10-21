@@ -1368,9 +1368,11 @@ case "${1:-}" in
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
   merged)
     _require_worktree
-    test "$(_board_section "$(git branch --show-current)" \
-      "$(basename "$(git rev-parse --show-toplevel)")")" = 'PROD REVIEW' \
-      || _wt_park 'READY TO DEPLOY' 'Ready to deploy'
+    case "$(_board_section "$(git branch --show-current)" \
+      "$(basename "$(git rev-parse --show-toplevel)")")" in
+      'READY TO DEPLOY'|'PROD REVIEW') ;;
+      *) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
+    esac
     _unblock_dependents "$(basename "$(git rev-parse --show-toplevel)")" \
       merged
     ;;

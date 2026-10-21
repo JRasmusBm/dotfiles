@@ -189,7 +189,7 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   PROGRESS`, ticket → In Progress (clears a block;
   `rt`/`rd`/`rp` clear it too).
 - `wt merged` — its PR merged: `wt rd` (unless already in
-  `# PROD REVIEW`), then unblocks the worktrees `wt rb`'d on
+  `# READY TO DEPLOY` or `# PROD REVIEW`), then unblocks the worktrees `wt rb`'d on
   it; an idle one's agent is told to rebase onto dev and carry
   on. I don't run it: when a PR merges, its agent is told
   (`pr-merged-tell`, from `claude-notify` or the `wt-sync`
