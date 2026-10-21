@@ -3,8 +3,9 @@
 # pr-merged-tell <worktree> <pr> — tell the worktree's idle Claude
 # (its `cli` pane) that <pr> merged: run `wt merged`, then hand me
 # deploy commands. Once per worktree and PR
-# ($LOCAL_CONFIG/merged-told); fails when there's no idle Claude to
-# tell, so the next run (claude-notify, wt-sync) retries.
+# ($LOCAL_CONFIG/merged-told). No session: pings me (check) instead.
+# Claude busy: fails, so the next run (claude-notify, wt-sync)
+# retries.
 
 _root="$1" _pr="$2"
 test -n "$_root" && test -n "$_pr" \
@@ -13,7 +14,13 @@ _told="${LOCAL_CONFIG:?}/merged-told"
 grep -qxF "$_root	$_pr" "$_told" 2>/dev/null && exit 0
 
 _pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
-  '#{pane_id}' 2>/dev/null)" || exit 1
+  '#{pane_id}' 2>/dev/null)" || _pane=""
+if test -z "$_pane"; then
+  echo "$_root	$_pr" >> "$_told"
+  ( cd "$_root" && NOTIFY_CLASS=check notify "Merged: $(basename "$_root")" \
+    "#$_pr merged, no agent session: wt merged, then deploy" )
+  exit 0
+fi
 claude-pane-idle "$_pane" || exit 1
 
 echo "$_root	$_pr" >> "$_told"
