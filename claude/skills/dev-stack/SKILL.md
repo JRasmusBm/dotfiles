@@ -77,7 +77,9 @@ stacks never take a slot and are never blocked.
    report. Starting it again later is cheap; idle RAM isn't.
 
 If a code change needs a restart, the be/fe watchers reload on their
-own. Don't `dev up` again just for that.
+own. Don't `dev up` again just for that. Never touch `node_modules`
+(`yarn install`, `wt dedup`) under a running stack: it breaks the fe
+build; park the devtools tab on `about:blank` until it's restarted.
 
 ## Browser testing (chrome-devtools MCP)
 

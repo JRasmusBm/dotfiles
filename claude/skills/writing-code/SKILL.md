@@ -23,6 +23,10 @@ anything here. When unsure, match what the surrounding code does.
 
 ## Documentation
 
+- Setups and spikes are code: one committed, idempotent script that
+  creates resources, writes config, starts servers and traps cleanup,
+  not a runbook of shell commands. Only interactive logins (OAuth
+  device flow) stay manual.
 - A script/tool's usage contract goes in a doc header at the top of that
   file — what it does and how to invoke it. Not in CLAUDE.md, which
   should at most point to it.

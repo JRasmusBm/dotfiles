@@ -113,15 +113,20 @@ publish?".
    can't find one. If it fails any other way, show me the error; don't
    retry with a changed payload without telling me what changed.
 
-3. Relay its output verbatim: one `[one-liner](comment link)` bullet
+3. Relay its links verbatim: one `[one-liner](comment link)` bullet
    per shared finding, every link a `#discussion_r…` comment, never the
    review itself.
 
    ```
-   I reviewed the PR, here are my review comments:
+   I reviewed the PR, <verdict, with its reassuring half>. <the
+   limits of this review>. <echo the author's own plan, e.g. "needs
+   the slow roll-out you proposed">. Here are my review comments:
 
-   - [one-liner](link-to-comment)
+   - Note on <rollout|stats|…>: [one-liner](link-to-comment)
    ```
+
+   A list of concerns with no verdict reads as a verdict against the
+   work; never propose a plan in place of the author's.
 
    If I'm also posting to Slack, write links the same `[text](link)`
    way, never `<url|text>`.
