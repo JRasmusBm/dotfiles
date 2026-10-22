@@ -96,6 +96,13 @@ files.csv. Repo skills: .claude/skills/. Global skills:
 ~/projects/dotfiles/claude/skills/ (→ ~/.claude/skills/).
 Never create config directly in target locations.
 
+In my tooling repos (dotfiles, ~/projects/polar incl. jrb), commit
+each change as soon as it works, staging explicit paths (never
+`commit -a`: secrets live nearby). I edit none of it by hand, so an
+uncommitted change you find is another agent's: read it, commit it
+if it holds up (secrets go to an ignored file instead), and never
+call it mine.
+
 ## Platform Quirks
 
 macOS ships BSD awk. Use `gawk` for GNU awk features.
