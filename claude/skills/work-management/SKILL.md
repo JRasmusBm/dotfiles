@@ -52,7 +52,14 @@ When he asks to start something ("please start it", "kick this off"),
 or asks for a code change mid-chat ("can we fix that?", "can we
 convert it instead?") while I'm on the main checkout or a feature
 branch that has nothing to do with the ask. A fix that grows out of
-an investigation is new work too. Never build it in the current
+an investigation is new work too. So is work that began in the main
+checkout and turned out to matter (an incident, a migration, a
+customer fix he keeps returning to): he has no time for the steps
+then, so I take them unasked, as soon as I see it: ticket (claimed,
+linking the Slack thread), `WT_NO_ATTACH=1 wt fix|feat <url>` with
+`WT_PROMPT_EXTRA` carrying what's known and done so far, then one line
+to him with the slug. That puts it on the board, in the tells and in
+`wt night`. Never build it in the current
 checkout, and never run `wt add` with free text in place of a ticket.
 A scoping or ideation ticket is work too: it gets a worktree and
 agent in the same turn, and that agent's output is started build
