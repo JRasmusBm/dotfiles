@@ -254,7 +254,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   to remove if Linear fails). No arg = the current worktree.
   Reversible (`wt resume`), so an agent whose ticket is
   finished runs `wt done` itself and reports it; never
-  "Should I run it?". Finished = merged, verified live, and
+  "Should I run it?", and its stop then sends me no ping
+  (`claude-notify`), unless it asks something. Finished = merged,
+  verified live, and
   announced if users or the team see it (a release post in
   #what-did-we-ship / #shipped-fixes, `release` skill);
   verified but not announced → `wt ra` and draft the post.

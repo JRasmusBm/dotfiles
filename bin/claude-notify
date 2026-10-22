@@ -11,6 +11,8 @@
 #   (merged) its PR is merged: the agent, not me, is told
 #            (pr-merged-tell; wt-sync retries)
 #   fyi      anything else ("done", nothing for me)
+#   (none)   it ran wt done/cancel/rm since my last prompt and asks
+#            nothing: finished, so no ping
 
 INPUT=$(cat)
 TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
@@ -61,6 +63,24 @@ _after_local_command() {
     | last | .subtype // ""' 2>/dev/null | grep -qx local_command
 }
 
+# Since my last prompt, the agent closed its worktree (wt done,
+# cancel or rm, without error): it is finished, nothing for me.
+_closed_worktree() {
+  test -f "$TRANSCRIPT" || return 1
+  tail -300 "$TRANSCRIPT" | jq -rs '
+    (map(.type == "user" and (.message.content | type) == "string")
+      | rindex(true) // -1) as $from
+    | .[$from + 1:] as $turn
+    | ([$turn[] | .message.content[]? | select(.type == "tool_result")
+        | select(.is_error != true) | .tool_use_id]) as $ok
+    | [$turn[] | .message.content[]?
+        | select(.type == "tool_use" and .name == "Bash")
+        | select(.input.command
+            | test("(^|[;&|(]\\s*)wt (done|cancel|rm|remove)( |$)"))
+        | select(.id as $id | $ok | index($id))]
+    | length > 0' 2>/dev/null | grep -qx true
+}
+
 case "$TYPE" in
   idle_prompt)
     # A slash command like cswap-auto's /remote-control left no
@@ -79,6 +99,11 @@ _q=""
 case "$_text" in
   *\?) _q="$(printf '%s\n' "$_text" | tail -1 | cut -c1-80)" ;;
 esac
+
+if [ -z "$_q" ] && _closed_worktree; then
+  [ -z "$TMUX_PANE" ] || notif seen "$TMUX_PANE" all >/dev/null 2>&1 || true
+  exit 0
+fi
 
 _pr="$(_pr_class)"
 case "$_pr" in
