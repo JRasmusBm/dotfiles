@@ -66,7 +66,14 @@ type-aware eslint server 1.2–2.6 GB per ice-floe nvim) were the bulk.
 - Forgotten dev stacks: a `react-scripts start` frontend detached
   from tmux (session `-`) ran 2.5 days, peaking 5.7 GB. One-shot `tsc`
   runs by agents reach ~4.3 GB for under a minute (normal).
-- Spotlight `mds` ~2.4 GB footprint (worktrees + node_modules).
+- Spotlight `mds` (root, session `-`): indexes `~/projects`
+  (~15k `package.json`, i.e. every worktree's node_modules) and
+  grows ~2 GB/day at ~100% CPU: 7 GB on 2026-10-13, 24–26 GB
+  by 10-20/21, the top consumer by far. Check: `mdfind -onlyin
+  ~/projects -count 'kMDItemFSName == "package.json"'` (0 =
+  excluded). Fix: add `~/projects` to System Settings →
+  Spotlight → Search Privacy (needs GUI/sudo), then `sudo
+  killall mds` (it respawns small).
 - Biggest by GB-minutes after the LSP fixes: Brave, then 13–15 Claude
   sessions (~300–900 MB each, growing with age), then agents'
   devtools Chromes.
