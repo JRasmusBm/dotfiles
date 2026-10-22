@@ -1,0 +1,100 @@
+#!/bin/sh
+#
+# wt-night [HH:MM]   (as `wt night`) — I'm away until HH:MM (07:30):
+#   - keeps the Mac awake until then (caffeinate; a closed lid on
+#     battery still sleeps);
+#   - tells each idle agent of a `# IN PROGRESS` worktree to work on
+#     alone until then. Left alone: a worktree whose PR is open, green
+#     and up to date (it waits on me), one with no Claude session, and
+#     a busy one (it is working already). The prompt says a finished
+#     one replies so and stops, so nothing runs for no reason;
+#   - at HH:MM minus 15 min (`wt-night morning`), of those told last
+#     night, tells each idle agent whose PR conflicts with dev or has
+#     failing checks to fix that before I'm back. Green ones, and PRs
+#     nobody worked on overnight, are left alone.
+# Run from inside the repo. Once per worktree per night (wt-told).
+# WT_NIGHT_DRY=1: list who would be told, start nothing.
+
+set -e
+_until="${1:-07:30}"
+_root="$(dirname "$(cd "$(git rev-parse --git-common-dir)" && pwd)")"
+cd "$_root"
+_day="$(date +%F)"
+
+# Open PRs of mine: branch<TAB>state, state = green | fix | wait.
+_prs() {
+  gh pr list --author @me --state open --limit 100 \
+    --json headRefName,isDraft,mergeable,statusCheckRollup --jq '.[]
+    | ([.statusCheckRollup[]? | (.conclusion // .state)]) as $c
+    | [.headRefName,
+       (if ($c | any(. == "FAILURE" or . == "ERROR" or . == "TIMED_OUT"))
+          or .mergeable == "CONFLICTING" then "fix"
+        elif .isDraft or ($c | any(. == null or . == "PENDING")) then "wait"
+        else "green" end)] | @tsv'
+}
+
+# worktree path<TAB>branch, for every worktree of the repo.
+_worktrees() {
+  git worktree list --porcelain | awk '
+    /^worktree / { w = substr($0, 10) }
+    /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }'
+}
+
+# Tell worktree $1's idle agent $3 once (key $2); 0 told, 1 busy.
+_tell() {
+  test -z "${WT_NIGHT_DRY:-}" || { echo "would tell $(basename "$1")"; return 0; }
+  wt-tell "$1" "$2" "night" "$3" 2>/dev/null \
+    && echo "told $(basename "$1")"
+}
+
+if test "${1:-}" = morning; then
+  _night="$(cat "$LOCAL_CONFIG/wt-night.last" 2>/dev/null)"
+  _prs | awk -F'\t' '$2 == "fix" { print $1 }' | while read -r _b; do
+    _wt="$(_worktrees | awk -F'\t' -v b="$_b" '$2 == b { print $1; exit }')"
+    test -n "$_wt" || continue
+    grep -qxF "$_wt	night:$_night" "$LOCAL_CONFIG/wt-told" 2>/dev/null \
+      || continue
+    _tell "$_wt" "morning:$_day" "Morning check before I'm back: this \
+PR is behind dev with conflicts or has failing checks. Rebase onto \
+origin/dev (reset local dev first), fix what fails, push, and once it's \
+green hand back in one line. Nothing else." || true
+  done
+  exit 0
+fi
+
+_secs=$(( $(gdate -d "$_until tomorrow" +%s) - $(date +%s) ))
+test "$(gdate -d "$_until" +%s)" -gt "$(date +%s)" \
+  && _secs=$(( $(gdate -d "$_until" +%s) - $(date +%s) ))
+test -n "${WT_NIGHT_DRY:-}" || {
+echo "$_day" > "$LOCAL_CONFIG/wt-night.last"
+nohup caffeinate -i -s -m -t "$_secs" >/dev/null 2>&1 &
+nohup sh -c 'sleep "$1"; cd "$2" && exec wt-night morning' \
+  sh "$(( _secs > 900 ? _secs - 900 : 0 ))" "$_root" >/dev/null 2>&1 &
+}
+
+_green="$(_prs | awk -F'\t' '$2 == "green" { print $1 }')"
+awk '
+  /^[[:space:]]*#/ || /:[[:space:]]*$/ {
+    h = $0; sub(/^[[:space:]]*#+[[:space:]]*/, "", h); sub(/:[[:space:]]*$/, "", h)
+    next
+  }
+  h == "IN PROGRESS" && NF { print $1 }' "$LOCAL_CONFIG/worktrees/$(basename "$_root")" \
+  | while read -r _b; do
+    if printf '%s\n' "$_green" | grep -qxF "$_b"; then
+      continue
+    fi
+    _wt="$(_worktrees | awk -F'\t' -v b="$_b" '$2 == b || $1 ~ "/" b "$" { print $1; exit }')"
+    test -n "$_wt" || continue
+    tmux has-session -t "=$(basename "$_wt")" 2>/dev/null || continue
+    _tell "$_wt" "night:$_day" "I'm away until $_until. Keep going \
+on your own until then. If this worktree's work is finished, or what's \
+left needs me (a review, merge, deploy or decision), reply in one line \
+saying so and stop: don't invent work. Otherwise carry on to the \
+hand-back bar (tests on every surface it touches, the artifact, \
+/iterate-review until green) without asking me anything: take your \
+recommended option on any question and note it. Follow-up tickets you \
+filed for this work that have no worktree yet: start at most 2 with \
+WT_NO_ATTACH=1 wt feat <url>. End with a short summary for the morning." \
+      || echo "left $(basename "$_wt"): not idle"
+  done
+echo "awake and checked until $_until (morning check 15 min before)"
