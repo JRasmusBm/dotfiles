@@ -1340,7 +1340,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|sz|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|sz|night|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
 }
 
 # Snoozed worktrees whose date has come wake up on any wt run.
@@ -1364,6 +1364,7 @@ case "${1:-}" in
   unpin) shift; _wt_unpin "$@" ;;
   rb) shift; _wt_block "$@" ;;
   sz|snooze) shift; _wt_snooze "$@" ;;
+  night) shift; exec wt-night "$@" ;;
   wake) _wt_wake ;;
   ip) _wt_park 'IN PROGRESS' 'In Progress' ;;
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;

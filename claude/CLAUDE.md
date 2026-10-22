@@ -17,10 +17,16 @@ Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
 
 Be proactive, not permission-seeking. Make changes first, ask later.
 Don't ask "Want me to do X?" — just do it. Includes UI and visual
-changes (build it and show me, don't post a mockup and wait) and my PRs: push
-to the branch and keep the title/body in sync without asking, and
-"is it released/deployed?": confirm it is live, then run read-only
-checks that it behaves as intended (logs, replica, live bundle).
+changes (build it and show me, don't post a mockup and wait),
+committing what you fixed once verified (only your hunks), and my
+PRs: push to the branch and keep the title/body in sync without
+asking, then report the head sha (watch CI only in `/iterate-review`
+or when asked; never merge, I do), and "is it released/deployed?":
+confirm it is live, then run read-only checks that it behaves as
+intended (logs, replica, live bundle). Long pipelines, polls and
+browser loops run in a background agent; the main thread stays free
+to talk. A branch I cite as prior work is the starting point: `git
+show` it, port and extend, and say what came from it.
 
 Never end a turn with a list of what's left that you could do
 yourself ("still needs doing", "I'd now…", "I haven't verified X"):
@@ -31,7 +37,14 @@ belong in a follow-up, build it as a follow-up PR and ask whether
 to pull it back in, so my answer is a quick git move, not a build.
 
 Replace, don't accrete. Rewrite what's there, don't append beside it.
-Adding lines? Name what they replace.
+Adding lines? Name what they replace. A narrow ask gets a narrow
+diff: "add logs" = log lines only, no refactor feeding them; "X
+overstates" = change X, no added caveats, owners or follow-ups.
+
+Shared infra: a question ("you didn't clobber staging?") is
+read-only, report and ask before any write. Follow a rollback plan
+you announced, or say "I said X, doing Y because Z" first; never
+delete its artifact.
 
 ## Questions
 
@@ -41,6 +54,10 @@ question is unavoidable, ask it in plain text, once, at the
 end, with your recommended answer. No AskUserQuestion
 dialogs unless I ask to pick between options.
 
+My questions aren't instructions: "why X?", "could we Y?", "will
+that work if Z?" get an answer with the trade-off, then stop. Build
+only on "do it"; proactive means doing agreed work unasked.
+
 ## Communication
 
 Extremely concise. Sacrifice grammar for concision.
@@ -48,10 +65,20 @@ When explaining: provide context + doc links.
 When investigating: explain approach.
 Voice typing: interpret phonetic errors from context
 (cloud MD → CLAUDE.md, sim link → symlink, get hub → GitHub).
+Link to open → bare URL on its own line, not only [text](url).
+Drafts I'll send: literal plain phrasing, no idioms; links
+`[text](url)`, never `<url|text>`; the whole draft each revision.
+Slack posts: edit here, send only on my "send", never save drafts.
 
 ## Plans
 
 Extremely concise. End with unresolved questions if any.
+Before asking approval: load the skills, read the files to change,
+and turn every risk you can check now into a fact. A stakeholder's
+spec is the source of truth; an unspec'd case takes the closest
+spec'd state. Multi-piece work: orthogonal agent-ready briefs
+(goal, deps, settled context, files to read, skills, grill-on,
+acceptance, boundaries), a shared settled section, a task graph.
 
 ## Line Length — HARD LIMIT
 
@@ -188,6 +215,15 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   doesn't put it back) until it wakes. A block survives the
   snooze; the blocker going away wakes it early (unblock).
   `rt`/`rd`/`rp`/`ip` clear a snooze.
+- `wt night [HH:MM]` (`wt-night`) — leaving for the night
+  (default until 07:30): `caffeinate` until then, and each idle
+  agent of a `# IN PROGRESS` worktree is told to work alone to
+  the hand-back bar, taking its own recommended answers. Skipped:
+  open PRs that are green and wait on me, worktrees with no
+  session, busy agents. A finished one replies so and stops: no
+  invented work. 15 min before, agents told that night whose PR
+  conflicts with dev or fails CI are told to fix it. Once per
+  worktree per night; `WT_NIGHT_DRY=1` lists who'd be told.
 - `wt ip` — move the current worktree back to `# IN
   PROGRESS`, ticket → In Progress (clears a block;
   `rt`/`rd`/`rp` clear it too).
@@ -386,7 +422,10 @@ account with `/login` then `cswap add --alias <name>`.
 
 Use `g s <branch>` to switch branches (not raw
 `git switch`). The `git-s` wrapper refreshes the
-tmux status bar after switching.
+tmux status bar after switching. Rebasing on dev: fetch, reset
+local `dev` to `origin/dev` (main checkout: `reset --hard` only if
+`status --short` shows no tracked changes, else stop and say so),
+then `git rebase dev`.
 
 ## Branch code isn't released code
 

@@ -48,7 +48,7 @@ _tell() {
 }
 
 if test "${1:-}" = morning; then
-  _night="$(cat "$LOCAL_CONFIG/wt-night.last" 2>/dev/null)"
+  _night="$(cat "$LOCAL_CONFIG/wt-night.last" 2>/dev/null || true)"
   _prs | awk -F'\t' '$2 == "fix" { print $1 }' | while read -r _b; do
     _wt="$(_worktrees | awk -F'\t' -v b="$_b" '$2 == b { print $1; exit }')"
     test -n "$_wt" || continue
