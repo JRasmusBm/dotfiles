@@ -27,6 +27,7 @@ asked for each. Steps with no arrow between them run in parallel.
 | Approved | `wt rd` | READY TO DEPLOY | Ready to deploy |
 | Deployed, check prod | `wt rp` | PROD REVIEW | Needs live verification |
 | Waiting on other work | `wt rb <blocker>` | BLOCKED | Blocked + relation |
+| Can't merge yet: design review, risks to settle, someone's decision | `wt rb "<reason>"` (I run it when I hand back, naming who and what) | BLOCKED | Blocked |
 | Waiting on a date ("snooze it until monday") | `wt sz <when>` | SNOOZED | unchanged |
 | Picking it back up | `wt ip` | IN PROGRESS | In Progress |
 | Finished | `wt done` | (removed) | Done |
