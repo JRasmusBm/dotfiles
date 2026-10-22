@@ -17,4 +17,7 @@ worktree get unblocked). Then load the deploy skill, record its targets \
 with pr-where $_pr <targets> (services whose non-test files change, \
 plus those importing changed shared or common code: shared-reach \
 <commit>; a service with only test changes needs none), and give me \
-three deploy commands for this change: staging, production, and both."
+three deploy commands for this change: staging, production, and both. \
+Recommend one: staging first when it changes how users edit, save or \
+share, permissions, data writes or migrations, or is large; both at \
+once for a small, contained fix."

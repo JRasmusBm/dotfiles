@@ -63,9 +63,11 @@ a test fix), then: wt ra if users or the team should hear about it \
         "#$_pr is on $_stage ($_targets), no agent session: verify it" \
         "PR #$_pr is now deployed to $_stage with all its targets \
 ($_targets). Check read-only that the change works on $_stage and \
-tell me what you verified. Once it's verified in production: wt ra if \
-users or the team should hear about it (and draft the release post), \
-else wt done." || _retry_later "$_root" "$_pr"
+tell me what you verified. Verified on staging and not in production \
+yet: end with the production command (tb pick first if it isn't on \
+master), so staging first never means forgotten. Once it's verified \
+in production: wt ra if users or the team should hear about it (and \
+draft the release post), else wt done." || _retry_later "$_root" "$_pr"
     done
 }
 
