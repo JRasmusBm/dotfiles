@@ -69,6 +69,8 @@ Link to open → bare URL on its own line, not only [text](url).
 Drafts I'll send: literal plain phrasing, no idioms; links
 `[text](url)`, never `<url|text>`; the whole draft each revision.
 Slack posts: edit here, send only on my "send", never save drafts.
+Screen recordings (.mov/.mp4) I share: extract frames with
+`ffmpeg -i <file> -vf fps=2 <scratchpad>/f%03d.png` and Read them.
 
 ## Plans
 
