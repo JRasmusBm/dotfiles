@@ -1,4 +1,5 @@
 {
+  "autoMemoryEnabled": false,
   "cleanupPeriodDays": 1825,
   "permissions": {
     "allow": [
