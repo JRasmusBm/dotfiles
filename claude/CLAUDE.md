@@ -197,9 +197,14 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   Needs live verification / Needs announcement (`lin state`; needs
   `$LINEAR_API_KEY` from polar `secrets/common`; a Linear
   failure never stops `wt`).
-- `wt rb [<worktree>|:]` — current worktree is blocked by
-  another (branch or dir; none/`:` = fzf): moves it to
-  `# BLOCKED` and records it in `<repo>.blocked`. When the
+- `wt rb [<worktree>|:|"<reason>"]` — current worktree is blocked
+  by another (branch or dir; none/`:` = fzf), or by something
+  that isn't a worktree, given as a reason (`wt rb "design review
+  with Marina"`, `wt rb "risks to settle with Pascal"`): moves it
+  to `# BLOCKED` and records it in `<repo>.blocked` (a reason in
+  column 4, shown by the `wt :` preview; only `wt ip` lifts it).
+  A PR that can't merge yet goes here with its reason, so nothing
+  treats it as abandoned or picks it up. When the
   blocker is removed (`wt rm`/`clean`), it moves back to
   `# IN PROGRESS` and gets an inbox notification (on its
   `cli` pane, else its path, so `M-i` lands there). `wt :` preview shows `blocked by`. Linear:

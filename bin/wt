@@ -945,8 +945,16 @@ _wt_block() {
   fi
   _m="$(_wt_match "$_arg")"
   if test -z "$_m"; then
-    echo "wt: no worktree for '$_arg'" >&2
-    exit 1
+    # Not a worktree: a reason ("design review with Marina", "risks
+    # to settle with Pascal"). Nothing unblocks it but `wt ip`.
+    _block_drop "$_self"
+    printf '%s\t%s\t\t%s\n' "$_self" "$_branch" "$_arg" \
+      >> "$(_blocked_file)"
+    _board_move "$_branch" "$_self" 'BLOCKED'
+    _notif_clear "$(git rev-parse --show-toplevel)"
+    echo "wt: blocked: $_arg" >&2
+    _linear Blocked "$_branch" || true
+    return 0
   fi
   _blocker="$(basename "${_m%%$(printf '\t')*}")"
   if test "$_blocker" = "$_self"; then

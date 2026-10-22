@@ -41,7 +41,8 @@ then
 fi
 _bf="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_root##*/}.blocked"
 if test -f "$_bf"; then
-  awk -F '\t' -v s="$_slug" '$1 == s { print "blocked by  " $3 }' "$_bf"
+  awk -F '\t' -v s="$_slug" '$1 == s && $3 != "" { print "blocked by  " $3 }
+    $1 == s && $3 == "" { print "blocked:    " $4 }' "$_bf"
 fi
 echo
 
