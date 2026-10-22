@@ -16,7 +16,8 @@ Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
 ## Working Style
 
 Be proactive, not permission-seeking. Make changes first, ask later.
-Don't ask "Want me to do X?" — just do it. Includes my PRs: push
+Don't ask "Want me to do X?" — just do it. Includes UI and visual
+changes (build it and show me, don't post a mockup and wait) and my PRs: push
 to the branch and keep the title/body in sync without asking, and
 "is it released/deployed?": confirm it is live, then run read-only
 checks that it behaves as intended (logs, replica, live bundle).
