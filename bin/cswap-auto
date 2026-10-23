@@ -5,7 +5,8 @@
 # manual /login). Each tick: `cswap auto --once`, then every idle
 # Claude pane whose last Remote Control notice is "disconnected" gets
 # `/remote-control`. Idle as in `claude-pane-idle`, so nothing typed
-# is touched.
+# is touched. Only while the login is mine (`CSWAP_RC_ACCOUNTS`): on a
+# borrowed account, Remote Control would hand its owner my sessions.
 #
 #   cswap-auto           loop (launchd com.jrasmusbm.cswap-auto)
 #   cswap-auto --once    one tick
@@ -24,8 +25,22 @@ _stale_panes() {
     done
 }
 
+_own_login() {
+  _email=$(cswap status --json 2>/dev/null | jq -r '.active.email // empty')
+  _mine="${CSWAP_RC_ACCOUNTS:-rasmus@polaranalytics.co \
+    kylian@polaranalytics.co}"
+  case " $_mine " in
+    *" $_email "*) return 0 ;;
+  esac
+  echo "$(date +%H:%M:%S)  skip Remote Control: ${_email:-unknown} isn't mine"
+  return 1
+}
+
 _reconnect() {
-  for _p in $(_stale_panes); do
+  _panes=$(_stale_panes)
+  [ -n "$_panes" ] || return 0
+  _own_login || return 0
+  for _p in $_panes; do
     tmux send-keys -t "$_p" -l '/remote-control'
     sleep 0.5
     tmux send-keys -t "$_p" Enter
