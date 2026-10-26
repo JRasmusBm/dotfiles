@@ -11,7 +11,9 @@
 #     Paced in the background (`wt-night feed`, log wt-night.log): at
 #     most WT_NIGHT_MAX (3) told agents busy at once, none told while
 #     free+inactive memory is under WT_NIGHT_MIN_GB (8) or pressure is
-#     raised. On 2026-10-23, 7 told at once on a Mac already at 53 MB
+#     raised. Agents queue follow-up tickets with `wt night queue
+#     <linear-url>`; the feeder starts each (`wt feat`) under the same
+#     limits, told to work alone without queueing more. On 2026-10-23, 7 told at once on a Mac already at 53 MB
 #     free (Spotlight 32 GB) hung it within 3 minutes;
 #   - at HH:MM minus 15 min (`wt-night morning`), of those told last
 #     night, tells each idle agent whose PR conflicts with dev or has
@@ -69,12 +71,27 @@ _busy() {
     done | wc -l | tr -d ' '
 }
 
-# feed <end epoch> <queue file> <prompt>: tell the queued worktrees one
-# by one, while memory and the busy count allow, until <end>.
+# queue <linear-url>: start this follow-up ticket tonight, once the
+# feeder's limits allow.
+if test "${1:-}" = queue; then
+  test -n "${2:-}" || { echo "usage: wt night queue <linear-url>" >&2; exit 2; }
+  grep -qxF "$2" "$LOCAL_CONFIG/wt-night.queue" 2>/dev/null \
+    || echo "$2" >> "$LOCAL_CONFIG/wt-night.queue"
+  echo "queued $2"
+  exit 0
+fi
+
+# feed <end epoch> <queue file> <prompt> <day> <until>: go through the
+# queue (worktree paths, then queued ticket URLs as they arrive) one by
+# one, while memory and the busy count allow, until <end>.
 if test "${1:-}" = feed; then
-  _end="$2" _q="$3" _p="$4" _day="$5"
+  _end="$2" _q="$3" _p="$4" _day="$5" _until="$6"
   _max="${WT_NIGHT_MAX:-3}" _min="${WT_NIGHT_MIN_GB:-8}"
-  while read -r _wt; do
+  _i=0
+  while test "$(date +%s)" -lt "$_end"; do
+    _next="$(sed -n "$(( _i + 1 ))p" "$_q")"
+    test -n "$_next" || { sleep 60; continue; }
+    _i=$(( _i + 1 ))
     while :; do
       test "$(date +%s)" -lt "$_end" || exit 0
       _lvl="$(sysctl -n kern.memorystatus_vm_pressure_level)"
@@ -84,10 +101,27 @@ if test "${1:-}" = feed; then
       sleep 60
     done
     echo "$(date +%T) free=${_gb}G busy=$_n pressure=$_lvl"
-    _tell "$_wt" "night:$_day" "$_p" \
-      || echo "left $(basename "$_wt"): not idle"
+    case "$_next" in
+      http*)
+        if test -n "${WT_NIGHT_DRY:-}"; then
+          echo "would start $_next"
+        else
+          _before="$(_worktrees | cut -f1)"
+          WT_NO_ATTACH=1 WT_PROMPT_EXTRA="I'm away until $_until: \
+don't grill me, take your recommended answer on every question and \
+note it, and carry on to the hand-back bar alone. Don't start or queue \
+further follow-ups tonight: list them in a short summary for the \
+morning." wt feat "$_next" </dev/null >/dev/null 2>&1 \
+            || { echo "failed to start $_next"; continue; }
+          _wt="$(_worktrees | cut -f1 | grep -vxF "$_before" | head -1)"
+          test -z "$_wt" || echo "$_wt	night:$_day" >> "$LOCAL_CONFIG/wt-told"
+          echo "started $_next ${_wt:+-> $(basename "$_wt")}"
+        fi ;;
+      *) _tell "$_next" "night:$_day" "$_p" \
+           || echo "left $(basename "$_next"): not idle" ;;
+    esac
     sleep 120
-  done < "$_q"
+  done
   exit 0
 fi
 
@@ -139,9 +173,10 @@ left needs me (a review, merge, deploy or decision), reply in one line \
 saying so and stop: don't invent work. Otherwise carry on to the \
 hand-back bar (tests on every surface it touches, the artifact, \
 /iterate-review until green) without asking me anything: take your \
-recommended option on any question and note it. Don't start new \
-worktrees or agents tonight (the Mac runs out of memory): list \
-follow-up tickets in the summary. End with a short summary for the \
+recommended option on any question and note it. Follow-up tickets you \
+filed for this work that have no worktree yet: queue at most 2 with \
+wt night queue <url> (they start when memory allows; never wt feat \
+tonight). End with a short summary for the \
 morning."
 if test -n "${WT_NIGHT_DRY:-}"; then
   while read -r _wt; do _tell "$_wt" "night:$_day" "$_prompt"; done \
@@ -149,7 +184,7 @@ if test -n "${WT_NIGHT_DRY:-}"; then
   exit 0
 fi
 nohup wt-night feed "$(( $(date +%s) + _secs ))" \
-  "$LOCAL_CONFIG/wt-night.queue" "$_prompt" "$_day" \
+  "$LOCAL_CONFIG/wt-night.queue" "$_prompt" "$_day" "$_until" \
   >> "$LOCAL_CONFIG/wt-night.log" 2>&1 &
 echo "$(grep -c . "$LOCAL_CONFIG/wt-night.queue") to tell, \
 ${WT_NIGHT_MAX:-3} busy at a time (log: $LOCAL_CONFIG/wt-night.log)"
