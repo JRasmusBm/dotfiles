@@ -212,6 +212,12 @@ DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 # names pass through untouched.
 function claude() {
   local a
+  # Worktree agents compact at 200k, not ~967k: on 10-19..22,
+  # turns over 200k context burned 59% of tokens and both
+  # weekly caps ran out Thursday (my-impact, 10-26). Hub
+  # sessions in the main checkout keep the full window.
+  [[ "$PWD" == */.worktrees/* && -z "$CLAUDE_CODE_AUTO_COMPACT_WINDOW" ]] \
+    && local -x CLAUDE_CODE_AUTO_COMPACT_WINDOW=200000
   [[ $# -eq 0 || "$1" == -* || "$1" == *" "* ]] \
     || { command claude "$@"; return; }
   for a in "$@"; do
