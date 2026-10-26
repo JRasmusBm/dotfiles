@@ -45,9 +45,10 @@ stacks never take a slot and are never blocked.
   the stack, else `test-slot release`. "I'll need the browser again
   in a few minutes" is still a release — the slot is scarce and a
   user reply is open-ended. Reacquire with `dev up` when you resume;
-  it's cheap. Either command quits your devtools Chrome (only yours,
-  other agents in this session keep theirs) and frees the slot once
-  no agent in the session still claims it. Slots also free when your
+  it's cheap. `test-slot release` quits your devtools Chrome (only
+  yours); `dev down` stops the browser of every agent in the session.
+  Either frees the slot once no agent in the session still claims
+  it. Slots also free when your
   pane or session ends, or after 30 idle minutes with no stack up,
   but don't rely on that.
 - `test-slot ls` shows who holds what.
@@ -103,7 +104,13 @@ build; park the devtools tab on `about:blank` until it's restarted.
   every gate (frontend hook and the backend check, with that service
   in `penv local`), never commit it, and `git checkout --` it before
   `dev down`. List the gate files in the agent brief's owned files.
-- When done, free the slot (see Test slots); that quits your Chrome.
+- Lifetime: the browser MCP and its Chrome start on your first devtools
+  call. They stop on `dev down`, when the stack's slot expires (an
+  hour without focus on the session), or after 10 idle minutes when
+  no stack is up (staging/production checks); freeing the test slot
+  (see Test slots) also quits your Chrome. The first call after a stop
+  takes a few seconds and starts from a fresh page: re-navigate and
+  log in again (`polar-agent-login`).
 
 ## Turn repeat browser checks into tests
 
