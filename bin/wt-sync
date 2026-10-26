@@ -14,6 +14,14 @@
 #     Checked when it merges, when a new successful deploy run
 #     appeared (whoever dispatched it), and again each run while its
 #     Claude was busy.
+# And for each worktree with a PR of mine open or merged in the last 3
+# days, in a repo with the conveyor (`.mcp.json` on origin/dev): when
+# its latest ship request ends rejected or failed, tell its agent once
+# per request what the conveyor said, so an agent that ended its turn
+# after ship_pr still hears it. Polled when the conveyor's status
+# counts moved since the last run, every 10th minute, and each run
+# while its Claude was busy. A request that ends done needs no tell
+# of its own: merged and deployed are told above.
 # On a phone hotspot it polls every 5th minute only; a poll without a
 # new deploy is ~10 KB. Android marks its hotspot's DHCP lease with
 # vendor option ANDROID_METERED; an iPhone's gateway is 172.20.10.1.
@@ -64,8 +72,9 @@ a test fix), then: wt ra if users or the team should hear about it \
         "PR #$_pr is now deployed to $_stage with all its targets \
 ($_targets). Check read-only that the change works on $_stage and \
 tell me what you verified. Verified on staging and not in production \
-yet: end with the production command (tb pick first if it isn't on \
-master), so staging first never means forgotten. Once it's verified \
+yet: end by asking me to ship it to production through the conveyor \
+(ship_pr until=deployed with its targets; it promotes to master \
+too), so staging first never means forgotten. Once it's verified \
 in production: wt ra if users or the team should hear about it (and \
 draft the release post), else wt done." || _retry_later "$_root" "$_pr"
     done
@@ -77,6 +86,57 @@ _retry_later() {
   printf '%s\t%s\n' "$1" "$2" >> "$_pending"
 }
 
+# Whether the conveyor's status counts moved since the last run (or
+# it's a 10th minute): only then are ship requests polled one by one.
+_ship_moved() {
+  git cat-file -e origin/dev:.mcp.json 2>/dev/null || return 1
+  _counts="$(timeout 30 conveyor queue 2>/dev/null | jq -c .counts)" \
+    || return 1
+  _was="$(cat "$_ship_seen" 2>/dev/null)"
+  echo "$_counts" > "$_ship_seen"
+  test "$_counts" != "$_was" || test "$(( $(date +%M) % 10 ))" = 0
+}
+
+# Tells the agent of worktree $1 when PR $2's latest ship request was
+# rejected or failed.
+_shipped() {
+  _root="$1" _pr="$2"
+  _req="$(timeout 30 conveyor status "$_pr" 2>/dev/null | jq -r '
+    [.request.id, .request.status, .request.until,
+     (.request.targets | join(",")), .request.reason // "",
+     (.request.message // "" | gsub("\\s+"; " ")),
+     (.nextStep // "" | gsub("\\s+"; " "))] | @tsv')" || return 0
+  IFS="$(printf '\t')" read -r _id _st _until _tg _why _msg _next <<EOF
+$_req
+EOF
+  case "$_st" in
+    rejected)
+      wt-tell "$_root" "conveyor:$_id" \
+        "#$_pr rejected by the conveyor ($_why), no agent session" \
+        "The conveyor rejected shipping PR #$_pr (until=$_until\
+${_tg:+, targets $_tg}): $_why, "$_msg" Next step: "$_next" Fix it as \
+that says (dev-workflow, Shipping a PR, lists every reason), then \
+ship_pr again with the same until and targets: this ship was already \
+asked for, so carrying it through is yours. If it needs a person \
+(workflow_change_needs_human) or a call only I can make, tell me what \
+and stop. Already handled: say so in one line and stop." \
+        || _ship_later "$_root" "$_pr" ;;
+    failed)
+      wt-tell "$_root" "conveyor:$_id" \
+        "#$_pr conveyor ship failed, no agent session" \
+        "The conveyor failed shipping PR #$_pr (until=$_until\
+${_tg:+, targets $_tg}): "$_msg" Check read-only what failed \
+(get_ship_status for the timeline, the deploy run, the rollout) and \
+tell me what you found and what you recommend. Don't ship again or \
+roll back without me. Already handled: say so in one line and stop." \
+        || _ship_later "$_root" "$_pr" ;;
+  esac
+}
+
+_ship_later() {
+  printf '%s\t%s\n' "$1" "$2" >> "$_ship_pending"
+}
+
 for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
   cd "$_repo" || continue
   _since="$(gdate -u -d '7 days ago' +%F)"
@@ -85,8 +145,19 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
     --search "merged:>=$_since" --limit 100 \
     --json number,headRefName,mergedAt \
     --jq '.[] | [.headRefName, .number, .mergedAt] | @tsv')" || continue
-  test -n "$_merged" || continue
-  _seen="${LOCAL_CONFIG:?}/wt-sync.deploy.$(basename "$_repo")"
+  _ship_seen="${LOCAL_CONFIG:?}/wt-sync.conveyor.$(basename "$_repo")"
+  _ship_pending="$LOCAL_CONFIG/wt-sync.conveyor-pending.$(basename "$_repo")"
+  _ship_retry="$(cat "$_ship_pending" 2>/dev/null)"
+  : > "$_ship_pending"
+  _open="" _moved=""
+  if _ship_moved; then
+    _moved=1
+    _open="$(timeout 30 gh pr list --state open --author @me --limit 100 \
+      --json number,headRefName \
+      --jq '.[] | [.headRefName, .number] | @tsv')" || _open=""
+  fi
+  test -n "$_merged$_open$_ship_retry" || continue
+  _seen="$LOCAL_CONFIG/wt-sync.deploy.$(basename "$_repo")"
   _pending="$LOCAL_CONFIG/wt-sync.pending.$(basename "$_repo")"
   _retry="$(cat "$_pending" 2>/dev/null)"
   : > "$_pending"
@@ -113,11 +184,29 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
               || _retry="$_retry
 $_wt	$_pr"
             pr-merged-tell "$_wt" "$_pr"
+            if test -n "$_moved" \
+              || printf '%s\n' "$_ship_retry" | grep -qxF "$_wt	$_pr"; then
+              _shipped "$_wt" "$_pr"
+            fi
           fi
           if test -n "$_new_deploy" \
             || printf '%s\n' "$_retry" | grep -qxF "$_wt	$_pr"; then
             _deployed "$_wt" "$_pr"
           fi
+        done
+      printf '%s\n' "$_open" | awk -F'\t' -v b="$_branch" -v w="${_wt##*/}" '
+        { n = split($1, a, "/") } NF && ($1 == b || a[n] == w)' \
+        | while IFS="$(printf '\t')" read -r _ _pr; do
+          _shipped "$_wt" "$_pr"
+        done
+      # Busy last run, and not polled above (its PR not open any more,
+      # or the counts didn't move): polled now.
+      test -n "$_moved" || printf '%s\n' "$_ship_retry" \
+        | awk -F'\t' -v w="$_wt" '$1 == w { print $2 }' \
+        | while read -r _pr; do
+          printf '%s\n' "$_merged" | awk -F'\t' -v p="$_pr" -v r="$_recent" \
+            '$2 == p && $3 >= r { f = 1 } END { exit !f }' \
+            || _shipped "$_wt" "$_pr"
         done
     done
   test -z "$_new_deploy" || echo "$_last" > "$_seen"
