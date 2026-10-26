@@ -4,7 +4,8 @@
   "enabledMcpjsonServers": ["conveyor"],
   "permissions": {
     "allow": [
-      "Bash(gh pr ready *)"
+      "Bash(gh pr ready *)",
+      "mcp__conveyor__ship_pr"
     ],
     "defaultMode": "auto"
   },
@@ -139,7 +140,8 @@
     "allow": [
       "$defaults",
       "Marking the user's own pull requests ready for review with `gh pr ready` (never merging them)",
-      "Commenting `@coderabbitai review` on the user's own pull requests to trigger a review"
+      "Commenting `@coderabbitai review` on the user's own pull requests to trigger a review",
+      "Shipping an ice-floe PR to production through the conveyor MCP `ship_pr` after the user said to ship, merge or deploy it"
     ]
   },
   "voiceEnabled": true
