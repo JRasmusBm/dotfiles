@@ -1,6 +1,7 @@
 {
   "autoMemoryEnabled": false,
   "cleanupPeriodDays": 1825,
+  "enabledMcpjsonServers": ["conveyor"],
   "permissions": {
     "allow": [
       "Bash(gh pr ready *)"

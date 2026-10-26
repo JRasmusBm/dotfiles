@@ -25,6 +25,7 @@ asked for each. Steps with no arrow between them run in parallel.
 | My PR ready (green) | `lin state "Owner review"` | IN PROGRESS | Owner review |
 | He sends it to the team | `wt rt` | TEAM REVIEW | Team review |
 | Approved | `wt rd` | READY TO DEPLOY | Ready to deploy |
+| He says "merge #N" / "ship #N" | conveyor `ship_pr` (`until=merged` / `deployed` + targets), then end the turn | (tells move it) | (tells move it) |
 | Deployed, check prod | `wt rp` | PROD REVIEW | Needs live verification |
 | Waiting on other work | `wt rb <blocker>` | BLOCKED | Blocked + relation |
 | Can't merge yet: design review, risks to settle, someone's decision | `wt rb "<reason>"` (I run it when I hand back, naming who and what) | BLOCKED | Blocked |
@@ -46,6 +47,28 @@ asked for each. Steps with no arrow between them run in parallel.
 - `wt done`/`cancel` refuse to remove anything if Linear isn't updated;
   the others are best-effort, so check their output.
 - Pointing another agent at this work: `wt id` (the slug).
+
+## Shipping and the tells
+
+In a repo with the conveyor MCP (ice-floe), merging and deploying to
+production go through it, and only on his word. `ship_pr` answers
+`checking`, `ready` or `rejected` right away; an immediate rejection
+I fix now. Otherwise I end the turn, without the 2-minute
+`get_ship_status` poll the repo's `dev-workflow` asks for: `wt-sync`
+follows every state change and tells this agent once per change, so
+he never has to nudge it. Each tell is the next step:
+
+| Tell | What I do |
+|---|---|
+| merged (`pr-merged-tell`) | `wt merged`, record targets (`pr-where <pr> <targets>`); conveyor already shipping → wait; else offer staging (`tb deploy staging`) or prod (`ship_pr`) |
+| conveyor rejected | fix what it says, `ship_pr` again with the same `until` and targets; needs a person → `wt rb "<who and what>"` |
+| conveyor failed | read-only: timeline, deploy run, rollout; report and recommend, never re-ship or roll back alone |
+| partly / fully on staging or prod | verify read-only there; staging verified → ask to ship to prod; prod verified → `wt ra` or `wt done` |
+| needs no deploy | check where it runs, then `wt ra` or `wt done` |
+
+A tell for something already handled: one line saying so, then stop.
+Staging still goes through `tb` (the conveyor is production only), and
+`deploy-plan`/`pr-where` count both kinds of deploy.
 
 ## Start new work
 

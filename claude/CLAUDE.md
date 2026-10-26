@@ -21,7 +21,9 @@ changes (build it and show me, don't post a mockup and wait),
 committing what you fixed once verified (only your hunks), and my
 PRs: push to the branch and keep the title/body in sync without
 asking, then report the head sha (watch CI only in `/iterate-review`
-or when asked; never merge, I do), and "is it released/deployed?":
+or when asked; merge or deploy only on my word, through the conveyor
+where a repo has one, then end the turn: `wt-sync` tells you what
+happens next), and "is it released/deployed?":
 confirm it is live, then run read-only checks that it behaves as
 intended (logs, replica, live bundle). Long pipelines, polls and
 browser loops run in a background agent; the main thread stays free
@@ -250,8 +252,11 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   it; an idle one's agent is told to rebase onto dev and carry
   on. I don't run it: when a PR merges, its agent is told
   (`pr-merged-tell`, from `claude-notify` or the `wt-sync`
-  launchd job every minute) to run it and hand me staging,
-  production and both deploy commands. No inbox ping for it.
+  launchd job every minute) to run it, record targets and offer
+  the next step (`tb deploy staging`, or the conveyor to
+  production); a PR the conveyor is already deploying just waits.
+  No inbox ping for it. A conveyor ship that ends rejected or
+  failed is told too (polled when the queue's counts move).
   Once every target the PR needs is deployed to a stage after
   it reached that branch (`pr-where --status`, the rule
   `deploy-plan` uses; whoever dispatched the runs), `wt-sync`
