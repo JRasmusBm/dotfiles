@@ -1,25 +1,44 @@
 #!/bin/sh
 #
 # pr-merged-tell <worktree> <pr> — tell the worktree's agent that <pr>
-# merged: run `wt merged`, record its targets, hand me deploy
-# commands (wt-tell: once, idle Claude, else a check ping).
+# merged: run `wt merged`, record its targets, and either hand me the
+# next deploy step or, when the conveyor is already shipping it to
+# production, wait (wt-tell: once, idle Claude, else a check ping).
 
 _root="$1" _pr="$2"
 test -n "$_root" && test -n "$_pr" \
-  || { sed -n '3,5s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+  || { sed -n '3,6s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+# Already told: skip the gh and conveyor calls (wt-sync runs it every
+# minute for 3 days).
+grep -qxF "$_root	merged:$_pr" "${LOCAL_CONFIG:?}/wt-told" 2>/dev/null \
+  && exit 0
 _by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
   --jq '.mergedBy.login' 2>/dev/null)"
-exec wt-tell "$_root" "merged:$_pr" \
-  "#$_pr merged, no agent session: wt merged, then deploy" \
-  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Run wt merged \
-(board and ticket to Ready to deploy; the follow-ups blocked on this \
-worktree get unblocked). Then load the deploy skill, record its targets \
+_ship="$(cd "$_root" && timeout 20 conveyor status "$_pr" 2>/dev/null \
+  | jq -r 'select(.request.until == "deployed"
+      and (.request.status | IN("rejected", "failed", "cancelled") | not))
+    | .request.targets | join(",")')"
+_targets="record its targets \
 with pr-where $_pr <targets> (services whose non-test files change; \
 of the services importing changed shared or common code, shared-reach \
 <commit> lists them, only those whose behaviour changes, not those that \
 merely get an additive change they don't use; a service with only \
-test changes needs none), and give me \
-three deploy commands for this change: staging, production, and both. \
-Recommend one: staging first when it changes how users edit, save or \
-share, permissions, data writes or migrations, or is large; both at \
-once for a small, contained fix."
+test changes needs none)"
+if test -n "$_ship"; then
+  _next="Then load the deploy skill and $_targets. The conveyor is \
+already shipping it to production ($_ship): if the targets you record \
+differ, say which are missing. Nothing to hand me; wt-sync tells you \
+when it's live or if the conveyor rejects it."
+else
+  _next="Then load the deploy skill, $_targets, and give me the next \
+step, recommending one: staging first (tb deploy staging <targets>, as \
+a ! line) when it changes how users edit, save or share, permissions, \
+data writes or migrations, or is large; else straight to production \
+through the conveyor (ship_pr until=deployed with those targets), \
+which I approve by saying ship."
+fi
+exec wt-tell "$_root" "merged:$_pr" \
+  "#$_pr merged, no agent session: wt merged, then deploy" \
+  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Run wt merged \
+(board and ticket to Ready to deploy; the follow-ups blocked on this \
+worktree get unblocked). $_next"
