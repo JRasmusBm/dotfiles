@@ -314,6 +314,21 @@ _reap() {
   }
 }
 
+# SIGUSR1 to the session's chrome-devtools-mcp-proxy processes: each
+# stops its browser server and Chrome; the next browser call restarts.
+_stop_chrome_mcp() {
+  for _f in "${LOCAL_CONFIG:-$HOME/.config}/chrome-mcp/$1"/*; do
+    test -f "$_f" || continue
+    _p="${_f##*/}"
+    if ps -o command= -p "$_p" 2>/dev/null \
+      | $_grep -q chrome-devtools-mcp-proxy; then
+      kill -USR1 "$_p" 2>/dev/null && echo "dev down: browser MCP $_p told to stop"
+    else
+      rm -f "$_f"
+    fi
+  done
+}
+
 _dev_down() {
   _s="$(_session)"
   _detach_if_inside_run down
@@ -324,6 +339,7 @@ _dev_down() {
   echo "session: $_s run window reset, $(echo $_old | wc -w | tr -d ' ') \
 processes stopped"
   heavy-slot free "dev:$_s" || true
+  _stop_chrome_mcp "$_s"
   if test "${CLAUDECODE:-}" = 1; then
     test-slot release
   fi
