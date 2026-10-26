@@ -155,7 +155,9 @@ _locked() {
 
 _hold_once() {
   if _s="$(_tagged "$_tag")"; then
-    echo "$_until $_tag" > "$_s/until"
+    # Renew, never shorten: a focus must not cut a `dev up --for 60`.
+    read -r _u _t < "$_s/until" 2>/dev/null || _u=0
+    test "$_until" -le "${_u:-0}" || echo "$_until $_tag" > "$_s/until"
     return 0
   fi
   _take

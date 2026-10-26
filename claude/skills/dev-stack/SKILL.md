@@ -75,7 +75,10 @@ stacks never take a slot and are never blocked.
    check.
 4. `dev down` as soon as you're done, if you started it; it frees the
    slot. Don't leave it idle while you write code, wait on an agent or
-   report. Starting it again later is cheap; idle RAM isn't.
+   report. Starting it again later is cheap; idle RAM isn't. A stack
+   lives 10 minutes after `dev up`, then goes down on its own; a
+   longer test asks for more up front (`dev up --for 30`) or extends
+   (`dev keep 20`, minutes; `dev keep` alone = 10 more).
 
 If a code change needs a restart, the be/fe watchers reload on their
 own. Don't `dev up` again just for that. Never touch `node_modules`
@@ -105,8 +108,8 @@ build; park the devtools tab on `about:blank` until it's restarted.
   in `penv local`), never commit it, and `git checkout --` it before
   `dev down`. List the gate files in the agent brief's owned files.
 - Lifetime: the browser MCP and its Chrome start on your first devtools
-  call. They stop on `dev down`, when the stack's slot expires (an
-  hour without focus on the session), or after 10 idle minutes when
+  call. They stop on `dev down`, when the stack's slot expires (see
+  step 4), or after 10 idle minutes when
   no stack is up (staging/production checks); freeing the test slot
   (see Test slots) also quits your Chrome. The first call after a stop
   takes a few seconds and starts from a fresh page: re-navigate and
