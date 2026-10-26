@@ -1,7 +1,9 @@
 #!/bin/sh
 # chrome-devtools-mcp on a throwaway copy of the logged-in default profile,
 # so parallel Claude sessions each drive their own browser. The copy is
-# deleted when the server exits.
+# deleted when the session exits. chrome-devtools-mcp-proxy starts the
+# server and its Chrome on the first browser call and stops them on
+# `dev down`, the dev slot going away, or idle (see its header).
 
 seed="$HOME/.cache/chrome-devtools-mcp/chrome-profile"
 profile=$(mktemp -d "${TMPDIR:-/tmp}/chrome-devtools-mcp.XXXXXX")
@@ -32,8 +34,7 @@ trap cleanup EXIT
 trap 'exit 143' TERM INT HUP
 
 exec 3<&0
-npx -y chrome-devtools-mcp@latest --viewport 1440x900 \
-  --userDataDir "$profile" --chromeArg="--window-name=Claude · $label" \
+python3 -I "$(dirname "$0")/chrome-devtools-mcp-proxy" "$profile" "$label" \
   "$@" <&3 3<&- &
 child=$!
 wait "$child"

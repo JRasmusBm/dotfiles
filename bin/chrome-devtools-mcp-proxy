@@ -1,0 +1,469 @@
+#!/usr/bin/env -S python3 -I
+"""chrome-devtools-mcp-proxy — lazy, stoppable chrome-devtools-mcp.
+
+Run by chrome-devtools-mcp-session (`python3 -I`) as the stdio MCP of
+every Claude session. Speaks newline-delimited JSON-RPC on stdio.
+
+- initialize and tools/list are answered from a cache under
+  ~/.cache/chrome-devtools-mcp/, keyed by VERSION, without starting
+  the server. On a cache miss the server starts once, both results
+  are recorded, and it stays running.
+- The first other request starts the real server: the client's
+  initialize is replayed, its response swallowed,
+  notifications/initialized sent, then the request forwarded.
+- Stop = end the server and its Chrome (killed by profile dir if it
+  outlives the server); the proxy keeps running and the next request
+  restarts the server. Never while a request is in flight. Triggers:
+  SIGUSR1 (`dev down` sends it to every pid under
+  $LOCAL_CONFIG/chrome-mcp/<tmux session>/); the session's
+  `dev:<session>` heavy-slot going away (polled every 60 s); with no
+  such slot, CHROME_MCP_IDLE seconds (600) without a request.
+
+Bump the pinned version:
+  npm view chrome-devtools-mcp version
+  npm install -g chrome-devtools-mcp@<version>
+  then set VERSION below; the new cache file fills on first use.
+
+usage: chrome-devtools-mcp-proxy PROFILE_DIR LABEL [SERVER ARGS...]
+"""
+
+import json
+import os
+import shutil
+import signal
+import subprocess
+import sys
+import threading
+import time
+
+VERSION = "1.12.0"
+
+HOME = os.path.expanduser("~")
+CACHE = os.path.join(HOME, ".cache", "chrome-devtools-mcp", f"proxy-{VERSION}.json")
+LOCAL_CONFIG = os.environ.get("LOCAL_CONFIG") or os.path.join(HOME, ".config")
+IDLE = int(os.environ.get("CHROME_MCP_IDLE", "600"))
+SLOT_POLL = 60
+INIT_TIMEOUT = 60
+INIT_ID = "chrome-mcp-proxy:init"
+
+
+def log(msg):
+    sys.stderr.write(f"chrome-mcp-proxy[{os.getpid()}]: {msg}\n")
+    sys.stderr.flush()
+
+
+class Proxy:
+    def __init__(self, profile, label, args):
+        self.profile = profile
+        self.server_cmd = [
+            "--viewport",
+            "1440x900",
+            "--userDataDir",
+            profile,
+            f"--chromeArg=--window-name=Claude · {label}",
+            *args,
+        ]
+        self.out_lock = threading.Lock()
+        self.life = threading.RLock()  # start/stop vs forwarding
+        self.flight_lock = threading.Lock()
+        self.inflight = set()
+        self.proc = None
+        self.init_msg = None  # client's initialize, replayed on start
+        self.init_done = None  # (event, response) for a replay
+        self.record = {}  # cache miss: method -> request id
+        self.cache = self.load_cache()
+        self.last_activity = time.monotonic()
+        self.stop_requested = False
+        self.session = self.tmux_session()
+        self.slot_held = False
+        self.pidfile = None
+        self.stop_reason = ""
+
+    # --- io ---
+
+    def send_client(self, raw):
+        with self.out_lock:
+            sys.stdout.write(raw if raw.endswith("\n") else raw + "\n")
+            sys.stdout.flush()
+
+    def reply(self, mid, result=None, error=None):
+        msg = {"jsonrpc": "2.0", "id": mid}
+        if error is not None:
+            msg["error"] = error
+        else:
+            msg["result"] = result
+        self.send_client(json.dumps(msg))
+
+    def send_server(self, raw):
+        self.proc.stdin.write(raw if raw.endswith("\n") else raw + "\n")
+        self.proc.stdin.flush()
+
+    # --- cache ---
+
+    def load_cache(self):
+        try:
+            with open(CACHE) as f:
+                c = json.load(f)
+            if "initialize" in c and "tools/list" in c:
+                return c
+        except (OSError, ValueError):
+            pass
+        return None
+
+    def save_cache(self, results):
+        os.makedirs(os.path.dirname(CACHE), exist_ok=True)
+        tmp = f"{CACHE}.{os.getpid()}"
+        with open(tmp, "w") as f:
+            json.dump(results, f)
+        os.replace(tmp, CACHE)
+        self.cache = results
+        log(f"cached initialize + tools/list at {CACHE}")
+
+    # --- session / pidfile / slot ---
+
+    def tmux_session(self):
+        pane = os.environ.get("TMUX_PANE")
+        if not pane:
+            return None
+        try:
+            s = subprocess.run(
+                ["tmux", "display-message", "-p", "-t", pane, "#S"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+            ).stdout.strip()
+        except (OSError, subprocess.SubprocessError):
+            return None
+        return s or None
+
+    def write_pidfile(self):
+        if not self.session:
+            return
+        d = os.path.join(LOCAL_CONFIG, "chrome-mcp", self.session)
+        os.makedirs(d, exist_ok=True)
+        self.pidfile = os.path.join(d, str(os.getpid()))
+        with open(self.pidfile, "w") as f:
+            f.write(f"{self.profile}\n")
+
+    def remove_pidfile(self):
+        if self.pidfile:
+            try:
+                os.unlink(self.pidfile)
+            except OSError:
+                pass
+
+    def slot_present(self):
+        hs = shutil.which("heavy-slot") or os.path.join(HOME, ".bin", "heavy-slot")
+        try:
+            out = subprocess.run(
+                [hs, "ls"], capture_output=True, text=True, timeout=30
+            ).stdout
+        except (OSError, subprocess.SubprocessError):
+            return None
+        tag = f"dev:{self.session} "
+        for line in out.splitlines():
+            f = line.split("\t")
+            if len(f) >= 3 and f[1] == "hold" and f[2].startswith(tag):
+                return True
+        return False
+
+    # --- server lifecycle ---
+
+    def running(self):
+        return self.proc is not None and self.proc.poll() is None
+
+    def server_bin(self):
+        b = shutil.which("chrome-devtools-mcp")
+        if not b:
+            raise RuntimeError(
+                "chrome-devtools-mcp not on PATH; "
+                f"npm install -g chrome-devtools-mcp@{VERSION}"
+            )
+        pkg = os.path.join(
+            os.path.dirname(os.path.realpath(b)), "..", "..", "..", "package.json"
+        )
+        try:
+            with open(pkg) as f:
+                v = json.load(f).get("version")
+        except (OSError, ValueError):
+            v = None
+        if v != VERSION:
+            raise RuntimeError(
+                f"chrome-devtools-mcp {v} installed, proxy pins {VERSION}; "
+                f"npm install -g chrome-devtools-mcp@{VERSION}"
+            )
+        return b
+
+    def spawn(self):
+        self.proc = subprocess.Popen(
+            [self.server_bin(), *self.server_cmd],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            text=True,
+            bufsize=1,
+        )
+        log(f"server started, pid {self.proc.pid}")
+        threading.Thread(target=self.read_server, args=(self.proc,), daemon=True).start()
+
+    def start(self):
+        """Start the server and replay the client's initialize."""
+        self.spawn()
+        ev = threading.Event()
+        self.init_done = [ev, None]
+        msg = dict(self.init_msg)
+        msg["id"] = INIT_ID
+        self.send_server(json.dumps(msg))
+        if not ev.wait(INIT_TIMEOUT) or self.init_done[1] is None:
+            self.init_done = None
+            self.stop("initialize failed")
+            raise RuntimeError("chrome-devtools-mcp did not answer initialize")
+        resp = self.init_done[1]
+        self.init_done = None
+        if "error" in resp:
+            self.stop("initialize error")
+            raise RuntimeError(f"initialize error: {resp['error']}")
+        self.send_server(
+            json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"})
+        )
+
+    def chrome_pids(self):
+        try:
+            out = subprocess.run(
+                ["pgrep", "-f", "--", f"--user-data-dir={self.profile}"],
+                capture_output=True,
+                text=True,
+            ).stdout
+        except OSError:
+            return []
+        return [int(p) for p in out.split() if int(p) != os.getpid()]
+
+    def stop(self, reason):
+        p = self.proc
+        self.proc = None
+        if p is None:
+            return
+        log(f"stopping server pid {p.pid}: {reason}")
+        try:
+            p.stdin.close()
+        except OSError:
+            pass
+        for sig in (None, signal.SIGTERM, signal.SIGKILL):
+            if sig is not None:
+                try:
+                    p.send_signal(sig)
+                except OSError:
+                    pass
+            try:
+                p.wait(5)
+                break
+            except subprocess.TimeoutExpired:
+                continue
+        for sig in (signal.SIGTERM, signal.SIGKILL):
+            pids = self.chrome_pids()
+            if not pids:
+                break
+            log(f"chrome outlived server, {sig.name} {pids}")
+            for pid in pids:
+                try:
+                    os.kill(pid, sig)
+                except OSError:
+                    pass
+            for _ in range(50):
+                if not self.chrome_pids():
+                    break
+                time.sleep(0.1)
+        left = self.chrome_pids()
+        if left:
+            log(f"chrome still running after KILL: {left}")
+        else:
+            log("server and chrome stopped")
+        with self.flight_lock:
+            self.inflight.clear()
+        self.stop_requested = False
+
+    def read_server(self, proc):
+        for raw in proc.stdout:
+            if not raw.strip():
+                continue
+            try:
+                msg = json.loads(raw)
+            except ValueError:
+                self.send_client(raw)
+                continue
+            mid = msg.get("id") if isinstance(msg, dict) else None
+            is_resp = isinstance(msg, dict) and "method" not in msg and mid is not None
+            if is_resp and mid == INIT_ID and self.init_done is not None:
+                self.init_done[1] = msg
+                self.init_done[0].set()
+                continue
+            if is_resp:
+                with self.flight_lock:
+                    self.inflight.discard(json.dumps(mid))
+                self.last_activity = time.monotonic()
+                for method, rid in list(self.record.items()):
+                    if rid == mid and "result" in msg:
+                        self.record[method] = ("done", msg["result"])
+                self.maybe_save_record()
+            self.send_client(raw)
+        # server exited
+        if self.init_done is not None:
+            self.init_done[0].set()
+        if proc is self.proc:
+            log(f"server pid {proc.pid} exited unexpectedly ({proc.wait()})")
+            with self.flight_lock:
+                orphans = list(self.inflight)
+                self.inflight.clear()
+            for k in orphans:
+                self.reply(
+                    json.loads(k),
+                    error={"code": -32603, "message": "chrome-devtools-mcp exited"},
+                )
+
+    def maybe_save_record(self):
+        if len(self.record) == 2 and all(
+            isinstance(v, tuple) for v in self.record.values()
+        ):
+            results = {m: v[1] for m, v in self.record.items()}
+            self.record = {}
+            try:
+                self.save_cache(results)
+            except OSError as e:
+                log(f"could not write cache: {e}")
+
+    # --- client side ---
+
+    def handle(self, raw):
+        try:
+            msg = json.loads(raw)
+        except ValueError:
+            msg = None
+        if not isinstance(msg, dict):
+            with self.life:
+                if self.running():
+                    self.send_server(raw)
+            return
+        method = msg.get("method")
+        mid = msg.get("id")
+        is_req = method is not None and mid is not None
+
+        if method == "initialize" and mid is not None:
+            self.init_msg = msg
+            with self.life:
+                if self.cache and not self.running():
+                    self.reply(mid, self.cache["initialize"])
+                    return
+                if not self.running():
+                    self.record = {"initialize": mid, "tools/list": None}
+                    self.spawn()
+                self.forward(raw, mid)
+            return
+
+        if method == "tools/list" and mid is not None:
+            with self.life:
+                if self.cache and not self.running():
+                    self.reply(mid, self.cache["tools/list"])
+                    return
+                if self.record.get("tools/list", 0) is None:
+                    self.record["tools/list"] = mid
+                if self.running():
+                    self.forward(raw, mid)
+                    return
+
+        if not is_req:
+            # notifications and responses go only to a running server
+            with self.life:
+                if self.running():
+                    self.send_server(raw)
+            return
+
+        with self.life:
+            if not self.running():
+                if self.init_msg is None:
+                    self.reply(
+                        mid,
+                        error={"code": -32002, "message": "not initialized"},
+                    )
+                    return
+                try:
+                    self.start()
+                except (RuntimeError, OSError) as e:
+                    log(str(e))
+                    self.reply(mid, error={"code": -32603, "message": str(e)})
+                    return
+            self.forward(raw, mid)
+
+    def forward(self, raw, mid):
+        with self.flight_lock:
+            self.inflight.add(json.dumps(mid))
+        self.last_activity = time.monotonic()
+        try:
+            self.send_server(raw)
+        except (OSError, ValueError) as e:
+            with self.flight_lock:
+                self.inflight.discard(json.dumps(mid))
+            self.reply(mid, error={"code": -32603, "message": f"server: {e}"})
+
+    # --- stop triggers ---
+
+    def monitor(self):
+        next_poll = 0.0
+        while True:
+            time.sleep(1)
+            now = time.monotonic()
+            slot_gone = False
+            if self.session and now >= next_poll:
+                next_poll = now + SLOT_POLL
+                present = self.slot_present()
+                if present is not None:
+                    if self.slot_held and not present:
+                        slot_gone = True
+                    self.slot_held = present
+            with self.life:
+                if not self.running():
+                    self.stop_requested = False
+                    continue
+                with self.flight_lock:
+                    busy = bool(self.inflight)
+                if slot_gone:
+                    self.stop_requested = True
+                    self.stop_reason = f"dev:{self.session} slot gone"
+                if busy:
+                    continue
+                if self.stop_requested:
+                    self.stop(self.stop_reason)
+                elif not self.slot_held and now - self.last_activity >= IDLE:
+                    self.stop(f"idle {IDLE}s, no dev slot")
+
+    def on_usr1(self, *_):
+        self.stop_requested = True
+        self.stop_reason = "SIGUSR1"
+
+    def run(self):
+        signal.signal(signal.SIGUSR1, self.on_usr1)
+        for s in (signal.SIGTERM, signal.SIGHUP, signal.SIGINT):
+            signal.signal(s, lambda *_: sys.exit(143))
+        self.write_pidfile()
+        log(
+            f"ready, chrome-devtools-mcp {VERSION}, session {self.session}, "
+            f"cache {'hit' if self.cache else 'miss'}"
+        )
+        threading.Thread(target=self.monitor, daemon=True).start()
+        try:
+            for raw in sys.stdin:
+                if raw.strip():
+                    self.handle(raw)
+        finally:
+            with self.life:
+                self.stop("client gone")
+            self.remove_pidfile()
+
+
+def main():
+    if len(sys.argv) < 3:
+        sys.stderr.write(__doc__)
+        sys.exit(2)
+    Proxy(sys.argv[1], sys.argv[2], sys.argv[3:]).run()
+
+
+if __name__ == "__main__":
+    main()
