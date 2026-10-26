@@ -235,7 +235,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   the hand-back bar, taking its own recommended answers. Skipped:
   open PRs that are green and wait on me, worktrees with no
   session, busy agents. A finished one replies so and stops: no
-  invented work. 15 min before, agents told that night whose PR
+  invented work. Told in the background, paced: at most 3
+  busy at once, none while free memory < 8 GB or pressure is
+  up (`wt-night.log`); agents start no new worktrees that
+  night. 15 min before, agents told that night whose PR
   conflicts with dev or fails CI are told to fix it. Once per
   worktree per night; `WT_NIGHT_DRY=1` lists who'd be told.
 - `wt ip` — move the current worktree back to `# IN

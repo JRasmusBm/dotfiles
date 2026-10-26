@@ -7,7 +7,12 @@
 #     alone until then. Left alone: a worktree whose PR is open, green
 #     and up to date (it waits on me), one with no Claude session, and
 #     a busy one (it is working already). The prompt says a finished
-#     one replies so and stops, so nothing runs for no reason;
+#     one replies so and stops, so nothing runs for no reason.
+#     Paced in the background (`wt-night feed`, log wt-night.log): at
+#     most WT_NIGHT_MAX (3) told agents busy at once, none told while
+#     free+inactive memory is under WT_NIGHT_MIN_GB (8) or pressure is
+#     raised. On 2026-10-23, 7 told at once on a Mac already at 53 MB
+#     free (Spotlight 32 GB) hung it within 3 minutes;
 #   - at HH:MM minus 15 min (`wt-night morning`), of those told last
 #     night, tells each idle agent whose PR conflicts with dev or has
 #     failing checks to fix that before I'm back. Green ones, and PRs
@@ -46,6 +51,45 @@ _tell() {
   wt-tell "$1" "$2" "night" "$3" 2>/dev/null \
     && echo "told $(basename "$1")"
 }
+
+# Free + inactive + speculative memory in whole GB.
+_free_gb() {
+  vm_stat | awk '/page size of/ { ps = $8 }
+    /Pages (free|inactive|speculative)/ { sub(/\./, "", $NF); n += $NF }
+    END { print int(n * ps / 1073741824) }'
+}
+
+# How many agents told tonight are still working.
+_busy() {
+  grep -F "	night:$_day" "$LOCAL_CONFIG/wt-told" 2>/dev/null | cut -f1 \
+    | while read -r _w; do
+      _p="$(tmux display-message -p -t "=$(basename "$_w"):cli" \
+        '#{pane_id}' 2>/dev/null)" || continue
+      claude-pane-idle "$_p" || echo x
+    done | wc -l | tr -d ' '
+}
+
+# feed <end epoch> <queue file> <prompt>: tell the queued worktrees one
+# by one, while memory and the busy count allow, until <end>.
+if test "${1:-}" = feed; then
+  _end="$2" _q="$3" _p="$4" _day="$5"
+  _max="${WT_NIGHT_MAX:-3}" _min="${WT_NIGHT_MIN_GB:-8}"
+  while read -r _wt; do
+    while :; do
+      test "$(date +%s)" -lt "$_end" || exit 0
+      _lvl="$(sysctl -n kern.memorystatus_vm_pressure_level)"
+      _gb="$(_free_gb)" _n="$(_busy)"
+      test "$_lvl" -le 1 && test "$_gb" -ge "$_min" \
+        && test "$_n" -lt "$_max" && break
+      sleep 60
+    done
+    echo "$(date +%T) free=${_gb}G busy=$_n pressure=$_lvl"
+    _tell "$_wt" "night:$_day" "$_p" \
+      || echo "left $(basename "$_wt"): not idle"
+    sleep 120
+  done < "$_q"
+  exit 0
+fi
 
 if test "${1:-}" = morning; then
   _night="$(cat "$LOCAL_CONFIG/wt-night.last" 2>/dev/null || true)"
@@ -86,15 +130,27 @@ awk '
     _wt="$(_worktrees | awk -F'\t' -v b="$_b" '$2 == b || $1 ~ "/" b "$" { print $1; exit }')"
     test -n "$_wt" || continue
     tmux has-session -t "=$(basename "$_wt")" 2>/dev/null || continue
-    _tell "$_wt" "night:$_day" "I'm away until $_until. Keep going \
+    echo "$_wt"
+  done > "$LOCAL_CONFIG/wt-night.queue"
+
+_prompt="I'm away until $_until. Keep going \
 on your own until then. If this worktree's work is finished, or what's \
 left needs me (a review, merge, deploy or decision), reply in one line \
 saying so and stop: don't invent work. Otherwise carry on to the \
 hand-back bar (tests on every surface it touches, the artifact, \
 /iterate-review until green) without asking me anything: take your \
-recommended option on any question and note it. Follow-up tickets you \
-filed for this work that have no worktree yet: start at most 2 with \
-WT_NO_ATTACH=1 wt feat <url>. End with a short summary for the morning." \
-      || echo "left $(basename "$_wt"): not idle"
-  done
+recommended option on any question and note it. Don't start new \
+worktrees or agents tonight (the Mac runs out of memory): list \
+follow-up tickets in the summary. End with a short summary for the \
+morning."
+if test -n "${WT_NIGHT_DRY:-}"; then
+  while read -r _wt; do _tell "$_wt" "night:$_day" "$_prompt"; done \
+    < "$LOCAL_CONFIG/wt-night.queue"
+  exit 0
+fi
+nohup wt-night feed "$(( $(date +%s) + _secs ))" \
+  "$LOCAL_CONFIG/wt-night.queue" "$_prompt" "$_day" \
+  >> "$LOCAL_CONFIG/wt-night.log" 2>&1 &
+echo "$(grep -c . "$LOCAL_CONFIG/wt-night.queue") to tell, \
+${WT_NIGHT_MAX:-3} busy at a time (log: $LOCAL_CONFIG/wt-night.log)"
 echo "awake and checked until $_until (morning check 15 min before)"
