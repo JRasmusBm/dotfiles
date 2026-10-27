@@ -74,7 +74,7 @@ a test fix), then: wt ra if users or the team should hear about it \
 ($_targets). Check read-only that the change works on $_stage and \
 tell me what you verified. Verified on staging and not in production \
 yet: end by asking me to ship it to production through the conveyor \
-(ship_pr until=deployed with its targets; it promotes to master \
+(ship_pr until=deployed with its targets; it promotes master \
 too), so staging first never means forgotten. Once it's verified \
 in production: wt ra if users or the team should hear about it (and \
 draft the release post), else wt done." || _retry_later "$_root" "$_pr"
