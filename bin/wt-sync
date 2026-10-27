@@ -3,8 +3,9 @@
 # wt-sync — launchd (com.jrasmusbm.wt-sync, every minute), for each
 # worktree of $WT_SYNC_REPOS with a PR of mine merged in the last 7
 # days:
-#   - merged in the last 3 days: tell its agent (pr-merged-tell), so a
-#     merge reaches an agent that was already idle when it happened;
+#   - tell its agent (pr-merged-tell, once), so a merge reaches an
+#     agent that was already idle when it happened, or that wasn't
+#     reachable (machine off, no session) for days;
 #   - some of the targets it needs deployed to a stage after it
 #     reached that stage's branch (pr-where --status, the same rule
 #     as deploy-plan): tell its agent which part is out, once per set
@@ -177,17 +178,16 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
       printf '%s\n' "$_merged" | awk -F'\t' -v b="$_branch" -v w="${_wt##*/}" '
         { n = split($1, a, "/") } $1 == b || a[n] == w' \
         | while IFS="$(printf '\t')" read -r _ _pr _at; do
-          if ! test "$_at" \< "$_recent"; then
-            # Checked right away the first time, so one needing no
-            # deploy doesn't wait for somebody's next run.
-            grep -qxF "$_wt	merged:$_pr" "$LOCAL_CONFIG/wt-told" \
-              || _retry="$_retry
+          # Told whatever its age (pr-merged-tell skips one already
+          # told), so a merge that happened while the machine was off
+          # over a long weekend still reaches its agent.
+          grep -qxF "$_wt	merged:$_pr" "$LOCAL_CONFIG/wt-told" \
+            || _retry="$_retry
 $_wt	$_pr"
-            pr-merged-tell "$_wt" "$_pr"
-            if test -n "$_moved" \
-              || printf '%s\n' "$_ship_retry" | grep -qxF "$_wt	$_pr"; then
-              _shipped "$_wt" "$_pr"
-            fi
+          pr-merged-tell "$_wt" "$_pr"
+          if ! test "$_at" \< "$_recent" && { test -n "$_moved" \
+            || printf '%s\n' "$_ship_retry" | grep -qxF "$_wt	$_pr"; }; then
+            _shipped "$_wt" "$_pr"
           fi
           if test -n "$_new_deploy" \
             || printf '%s\n' "$_retry" | grep -qxF "$_wt	$_pr"; then
