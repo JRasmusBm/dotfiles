@@ -13,7 +13,7 @@ def main():
     column = int(get(["tmux", "display", "-pF", "#{copy_cursor_x}"]).strip())
     line = get(["tmux", "display", "-pF", "#{copy_cursor_line}"])
 
-    file_regex = re.compile("([-_/.@a-z:0-9~]+)", re.IGNORECASE)
+    file_regex = re.compile("([-_/.@a-z:0-9~#?=&%+]+)", re.IGNORECASE)
 
     total_matches = []
     while True:
@@ -26,7 +26,7 @@ def main():
             raise e
 
         if match.start() <= column <= match.end():
-            path = match.group(1)
+            path = match.group(1).rstrip(".,:")
             break
 
         total_matches.append(match)
