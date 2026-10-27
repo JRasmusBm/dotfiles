@@ -14,7 +14,8 @@ def get(command):
 
 
 def main():
-    path = argv[1]
+    reveal = argv[1] == "--reveal"
+    path = argv[-1]
 
     if path.startswith("http"):
         if platform.system() == "Darwin":
@@ -46,6 +47,10 @@ def main():
     if file_path is None:
         print(f"Cannot find file {raw_file_path}")
         exit(1)
+
+    if reveal:
+        run(["open", "-R", os.path.realpath(file_path)])
+        return
 
     if len(path_components) > 1:
         run(["nr", f"+{path_components[1]}", "--remote", file_path])

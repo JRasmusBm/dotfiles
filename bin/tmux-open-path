@@ -2,6 +2,7 @@
 
 from subprocess import run
 import re
+import sys
 
 
 def get(command):
@@ -35,7 +36,7 @@ def main():
 
     binary_path = get(["which", "open-path"]).strip()
     try: 
-        result = run(["python3", binary_path, path])
+        result = run(["python3", binary_path, *sys.argv[1:], path])
     except BaseException as e:
         print(e)
         exit(1)
