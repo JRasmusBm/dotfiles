@@ -45,6 +45,18 @@ def main():
             current_path = next_path
 
     if file_path is None:
+        # Not under this checkout or its parents: the newest copy in a
+        # sibling worktree of the same repo (a path from another agent).
+        trees = [
+            line[len("worktree "):]
+            for line in get(["git", "worktree", "list", "--porcelain"]).splitlines()
+            if line.startswith("worktree ")
+        ]
+        found = [Path(t) / raw_file_path for t in trees if (Path(t) / raw_file_path).exists()]
+        if found:
+            file_path = max(found, key=lambda f: f.stat().st_mtime)
+
+    if file_path is None:
         print(f"Cannot find file {raw_file_path}")
         exit(1)
 
