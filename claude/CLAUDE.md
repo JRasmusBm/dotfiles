@@ -248,14 +248,16 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt ip` — move the current worktree back to `# IN
   PROGRESS`, ticket → In Progress (clears a block;
   `rt`/`rd`/`rp` clear it too).
-- `wt merged` — its PR merged: `wt rd` (unless already in
-  `# READY TO DEPLOY` or `# PROD REVIEW`), then unblocks the worktrees `wt rb`'d on
-  it; an idle one's agent is told to rebase onto dev and carry
-  on. I don't run it: when a PR merges, its agent is told
-  (`pr-merged-tell`, from `claude-notify` or the `wt-sync`
-  launchd job every minute) to run it, record targets and offer
-  the next step (`tb deploy staging`, or the conveyor to
-  production); a PR the conveyor is already deploying just waits.
+- `wt merged` — its PR merged: parks the worktree in `# PROD
+  REVIEW` (ticket → Needs live verification) when the conveyor is
+  already shipping it to production, else `# READY TO DEPLOY` (unless
+  already in one of those or `# TO ANNOUNCE`), then unblocks the
+  worktrees `wt rb`'d on it; an idle one's agent is told to rebase
+  onto dev and carry on. I don't run it: when a PR merges, its
+  agent is told (`pr-merged-tell`, from `claude-notify` or the
+  `wt-sync` launchd job every minute) to double-check the conveyor
+  and run it; a session that isn't running is started with its
+  agent first.
   No inbox ping for it. A conveyor ship that ends rejected or
   failed is told too (polled when the queue's counts move).
   Once every target the PR needs is deployed to a stage after
