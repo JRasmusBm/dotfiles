@@ -30,6 +30,9 @@
 # counts moved since the last run, every 10th minute, and each run
 # while its Claude was busy. A request that ends done needs no tell
 # of its own: merged and deployed are told above.
+# Every 5th minute, wt-pr-watch tells the agent of a worktree whose
+# open PR has failing CI or a review newer than its last push, once per
+# head sha / review.
 # On a phone hotspot it polls every 5th minute only; a poll without a
 # new deploy is ~10 KB. Android marks its hotspot's DHCP lease with
 # vendor option ANDROID_METERED; an iPhone's gateway is 172.20.10.1.
@@ -170,6 +173,8 @@ fi
 
 for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
   cd "$_repo" || continue
+  # Every 5th minute: CI failures and reviews on my open PRs.
+  test "$(( $(date +%-M) % 5 ))" != 0 || wt-pr-watch "$_repo"
   _run_start="$(date -u +%FT%TZ)"
   _wm_file="$LOCAL_CONFIG/wt-sync.since.$(basename "$_repo")"
   _wm="$(cat "$_wm_file" 2>/dev/null)"
