@@ -1,9 +1,9 @@
 #!/bin/sh
 #
 # pr-merged-tell <worktree> <pr> — tell the worktree's agent that <pr>
-# merged: run `wt merged`, and either tell me how it would ship it or,
-# when the conveyor is already shipping it to production, wait
-# (wt-tell: once, idle Claude, else it starts one).
+# merged: it checks the conveyor, runs `wt merged`, and either tells me
+# how it would ship it or, when the conveyor is already shipping it to
+# production, waits (wt-tell: once, idle Claude, else it starts one).
 
 _root="$1" _pr="$2"
 test -n "$_root" && test -n "$_pr" \
@@ -14,22 +14,13 @@ grep -qxF "$_root	merged:$_pr" "${LOCAL_CONFIG:?}/wt-told" 2>/dev/null \
   && exit 0
 _by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
   --jq '.mergedBy.login' 2>/dev/null)"
-_ship="$(cd "$_root" && timeout 20 conveyor status "$_pr" 2>/dev/null \
-  | jq -r 'select(.request.until == "deployed"
-      and (.request.status | IN("rejected", "failed", "cancelled") | not))
-    | .request.targets | join(",")')"
-if test -n "$_ship"; then
-  _next="The conveyor is already shipping it to production ($_ship); \
-wt-sync tells you when it's live or if the conveyor rejects it."
-  _flag=" --shipping" _state="Needs live verification"
-else
-  _next="It's on dev only. Tell me how you'd ship it (dev-workflow, \
-Shipping a PR): through the conveyor straight to production, or \
-staging first if it's risky. I approve by saying ship."
-  _flag="" _state="Ready to deploy"
-fi
 exec wt-tell "$_root" "merged:$_pr" \
-  "#$_pr merged, no agent session: wt merged, then deploy" \
-  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Run \
-wt merged$_flag (board and ticket to $_state; the follow-ups blocked on \
-this worktree get unblocked). $_next"
+  "#$_pr merged, no agent session: wt merged, then check the conveyor" \
+  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Check the \
+conveyor (get_ship_status). If it is already shipping it to production, \
+run wt merged --shipping (board and ticket to Needs live verification); \
+wt-sync tells you when it's live or if the conveyor rejects it. If not, \
+run wt merged (Ready to deploy) and tell me how you'd ship it \
+(dev-workflow, Shipping a PR): the conveyor straight to production, or \
+staging first if it's risky. I approve by saying ship. Either way the \
+follow-ups blocked on this worktree get unblocked."
