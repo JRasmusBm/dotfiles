@@ -3,7 +3,9 @@
 # wt-pr-watch [repo] — for each open PR of mine with a worktree, tell
 # its agent (wt-tell: idle Claude, else it starts one) once per event:
 #   - CI failed on the head commit (once per head sha), or
-#   - someone else reviewed after the last push (once per newest review).
+#   - someone else reviewed after the last push (once per newest review),
+#   - the stale bot labelled it (it closes the PR 7 days later; once
+#     per head sha).
 # Called by wt-sync every 5th minute. A tell that finds Claude busy
 # or not up yet isn't recorded, so the next run retries it.
 
@@ -11,39 +13,49 @@ _repo="${1:-$PWD}"
 cd "$_repo" || exit 0
 _me="$(timeout 20 gh api user --jq .login 2>/dev/null)" || exit 0
 # latestReviews, not reviews/comments/commits: those exceed GraphQL's
-# node limit across ~30 PRs.
+# node limit across ~30 PRs. Empty fields are "-": read with a tab IFS
+# collapses consecutive tabs.
 _prs="$(timeout 60 gh pr list --state open --author @me --limit 100 \
-  --json number,headRefName,headRefOid,latestReviews,statusCheckRollup \
+  --json number,headRefName,headRefOid,latestReviews,statusCheckRollup,labels \
   --jq '.[] | [.number, .headRefName, .headRefOid,
     ([.statusCheckRollup[]? | select(.conclusion == "FAILURE") | .name]
       | unique | join(",")),
     ([.statusCheckRollup[]? | select(.status != null and .status != "COMPLETED")]
       | length),
     ([.latestReviews[]? | select(.author.login != "'"$_me"'") | .submittedAt]
-      | max // "")] | @tsv')" || exit 0
+      | max // ""),
+    (if any(.labels[]?; .name == "stale") then "stale" else "" end)]
+    | map(if . == "" then "-" else . end) | @tsv')" || exit 0
 
 git worktree list --porcelain | awk '
   /^worktree / { w = substr($0, 10) }
   /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }' \
   | while IFS="$(printf '\t')" read -r _wt _branch; do
     printf '%s\n' "$_prs" | awk -F'\t' -v b="$_branch" '$2 == b' \
-      | while IFS="$(printf '\t')" read -r _pr _ _sha _fail _pend _fb; do
-        if test -n "$_fail" && test "$_pend" = 0; then
+      | while IFS="$(printf '\t')" read -r _pr _ _sha _fail _pend _fb _stale; do
+        if test "$_fail" != - && test "$_pend" = 0; then
           wt-tell "$_wt" "ci:$_pr:$_sha" \
             "#$_pr CI failed ($_fail), no agent session" \
             "CI failed on PR #$_pr ($_fail). Please look at the failure, \
 fix it, push, and tell me what it was."
         fi
         _push=""
-        test -z "$_fb" || _push="$(timeout 20 gh api \
+        test "$_fb" = - || _push="$(timeout 20 gh api \
           "repos/{owner}/{repo}/commits/$_sha" \
           --jq .commit.committer.date 2>/dev/null)"
-        if test -n "$_fb" && test -n "$_push" && test "$_fb" \> "$_push"; then
+        if test "$_fb" != - && test -n "$_push" && test "$_fb" \> "$_push"; then
           wt-tell "$_wt" "feedback:$_pr:$_fb" \
             "#$_pr has new review comments, no agent session" \
             "PR #$_pr has review feedback newer than your last push \
 ($_fb). Please read it, address what is right, push, and reply on the \
 threads."
+        fi
+        if test "$_stale" = stale; then
+          wt-tell "$_wt" "stale:$_pr:$_sha" \
+            "#$_pr marked stale, closes in 7 days, no agent session" \
+            "The stale bot marked PR #$_pr stale; it closes the PR 7 days \
+later. Move it forward (rebase, CI, reviews, what is left to the \
+hand-back bar) and push, or if it is no longer wanted, tell me why."
         fi
       done
   done
