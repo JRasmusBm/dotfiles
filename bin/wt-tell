@@ -3,7 +3,8 @@
 # wt-tell <worktree> <key> <ping> <prompt> — tell the worktree's idle
 # Claude (its `cli` pane) <prompt>, once per worktree and key
 # ($LOCAL_CONFIG/wt-told). No session (or tmux down, as after a
-# reboot): starts it with `claude --continue` in its cli window, at
+# reboot) or no Claude in its cli window: starts it with
+# `claude --continue` there, at
 # most one per WT_TELL_REVIVE_SECS (120) and only while memory is
 # free (wt-night's limits), and fails without recording the tell, so
 # the caller's next run tells it once Claude is up. A worktree that
@@ -18,8 +19,11 @@ grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
 
 _pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
   '#{pane_id}' 2>/dev/null)" || _pane=""
-if test -z "$_pane" && test -z "${WT_TELL_NO_REVIVE:-}" \
-  && test -d "$_root"; then
+_cmd="$(tmux display-message -p -t "$_pane" '#{pane_current_command}' \
+  2>/dev/null)" || _cmd=""
+case "$_cmd" in zsh|bash|sh|fish) _shell=1 ;; *) _shell="" ;; esac
+if { test -z "$_pane" || test -n "$_shell"; } \
+  && test -z "${WT_TELL_NO_REVIVE:-}" && test -d "$_root"; then
   _rv="$LOCAL_CONFIG/wt-tell.revived"
   _now="$(date +%s)"
   _gb="$(vm_stat | awk '/page size of/ { ps = $8 }
@@ -30,8 +34,12 @@ if test -z "$_pane" && test -z "${WT_TELL_NO_REVIVE:-}" \
     && test "$(( _now - $(cat "$_rv" 2>/dev/null || echo 0) ))" \
       -ge "${WT_TELL_REVIVE_SECS:-120}"; then
     echo "$_now" > "$_rv"
-    ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
-      wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true
+    if test -n "$_pane"; then
+      tmux send-keys -t "$_pane" "claude --continue" Enter
+    else
+      ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
+        wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true
+    fi
   fi
   exit 1
 fi
