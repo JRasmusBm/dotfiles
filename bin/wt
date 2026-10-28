@@ -183,9 +183,10 @@ _unblock_dependents() {
       _linear 'In Progress' "$_ud_branch" || true
       _ud_root="$(_main_root)/.worktrees/$_ud_slug"
       _ud_ping="Unblocked: $_ud_slug ($1 $_ud_why; back in progress)"
-      _ud_msg="$1 $_ud_why, which unblocks this worktree. The PR and \
-ticket may have changed while you were blocked: please double-check \
-your assumptions and carry on."
+      _ud_msg="$1 $_ud_why, which unblocks this worktree. Before you \
+carry on, double-check your assumptions: look for what changed in this \
+PR and ticket since the work began (new comments, scope, reviews, \
+commits on the base), and whether what you planned still holds."
       # Not delivered now (busy, or its session just started): wt-sync
       # keeps trying (wt-unblocked), like any other tell.
       wt-tell "$_ud_root" "unblocked:$1" "$_ud_ping" "$_ud_msg" \
