@@ -1378,10 +1378,15 @@ case "${1:-}" in
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
   merged)
+    # --shipping: the conveyor is already taking it to production, so
+    # nothing waits on me but checking it arrived: Needs live
+    # verification, not Ready to deploy.
     _require_worktree
-    case "$(_board_section "$(git branch --show-current)" \
-      "$(basename "$(git rev-parse --show-toplevel)")")" in
-      'READY TO DEPLOY'|'PROD REVIEW'|'TO ANNOUNCE') ;;
+    _m_sec="$(_board_section "$(git branch --show-current)" \
+      "$(basename "$(git rev-parse --show-toplevel)")")"
+    case "$_m_sec:${2:-}" in
+      'PROD REVIEW':*|'TO ANNOUNCE':*|'READY TO DEPLOY':) ;;
+      *:--shipping) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
       *) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
     esac
     _unblock_dependents "$(basename "$(git rev-parse --show-toplevel)")" \

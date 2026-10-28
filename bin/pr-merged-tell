@@ -37,8 +37,13 @@ data writes or migrations, or is large; else straight to production \
 through the conveyor (ship_pr until=deployed with those targets), \
 which I approve by saying ship."
 fi
+if test -n "$_ship"; then
+  _flag=" --shipping" _state="Needs live verification"
+else
+  _flag="" _state="Ready to deploy"
+fi
 exec wt-tell "$_root" "merged:$_pr" \
   "#$_pr merged, no agent session: wt merged, then deploy" \
-  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Run wt merged \
-(board and ticket to Ready to deploy; the follow-ups blocked on this \
-worktree get unblocked). $_next"
+  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Run \
+wt merged$_flag (board and ticket to $_state; the follow-ups blocked on \
+this worktree get unblocked). $_next"
