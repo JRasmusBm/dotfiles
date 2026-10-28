@@ -34,7 +34,7 @@ _metered() {
     || route -n get default | grep -q 'gateway: 172\.20\.10\.1$'
 }
 
-if _metered && test "$(( $(date +%M) % 5 ))" != 0; then
+if _metered && test "$(( $(date +%-M) % 5 ))" != 0; then
   exit 0
 fi
 
@@ -95,7 +95,7 @@ _ship_moved() {
     || return 1
   _was="$(cat "$_ship_seen" 2>/dev/null)"
   echo "$_counts" > "$_ship_seen"
-  test "$_counts" != "$_was" || test "$(( $(date +%M) % 10 ))" = 0
+  test "$_counts" != "$_was" || test "$(( $(date +%-M) % 10 ))" = 0
 }
 
 # Tells the agent of worktree $1 when PR $2's latest ship request was
