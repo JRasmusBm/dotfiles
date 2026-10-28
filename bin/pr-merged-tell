@@ -14,6 +14,19 @@ grep -qxF "$_root	merged:$_pr" "${LOCAL_CONFIG:?}/wt-told" 2>/dev/null \
   && exit 0
 _by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
   --jq '.mergedBy.login' 2>/dev/null)"
+# Nothing to deploy (tests, docs or CI only): one tell, not this one
+# plus wt-sync's no-deploy one, which it then finds already told.
+if pr-where --status "$_pr" 2>/dev/null | cut -f2 \
+  | grep -qxF "nothing to deploy"; then
+  wt-tell "$_root" "merged:$_pr" \
+    "#$_pr merged, needs no deploy, no agent session: announce or not?" \
+    "PR #$_pr is merged${_by:+ (merged by $_by)} and needs no deploy \
+(tests, docs or CI only). Please check it where it runs and prepare an \
+announcement for me to review." \
+    && printf '%s\tnodeploy:%s\n' "$_root" "$_pr" \
+      >> "${LOCAL_CONFIG:?}/wt-told"
+  exit
+fi
 exec wt-tell "$_root" "merged:$_pr" \
   "#$_pr merged, no agent session: check the conveyor, wt merged" \
   "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Please \
