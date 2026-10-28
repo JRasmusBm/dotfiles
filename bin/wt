@@ -512,7 +512,7 @@ _wt_open_with_claude() {
     tmux send-keys -t "$_session:cli" \
       "claude \"\$(cat $_pf)\"" Enter 2>/dev/null || true
   elif test -n "${_WT_CONTINUE:-}" && test "$_created" = true; then
-    tmux send-keys -t "$_session:cli" "claude --continue" Enter \
+    tmux send-keys -t "$_session:cli" "claude --continue || claude" Enter \
       2>/dev/null || true
   fi
 
