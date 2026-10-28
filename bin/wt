@@ -186,7 +186,7 @@ _unblock_dependents() {
       _ud_msg="$1 $_ud_why, which unblocks this worktree. Before you \
 carry on, double-check your assumptions: look for what changed in this \
 PR and ticket since the work began (new comments, scope, reviews, \
-commits on the base), and whether what you planned still holds."
+commits on the base), and how that affects what you planned."
       # Not delivered now (busy, or its session just started): wt-sync
       # keeps trying (wt-unblocked), like any other tell.
       wt-tell "$_ud_root" "unblocked:$1" "$_ud_ping" "$_ud_msg" \
