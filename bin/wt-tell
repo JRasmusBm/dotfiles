@@ -4,11 +4,12 @@
 # Claude (its `cli` pane) <prompt>, once per worktree and key
 # ($LOCAL_CONFIG/wt-told). No session (or tmux down, as after a
 # reboot) or no Claude in its cli window: starts it with
-# `claude --continue` there, at
-# most one per WT_TELL_REVIVE_SECS (120) and only while memory is
-# free (wt-night's limits), and fails without recording the tell, so
-# the caller's next run tells it once Claude is up. A worktree that
-# is gone (or WT_TELL_NO_REVIVE set): pings me (check) with <ping>
+# `claude --continue` there, only while memory is free (wt-night's
+# limits), at most one per WT_TELL_REVIVE_SECS (default by free GB:
+# 30 from 16, 60 from 12, else 120: a new Claude takes a while to
+# reach its full size, so the gauge lags), and fails without
+# recording the tell, so the caller's next run tells it once Claude
+# is up. A worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check) with <ping>
 # once instead. Claude busy: fails too.
 
 _root="$1" _key="$2" _msg="$3" _prompt="$4"
@@ -29,10 +30,16 @@ if { test -z "$_pane" || test -n "$_shell"; } \
   _gb="$(vm_stat | awk '/page size of/ { ps = $8 }
     /Pages (free|inactive|speculative)/ { sub(/\./, "", $NF); n += $NF }
     END { print int(n * ps / 1073741824) }')"
+  _gap="${WT_TELL_REVIVE_SECS:-}"
+  if test -z "$_gap"; then
+    if test "$_gb" -ge 16; then _gap=30
+    elif test "$_gb" -ge 12; then _gap=60
+    else _gap=120; fi
+  fi
   if test "$(sysctl -n kern.memorystatus_vm_pressure_level)" -le 1 \
     && test "$_gb" -ge "${WT_NIGHT_MIN_GB:-8}" \
     && test "$(( _now - $(cat "$_rv" 2>/dev/null || echo 0) ))" \
-      -ge "${WT_TELL_REVIVE_SECS:-120}"; then
+      -ge "$_gap"; then
     echo "$_now" > "$_rv"
     if test -n "$_pane"; then
       tmux send-keys -t "$_pane" "claude --continue" Enter
