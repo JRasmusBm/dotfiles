@@ -88,6 +88,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/read-size-nudge.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SessionEnd": [
