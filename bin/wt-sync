@@ -76,7 +76,8 @@ to review." \
       wt-tell "$_root" "deployed:$_stage:$_pr" \
         "#$_pr is on $_stage ($_targets), no agent session: verify it" \
         "PR #$_pr is deployed to $_stage with all its targets \
-($_targets). Please verify it there and ${_ann:-update the worktree}." \
+($_targets). Please verify it there (including devtools/MCP checks \
+etc. as applicable) and ${_ann:-update the worktree}." \
 || _retry_later "$_root" "$_pr"
     done
 }
