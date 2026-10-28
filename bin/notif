@@ -180,6 +180,9 @@ _notif_list() {
 
 # Move key $1's rows onto the pane we landed on ($2, a tmux
 # target), so M-y and M-i rotation see them as this pane's.
+# With $3 `sticky` they also turn sticky: a session started for
+# them showed me nothing yet, so the focus hooks must not clear
+# them.
 _notif_rekey() {
   _r_new="$(tmux display-message -p -t "$2" '#{pane_id}' \
     2>/dev/null)" || return 0
@@ -187,8 +190,9 @@ _notif_rekey() {
   _r_ctx="$(tmux display-message -p -t "$_r_new" '#S:#W.#P')"
   _f="$(_inbox)"
   _tmp="$(mktemp)"
-  awk -F'\t' -v k="$1" -v n="$_r_new" -v c="$_r_ctx" "$_KEY"'
-    key() == k { $2 = c; $6 = n } { print }
+  awk -F'\t' -v k="$1" -v n="$_r_new" -v c="$_r_ctx" \
+    -v s="${3:-}" "$_KEY"'
+    key() == k { $2 = c; $6 = n; if (s) $7 = "sticky" } { print }
   ' OFS='\t' "$_f" > "$_tmp" && mv "$_tmp" "$_f"
   tmux refresh-client -S 2>/dev/null || true
 }
@@ -207,12 +211,14 @@ _notif_jump() {
       if tmux switch-client -t "$_j_key" 2>/dev/null; then
         tmux select-window -t "$_j_key" 2>/dev/null || true
         tmux select-pane -t "$_j_key" 2>/dev/null || true
+        _notif_drop "$_j_key" arrive
         return 0
       fi
       ;;
   esac
   if tmux switch-client -t "=$_j_ctx" 2>/dev/null; then
     _notif_rekey "$_j_key" "$_j_ctx"
+    _notif_drop "$(tmux display-message -p '#{pane_id}')" arrive
     return 0
   fi
   _j_home="$_j_path"
@@ -239,18 +245,17 @@ _notif_jump() {
     fi
     if tmux switch-client -t "=$_j_sess" 2>/dev/null \
       || tmux-attach-to-session "$_j_sess" 2>/dev/null; then
-      _notif_rekey "$_j_key" "$_j_sess"
+      _notif_rekey "$_j_key" "$_j_sess" sticky
       return 0
     fi
   fi
   return 1
 }
 
-# Arriving clears non-sticky rows explicitly too: a recreated
-# session may be renamed, so the focus hook might not match.
-# A gone place is dropped entirely.
+# Arriving at a live place clears its non-sticky rows (in
+# _notif_jump); starting or resuming a session for them does
+# not. A gone place is dropped entirely.
 _go() {
-  _notif_drop "$1" arrive
   _notif_jump "$1" "$2" "$3" && return 0
   _notif_drop "$1"
   return 1
