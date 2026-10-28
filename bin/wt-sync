@@ -56,33 +56,24 @@ _deployed() {
             | paste -sd, -)"
           wt-tell "$_root" "partly:$_stage:$_pr:$_done" \
             "#$_pr partly on $_stage ($_done; missing $_miss)" \
-            "Part of PR #$_pr is deployed to $_stage: $_done. Still \
-missing: $_miss, so it isn't shipped yet. Check read-only that the \
-deployed part works on $_stage and doesn't break anything without the \
-rest, and tell me what you verified." || _retry_later "$_root" "$_pr"
+            "PR #$_pr is partly on $_stage ($_done; still missing \
+$_miss). Please look at how the rollout is going and update the \
+worktree." || _retry_later "$_root" "$_pr"
           continue ;;
         "nothing to deploy")
           wt-tell "$_root" "nodeploy:$_pr" \
             "#$_pr needs no deploy, no agent session: wt done or wt ra" \
-            "PR #$_pr needs no deploy: none of its changes reach a \
-deployed service (tests, docs or CI only), so it took effect when it \
-merged. Check that it does what it should where it runs (CI on dev, for \
-a test fix), then: wt ra if users or the team should hear about it \
-(and draft the release post), else wt done." \
+            "PR #$_pr needs no deploy (tests, docs or CI only). Please \
+check it where it runs and update the worktree." \
             || _retry_later "$_root" "$_pr"
           return ;;
         *) continue ;;
       esac
       wt-tell "$_root" "deployed:$_stage:$_pr" \
         "#$_pr is on $_stage ($_targets), no agent session: verify it" \
-        "PR #$_pr is now deployed to $_stage with all its targets \
-($_targets). Check read-only that the change works on $_stage and \
-tell me what you verified. Verified on staging and not in production \
-yet: end by asking me to ship it to production through the conveyor \
-(ship_pr until=deployed with its targets; it promotes master \
-too), so staging first never means forgotten. Once it's verified \
-in production: wt ra if users or the team should hear about it (and \
-draft the release post), else wt done." || _retry_later "$_root" "$_pr"
+        "PR #$_pr is deployed to $_stage with all its targets \
+($_targets). Please verify it there and update the worktree." \
+|| _retry_later "$_root" "$_pr"
     done
 }
 
@@ -120,21 +111,15 @@ EOF
       wt-tell "$_root" "conveyor:$_id" \
         "#$_pr rejected by the conveyor ($_why), no agent session" \
         "The conveyor rejected shipping PR #$_pr (until=$_until\
-${_tg:+, targets $_tg}): $_why, "$_msg" Next step: "$_next" Fix it as \
-that says (dev-workflow, Shipping a PR, lists every reason), then \
-ship_pr again with the same until and targets: this ship was already \
-asked for, so carrying it through is yours. If it needs a person \
-(workflow_change_needs_human) or a call only I can make, tell me what \
-and stop. Already handled: say so in one line and stop." \
+${_tg:+, targets $_tg}): $_why, "$_msg" Next step: "$_next" Please look \
+at what happened and update the worktree." \
         || _ship_later "$_root" "$_pr" ;;
     failed)
       wt-tell "$_root" "conveyor:$_id" \
         "#$_pr conveyor ship failed, no agent session" \
         "The conveyor failed shipping PR #$_pr (until=$_until\
-${_tg:+, targets $_tg}): "$_msg" Check read-only what failed \
-(get_ship_status for the timeline, the deploy run, the rollout) and \
-tell me what you found and what you recommend. Don't ship again or \
-roll back without me. Already handled: say so in one line and stop." \
+${_tg:+, targets $_tg}): "$_msg" Please look at what happened and \
+update the worktree." \
         || _ship_later "$_root" "$_pr" ;;
   esac
 }
