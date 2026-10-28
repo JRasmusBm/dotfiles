@@ -14,7 +14,9 @@
 #   - some of the targets it needs deployed to a stage after it
 #     reached that stage's branch (pr-where --status, the same rule
 #     as deploy-plan): tell its agent which part is out, once per set
-#     of deployed targets; all of them: tell it it's shipped there,
+#     of deployed targets and only after a target has been missing
+#     10 minutes (WT_SYNC_PARTLY_SECS), never after that stage's
+#     fully-deployed tell; all of them: tell it it's shipped there,
 #     once per stage. Nothing to deploy (tests, docs, CI only): tell
 #     it so once, so it closes the ticket.
 #     Checked when it merges, when a new successful deploy run
@@ -54,6 +56,24 @@ _deployed() {
           _done="$(printf '%s\n' $(echo "$_targets" | tr ',' ' ') \
             | grep -vxF "$(echo "$_miss" | tr ',' '\n')" | grep -v '^+shared$' \
             | paste -sd, -)"
+          # Only once a target has been missing for 10 minutes (a normal
+          # rollout is partly out for a while), and never after the
+          # fully-deployed tell for that stage.
+          grep -qxF "$_root	deployed:$_stage:$_pr" \
+            "$LOCAL_CONFIG/wt-told" 2>/dev/null && continue
+          _pf="$LOCAL_CONFIG/wt-sync.partly"
+          _pkey="$_root|$_stage|$_pr|$_done"
+          _first="$(awk -F'\t' -v k="$_pkey" '$1 == k { print $2 }' \
+            "$_pf" 2>/dev/null)"
+          if test -z "$_first"; then
+            _first="$(date +%s)"
+            printf '%s\t%s\n' "$_pkey" "$_first" >> "$_pf"
+          fi
+          if test "$(( $(date +%s) - _first ))" \
+            -lt "${WT_SYNC_PARTLY_SECS:-600}"; then
+            _retry_later "$_root" "$_pr"
+            continue
+          fi
           wt-tell "$_root" "partly:$_stage:$_pr:$_done" \
             "#$_pr partly on $_stage ($_done; missing $_miss)" \
             "PR #$_pr is on $_stage for $_done, but its targets also \
