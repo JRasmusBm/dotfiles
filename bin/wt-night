@@ -10,7 +10,8 @@
 #     one replies so and stops, so nothing runs for no reason.
 #     Paced in the background (`wt-night feed`, log wt-night.log): at
 #     most WT_NIGHT_MAX (3) told agents busy at once, none told while
-#     free+inactive memory is under WT_NIGHT_MIN_GB (8) or pressure is
+#     free+inactive memory is under WT_NIGHT_MIN_GB (8), free disk under
+#     WT_NIGHT_MIN_DISK_GB (30) or pressure is
 #     raised. Agents queue follow-up tickets with `wt night queue
 #     <linear-url>`; the feeder starts each (`wt feat`) under the same
 #     limits, told to work alone without queueing more. On 2026-10-23, 7 told at once on a Mac already at 53 MB
@@ -96,11 +97,13 @@ if test "${1:-}" = feed; then
       test "$(date +%s)" -lt "$_end" || exit 0
       _lvl="$(sysctl -n kern.memorystatus_vm_pressure_level)"
       _gb="$(_free_gb)" _n="$(_busy)"
+      _disk="$(df -g "$HOME" | awk 'NR == 2 { print $4 }')"
       test "$_lvl" -le 1 && test "$_gb" -ge "$_min" \
+        && test "$_disk" -ge "${WT_NIGHT_MIN_DISK_GB:-30}" \
         && test "$_n" -lt "$_max" && break
       sleep 60
     done
-    echo "$(date +%T) free=${_gb}G busy=$_n pressure=$_lvl"
+    echo "$(date +%T) free=${_gb}G disk=${_disk}G busy=$_n pressure=$_lvl"
     case "$_next" in
       http*)
         if test -n "${WT_NIGHT_DRY:-}"; then
