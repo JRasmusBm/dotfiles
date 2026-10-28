@@ -115,6 +115,24 @@ build; park the devtools tab on `about:blank` until it's restarted.
   takes a few seconds and starts from a fresh page: re-navigate and
   log in again (`polar-agent-login`).
 
+### Who drives the browser
+
+The visual pass is mechanical (click, screenshot, compare to a list), and
+its cost is turns re-reading a big context: one hand-driven check ran
+411 turns. Hand it to a fresh Haiku or Sonnet subagent; keep Opus for
+choosing what to check and for judging what comes back.
+
+- Brief it with a checklist: the URL, the steps, and per state what
+  "right" looks like (layout, clipping, empty and error states, copy).
+- It returns the screenshot paths and a verdict per checklist item, not
+  a summary. A small model's "looks fine" proves nothing: the main
+  agent opens the screenshots and makes the call, and they go in the
+  artifact for jrb (see Show what you tested).
+- Cap it (about 60 turns). Past that, stop and report where it got
+  stuck rather than looping.
+- Flow logic that a regression would break belongs in a spec (next
+  section); the subagent covers what a spec can't judge.
+
 ## Turn repeat browser checks into tests
 
 A devtools run proves the change once; a test proves it on every PR.
