@@ -1,8 +1,13 @@
 #!/bin/sh
 #
 # wt-sync — launchd (com.jrasmusbm.wt-sync, every minute), for each
-# worktree of $WT_SYNC_REPOS with a PR of mine merged in the last 7
-# days:
+# worktree of $WT_SYNC_REPOS with a PR of mine merged since the
+# watermark (wt-sync.since: the start of the last clean run, held back
+# to the oldest merge whose PR isn't yet told as on production or as
+# needing no deploy, so a PR in flight stays tracked however long
+# the machine was off; 7 days back on first run), searched from
+# WT_SYNC_GRACE (1 day) before it so a merge in a gap between runs
+# (clock skew, a late search index) is still seen:
 #   - tell its agent (pr-merged-tell, once), so a merge reaches an
 #     agent that was already idle when it happened, or that wasn't
 #     reachable (machine off, no session) for days;
@@ -140,12 +145,17 @@ _ship_later() {
 
 for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
   cd "$_repo" || continue
-  _since="$(gdate -u -d '7 days ago' +%F)"
+  _run_start="$(date -u +%FT%TZ)"
+  _wm_file="$LOCAL_CONFIG/wt-sync.since.$(basename "$_repo")"
+  _wm="$(cat "$_wm_file" 2>/dev/null)"
+  test -n "$_wm" || _wm="$(gdate -u -d '7 days ago' +%FT%TZ)"
+  _since="$(gdate -u -d "$_wm - ${WT_SYNC_GRACE:-1 day}" +%F)"
   _recent="$(gdate -u -d '3 days ago' +%FT%TZ)"
   _merged="$(timeout 30 gh pr list --state merged --author @me \
-    --search "merged:>=$_since" --limit 100 \
+    --search "merged:>=$_since" --limit 300 \
     --json number,headRefName,mergedAt \
     --jq '.[] | [.headRefName, .number, .mergedAt] | @tsv')" || continue
+  _open_at="$(mktemp)"
   _ship_seen="${LOCAL_CONFIG:?}/wt-sync.conveyor.$(basename "$_repo")"
   _ship_pending="$LOCAL_CONFIG/wt-sync.conveyor-pending.$(basename "$_repo")"
   _ship_retry="$(cat "$_ship_pending" 2>/dev/null)"
@@ -157,7 +167,8 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
       --json number,headRefName \
       --jq '.[] | [.headRefName, .number] | @tsv')" || _open=""
   fi
-  test -n "$_merged$_open$_ship_retry" || continue
+  test -n "$_merged$_open$_ship_retry" \
+    || { echo "$_run_start" > "$_wm_file"; rm -f "$_open_at"; continue; }
   _seen="$LOCAL_CONFIG/wt-sync.deploy.$(basename "$_repo")"
   _pending="$LOCAL_CONFIG/wt-sync.pending.$(basename "$_repo")"
   _retry="$(cat "$_pending" 2>/dev/null)"
@@ -185,6 +196,10 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
             || _retry="$_retry
 $_wt	$_pr"
           pr-merged-tell "$_wt" "$_pr"
+          # Still in flight: not told as on production / no deploy.
+          grep -qxF "$_wt	deployed:production:$_pr" "$LOCAL_CONFIG/wt-told" \
+            || grep -qxF "$_wt	nodeploy:$_pr" "$LOCAL_CONFIG/wt-told" \
+            || echo "$_at" >> "$_open_at"
           if ! test "$_at" \< "$_recent" && { test -n "$_moved" \
             || printf '%s\n' "$_ship_retry" | grep -qxF "$_wt	$_pr"; }; then
             _shipped "$_wt" "$_pr"
@@ -210,4 +225,8 @@ $_wt	$_pr"
         done
     done
   test -z "$_new_deploy" || echo "$_last" > "$_seen"
+  # Clean run: the watermark moves to its start, or to the oldest
+  # merge still in flight if that is earlier.
+  { cat "$_open_at"; echo "$_run_start"; } | sort | head -n 1 > "$_wm_file"
+  rm -f "$_open_at"
 done
