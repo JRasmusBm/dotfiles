@@ -63,16 +63,20 @@ worktree." || _retry_later "$_root" "$_pr"
         "nothing to deploy")
           wt-tell "$_root" "nodeploy:$_pr" \
             "#$_pr needs no deploy, no agent session: wt done or wt ra" \
-            "PR #$_pr needs no deploy (tests, docs or CI only). Please \
-check it where it runs and update the worktree." \
+            "PR #$_pr is merged and needs no deploy (tests, docs or CI \
+only). Please check it where it runs and prepare an announcement for me \
+to review." \
             || _retry_later "$_root" "$_pr"
           return ;;
         *) continue ;;
       esac
+      _ann=""
+      test "$_stage" != production \
+        || _ann="prepare an announcement for me to review"
       wt-tell "$_root" "deployed:$_stage:$_pr" \
         "#$_pr is on $_stage ($_targets), no agent session: verify it" \
         "PR #$_pr is deployed to $_stage with all its targets \
-($_targets). Please verify it there and update the worktree." \
+($_targets). Please verify it there and ${_ann:-update the worktree}." \
 || _retry_later "$_root" "$_pr"
     done
 }

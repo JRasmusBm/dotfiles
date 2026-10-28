@@ -63,8 +63,8 @@ he never has to nudge it. Each tell is the next step:
 | merged (`pr-merged-tell`) | double-check the conveyor (`get_ship_status`), `wt merged` (it parks in NLV when the conveyor is shipping it, else RTD); not shipping → tell me how you'd ship it (`ship_pr`) |
 | conveyor rejected | fix what it says, `ship_pr` again with the same `until` and targets; needs a person → `wt rb "<who and what>"` |
 | conveyor failed | read-only: timeline, deploy run, rollout; report and recommend, never re-ship or roll back alone |
-| partly / fully on staging or prod | verify read-only there; staging verified → ask to ship to prod; prod verified → `wt ra` or `wt done` |
-| needs no deploy | check where it runs, then `wt ra` or `wt done` |
+| partly / fully on staging or prod | verify read-only there; prod verified → draft the announcement, `wt ra`, wait for my send or not needed |
+| needs no deploy | check where it runs, draft the announcement, `wt ra`, wait for my send or not needed |
 
 A tell for something already handled: one line saying so, then stop.
 Staging still goes through `tb` (the conveyor is production only), and

@@ -275,10 +275,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   finished runs `wt done` itself and reports it; never
   "Should I run it?", and its stop then sends me no ping
   (`claude-notify`), unless it asks something. Finished = merged,
-  verified live, and
-  announced if users or the team see it (a release post in
-  #what-did-we-ship / #shipped-fixes, `release` skill);
-  verified but not announced → `wt ra` and draft the post.
+  verified live, and announced if users or the team see it (a
+  release post in #what-did-we-ship / #shipped-fixes, `release`
+  skill). Whether it's announced is my call, not the agent's: once
+  verified live (or merged, when it needs no deploy), it drafts
+  the post, parks the worktree with `wt ra`, and waits. I say
+  send (it posts, then `wt done`) or not needed (`wt done`).
 - `wt id` — print the current worktree's slug (= its tmux
   session name) and copy it, to point other agents at it.
 - `wt pin [N]` / `wt unpin` — put the current worktree on
