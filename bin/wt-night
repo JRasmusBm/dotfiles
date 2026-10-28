@@ -50,7 +50,7 @@ _worktrees() {
 # Tell worktree $1's idle agent $3 once (key $2); 0 told, 1 busy.
 _tell() {
   test -z "${WT_NIGHT_DRY:-}" || { echo "would tell $(basename "$1")"; return 0; }
-  wt-tell "$1" "$2" "night" "$3" 2>/dev/null \
+  WT_TELL_NO_REVIVE=1 wt-tell "$1" "$2" "night" "$3" 2>/dev/null \
     && echo "told $(basename "$1")"
 }
 
