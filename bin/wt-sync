@@ -56,9 +56,10 @@ _deployed() {
             | paste -sd, -)"
           wt-tell "$_root" "partly:$_stage:$_pr:$_done" \
             "#$_pr partly on $_stage ($_done; missing $_miss)" \
-            "PR #$_pr is partly on $_stage ($_done; still missing \
-$_miss). Please look at how the rollout is going and update the \
-worktree." || _retry_later "$_root" "$_pr"
+            "PR #$_pr is on $_stage for $_done, but its targets also \
+include $_miss, which hasn't deployed. Please check that we're deploying \
+the right set of services, and whether the rollout is still going." \
+            || _retry_later "$_root" "$_pr"
           continue ;;
         "nothing to deploy")
           wt-tell "$_root" "nodeploy:$_pr" \
