@@ -211,7 +211,7 @@ _wt_wake() {
   test -n "$_due" || return 0
   awk -F '\t' -v t="$_now" '$3 > t' "$_sf" | sponge "$_sf"
   echo "$_due" \
-    | while IFS="$(printf '\t')" read -r _wk_slug _wk_branch _wk_date _wk_sec; do
+    | while IFS="$(printf '\t')" read -r _wk_slug _wk_branch _wk_date _wk_sec _wk_from; do
       test -n "$_wk_slug" || continue
       _wk_date="$(echo "$_wk_date" | tr T ' ')"
       echo "wt: $_wk_slug was snoozed until $_wk_date — waking it" >&2
@@ -220,10 +220,23 @@ _wt_wake() {
       _board_move "$_wk_branch" "$_wk_slug" "$_wk_sec"
       _wk_pane="$(tmux display-message -p -t "=$_wk_slug:cli" \
         '#{pane_id}' 2>/dev/null || true)"
-      ( cd "$(_main_root)/.worktrees/$_wk_slug" 2>/dev/null \
-        && TMUX_PANE="$_wk_pane" notify "Awake: $_wk_slug" \
-          "snoozed until $_wk_date; back in $_wk_sec" ) \
-        >/dev/null 2>&1 || true
+      _wk_woke="$(date '+%F %H:%M')"
+      _wk_when=""
+      test -z "$_wk_from" \
+        || _wk_when="$(gdate -d "@$_wk_from" '+%F %H:%M')"
+      _wk_root="$(_main_root)/.worktrees/$_wk_slug"
+      _wk_ping="Awake: $_wk_slug (snoozed${_wk_when:+ $_wk_when}; \
+back in $_wk_sec)"
+      _wk_msg="You were snoozed${_wk_when:+ on $_wk_when} and woke \
+$_wk_woke. Before you carry on, double-check your assumptions: look for \
+what changed in this PR and ticket since you were snoozed, and how that \
+affects what you planned."
+      # Retried by wt-sync (wt-unblocked) when not delivered right away.
+      wt-tell "$_wk_root" "awake:$_wk_slug:${_wk_from:-$(date +%s)}" \
+        "$_wk_ping" "$_wk_msg" >/dev/null 2>&1 \
+        || printf '%s\t%s\t%s\t%s\t%s\n' "$_wk_root" \
+          "awake:$_wk_slug:${_wk_from:-$(date +%s)}" "$_wk_ping" \
+          "$_wk_msg" "$(date +%s)" >> "${LOCAL_CONFIG:?}/wt-unblocked"
     done
 }
 
@@ -1008,8 +1021,8 @@ _wt_snooze() {
     SNOOZED) _from='' ;;
   esac
   _snooze_drop "$_self"
-  printf '%s\t%s\t%s\t%s\n' "$_self" "$_branch" "$_until" "$_from" \
-    >> "$(_snoozed_file)"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$_self" "$_branch" "$_until" "${_from:--}" \
+    "$(date +%s)" >> "$(_snoozed_file)"
   _board_move "$_branch" "$_self" 'SNOOZED'
   _notif_clear "$(git rev-parse --show-toplevel)"
   case "$_until" in

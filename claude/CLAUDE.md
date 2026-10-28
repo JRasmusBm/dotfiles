@@ -220,11 +220,11 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `# SNOOZED` until a date or time: `monday`, `tomorrow`,
   `+3 days`, `2026-10-19`, `+3 hours`, `15:00` (parsed by
   `gdate -d`, must be in the future), recorded in
-  `<repo>.snoozed` as slug/branch/date[Ttime]/section. A time
+  `<repo>.snoozed` as slug/branch/date[Ttime]/section/start. A time
   also starts a detached timer that runs `wt wake` then.
   Every `wt` run wakes whatever is due — back to the section it
-  was snoozed from (else `# IN PROGRESS`) with an inbox
-  notification, same path as unblocking — so the board
+  was snoozed from (else `# IN PROGRESS`), and its agent is told
+  when it was snoozed and woke, and to double-check, same path as unblocking — so the board
   corrects itself the next time `wt` is used on or after the
   date; `wt wake` forces the check. Unlike `rb`, Linear is left
   alone: a snooze is when I plan to look again, not a state the
