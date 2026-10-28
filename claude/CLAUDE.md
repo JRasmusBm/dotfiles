@@ -110,7 +110,8 @@ call it mine.
 
 ## Platform Quirks
 
-macOS ships BSD awk. Use `gawk` for GNU awk features.
+macOS ships BSD awk and sed. Use `gawk` / `gsed` for GNU features
+(`sed -i` without a suffix arg fails on BSD sed).
 
 ## CLI Conventions
 
