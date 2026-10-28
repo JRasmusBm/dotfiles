@@ -1,7 +1,5 @@
 {
-  "autoMemoryEnabled": false,
   "cleanupPeriodDays": 1825,
-  "enabledMcpjsonServers": ["conveyor"],
   "permissions": {
     "allow": [
       "Bash(gh pr ready *)",
@@ -9,7 +7,10 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "sonnet",
+  "enabledMcpjsonServers": [
+    "conveyor"
+  ],
   "hooks": {
     "Notification": [
       {
@@ -131,6 +132,7 @@
     "enabled": true,
     "mode": "hold"
   },
+  "autoMemoryEnabled": false,
   "theme": "dark-ansi",
   "editorMode": "vim",
   "remoteControlAtStartup": true,
