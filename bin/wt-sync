@@ -153,6 +153,21 @@ _ship_later() {
   printf '%s\t%s\n' "$1" "$2" >> "$_ship_pending"
 }
 
+# Unblock tells that couldn't be delivered when `wt` sent them (busy, or
+# the session had just started): retried until told, dropped after 3 days.
+_ub="$LOCAL_CONFIG/wt-unblocked"
+if test -s "$_ub"; then
+  _ub_tmp="$(mktemp)"
+  while IFS="$(printf '\t')" read -r _r _k _p _m _t; do
+    test -n "$_r" || continue
+    test "$(( $(date +%s) - _t ))" -lt 259200 || continue
+    wt-tell "$_r" "$_k" "$_p" "$_m" >/dev/null 2>&1 \
+      || printf '%s\t%s\t%s\t%s\t%s\n' "$_r" "$_k" "$_p" "$_m" "$_t" \
+        >> "$_ub_tmp"
+  done < "$_ub"
+  mv "$_ub_tmp" "$_ub"
+fi
+
 for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
   cd "$_repo" || continue
   _run_start="$(date -u +%FT%TZ)"

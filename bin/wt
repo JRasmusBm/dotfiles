@@ -169,8 +169,8 @@ _linear() {
 }
 
 # The blocker went away (or merged, $2): send what it blocked
-# back to # IN PROGRESS and tell its agent to rebase and carry on
-# (idle Claude), else ping it in the notification inbox.
+# back to # IN PROGRESS and tell its agent (wt-tell: idle Claude, a
+# session that isn't running is started; else wt-sync retries).
 _unblock_dependents() {
   _ud_why="${2:-is gone}"
   _bf="$(_blocked_file)"
@@ -181,19 +181,18 @@ _unblock_dependents() {
       _snooze_drop "$_ud_slug"
       _board_move "$_ud_branch" "$_ud_slug" 'IN PROGRESS'
       _linear 'In Progress' "$_ud_branch" || true
-      _ud_pane="$(tmux display-message -p -t "=$_ud_slug:cli" \
-        '#{pane_id}' 2>/dev/null || true)"
-      if test -n "$_ud_pane" && claude-pane-idle "$_ud_pane"; then
-        tmux send-keys -t "$_ud_pane" -l "$1 $_ud_why, which unblocks \
-this worktree. Rebase onto origin/dev (retarget its PR to dev if it \
-was stacked on $1) and carry on."
-        sleep 0.5
-        tmux send-keys -t "$_ud_pane" Enter
-        continue
-      fi
-      ( cd "$(_main_root)/.worktrees/$_ud_slug" 2>/dev/null \
-        && TMUX_PANE="$_ud_pane" notify "Unblocked: $_ud_slug" \
-          "$1 $_ud_why; back in progress" ) >/dev/null 2>&1 || true
+      _ud_root="$(_main_root)/.worktrees/$_ud_slug"
+      _ud_ping="Unblocked: $_ud_slug ($1 $_ud_why; back in progress)"
+      _ud_msg="$1 $_ud_why, which unblocks this worktree. The PR and \
+ticket may have changed while you were blocked: please double-check \
+your assumptions and carry on."
+      # Not delivered now (busy, or its session just started): wt-sync
+      # keeps trying (wt-unblocked), like any other tell.
+      wt-tell "$_ud_root" "unblocked:$1" "$_ud_ping" "$_ud_msg" \
+        >/dev/null 2>&1 \
+        || printf '%s\t%s\t%s\t%s\t%s\n' "$_ud_root" "unblocked:$1" \
+          "$_ud_ping" "$_ud_msg" "$(date +%s)" \
+          >> "${LOCAL_CONFIG:?}/wt-unblocked"
     done
   awk -F '\t' -v b="$1" '$3 != b && $1 != b' "$_bf" | sponge "$_bf"
 }
