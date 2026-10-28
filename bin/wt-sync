@@ -156,8 +156,8 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
     --json number,headRefName,mergedAt \
     --jq '.[] | [.headRefName, .number, .mergedAt] | @tsv')" || continue
   _open_at="$(mktemp)"
-  # A worktree on someone else's branch (a PR I took over, wt review):
-  # its PRs aren't mine, so ask by branch.
+  # A worktree on someone else's branch that I committed to (a PR I
+  # took over): its PRs aren't mine, so ask by branch.
   _foreign="$(git worktree list --porcelain | awk '
     /^branch / { sub("refs/heads/", "", $2) }
     /^branch / && $2 !~ /\/jrb\// && $2 !~ /^(dev|staging|master|main|worktree-agent-.*)$/ \
@@ -165,6 +165,9 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
   _merged="$_merged
 $(printf '%s\n' "$_foreign" | while read -r _b; do
     test -n "$_b" || continue
+    # Only a branch I committed to: a wt review worktree isn't mine.
+    test -n "$(git log -1 --format=%H --author="$(git config user.email)" \
+      "origin/dev..refs/heads/$_b" 2>/dev/null)" || continue
     timeout 30 gh pr list --state merged --head "$_b" --limit 3 \
       --json number,headRefName,mergedAt \
       --jq '.[] | select(.mergedAt >= "'"$_wm"'") |
