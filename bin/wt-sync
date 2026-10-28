@@ -85,8 +85,7 @@ the right set of services, and whether the rollout is still going." \
           wt-tell "$_root" "nodeploy:$_pr" \
             "#$_pr needs no deploy, no agent session: wt done or wt ra" \
             "PR #$_pr is merged and needs no deploy (tests, docs or CI \
-only). Please check it where it runs and prepare an announcement for me \
-to review." \
+only). Please verify it and prepare an announcement for me to review." \
             || _retry_later "$_root" "$_pr"
           return ;;
         *) continue ;;

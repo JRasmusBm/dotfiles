@@ -21,7 +21,7 @@ if pr-where --status "$_pr" 2>/dev/null | cut -f2 \
   wt-tell "$_root" "merged:$_pr" \
     "#$_pr merged, needs no deploy, no agent session: announce or not?" \
     "PR #$_pr is merged${_by:+ (merged by $_by)} and needs no deploy \
-(tests, docs or CI only). Please check it where it runs and prepare an \
+(tests, docs or CI only). Please verify it and prepare an \
 announcement for me to review." \
     && printf '%s\tnodeploy:%s\n' "$_root" "$_pr" \
       >> "${LOCAL_CONFIG:?}/wt-told"
