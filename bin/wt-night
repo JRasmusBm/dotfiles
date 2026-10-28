@@ -107,11 +107,10 @@ if test "${1:-}" = feed; then
           echo "would start $_next"
         else
           _before="$(_worktrees | cut -f1)"
-          WT_NO_ATTACH=1 WT_PROMPT_EXTRA="I'm away until $_until: \
-don't grill me, take your recommended answer on every question and \
-note it, and carry on to the hand-back bar alone. Don't start or queue \
-further follow-ups tonight: list them in a short summary for the \
-morning." wt feat "$_next" </dev/null >/dev/null 2>&1 \
+          WT_NO_ATTACH=1 WT_PROMPT_EXTRA="I'm away until $_until. Please take your \
+recommended option where you'd normally ask me and work toward the \
+hand-back bar. Don't start or queue follow-ups tonight: list them in a \
+short summary for the morning." wt feat "$_next" </dev/null >/dev/null 2>&1 \
             || { echo "failed to start $_next"; continue; }
           _wt="$(_worktrees | cut -f1 | grep -vxF "$_before" | head -1)"
           test -z "$_wt" || echo "$_wt	night:$_day" >> "$LOCAL_CONFIG/wt-told"
@@ -132,10 +131,8 @@ if test "${1:-}" = morning; then
     test -n "$_wt" || continue
     grep -qxF "$_wt	night:$_night" "$LOCAL_CONFIG/wt-told" 2>/dev/null \
       || continue
-    _tell "$_wt" "morning:$_day" "Morning check before I'm back: this \
-PR is behind dev with conflicts or has failing checks. Rebase onto \
-origin/dev (reset local dev first), fix what fails, push, and once it's \
-green hand back in one line. Nothing else." || true
+    _tell "$_wt" "morning:$_day" "I'm back soon, and this PR is behind dev or failing \
+checks. Please get it green and hand back in one line." || true
   done
   exit 0
 fi
@@ -167,17 +164,11 @@ awk '
     echo "$_wt"
   done > "$LOCAL_CONFIG/wt-night.queue"
 
-_prompt="I'm away until $_until. Keep going \
-on your own until then. If this worktree's work is finished, or what's \
-left needs me (a review, merge, deploy or decision), reply in one line \
-saying so and stop: don't invent work. Otherwise carry on to the \
-hand-back bar (tests on every surface it touches, the artifact, \
-/iterate-review until green) without asking me anything: take your \
-recommended option on any question and note it. Follow-up tickets you \
-filed for this work that have no worktree yet: queue at most 2 with \
-wt night queue <url> (they start when memory allows; never wt feat \
-tonight). End with a short summary for the \
-morning."
+_prompt="I'm away until $_until. Please keep working until then toward \
+the hand-back bar, taking your recommended option where you'd normally \
+ask me. If you're finished or need me, say so in one line and stop. \
+Follow-ups you filed for this work: queue at most 2 with wt night queue \
+<url> (never wt feat tonight). End with a short summary for the morning."
 if test -n "${WT_NIGHT_DRY:-}"; then
   while read -r _wt; do _tell "$_wt" "night:$_day" "$_prompt"; done \
     < "$LOCAL_CONFIG/wt-night.queue"
