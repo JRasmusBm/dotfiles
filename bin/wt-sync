@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # wt-sync — launchd (com.jrasmusbm.wt-sync, every minute), for each
-# worktree of $WT_SYNC_REPOS with a PR of mine merged since the
+# worktree of $WT_SYNC_REPOS with a PR of mine (or on a branch not named .../jrb/..., one I took over) merged since the
 # watermark (wt-sync.since: the start of the last clean run, held back
 # to the oldest merge whose PR isn't yet told as on production or as
 # needing no deploy, so a PR in flight stays tracked however long
@@ -156,6 +156,20 @@ for _repo in ${WT_SYNC_REPOS:-$HOME/projects/polar/ice-floe}; do
     --json number,headRefName,mergedAt \
     --jq '.[] | [.headRefName, .number, .mergedAt] | @tsv')" || continue
   _open_at="$(mktemp)"
+  # A worktree on someone else's branch (a PR I took over, wt review):
+  # its PRs aren't mine, so ask by branch.
+  _foreign="$(git worktree list --porcelain | awk '
+    /^branch / { sub("refs/heads/", "", $2) }
+    /^branch / && $2 !~ /\/jrb\// && $2 !~ /^(dev|staging|master|main|worktree-agent-.*)$/ \
+      { print $2 }')"
+  _merged="$_merged
+$(printf '%s\n' "$_foreign" | while read -r _b; do
+    test -n "$_b" || continue
+    timeout 30 gh pr list --state merged --head "$_b" --limit 3 \
+      --json number,headRefName,mergedAt \
+      --jq '.[] | select(.mergedAt >= "'"$_wm"'") |
+        [.headRefName, .number, .mergedAt] | @tsv'
+  done)"
   _ship_seen="${LOCAL_CONFIG:?}/wt-sync.conveyor.$(basename "$_repo")"
   _ship_pending="$LOCAL_CONFIG/wt-sync.conveyor-pending.$(basename "$_repo")"
   _ship_retry="$(cat "$_ship_pending" 2>/dev/null)"
