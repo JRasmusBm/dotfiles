@@ -1378,15 +1378,24 @@ case "${1:-}" in
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
   merged)
-    # --shipping: the conveyor is already taking it to production, so
-    # nothing waits on me but checking it arrived: Needs live
-    # verification, not Ready to deploy.
+    # The conveyor already taking it to production (a live ship request
+    # until=deployed): nothing waits on me but checking it arrived, so
+    # Needs live verification, not Ready to deploy.
     _require_worktree
     _m_sec="$(_board_section "$(git branch --show-current)" \
       "$(basename "$(git rev-parse --show-toplevel)")")"
-    case "$_m_sec:${2:-}" in
+    _m_pr="$(timeout 20 gh pr list --state merged \
+      --head "$(git branch --show-current)" --limit 1 \
+      --json number --jq '.[0].number' 2>/dev/null)" || _m_pr=""
+    _m_ship=""
+    test -z "$_m_pr" || _m_ship="$(timeout 20 conveyor status "$_m_pr" \
+      2>/dev/null | jq -r 'select(.request.until == "deployed"
+        and (.request.status
+          | IN("rejected", "failed", "cancelled") | not)) | "y"')" \
+      || _m_ship=""
+    case "$_m_sec:$_m_ship" in
       'PROD REVIEW':*|'TO ANNOUNCE':*|'READY TO DEPLOY':) ;;
-      *:--shipping) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
+      *:y) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
       *) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
     esac
     _unblock_dependents "$(basename "$(git rev-parse --show-toplevel)")" \

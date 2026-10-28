@@ -1,9 +1,9 @@
 #!/bin/sh
 #
 # pr-merged-tell <worktree> <pr> — tell the worktree's agent that <pr>
-# merged: it checks the conveyor, runs `wt merged`, and either tells me
-# how it would ship it or, when the conveyor is already shipping it to
-# production, waits (wt-tell: once, idle Claude, else it starts one).
+# merged: it double-checks the conveyor and runs `wt merged`, which
+# parks the worktree by whether the conveyor is shipping it (wt-tell:
+# once, idle Claude, else it starts one).
 
 _root="$1" _pr="$2"
 test -n "$_root" && test -n "$_pr" \
@@ -15,12 +15,6 @@ grep -qxF "$_root	merged:$_pr" "${LOCAL_CONFIG:?}/wt-told" 2>/dev/null \
 _by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
   --jq '.mergedBy.login' 2>/dev/null)"
 exec wt-tell "$_root" "merged:$_pr" \
-  "#$_pr merged, no agent session: wt merged, then check the conveyor" \
-  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Check the \
-conveyor (get_ship_status). If it is already shipping it to production, \
-run wt merged --shipping (board and ticket to Needs live verification); \
-wt-sync tells you when it's live or if the conveyor rejects it. If not, \
-run wt merged (Ready to deploy) and tell me how you'd ship it \
-(dev-workflow, Shipping a PR): the conveyor straight to production, or \
-staging first if it's risky. I approve by saying ship. Either way the \
-follow-ups blocked on this worktree get unblocked."
+  "#$_pr merged, no agent session: check the conveyor, wt merged" \
+  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Please \
+double-check the conveyor status and update the worktree with wt merged."
