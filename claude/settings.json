@@ -7,7 +7,7 @@
     ],
     "defaultMode": "auto"
   },
-  "model": "opus[1m]",
+  "model": "opus",
   "enabledMcpjsonServers": [
     "conveyor"
   ],
