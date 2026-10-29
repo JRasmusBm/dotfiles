@@ -5,12 +5,19 @@
 #   - CI failed on the head commit (once per head sha), or
 #   - someone else reviewed after the last push (once per newest review),
 #   - the stale bot labelled it (it closes the PR 7 days later; once
-#     per head sha).
+#     per head sha), or
+#   - checks done and it conflicts with dev: rebase (once per head sha).
+# Checks done, CLEAN, not draft, based on dev, no "do not merge": pings
+# me as `merge` from its cli pane (once per head sha, not while a merge
+# row is pending there, not when blocked or snoozed). `wt rd` clears
+# the inbox, so without this a parked PR never comes back to me.
 # Called by wt-sync every 5th minute. A tell that finds Claude busy
 # or not up yet isn't recorded, so the next run retries it.
 
 _repo="${1:-$PWD}"
 cd "$_repo" || exit 0
+_told="${LOCAL_CONFIG:?}/wt-told"
+_board="$LOCAL_CONFIG/worktrees/$(basename "$(git rev-parse --show-toplevel)")"
 _me="$(timeout 20 gh api user --jq .login 2>/dev/null)" || exit 0
 # latestReviews, not reviews/comments/commits: those exceed GraphQL's
 # node limit across ~30 PRs. Empty fields are "-": read with a tab IFS
@@ -56,6 +63,34 @@ threads."
             "The stale bot marked PR #$_pr stale; it closes the PR 7 days \
 later. Move it forward (rebase, CI, reviews, what is left to the \
 hand-back bar) and push, or if it is no longer wanted, tell me why."
+        fi
+        test "$_fail" = - && test "$_pend" = 0 || continue
+        # pr list reports mergeStateStatus UNKNOWN until a view computes it.
+        _state="$(timeout 20 gh pr view "$_pr" \
+          --json mergeStateStatus,isDraft,baseRefName,body --jq '
+          if .mergeStateStatus == "DIRTY" then "dirty"
+          elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
+            and .baseRefName == "dev"
+            and ((.body // "") | test("do not merge"; "i") | not)
+          then "ready" else "-" end' 2>/dev/null)" || continue
+        _slug="$(basename "$_wt")"
+        if test "$_state" = dirty; then
+          wt-tell "$_wt" "conflict:$_pr:$_sha" \
+            "#$_pr conflicts with dev, no agent session" \
+            "PR #$_pr conflicts with dev. Please rebase onto dev, resolve \
+the conflicts, rerun the checks they touch, and push."
+        elif test "$_state" = ready \
+          && case "$_wt" in */.worktrees/?*) true ;; *) false ;; esac \
+          && ! cut -f1 "$_board.snoozed" 2>/dev/null | grep -qxF "$_slug" \
+          && ! grep -qxF "$_wt	merge-ping:$_pr:$_sha" "$_told" 2>/dev/null \
+          && ! cut -f1 "$_board.blocked" 2>/dev/null | grep -qxF "$_slug" \
+          && ! awk -F'\t' -v p="$_wt" '$5 == p && $8 == "merge" { f = 1 }
+            END { exit !f }' "$LOCAL_CONFIG/notifications" 2>/dev/null; then
+          echo "$_wt	merge-ping:$_pr:$_sha" >> "$_told"
+          _pane="$(tmux display-message -p -t "=$_slug:cli" '#{pane_id}' \
+            2>/dev/null)" || _pane=""
+          ( cd "$_wt" && TMUX_PANE="$_pane" NOTIFY_CLASS=merge \
+            notify "Claude: $_slug" "READY TO MERGE #$_pr" )
         fi
       done
   done
