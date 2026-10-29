@@ -155,7 +155,9 @@
       "$defaults",
       "Marking the user's own pull requests ready for review with `gh pr ready` (never merging them)",
       "Commenting `@coderabbitai review` on the user's own pull requests to trigger a review",
-      "Shipping an ice-floe PR to production through the conveyor MCP `ship_pr` after the user said to ship, merge or deploy it"
+      "Shipping an ice-floe PR to production through the conveyor MCP `ship_pr` after the user said to ship, merge or deploy it",
+      "Resolving review threads (gh api graphql resolveReviewThread, and a reply naming the fixing commit) on the user's own ice-floe PR after the user said to ship it, when the current code already addresses the thread",
+      "Read-only queries against ice-floe production or staging Postgres through `node tools/src/lib/run-prod-pg.js` (with or without `--staging`), for debugging or verification, and briefing a subagent to run them: it connects to the reader replica (port 5433), which refuses writes. Allowed: SELECT, WITH ... SELECT, EXPLAIN (not EXPLAIN ANALYZE of a write), SHOW. Not allowed: any write or DDL, pg_terminate_backend / pg_cancel_backend, advisory locks, LOCK, SET of server settings, or connecting to the writer port 5432"
     ]
   },
   "voiceEnabled": true
