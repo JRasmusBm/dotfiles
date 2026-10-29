@@ -76,7 +76,9 @@ When he asks to start something ("please start it", "kick this off"),
 or asks for a code change mid-chat ("can we fix that?", "can we
 convert it instead?") while I'm on the main checkout or a feature
 branch that has nothing to do with the ask. A fix that grows out of
-an investigation is new work too. So is work that began in the main
+an investigation is new work too, and so is a bug in work whose PR
+already merged, even its own ticket's: a new ticket related to the
+old one, never a branch switched or created in the old worktree. So is work that began in the main
 checkout and turned out to matter (an incident, a migration, a
 customer fix he keeps returning to): he has no time for the steps
 then, so I take them unasked, as soon as I see it: ticket (claimed,
