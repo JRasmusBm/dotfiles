@@ -3,7 +3,9 @@
   "permissions": {
     "allow": [
       "Bash(gh pr ready *)",
-      "mcp__conveyor__ship_pr"
+      "Bash(gh pr merge *)",
+      "mcp__conveyor__ship_pr",
+      "mcp__conveyor__cancel_ship"
     ],
     "defaultMode": "auto"
   },

@@ -22,8 +22,11 @@ committing what you fixed once verified (only your hunks), and my
 PRs: push to the branch and keep the title/body in sync without
 asking, then report the head sha (watch CI only in `/iterate-review`
 or when asked; merge or deploy only on my word, through the conveyor
-where a repo has one, then end the turn: `wt-sync` tells you what
-happens next), and "is it released/deployed?":
+where a repo has one; my word to ship also covers the merge the
+conveyor refuses (workflow files) and cancelling your own stuck ship
+request: do them yourself, then `ship_pr` again; then end the turn:
+`wt-sync` tells you what happens next), and "is it
+released/deployed?":
 confirm it is live, then run read-only checks that it behaves as
 intended (logs, replica, live bundle). Long pipelines, polls and
 browser loops run in a background agent; the main thread stays free
