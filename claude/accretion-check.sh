@@ -17,6 +17,10 @@ flag_file() {
   local add=$1 del=$2 path=$3 headings
   [[ "$add" =~ ^[0-9]+$ ]] || return 0
   git cat-file -e "$base:$path" 2>/dev/null || return 0
+  # Tests grow by adding cases; that is not piling on.
+  case "$path" in
+    */__tests__/*|*.test.*|*.spec.*|*/test_*.py|*_test.*|*/cypress/*) return 0 ;;
+  esac
 
   if [[ "$path" == *.md || "$path" == *.mdx || "$path" == *.txt || "$path" == *.rst ]]; then
     local diff gained lost
