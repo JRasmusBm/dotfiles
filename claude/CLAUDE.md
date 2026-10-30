@@ -454,8 +454,8 @@ so the phone sees it under the new account (log:
 `$LOCAL_CONFIG/cswap-auto.log`; `cswap-auto -n` lists targets). `cswap list` shows usage; add an
 account with `/login` then `cswap add --alias <name>`.
 An artifact published before a swap reads "not found" after it
-unless I shared it with the org (both logins are in it; only
-the page's Share menu can, Claude can't): ask me to, or
+unless I shared it with my other login (only the page's Share
+menu can, Claude can't): ask me to share it, or
 republish under the new login and update links to it.
 
 ## Git
