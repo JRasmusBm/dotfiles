@@ -77,8 +77,15 @@ or asks for a code change mid-chat ("can we fix that?", "can we
 convert it instead?") while I'm on the main checkout or a feature
 branch that has nothing to do with the ask. A fix that grows out of
 an investigation is new work too, and so is a bug in work whose PR
-already merged, even its own ticket's: a new ticket related to the
-old one, never a branch switched or created in the old worktree. So is work that began in the main
+already merged, even its own ticket's, whether I found it verifying
+the deploy or he pasted the error ("did we cause this?" = yes, then
+this): a new ticket related to the old one, `wt fix <url>` and a
+briefed agent in the same turn, before any edit or subagent. Never
+a branch switched or created in the old worktree, never `wt add`
+with free text, and a `worker` subagent only edits inside that
+worktree, it never stands in for the agent. One ticket id per
+worktree he reviews: two worktrees on one id are hard to tell
+apart (throwaway subagent worktrees excepted). So is work that began in the main
 checkout and turned out to matter (an incident, a migration, a
 customer fix he keeps returning to): he has no time for the steps
 then, so I take them unasked, as soon as I see it: ticket (claimed,
