@@ -897,6 +897,7 @@ _wt_evict() {
   _of_drop_line "$_ln" "$_of"
   _unblock_dependents "$_slug"
   _snooze_drop "$_slug"
+  _nf_drop "$_slug"
   _notif_clear "$_wt_path"
 
   echo "wt: removing $_wt_name ($_branch) in background;" \
@@ -1054,6 +1055,7 @@ _wt_snooze() {
   printf '%s\t%s\t%s\t%s\t%s\n' "$_self" "$_branch" "$_until" "${_from:--}" \
     "$(date +%s)" >> "$(_snoozed_file)"
   _board_move "$_branch" "$_self" 'SNOOZED'
+  _nf_drop "$_self"
   _notif_clear "$(git rev-parse --show-toplevel)"
   case "$_until" in
     *T*) _snooze_timer "$_until" "$(git rev-parse --show-toplevel)" ;;
