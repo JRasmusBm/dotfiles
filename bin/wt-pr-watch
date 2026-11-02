@@ -6,7 +6,11 @@
 #   - someone else reviewed after the last push (once per newest review),
 #   - the stale bot labelled it (it closes the PR 7 days later; once
 #     per head sha), or
-#   - checks done and it conflicts with dev: rebase (once per head sha).
+#   - checks done, not draft, based on dev, and it conflicts with dev:
+#     rebase it alone (once per head sha). A rebase goes stale as dev
+#     moves and each force-push reruns CI, so PRs stacked on another
+#     branch, or drafts, are left until they're next to ship (the ship
+#     queue refuses a conflicting PR anyway).
 # Checks done, CLEAN, not draft, based on dev, no "do not merge": pings
 # me as `merge` from its cli pane (once per head sha, not while a merge
 # row is pending there, not when blocked or snoozed). `wt rd` clears
@@ -68,7 +72,8 @@ hand-back bar) and push, or if it is no longer wanted, tell me why."
         # pr list reports mergeStateStatus UNKNOWN until a view computes it.
         _state="$(timeout 20 gh pr view "$_pr" \
           --json mergeStateStatus,isDraft,baseRefName,body --jq '
-          if .mergeStateStatus == "DIRTY" then "dirty"
+          if .mergeStateStatus == "DIRTY" and (.isDraft | not)
+            and .baseRefName == "dev" then "dirty"
           elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
             and .baseRefName == "dev"
             and ((.body // "") | test("do not merge"; "i") | not)
@@ -77,8 +82,10 @@ hand-back bar) and push, or if it is no longer wanted, tell me why."
         if test "$_state" = dirty; then
           wt-tell "$_wt" "conflict:$_pr:$_sha" \
             "#$_pr conflicts with dev, no agent session" \
-            "PR #$_pr conflicts with dev. Please rebase onto dev, resolve \
-the conflicts, rerun the checks they touch, and push."
+            "PR #$_pr conflicts with dev. Please rebase it onto dev, \
+resolve the conflicts, rerun only the tests the conflicts touch (CI \
+covers the rest), and push. Don't restack PRs above it: they're \
+rebased when they're next to ship."
         elif test "$_state" = ready \
           && case "$_wt" in */.worktrees/?*) true ;; *) false ;; esac \
           && ! cut -f1 "$_board.snoozed" 2>/dev/null | grep -qxF "$_slug" \
