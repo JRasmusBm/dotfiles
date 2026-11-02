@@ -5,12 +5,9 @@
 #   - CI failed on the head commit (once per head sha), or
 #   - someone else reviewed after the last push (once per newest review),
 #   - the stale bot labelled it (it closes the PR 7 days later; once
-#     per head sha), or
-#   - checks done, not draft, based on dev, and it conflicts with dev:
-#     rebase it alone (once per head sha). A rebase goes stale as dev
-#     moves and each force-push reruns CI, so PRs stacked on another
-#     branch, or drafts, are left until they're next to ship (the ship
-#     queue refuses a conflicting PR anyway).
+#     per head sha).
+# Conflicts with dev get no tell: a rebase goes stale as dev moves and
+# each force-push reruns CI, so the agent rebases only when it ships.
 # Checks done, CLEAN, not draft, based on dev, no "do not merge": pings
 # me as `merge` from its cli pane (once per head sha, not while a merge
 # row is pending there, not when blocked or snoozed). `wt rd` clears
@@ -65,28 +62,19 @@ threads."
           wt-tell "$_wt" "stale:$_pr:$_sha" \
             "#$_pr marked stale, closes in 7 days, no agent session" \
             "The stale bot marked PR #$_pr stale; it closes the PR 7 days \
-later. Move it forward (rebase, CI, reviews, what is left to the \
+later. Move it forward (CI, reviews, what is left to the \
 hand-back bar) and push, or if it is no longer wanted, tell me why."
         fi
         test "$_fail" = - && test "$_pend" = 0 || continue
         # pr list reports mergeStateStatus UNKNOWN until a view computes it.
         _state="$(timeout 20 gh pr view "$_pr" \
           --json mergeStateStatus,isDraft,baseRefName,body --jq '
-          if .mergeStateStatus == "DIRTY" and (.isDraft | not)
-            and .baseRefName == "dev" then "dirty"
-          elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
+          if (.isDraft | not) and .mergeStateStatus == "CLEAN"
             and .baseRefName == "dev"
             and ((.body // "") | test("do not merge"; "i") | not)
           then "ready" else "-" end' 2>/dev/null)" || continue
         _slug="$(basename "$_wt")"
-        if test "$_state" = dirty; then
-          wt-tell "$_wt" "conflict:$_pr:$_sha" \
-            "#$_pr conflicts with dev, no agent session" \
-            "PR #$_pr conflicts with dev. Please rebase it onto dev, \
-resolve the conflicts, rerun only the tests the conflicts touch (CI \
-covers the rest), and push. Don't restack PRs above it: they're \
-rebased when they're next to ship."
-        elif test "$_state" = ready \
+        if test "$_state" = ready \
           && case "$_wt" in */.worktrees/?*) true ;; *) false ;; esac \
           && ! cut -f1 "$_board.snoozed" 2>/dev/null | grep -qxF "$_slug" \
           && ! grep -qxF "$_wt	merge-ping:$_pr:$_sha" "$_told" 2>/dev/null \

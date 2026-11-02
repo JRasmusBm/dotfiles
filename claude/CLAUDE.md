@@ -274,7 +274,7 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   up (`wt-night.log`). Agents queue follow-up tickets with
   `wt night queue <url>`, started (`wt feat`) under the same
   limits. 15 min before, agents told that night whose PR
-  conflicts with dev or fails CI are told to fix it. Once per
+  fails CI are told to fix it. Once per
   worktree per night; `WT_NIGHT_DRY=1` lists who'd be told.
 - `wt ip` — move the current worktree back to `# IN
   PROGRESS`, ticket → In Progress (clears a block;
@@ -488,7 +488,11 @@ republish under the new login and update links to it.
 
 Use `g s <branch>` to switch branches (not raw
 `git switch`). The `git-s` wrapper refreshes the
-tmux status bar after switching. Rebasing on dev: fetch, reset
+tmux status bar after switching. Rebase onto dev only when
+shipping, and only the PR being shipped: a rebase goes stale as
+dev moves and every force-push reruns CI (on a whole stack
+when restacked), so catching up earlier burns tokens and CI for
+nothing. Rebasing on dev: fetch, reset
 local `dev` to `origin/dev` (main checkout: `reset --hard` only if
 `status --short` shows no tracked changes, else stop and say so),
 then `git rebase dev`, then `git push --force-with-lease`

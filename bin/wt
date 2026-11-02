@@ -575,7 +575,7 @@ _wt_typed() {
 
   # Only Linear URLs get a Claude kickoff prompt; free text
   # just opens the worktree session.
-  _done="Before you hand back to me: test the change on every surface it touches (unit, API, MCP, the app in the browser, Cypress - whichever apply). Then take objects that already exist one step past your change: for each stored shape your diff reads or writes, open a saved object of that shape in a test environment, do the next thing a user does with it, and state Real data: shape x count, result in the hand-back. Publish an artifact showing how it was tested and what you saw, then run /iterate-review until the PR is green. Hand back only when it has no conflicts with its base (rebase only for a real conflict, never just to catch up with dev), CI is green and the PR body is current, with the PR link, the artifact link and what could bite us."
+  _done="Before you hand back to me: test the change on every surface it touches (unit, API, MCP, the app in the browser, Cypress - whichever apply). Then take objects that already exist one step past your change: for each stored shape your diff reads or writes, open a saved object of that shape in a test environment, do the next thing a user does with it, and state Real data: shape x count, result in the hand-back. Publish an artifact showing how it was tested and what you saw, then run /iterate-review until the PR is green. Hand back only when CI is green and the PR body is current, with the PR link, the artifact link and what could bite us."
   _prompt=""
   case "$_arg" in
     *linear.app/*issue/*)

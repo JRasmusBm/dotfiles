@@ -17,9 +17,9 @@
 #     limits, told to work alone without queueing more. On 2026-10-23, 7 told at once on a Mac already at 53 MB
 #     free (Spotlight 32 GB) hung it within 3 minutes;
 #   - at HH:MM minus 15 min (`wt-night morning`), of those told last
-#     night, tells each idle agent whose PR conflicts with dev or has
-#     failing checks to fix that before I'm back. Green ones, and PRs
-#     nobody worked on overnight, are left alone.
+#     night, tells each idle agent whose PR has failing checks to fix
+#     that before I'm back (conflicts wait for the ship: no rebases).
+#     Green ones, and PRs nobody worked on overnight, are left alone.
 # Run from inside the repo. Once per worktree per night (wt-told).
 # WT_NIGHT_DRY=1: list who would be told, start nothing.
 
@@ -32,11 +32,11 @@ _day="$(date +%F)"
 # Open PRs of mine: branch<TAB>state, state = green | fix | wait.
 _prs() {
   gh pr list --author @me --state open --limit 100 \
-    --json headRefName,isDraft,mergeable,statusCheckRollup --jq '.[]
+    --json headRefName,isDraft,statusCheckRollup --jq '.[]
     | ([.statusCheckRollup[]? | (.conclusion // .state)]) as $c
     | [.headRefName,
        (if ($c | any(. == "FAILURE" or . == "ERROR" or . == "TIMED_OUT"))
-          or .mergeable == "CONFLICTING" then "fix"
+          then "fix"
         elif .isDraft or ($c | any(. == null or . == "PENDING")) then "wait"
         else "green" end)] | @tsv'
 }
@@ -134,7 +134,7 @@ if test "${1:-}" = morning; then
     test -n "$_wt" || continue
     grep -qxF "$_wt	night:$_night" "$LOCAL_CONFIG/wt-told" 2>/dev/null \
       || continue
-    _tell "$_wt" "morning:$_day" "I'm back soon, and this PR is behind dev or failing \
+    _tell "$_wt" "morning:$_day" "I'm back soon, and this PR is failing \
 checks. Please get it green and hand back in one line." || true
   done
   exit 0
