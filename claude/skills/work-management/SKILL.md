@@ -25,7 +25,7 @@ asked for each. Steps with no arrow between them run in parallel.
 | My PR ready (green) | `lin state "Owner review"` | IN PROGRESS | Owner review |
 | He sends it to the team | `wt rt` | TEAM REVIEW | Team review |
 | Approved | `wt rd` | READY TO DEPLOY | Ready to deploy |
-| He says "merge #N" / "ship #N" | conveyor `ship_pr` (`until=merged` / `deployed` + targets), then end the turn | (tells move it) | (tells move it) |
+| He says "merge #N" / "ship #N" (= approved) | `wt rd` unless already there → conveyor `ship_pr` (`until=merged` / `deployed` + targets), then end the turn | READY TO DEPLOY, then tells move it | Ready to deploy, then tells move it |
 | Deployed, check prod | `wt rp` | PROD REVIEW | Needs live verification |
 | Waiting on other work | `wt rb <blocker>` | BLOCKED | Blocked + relation |
 | Can't merge yet: design review, risks to settle, someone's decision | `wt rb "<reason>"` (I run it when I hand back, naming who and what) | BLOCKED | Blocked |
