@@ -570,7 +570,7 @@ _wt_typed() {
 
   # Only Linear URLs get a Claude kickoff prompt; free text
   # just opens the worktree session.
-  _done="Before you hand back to me: test the change on every surface it touches (unit, API, MCP, the app in the browser, Cypress - whichever apply), publish an artifact showing how it was tested and what you saw, then run /iterate-review until the PR is green. Hand back only when it is rebased onto origin/dev, CI is green and the PR body is current, with the PR link, the artifact link and what could bite us."
+  _done="Before you hand back to me: test the change on every surface it touches (unit, API, MCP, the app in the browser, Cypress - whichever apply). Then take objects that already exist one step past your change: count the stored shapes your diff reads or writes on the prod replica (tools/src/lib/run-prod-pg.js, read-only), open a saved object of each shape in Demo DTC Brand or staging (copy the shape there first if none exists), do the next thing a user does with it (the next chat turn, reopening the saved metric), and state Real data: shape x count, result in the hand-back. Publish an artifact showing how it was tested and what you saw, then run /iterate-review until the PR is green. Hand back only when it is rebased onto origin/dev, CI is green and the PR body is current, with the PR link, the artifact link and what could bite us."
   _prompt=""
   case "$_arg" in
     *linear.app/*issue/*)
