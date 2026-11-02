@@ -6,7 +6,9 @@ CLAUDE.md, load the repo's `save-learnings` skill if it has one,
 and `private-overlay` (public dotfiles vs private, see Dotfiles).
 Only write to auto memory for cross-project notes.
 Per-project knowledge goes in repo CLAUDE.md or related skills/docs where it
-can be committed and shared.
+can be committed and shared. A rule states what to do and why, not the
+commands, tools or steps an agent can work out: those go stale as agents
+and tooling improve.
 
 ## Identity
 
