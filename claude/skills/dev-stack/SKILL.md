@@ -98,7 +98,9 @@ build; park the devtools tab on `about:blank` until it's restarted.
   Bring it to the front first (`select_page` with `bringToFront`).
 - The stack talks to the stage `penv info` shows. On staging, writing
   through the app UI (create, edit, delete, restore) is fine without
-  asking; use throwaway objects and delete them when done. Never write
+  asking; use throwaway objects and delete them when done (e.g.
+  Force MFA, `#tenant-setting-force-mfa` at `/<slug>/settings/users`:
+  switch it back off). Never write
   to the staging database directly (SQL, insert/update scripts). On
   production, look only unless jrb asked. Never switch stage to
   production.
