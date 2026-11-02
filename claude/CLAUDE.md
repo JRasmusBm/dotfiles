@@ -179,6 +179,8 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   to the project's overview, documents, milestones and
   issues. Generic (not per-repo) — relies on
   the default run/vim/cli layout worktrees get with no `.tmux`.
+  A repo's own kickoff lines go in `.jrb/wt-prompt` (trusted
+  via `dev trust`, like `wt-hook`), never in `bin/wt`.
   `WT_PROMPT_EXTRA="…"` appends to the kickoff prompt;
   `WT_NO_ATTACH=1` skips attaching (batch kickoffs from
   Claude). Prompt avoids `"`, `$`, backticks.
