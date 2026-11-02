@@ -75,9 +75,22 @@ _blocked_file() {
 }
 
 _block_drop() {
+  _nf_drop "$1"
   _bf="$(_blocked_file)"
   test -f "$_bf" || return 0
   awk -F '\t' -v s="$1" '$1 != s' "$_bf" | sponge "$_bf"
+}
+
+# Worktrees parked by `wt fx`: slug<TAB>branch<TAB>what I must do,
+# one row each. notif ranks their pings last, wt-preview shows it.
+_nf_file() {
+  echo "$LOCAL_CONFIG/worktrees/$(_repo_name).needsfocus"
+}
+
+_nf_drop() {
+  _nf="$(_nf_file)"
+  test -f "$_nf" || return 0
+  awk -F '\t' -v s="$1" '$1 != s' "$_nf" | sponge "$_nf"
 }
 
 # When each snoozed worktree comes back, and to which board section:
@@ -940,6 +953,23 @@ _wt_park() {
     || _notif_clear "$(git rev-parse --show-toplevel)"
 }
 
+# Park the current worktree under # NEEDS FOCUS: the next step is
+# mine and takes real focus (manual setup, a direction check), so
+# quick unblocks come first. Ticket → Owner review. Unlike the review
+# parks the inbox stays; notif ranks its pings after every other
+# class. $1 = what I must do (optional, shown by wt-preview).
+_wt_focus() {
+  _require_worktree
+  _self="$(basename "$(git rev-parse --show-toplevel)")"
+  _branch="$(git branch --show-current)"
+  _block_drop "$_self"
+  _snooze_drop "$_self"
+  _ensure_order_dir
+  printf '%s\t%s\t%s\n' "$_self" "$_branch" "${1:-}" >> "$(_nf_file)"
+  _board_move "$_branch" "$_self" 'NEEDS FOCUS'
+  _linear 'Owner review' "$_branch" || true
+}
+
 # Park the current worktree under # BLOCKED until the blocker
 # (a branch or dir; `:`/none = fzf) is removed, which sends it
 # back to # IN PROGRESS.
@@ -1361,7 +1391,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|sz|night|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|fx|sz|night|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
 }
 
 # Snoozed worktrees whose date has come wake up on any wt run.
@@ -1384,6 +1414,7 @@ case "${1:-}" in
   pin) shift; _wt_pin "$@" ;;
   unpin) shift; _wt_unpin "$@" ;;
   rb) shift; _wt_block "$@" ;;
+  fx|focus) shift; _wt_focus "$@" ;;
   sz|snooze) shift; _wt_snooze "$@" ;;
   night) shift; exec wt-night "$@" ;;
   wake) _wt_wake ;;

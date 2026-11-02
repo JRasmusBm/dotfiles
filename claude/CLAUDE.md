@@ -224,6 +224,13 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `cli` pane, else its path, so `M-i` lands there). `wt :` preview shows `blocked by`. Linear:
   ticket → Blocked plus a blocked-by relation when the
   blocker has a ticket; back to In Progress on unblock.
+- `wt fx ["<what I must do>"]` (`focus`) — my next step needs
+  more than a minute of focus (manual setup, a direction check):
+  moves the row to `# NEEDS FOCUS`, ticket → Owner review, reason
+  in `<repo>.needsfocus` (shown by the `wt :` preview). Quick
+  unblocks first: unlike `rd` it keeps the inbox, and `M-i` ranks
+  its pings after every other class (an `M-k` focus still wins).
+  `ip`/`rt`/`rd`/`rp` move it out.
 - `wt sz <when>` (`snooze`) — park the current worktree under
   `# SNOOZED` until a date or time: `monday`, `tomorrow`,
   `+3 days`, `2026-10-19`, `+3 hours`, `15:00` (parsed by

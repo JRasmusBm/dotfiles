@@ -41,6 +41,7 @@ case "$_section" in
   'PROD REVIEW') _c=magenta ;;
   'TO ANNOUNCE') _c=blue ;;
   BLOCKED) _c=red ;;
+  'NEEDS FOCUS') _c=red ;;
   '') _c='#aaaaaa' _section='OFF BOARD' ;;
   *) _c='#aaaaaa' ;;
 esac

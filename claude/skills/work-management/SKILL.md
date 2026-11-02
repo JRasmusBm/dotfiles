@@ -23,6 +23,7 @@ asked for each. Steps with no arrow between them run in parallel.
 | Start a ticket | `wt fix\|feat <url>` | IN PROGRESS | (kickoff prompt) |
 | Review someone's PR | `wt review <pr>` | IN PROGRESS | — |
 | My PR ready (green) | `lin state "Owner review"` | IN PROGRESS | Owner review |
+| Next step is mine and needs over a minute of focus (manual setup/consent like Teams, a direction check) | `wt fx "<reason>"` (agent runs it itself) | NEEDS FOCUS (quick unblocks first, focus items swept in one block) | Owner review |
 | He sends it to the team | `wt rt` | TEAM REVIEW | Team review |
 | Approved | `wt rd` | READY TO DEPLOY | Ready to deploy |
 | He says "merge #N" / "ship #N" (= approved) | `wt rd` unless already there → conveyor `ship_pr` (`until=merged` / `deployed` + targets), then end the turn | READY TO DEPLOY, then tells move it | Ready to deploy, then tells move it |
@@ -46,6 +47,9 @@ asked for each. Steps with no arrow between them run in parallel.
   "not before Monday"; `rb` is for "not until that ships".
 - `wt done`/`cancel` refuse to remove anything if Linear isn't updated;
   the others are best-effort, so check their output.
+- Before `wt fx` for a direction or testing check, publish an artifact
+  of what you built and tested (screenshots or recording, the 1-2
+  decisions you need), so the check takes 2 minutes.
 - Pointing another agent at this work: `wt id` (the slug).
 
 ## Shipping and the tells

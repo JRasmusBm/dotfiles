@@ -15,7 +15,8 @@ set -e
 #                       (a focused worktree's pings first, and
 #                       from anywhere else straight to them; a
 #                       worktree `wt rb` blocked on another goes
-#                       last; then class, see notify: env, merge,
+#                       late, one `wt fx` parked under NEEDS FOCUS
+#                       last of all; then class, see notify: env, merge,
 #                       blocked, fail, check, unset, fyi; then
 #                       most follow-ups blocked on it; then
 #                       oldest)
@@ -57,6 +58,7 @@ function focused(k, p,  s) {
 function prio(c, p, k,  s, kids, rest, j) {
   s = slug(p)
   if (focused(k, p)) return rank(c)
+  if (s != "" && index(nfc, " " s " ")) return 200 + rank(c) * 10
   if (s != "" && index(blk, " " s ">")) return 100 + rank(c) * 10
   kids = 0; rest = blk
   while (s != "" && (j = index(rest, ">" s " "))) {
@@ -73,6 +75,13 @@ _focus_file() {
 _focused() {
   printf ' '
   cat "$(_focus_file)" 2>/dev/null | tr '\n' ' '
+}
+
+# " slug ..." of worktrees `wt fx` parked under # NEEDS FOCUS.
+_needsfocus() {
+  printf ' '
+  cat "${LOCAL_CONFIG:?}"/worktrees/*.needsfocus 2>/dev/null \
+    | awk -F'\t' '{ printf "%s ", $1 }'
 }
 
 # " child>blocker ..." from every board's `wt rb` records, so a
@@ -138,7 +147,8 @@ _notif_count() {
 # `skip` (space-separated) are left out; at most `max` lines.
 _collapse() {
   awk -F'\t' -v mark="$1" -v skip=" $2 " -v max="${3:-0}" \
-    -v blk="$(_blocked)" -v foc="$(_focused)" "$_KEY"'
+    -v blk="$(_blocked)" -v nfc="$(_needsfocus)" \
+      -v foc="$(_focused)" "$_KEY"'
     {
       k = key()
       if (index(skip, " " k " ")) next
@@ -269,6 +279,7 @@ _notif_next() {
   _here_key="${1:-}"
   while test -f "$_f"; do
     _line="$(awk -F'\t' -v h="$_here_key" -v blk="$(_blocked)" \
+      -v nfc="$(_needsfocus)" \
       -v foc="$(_focused)" "$_KEY"'
       {
         k = key()

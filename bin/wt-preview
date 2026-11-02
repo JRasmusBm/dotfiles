@@ -44,6 +44,10 @@ if test -f "$_bf"; then
   awk -F '\t' -v s="$_slug" '$1 == s && $3 != "" { print "blocked by  " $3 }
     $1 == s && $3 == "" { print "blocked:    " $4 }' "$_bf"
 fi
+_nf="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_root##*/}.needsfocus"
+if test -f "$_nf"; then
+  awk -F '\t' -v s="$_slug" '$1 == s { print "needs focus: " $3 }' "$_nf"
+fi
 echo
 
 # PR state (best-effort; needs gh)
