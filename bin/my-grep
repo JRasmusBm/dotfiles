@@ -3,7 +3,7 @@
 set -e
 
 if test "$(uname)" = 'Darwin' ; then
-  "$grep_cmd" --color=auto "$@"
+  ggrep --color=auto "$@"
 else
   grep --color=auto "$@"
 fi
