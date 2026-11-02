@@ -58,8 +58,10 @@ test -f "$HOME/.rover/env" && . "/home/jrasmusbm/.rover/env"
 
 ssh-add -k 2> /dev/null
 
-if test -f "$HOME/projects/polar/.zshenv" ; then
-  source "$HOME/projects/polar/.zshenv"
+# Private overlay (~/.private, a symlink its own link script makes):
+# work env, secrets and settings that don't belong in public dotfiles.
+if test -f "$HOME/.private/.zshenv" ; then
+  source "$HOME/.private/.zshenv"
 fi
 
 

@@ -87,14 +87,23 @@ _run_window() {
     awk '$3 == "run" { print $1, $2; exit }'
 }
 
+# $DEV_PASS_ENV: names of variables (space-separated, e.g. set by a
+# repo's private env) carried into the tmux windows dev creates.
+_pass_env() {
+  for _v in ${DEV_PASS_ENV:-}; do
+    eval "_val=\${$_v:-}"
+    test -z "$_val" || printf '%s=%s\n' "$_v" "$_val"
+  done
+}
+
 _with_env() {
   _sub="$1"
   shift
-  if test -n "${POLAR_ENV:-}"; then
-    tmux "$_sub" -e "POLAR_ENV=$POLAR_ENV" "$@"
-  else
-    tmux "$_sub" "$@"
-  fi
+  for _v in ${DEV_PASS_ENV:-}; do
+    eval "_val=\${$_v:-}"
+    test -z "$_val" || set -- -e "$_v=$_val" "$@"
+  done
+  tmux "$_sub" "$@"
 }
 
 _self() {
@@ -111,9 +120,7 @@ _detach_if_inside_run() {
   mkdir -p "$(_log_dir)"
   _log="$(_log_dir)/dev.log"
   _envs="DEV_SESSION='$_s'"
-  if test -n "${POLAR_ENV:-}"; then
-    _envs="$_envs POLAR_ENV='$POLAR_ENV'"
-  fi
+  _envs="$_envs $(_pass_env | sed "s/=\(.*\)/='\1'/" | tr '\n' ' ')"
   if test -n "${CLAUDECODE:-}"; then
     _envs="$_envs CLAUDECODE='$CLAUDECODE'"
   fi
@@ -210,9 +217,7 @@ _source_dev_file() {
 
 _banner() {
   echo "session: $_s"
-  if test -n "${POLAR_ENV:-}"; then
-    echo "POLAR_ENV: $POLAR_ENV"
-  fi
+  _pass_env | sed 's/=/: /'
   for _t in $_tags; do
     echo "  $_t -> $(_log_dir)/$_t.log"
   done

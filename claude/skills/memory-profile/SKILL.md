@@ -8,7 +8,7 @@ description: Profile this Mac's memory use over time or after a crash — 'profi
 36 GB machine shared by many tmux worktree sessions, nvims, Claude
 sessions and dev stacks. On 2026-10-09 it OOM-crashed (~119 GB
 resident + 16 GB compressed): ~12 nvim LSP pairs (tsserver ~3.6 GB +
-type-aware eslint server 1.2–2.6 GB per ice-floe nvim) were the bulk.
+type-aware eslint server 1.2–2.6 GB per big-TS-repo nvim) were the bulk.
 
 ## Data
 
@@ -47,11 +47,11 @@ type-aware eslint server 1.2–2.6 GB per ice-floe nvim) were the bulk.
 ## Known consumers
 
 - Claude Code's `typescript-lsp@claude-plugins-official` plugin,
-  enabled in ice-floe's committed `.claude/settings.json`: a full
+  enabled in a work repo's committed `.claude/settings.json`: a full
   tsserver (up to ~4 GB) per Claude session for its whole life.
   Turned off for jrb since 2026-10-12 via each checkout's git-ignored
-  `.claude/settings.local.json` (`~/projects/polar/jrb/ice-floe/
-  claude-local-settings`, run by `.jrb/wt-hook add` on `wt add`);
+  `.claude/settings.local.json` (written by the repo's `.jrb/wt-hook
+  add` on `wt add`);
   check with `claude plugin list`. Rationale: 0 `LSP` tool calls in
   364 transcripts, ~80% of its passive diagnostics were false errors
   (no root tsconfig). Killing its tsserver leaves the server

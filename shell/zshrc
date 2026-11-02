@@ -174,7 +174,6 @@ function precmd() {
       fi
     fi
   fi
-  (( $+functions[_polar_env_refresh] )) && _polar_env_refresh
 }
 
 # Anonymous function to avoid leaking NBSP variable.
@@ -220,11 +219,16 @@ function claude() {
     && local -x CLAUDE_CODE_AUTO_COMPACT_WINDOW=200000
   [[ $# -eq 0 || "$1" == -* || "$1" == *" "* ]] \
     || { command claude "$@"; return; }
+  # Private settings layered on ~/.claude/settings.json (set by an
+  # overlay outside dotfiles); --settings merges, it doesn't replace.
+  local -a extra
+  [[ -r "$CLAUDE_EXTRA_SETTINGS" ]] \
+    && extra=(--settings "$CLAUDE_EXTRA_SETTINGS")
   for a in "$@"; do
     case "$a" in
       -n|--name|--name=*|-r|--resume|--resume=*|-c|--continue|\
       -p|--print|--remote-control|--remote-control=*)
-        command claude "$@"; return ;;
+        command claude "${extra[@]}" "$@"; return ;;
     esac
   done
 
@@ -253,7 +257,7 @@ function claude() {
     name="$name:$(tmux display -p -t "$TMUX_PANE" '#{window_index}')"
   fi
 
-  command claude --name "$name" "$@"
+  command claude "${extra[@]}" --name "$name" "$@"
 }
 
 [ -f $HOME/.config/broot/launcher/bash/br ] && source $HOME/.config/broot/launcher/bash/br

@@ -1,14 +1,15 @@
 #!/bin/sh
 #
 # pr-merged-tell <worktree> <pr> — tell the worktree's agent that <pr>
-# merged: it double-checks the conveyor and runs `wt merged`, which
-# parks the worktree by whether the conveyor is shipping it (wt-tell:
-# once, idle Claude, else it starts one).
+# merged: it checks where the PR is headed and runs `wt merged`, which
+# parks the worktree by whether it is already shipping (wt-tell: once,
+# idle Claude, else it starts one). The repo's hook (jrb-hook nodeploy,
+# merged-hint) says whether it needs a deploy and what to check.
 
 _root="$1" _pr="$2"
 test -n "$_root" && test -n "$_pr" \
-  || { sed -n '3,6s/^# \{0,1\}//p' "$0" >&2; exit 2; }
-# Already told: skip the gh and conveyor calls (wt-sync runs it every
+  || { sed -n '3,8s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+# Already told: skip the gh and hook calls (wt-sync runs it every
 # minute for 3 days).
 grep -qxF "$_root	merged:$_pr" "${LOCAL_CONFIG:?}/wt-told" 2>/dev/null \
   && exit 0
@@ -16,8 +17,7 @@ _by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
   --jq '.mergedBy.login' 2>/dev/null)"
 # Nothing to deploy (tests, docs or CI only): one tell, not this one
 # plus wt-sync's no-deploy one, which it then finds already told.
-if pr-where --status "$_pr" 2>/dev/null | cut -f2 \
-  | grep -qxF "nothing to deploy"; then
+if jrb-hook "$_root" nodeploy "$_pr" 2>/dev/null; then
   wt-tell "$_root" "merged:$_pr" \
     "#$_pr merged, needs no deploy, no agent session: announce or not?" \
     "PR #$_pr is merged${_by:+ (merged by $_by)} and needs no deploy \
@@ -27,7 +27,8 @@ announcement for me to review." \
       >> "${LOCAL_CONFIG:?}/wt-told"
   exit
 fi
+_hint="$(jrb-hook "$_root" merged-hint "$_pr" 2>/dev/null)"
 exec wt-tell "$_root" "merged:$_pr" \
-  "#$_pr merged, no agent session: check the conveyor, wt merged" \
-  "PR #$_pr is merged into dev${_by:+ (merged by $_by)}. Please \
-double-check the conveyor status and update the worktree with wt merged."
+  "#$_pr merged, no agent session: check it, wt merged" \
+  "PR #$_pr is merged${_by:+ (merged by $_by)}. Please \
+${_hint:-check where it is headed} and update the worktree with wt merged."

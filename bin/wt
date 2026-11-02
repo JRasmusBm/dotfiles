@@ -53,19 +53,10 @@ _registry_file() {
   echo "$LOCAL_CONFIG/worktrees/$(_repo_name).registry"
 }
 
-# Let the repo react to a worktree arriving or leaving (penv frees
-# its ports on rm):
-# runs <main-root>/.jrb/wt-hook <event> <slug> when it is trusted
-# the same way `dev trust` trusts .jrb/dev.
+# Let the repo react to a worktree arriving or leaving (e.g. free its
+# ports on rm): its trusted .jrb/wt-hook <event> <slug> (jrb-hook).
 _repo_hook() {
-  _rh="$(_main_root)/.jrb/wt-hook"
-  test -x "$_rh" || return 0
-  if ! $_grep -qxF "$(openssl sha256 "$_rh")" ~/..dev.digests \
-    2>/dev/null; then
-    echo "wt: skipped untrusted $_rh (run: dev trust $_rh)" >&2
-    return 0
-  fi
-  "$_rh" "$@" || echo "wt: $_rh $* failed" >&2
+  jrb-hook "$(_main_root)" "$@" || true
 }
 
 # Who blocks whom: slug<TAB>branch<TAB>blocker-slug, one row
@@ -1448,9 +1439,9 @@ case "${1:-}" in
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
   merged)
-    # The conveyor already taking it to production (a live ship request
-    # until=deployed): nothing waits on me but checking it arrived, so
-    # Needs live verification, not Ready to deploy.
+    # Already on its way to production (the repo's hook says so, e.g.
+    # a ship queue deploying it): nothing waits on me but checking it
+    # arrived, so Needs live verification, not Ready to deploy.
     _require_worktree
     _m_sec="$(_board_section "$(git branch --show-current)" \
       "$(basename "$(git rev-parse --show-toplevel)")")"
@@ -1458,11 +1449,8 @@ case "${1:-}" in
       --head "$(git branch --show-current)" --limit 1 \
       --json number --jq '.[0].number' 2>/dev/null)" || _m_pr=""
     _m_ship=""
-    test -z "$_m_pr" || _m_ship="$(timeout 20 conveyor status "$_m_pr" \
-      2>/dev/null | jq -r 'select(.request.until == "deployed"
-        and (.request.status
-          | IN("rejected", "failed", "cancelled") | not)) | "y"')" \
-      || _m_ship=""
+    test -z "$_m_pr" || _m_ship="$(timeout 30 jrb-hook . shipping \
+      "$_m_pr" 2>/dev/null)" || _m_ship=""
     case "$_m_sec:$_m_ship" in
       'PROD REVIEW':*|'TO ANNOUNCE':*|'READY TO DEPLOY':) ;;
       *:y) _wt_park 'PROD REVIEW' 'Needs live verification' ;;

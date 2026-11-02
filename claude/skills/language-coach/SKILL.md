@@ -67,8 +67,8 @@ Bake this profile into every deep-dive so the connections land:
   Dutch**. These four are the permanent **bridge languages** — lean on them for
   cognates, false friends, and shared roots no matter what the target is ("you
   already know this from German *X* / Swedish *Y*").
-- **Software engineer** (TypeScript; company is Polar Analytics, an e-commerce
-  analytics platform headquartered in Paris). Learning languages for work
+- **Software engineer** (TypeScript; at a company headquartered
+  in Paris). Learning languages for work
   off-sites, travel, and colleagues.
 - **Learns best through**: word origins, cross-language connections, grammar and
   structure, history, trivia, fun facts. Etymology is the hook that makes things

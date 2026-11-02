@@ -26,8 +26,12 @@ Existing non-symlink files are backed up to `~/.backup_dotfiles/` before being r
 
 `--no-verify` is authorized for push/commit. The
 `confirm` prompt requires `/dev/tty` which is
-unavailable in Claude Code.
+unavailable in Claude Code. It also skips `leak-check`
+(this repo is public): run `leak-check --staged` before
+such a commit.
 
 ## Skills
+
+- **[private-overlay](claude/skills/private-overlay/SKILL.md)** (global) — What goes in public dotfiles vs the private overlay (`~/.private`), and the seams between them. Load before editing any skill, CLAUDE.md, script or setting.
 
 - **[commit](.claude/skills/commit/SKILL.md)** — Create atomic commits from uncommitted changes. Groups related modifications into logical, self-contained commits.

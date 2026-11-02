@@ -56,7 +56,7 @@ PATH="$PATH:$DOTFILES/bin"
 PATH="$PATH:$HOME/bin"
 PATH="$PATH:$HOME/.rover/bin"
 PATH="$PATH:$FLYCTL_INSTALL/bin"
-PATH="$PATH:$HOME/projects/polar/bin"
+PATH="$PATH:$HOME/.private/bin" # private overlay, see shell/zshenv
 PATH=$PATH:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$JAVA_HOME/bin
 
 # Put nvm's default node bin on PATH eagerly so child processes

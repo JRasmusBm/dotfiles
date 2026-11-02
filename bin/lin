@@ -4,7 +4,7 @@
 #
 #   lin              open the current branch's ticket
 #   lin o | open     same
-#   lin EXP-1715     open a specific ticket
+#   lin ABC-123      open a specific ticket
 #   lin id [BRANCH]  print the branch's ticket id
 #   lin state STATE [ID]
 #                    move the ticket to the team's state named
@@ -13,9 +13,9 @@
 #                    mark the ticket as blocked by BLOCKER
 #
 # With no id, the identifier is read from the current branch
-# (e.g. fix/jrb/exp-1527-slug). Opening requires
+# (e.g. fix/jrb/abc-123-slug). Opening requires
 # $LINEAR_WORKSPACE; state/block a personal API key:
-# $LINEAR_API_KEY, else read from polar's secrets/common.
+# $LINEAR_API_KEY, else read from ~/.config/linear.env.
 
 set -e
 
@@ -67,9 +67,9 @@ _id() {
 _gql() {
   test -n "$LINEAR_API_KEY" || LINEAR_API_KEY="$(sed -n \
     "s/^export LINEAR_API_KEY=['\"]*\([^'\"]*\).*/\1/p" \
-    "${POLAR_DIR:-$HOME/projects/polar}/secrets/common" 2>/dev/null)"
+    "$HOME/.config/linear.env" 2>/dev/null)"
   if test -z "$LINEAR_API_KEY"; then
-    echo "Set \$LINEAR_API_KEY (polar secrets/common)" >&2
+    echo "Set \$LINEAR_API_KEY (or export it in ~/.config/linear.env)" >&2
     return 1
   fi
   _q="$1"

@@ -27,8 +27,9 @@ _stale_panes() {
 
 _own_login() {
   _email=$(cswap status --json 2>/dev/null | jq -r '.active.email // empty')
-  _mine="${CSWAP_RC_ACCOUNTS:-rasmus@polaranalytics.co \
-    kylian@polaranalytics.co}"
+  # My logins, one per line (private overlay, not in dotfiles).
+  _mine="${CSWAP_RC_ACCOUNTS:-$(cat "$HOME/.config/cswap-rc-accounts" \
+    2>/dev/null | tr '\n' ' ')}"
   case " $_mine " in
     *" $_email "*) return 0 ;;
   esac

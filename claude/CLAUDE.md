@@ -2,7 +2,8 @@
 
 At conversation end, propose CLAUDE.md/skill updates if patterns
 discovered. Before that reflection, and before editing any skill or
-CLAUDE.md, load the repo's `save-learnings` skill if it has one.
+CLAUDE.md, load the repo's `save-learnings` skill if it has one,
+and `private-overlay` (public dotfiles vs private, see Dotfiles).
 Only write to auto memory for cross-project notes.
 Per-project knowledge goes in repo CLAUDE.md or related skills/docs where it
 can be committed and shared.
@@ -21,15 +22,16 @@ changes (build it and show me, don't post a mockup and wait),
 committing what you fixed once verified (only your hunks), and my
 PRs: push to the branch and keep the title/body in sync without
 asking, then report the head sha (watch CI only in `/iterate-review`
-or when asked; merge or deploy only on my word, through the conveyor
-where a repo has one, except a `fix` PR you may ship yourself once
-CI and the pr-reviewer are green and your own testing gives high
-confidence: the user's path run on real data, through devtools or
-the Polar MCP where it applies, evidence in the PR body; my word to ship also covers the merge the
-conveyor refuses (workflow files), resolving review threads the code
-already answers (reply with the commit that fixed it, then resolve),
-and cancelling your own stuck ship request: do them yourself, then
-`ship_pr` again; then end the turn:
+or when asked; merge or deploy only on my word, through the repo's
+ship queue where it has one, except a `fix` PR you may ship yourself
+once CI and the PR reviewer are green and your own testing gives
+high confidence: the user's path run on real data, through devtools
+or the product's MCP where it applies, evidence in the PR body; my
+word to ship also covers the merge the queue refuses (workflow
+files), resolving review threads the code already answers (reply
+with the commit that fixed it, then resolve), and cancelling your
+own stuck ship request: do them yourself, then ship again; then end
+the turn:
 `wt-sync` tells you what happens next), and "is it
 released/deployed?":
 confirm it is live, then run read-only checks that it behaves as
@@ -112,7 +114,14 @@ files.csv. Repo skills: .claude/skills/. Global skills:
 ~/projects/dotfiles/claude/skills/ (→ ~/.claude/skills/).
 Never create config directly in target locations.
 
-In my tooling repos (dotfiles, ~/projects/polar incl. jrb), commit
+dotfiles is PUBLIC. Work specifics (employer, products, repos,
+infra, tools, people, emails, URLs) go to the private overlay
+(`~/.private`, a private GitHub repo) through its seams, never into
+dotfiles: load the `private-overlay` skill before writing to either,
+from any repo (alongside that repo's own `save-learnings`).
+`leak-check` guards commits.
+
+In my tooling repos (dotfiles, the private overlay), commit
 each change as soon as it works, staging explicit paths (never
 `commit -a`: secrets live nearby). I edit none of it by hand, so an
 uncommitted change you find is another agent's: read it, commit it
@@ -141,9 +150,8 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   or worktree dir (slug), resolved via `git worktree
   list`; no match = error. Prints what it's removing;
   the delete itself runs in the background. Then runs the
-  repo's trusted `.jrb/wt-hook rm <slug>` (ice-floe: `penv
-  free`, releasing the worktree's ports); `forget` runs it
-  with `forget` (`penv rm`).
+  repo's trusted `.jrb/wt-hook rm <slug>` (e.g. releasing
+  the worktree's ports); `forget` runs it with `forget`.
 - `wt :` — fzf pick worktree to switch to. Lists from disk
   (`git worktree list`), so it always reflects reality;
   preview (`wt-preview`) shows branch, last commit, PR state,
@@ -157,14 +165,14 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt fix <url|text>` / `wt feat <url|text>` — Linear-aware
   add. A Linear issue URL becomes
   `<type>/${WT_INITIALS:-jrb}/<id>-<slug>` (id + slug parsed
-  straight from the URL, no token, any team key — `EXP-`,
-  `PLA-`, …); a Linear project URL becomes
+  straight from the URL, no token, any team key — `ABC-`,
+  `XY-`, …); a Linear project URL becomes
   `<type>/<initials>/<slug>` (the trailing 12-hex slug id
   dropped); free text is slugified to
   `<type>/<initials>/<slug>`. The `fix`/`feat` prefix
   comes from the command name. E.g. `wt fix
-  linear.app/x/issue/EXP-1527/deleting-connections-…` →
-  branch `fix/jrb/exp-1527-deleting-connections-…`.
+  linear.app/x/issue/ABC-123/fix-the-thing-…` →
+  branch `fix/jrb/abc-123-fix-the-thing-…`.
   After creating the worktree it opens the tmux session and,
   for a Linear URL, kicks off a Claude session in the third
   window (`cli`) preloaded with a prompt: `fix` →
@@ -214,7 +222,7 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   Checkout, branch and tmux session stay. The branch's Linear
   ticket, if any, moves to Team review / Ready to deploy /
   Needs live verification / Needs announcement (`lin state`; needs
-  `$LINEAR_API_KEY` from polar `secrets/common`; a Linear
+  `$LINEAR_API_KEY`, else `~/.config/linear.env`; a Linear
   failure never stops `wt`).
 - `wt rb [<worktree>|:|"<reason>"]` — current worktree is blocked
   by another (branch or dir; none/`:` = fzf), or by something
@@ -270,23 +278,21 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   PROGRESS`, ticket → In Progress (clears a block;
   `rt`/`rd`/`rp` clear it too).
 - `wt merged` — its PR merged: parks the worktree in `# PROD
-  REVIEW` (ticket → Needs live verification) when the conveyor is
-  already shipping it to production, else `# READY TO DEPLOY` (unless
+  REVIEW` (ticket → Needs live verification) when the repo's
+  hook says it's already shipping to production (`jrb-hook
+  shipping`), else `# READY TO DEPLOY` (unless
   already in one of those or `# TO ANNOUNCE`), then unblocks the
   worktrees `wt rb`'d on it; an idle one's agent is told to rebase
   onto dev and carry on. I don't run it: when a PR merges, its
   agent is told (`pr-merged-tell`, from `claude-notify` or the
-  `wt-sync` launchd job every minute) to double-check the conveyor
-  and run it; a session that isn't running is started with its
-  agent first.
-  No inbox ping for it. A conveyor ship that ends rejected or
-  failed is told too (polled when the queue's counts move).
-  Once every target the PR needs is deployed to a stage after
-  it reached that branch (`pr-where --status`, the rule
-  `deploy-plan` uses; whoever dispatched the runs), `wt-sync`
-  tells the agent once per stage to verify it there; a PR that
-  needs no deploy (tests, docs, CI only) gets one tell at merge to
-  check it where it runs and close the ticket. Both go
+  `wt-sync` launchd job every minute) to check where it's
+  headed (`jrb-hook merged-hint`) and run it; a session that
+  isn't running is started with its agent first.
+  No inbox ping for it. A PR that needs no deploy (`jrb-hook
+  nodeploy`) gets one tell at merge to check it where it runs
+  and close the ticket. Deploy and ship-queue tells (on a
+  stage, rejected, failed) come from the repo's `.jrb/wt-hook
+  sync`, which `wt-sync` runs per repo. All go
   through `wt-tell`: idle Claude gets the prompt, a worktree
   with no session gets me a `check` ping.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
@@ -355,7 +361,7 @@ the registry, where `wt resume` brings it back.
 
 Alt-N speed-dial is separate: line N of the current ts
 profile (`tsp`, `$LOCAL_CONFIG/ts-profiles/…`; Alt-0 = line
-10). A line is a zoxide name (`notes`, `dotfiles`, `ice-floe`
+10). A line is a zoxide name (`notes`, `dotfiles`, a repo
 = main checkout) or `<repo>:<slug>` for a worktree. Blank
 lines are empty keys, so numbers stay put. Pin with `wt pin`,
 edit with `M-t` (`tsp e`).

@@ -1,0 +1,31 @@
+#!/bin/sh
+#
+# jrb-hook <dir> <event> [args...] — run the repo's own hook for the
+# wt family: <main checkout of dir>/.jrb/wt-hook <event> [args...], only
+# when trusted the way `dev trust` trusts .jrb/dev. Repo-specific
+# behaviour (env ports, deploy queues, ship status) lives there, not in
+# dotfiles. Events:
+#   add|rm|forget <slug>   a worktree arrived / left
+#   preview <slug>         extra lines for the `wt :` preview
+#   shipping <pr>          print y when a merged PR is already on its
+#                          way to production (wt merged parks it in
+#                          PROD REVIEW, not READY TO DEPLOY)
+#   nodeploy <pr>          exit 0 when a merged PR needs no deploy
+#   merged-hint <pr>       a sentence added to the merge tell
+#   sync                   wt-sync's per-repo tick (deploy/ship tells)
+# No hook, untrusted, or an event the hook doesn't handle: exit 1,
+# printing nothing (untrusted warns once per call on stderr).
+
+_dir="$1" _event="$2"
+test -n "$_dir" && test -n "$_event" \
+  || { sed -n '3,18s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+shift 2
+_common="$(git -C "$_dir" rev-parse --path-format=absolute \
+  --git-common-dir 2>/dev/null)" || exit 1
+_rh="$(dirname "$_common")/.jrb/wt-hook"
+test -x "$_rh" || exit 1
+if ! grep -qxF "$(openssl sha256 "$_rh")" ~/..dev.digests 2>/dev/null; then
+  echo "jrb-hook: skipped untrusted $_rh (run: dev trust $_rh)" >&2
+  exit 1
+fi
+exec "$_rh" "$_event" "$@"
