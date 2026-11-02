@@ -37,6 +37,8 @@ _ensure_order_dir() {
 # Append-only graveyard of removed worktrees. Never
 # blanked — it's the searchable registry behind
 # `wt resume :`. Rows: slug<TAB>branch<TAB>sha<TAB>date
+# [<TAB>left]: the board section it was removed from, or
+# Done/Canceled for `wt done`/`cancel`; resume puts it back there.
 # Board line of a worktree: its current branch, else its dir
 # name, else a row whose last path part is the dir name — the
 # dir is the stable anchor when the branch was switched after
@@ -249,9 +251,9 @@ _registry_append() {
   _ra_branch="$2"
   _ra_sha="$3"
   _ensure_order_dir
-  printf '%s\t%s\t%s\t%s\n' \
+  printf '%s\t%s\t%s\t%s\t%s\n' \
     "$_ra_slug" "$_ra_branch" "$_ra_sha" \
-    "$(date -u +%FT%TZ)" >> "$(_registry_file)"
+    "$(date -u +%FT%TZ)" "${4:--}" >> "$(_registry_file)"
 }
 
 _switch_to() {
@@ -831,6 +833,7 @@ _wt_evict_current() {
       echo "wt: not removing $(basename "$_wt_path")" >&2
       exit 1
     fi
+    _WT_ENDED="$_WT_STATE"
     _WT_STATE=''
   fi
   cd "$_root"
@@ -881,9 +884,11 @@ _wt_evict() {
     "refs/heads/$_branch^{commit}" \
     || git -C "$_wt_path" rev-parse -q --verify HEAD \
     || true)"
+  _left="${_WT_STATE:-${_WT_ENDED:-}}"
+  test -n "$_left" || _left="$(_board_section "$_branch" "$_wt_name")"
   if test -n "$_sha"; then
     git -C "$_root" update-ref "refs/wt/$_slug" "$_sha"
-    _registry_append "$_slug" "$_branch" "$_sha"
+    _registry_append "$_slug" "$_branch" "$_sha" "$_left"
   fi
   _repo_hook rm "$_slug"
   tsp unpin "$(_repo_name):$_slug" 2>/dev/null || true
@@ -1170,12 +1175,15 @@ _wt_resume() {
     test -z "$_sel" && exit 0
     _slug="$(printf '%s' "$_sel" | cut -f1)"
     _branch="$(printf '%s' "$_sel" | cut -f2)"
+    _left="$(printf '%s' "$_sel" | cut -f5)"
   else
     _slug="$(basename "$_arg")"
     _branch=""
+    _left=""
     if test -f "$_rf"; then
-      _branch="$($_grep -P "^$_slug\t" "$_rf" \
-        | tail -1 | cut -f2)"
+      _row="$($_grep -P "^$_slug\t" "$_rf" | tail -1)"
+      _branch="$(printf '%s' "$_row" | cut -f2)"
+      _left="$(printf '%s' "$_row" | cut -f5)"
     fi
     test -z "$_branch" && _branch="$_arg"
   fi
@@ -1204,13 +1212,20 @@ _wt_resume() {
   git wc "$_branch" $_start
   _repo_hook add "$_slug"
 
-  # Put it back on the active board (same as `wt add`)
+  # Back where it left the board. A finished ticket stays off it
+  # (`wt ip` picks it back up); rows from before the column: IN PROGRESS.
   _ensure_order_dir
   _of="$(_order_file)"
   touch "$_of"
-  if ! $_grep -qx "$_branch" "$_of" 2>/dev/null; then
-    _of_insert "$_branch" "$_of"
-  fi
+  case "$_left" in
+    Done|Canceled)
+      echo "wt: ticket was $_left; left off the board (wt ip to resume work)" >&2 ;;
+    *)
+      case "$_left" in ''|-) _left='IN PROGRESS' ;; esac
+      if ! $_grep -qx "$_branch" "$_of" 2>/dev/null; then
+        _of_place_in_section "$_left" "$_branch" "$_of"
+      fi ;;
+  esac
 
   # Its Claude context is keyed by this path, so pick it up.
   _WT_CONTINUE=1 _wt_open_with_claude "$_wt_path" ""

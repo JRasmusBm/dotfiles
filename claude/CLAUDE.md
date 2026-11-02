@@ -329,8 +329,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   its worktree is scratch.
 - `wt resume <slug>`/`:` — re-materialise a removed
   worktree at the same path and run `claude --continue` in
-  its new session's `cli` (context is keyed by path). `:`
-  opens the registry graveyard in fzf.
+  its new session's `cli` (context is keyed by path), its
+  row back in the section it left (a `done`/`cancel`ed one
+  stays off the board: `wt ip` to work on it). `:` opens
+  the registry graveyard in fzf.
 - `wt forget <slug>` — the only true destroy: drop branch
   + `refs/wt/<slug>` so it leaves the resurrectable set.
   Claude context dir left intact.
@@ -369,7 +371,8 @@ lines are empty keys, so numbers stay put. Pin with `wt pin`,
 edit with `M-t` (`tsp e`).
 
 Removed worktrees append to `<repo>.registry` (append-only,
-never blanked): `slug<TAB>branch<TAB>sha<TAB>date`. The
+never blanked): `slug<TAB>branch<TAB>sha<TAB>date<TAB>left`
+(section it left, or Done/Canceled). The
 companion `refs/wt/<slug>` git ref pins the commit and
 survives `git branch -D`, `fetch --prune`, and `gc` —
 that's what makes `wt resume` reliable after branch cleanup.
