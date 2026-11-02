@@ -17,7 +17,7 @@ set -e
 #                       worktree `wt rb` blocked on another goes
 #                       late, one `wt fx` parked under NEEDS FOCUS
 #                       last of all; then class, see notify: env, merge,
-#                       blocked, fail, check, unset, fyi; then
+#                       blocked, slack, fail, check, unset, fyi; then
 #                       most follow-ups blocked on it; then
 #                       oldest)
 #   notif focus <pane>  toggle focus on <pane>'s worktree (else
@@ -43,6 +43,7 @@ _recent() {
 _KEY='function key() { return $6 != "" ? $6 : $2 }
 function rank(c) {
   return c == "env" ? 1 : c == "merge" ? 2 : c == "blocked" ? 3 \
+    : c == "slack" ? 3.5 \
     : c == "fail" ? 4 : c == "check" ? 5 : c == "fyi" ? 7 : 6
 }
 function slug(p,  i, s) {
