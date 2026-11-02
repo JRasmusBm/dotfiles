@@ -22,7 +22,10 @@ committing what you fixed once verified (only your hunks), and my
 PRs: push to the branch and keep the title/body in sync without
 asking, then report the head sha (watch CI only in `/iterate-review`
 or when asked; merge or deploy only on my word, through the conveyor
-where a repo has one; my word to ship also covers the merge the
+where a repo has one, except a `fix` PR you may ship yourself once
+CI and the pr-reviewer are green and your own testing gives high
+confidence: the user's path run on real data, through devtools or
+the Polar MCP where it applies, evidence in the PR body; my word to ship also covers the merge the
 conveyor refuses (workflow files), resolving review threads the code
 already answers (reply with the commit that fixed it, then resolve),
 and cancelling your own stuck ship request: do them yourself, then
@@ -58,7 +61,7 @@ delete its artifact.
 Questions stall work. Default: don't ask; decide, do it, and
 say what you assumed. Come back only for an irreversible or
 truly risky tradeoff: writes to prod data, infra applies,
-merging or deploying, posting as me or to customers, deleting
+merging or deploying (bar the `fix` PRs above), posting as me or to customers, deleting
 what can't be resumed. Everything else is reversible: act.
 When a question is unavoidable, ask it in plain text, once,
 at the end, with your recommended answer. No AskUserQuestion
