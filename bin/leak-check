@@ -1,12 +1,14 @@
 #!/bin/sh
 #
-# leak-check [--staged | <rev-range>...] — fail when a line being added
-# matches the repo's denylist: the file named by `git config
+# leak-check [--staged | <base> <tip>] — fail when a line being added
+# (staged, or the net diff base→tip) matches the repo's denylist: the file named by `git config
 # leakcheck.denylist`, extended regexes (case-insensitive), one per
 # line, # comments. The list lives outside the repo, so a public repo
 # can refuse private names without publishing them. No config: passes.
-# The global pre-commit (--staged) and pre-push (outgoing commits)
-# hooks run it.
+# The global pre-commit (--staged) and pre-push (remote tip → pushed
+# tip) hooks run it. Net diff, not per commit: a line added and later
+# removed before the push isn't in what the push publishes at the tip
+# (it stays in history: rewriting that is a separate, deliberate step).
 
 _list="$(git config --path leakcheck.denylist 2>/dev/null)"
 test -n "$_list" || exit 0
@@ -17,7 +19,7 @@ test -n "$_re" || exit 0
 if test "${1:-}" = --staged || test $# -eq 0; then
   _diff="$(git diff --cached -U0 --no-color --no-ext-diff)"
 else
-  _diff="$(git log -p -U0 --no-color --no-ext-diff --format= "$@")"
+  _diff="$(git diff -U0 --no-color --no-ext-diff "$1" "$2")"
 fi
 
 _hits="$(printf '%s\n' "$_diff" | awk '

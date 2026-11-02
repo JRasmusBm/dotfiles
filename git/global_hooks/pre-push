@@ -21,11 +21,14 @@ _may_push() {
 _z=0000000000000000000000000000000000000000
 while read -r _lref _lsha _rref _rsha; do
   test "$_lsha" != "$_z" || continue
+  # New branch: from where it leaves what the remote already has.
   if test "$_rsha" = "$_z"; then
-    leak-check "$_lsha" --not --remotes
-  else
-    leak-check "$_rsha..$_lsha"
+    _first="$(git rev-list --reverse "$_lsha" --not --remotes | head -n 1)"
+    test -n "$_first" || continue
+    _rsha="$(git rev-parse -q --verify "$_first^" \
+      || git hash-object -t tree /dev/null)"
   fi
+  leak-check "$_rsha" "$_lsha"
 done
 
 if ! _may_push "$@" ; then
