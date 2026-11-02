@@ -1420,7 +1420,19 @@ case "${1:-}" in
   .) _wt_evict . ;;
   e|edit) shift; _wt_edit "$@" ;;
   open) shift; _wt_open "$@" ;;
-  add) shift; _wt_add "$@" ;;
+  add) shift
+    # An agent's `wt add <free text>` makes a worktree with no ticket,
+    # no kickoff and no agent: an orphan I have to ask about.
+    if test -n "${CLAUDECODE:-}" && test -z "${WT_ALLOW_ADD:-}" \
+      && ! echo "${1:-}" | $_grep -Eiq '[a-z]+-[0-9]+'; then
+      echo "wt: agents don't run 'wt add' with free text. New work is" \
+        "a ticket: claim-work, then 'WT_NO_ATTACH=1 wt fix|feat <url>'" \
+        "with WT_PROMPT_EXTRA (work-management skill). A shared" \
+        "blocker (red dev CI): check 'gh pr list' for a fix in" \
+        "flight first and wait on it ('wt rb')." >&2
+      exit 1
+    fi
+    _wt_add "$@" ;;
   fix) shift; _wt_typed fix "$@" ;;
   feat) shift; _wt_typed feat "$@" ;;
   review) shift; _wt_review "$@" ;;

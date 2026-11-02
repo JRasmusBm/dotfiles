@@ -97,7 +97,8 @@ linking the Slack thread), `WT_NO_ATTACH=1 wt fix|feat <url>` with
 `WT_PROMPT_EXTRA` carrying what's known and done so far, then one line
 to him with the slug. That puts it on the board, in the tells and in
 `wt night`. Never build it in the current
-checkout, and never run `wt add` with free text in place of a ticket.
+checkout, and never run `wt add` with free text in place of a ticket
+(`wt` refuses it from an agent unless the branch carries a ticket id).
 A scoping or ideation ticket is work too: it gets a worktree and
 agent in the same turn, and that agent's output is started build
 tickets (Follow-up flow, steps 3–4), not a doc. It may kick off a
