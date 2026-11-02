@@ -161,8 +161,10 @@ PR. Never split on my own: a ticket step that waits on
 another PR stays in this ticket (hold the PR, or add it after
 a rebase). Unsure → ask with options, don't split. A
 follow-up that only lives in chat or a PR comment gets lost,
-so it always becomes a ticket with its own worktree and agent.
-Same for tickets I file for findings outside this PR's scope
+so it always becomes a new ticket with its own worktree and agent,
+"can we cover X in a follow-up?" included: never a worktree or
+branch on the parent's id (`wt add feat/jrb/<parent-id>-e2e` is the failure),
+never `wt add`, never a background subagent standing in. Same for tickets I file for findings outside this PR's scope
 (review leftovers, bugs seen along the way): start each one
 in the same turn I file it. A ticket with no agent is the
 failure here, never the cautious choice, since an unwanted
