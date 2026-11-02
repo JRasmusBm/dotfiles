@@ -16,6 +16,9 @@ _may_commit() {
   return 0
 }
 
+# A repo with a leakcheck.denylist refuses private names (leak-check).
+leak-check --staged
+
 if ! _may_commit "$@" ; then
   exit 1
 fi

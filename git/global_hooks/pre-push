@@ -16,6 +16,18 @@ _may_push() {
   return 0
 }
 
+# A repo with a leakcheck.denylist refuses private names in the commits
+# going out (leak-check); stdin is "<ref> <sha> <remote ref> <remote sha>".
+_z=0000000000000000000000000000000000000000
+while read -r _lref _lsha _rref _rsha; do
+  test "$_lsha" != "$_z" || continue
+  if test "$_rsha" = "$_z"; then
+    leak-check "$_lsha" --not --remotes
+  else
+    leak-check "$_rsha..$_lsha"
+  fi
+done
+
 if ! _may_push "$@" ; then
   exit 1
 fi

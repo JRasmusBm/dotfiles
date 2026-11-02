@@ -1,0 +1,30 @@
+#!/bin/sh
+#
+# leak-check [--staged | <rev-range>...] — fail when a line being added
+# matches the repo's denylist: the file named by `git config
+# leakcheck.denylist`, extended regexes (case-insensitive), one per
+# line, # comments. The list lives outside the repo, so a public repo
+# can refuse private names without publishing them. No config: passes.
+# The global pre-commit (--staged) and pre-push (outgoing commits)
+# hooks run it.
+
+_list="$(git config --path leakcheck.denylist 2>/dev/null)"
+test -n "$_list" || exit 0
+test -r "$_list" || { echo "leak-check: can't read $_list" >&2; exit 1; }
+_re="$(grep -v -e '^#' -e '^[[:space:]]*$' "$_list" | paste -sd'|' -)"
+test -n "$_re" || exit 0
+
+if test "${1:-}" = --staged || test $# -eq 0; then
+  _diff="$(git diff --cached -U0 --no-color --no-ext-diff)"
+else
+  _diff="$(git log -p -U0 --no-color --no-ext-diff --format= "$@")"
+fi
+
+_hits="$(printf '%s\n' "$_diff" | awk '
+  /^\+\+\+ / { f = substr($0, 7); next }
+  /^\+/ { print f ": " substr($0, 2) }' | grep -i -E -e "$_re")"
+test -z "$_hits" && exit 0
+echo "leak-check: private names in lines being added ($_list):" >&2
+printf '%s\n' "$_hits" | cut -c1-160 | sed 's/^/  /' >&2
+echo "Move them to the private overlay (private-overlay skill)." >&2
+exit 1
