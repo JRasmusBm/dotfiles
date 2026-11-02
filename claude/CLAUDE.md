@@ -488,7 +488,10 @@ Use `g s <branch>` to switch branches (not raw
 tmux status bar after switching. Rebasing on dev: fetch, reset
 local `dev` to `origin/dev` (main checkout: `reset --hard` only if
 `status --short` shows no tracked changes, else stop and say so),
-then `git rebase dev`.
+then `git rebase dev`, then `git push --force-with-lease`
+unasked: rewriting your own branch's remote is part of a rebase.
+Never force a shared branch (base branches, someone else's or
+a branch another PR stacks on).
 
 ## Branch code isn't released code
 

@@ -138,7 +138,8 @@
     "allow": [
       "$defaults",
       "Marking the user's own pull requests ready for review with `gh pr ready` (never merging them)",
-      "Commenting `@coderabbitai review` on the user's own pull requests to trigger a review"
+      "Commenting `@coderabbitai review` on the user's own pull requests to trigger a review",
+      "`git push --force-with-lease` of the session's own feature branch after rebasing it (never dev, main, master, staging or another person's branch)"
     ]
   },
   "voiceEnabled": true
