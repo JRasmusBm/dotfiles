@@ -55,10 +55,13 @@ delete its artifact.
 
 ## Questions
 
-Questions stall work. Default: don't ask; act on the
-cheap-to-undo option and say what you assumed. When a
-question is unavoidable, ask it in plain text, once, at the
-end, with your recommended answer. No AskUserQuestion
+Questions stall work. Default: don't ask; decide, do it, and
+say what you assumed. Come back only for an irreversible or
+truly risky tradeoff: writes to prod data, infra applies,
+merging or deploying, posting as me or to customers, deleting
+what can't be resumed. Everything else is reversible: act.
+When a question is unavoidable, ask it in plain text, once,
+at the end, with your recommended answer. No AskUserQuestion
 dialogs unless I ask to pick between options.
 
 My questions aren't instructions: "why X?", "could we Y?", "will
