@@ -256,7 +256,20 @@ _registry_append() {
     "$(date -u +%FT%TZ)" "${4:--}" >> "$(_registry_file)"
 }
 
+# True when a person is looking at the pane wt runs from: outside
+# tmux (a plain terminal), or inside a session some client views.
+# An agent's pane in a session nobody views fails it, so wt never
+# switches a client from there: tmux would move the most recent
+# client, i.e. me, wherever I am.
+_viewed() {
+  test -z "${TMUX:-}" && return 0
+  _vs="$(tmux display-message -p -t "${TMUX_PANE:-}" \
+    '#{session_name}' 2>/dev/null)"
+  test -n "$(tmux list-clients -t "=$_vs" 2>/dev/null)"
+}
+
 _switch_to() {
+  _viewed || return 0
   _target="$1"
   _session="$(tmux-session-name-from-path "$_target")"
 
@@ -535,6 +548,7 @@ _wt_open_with_claude() {
   fi
 
   test -n "$WT_NO_ATTACH" && return 0
+  _viewed || return 0
   tmux-attach-to-session "$_session:cli" \
     || tmux-attach-to-session "$_session:vim" \
     || ta "$_session" \
