@@ -1,0 +1,200 @@
+#!/usr/bin/env python3
+#
+# tok-top — which Claude Code sessions burn the token budget, read
+# from the local transcripts (~/.claude/projects/*/*.jsonl plus each
+# session's subagents/*.jsonl, counted into the parent). Zero tokens.
+# Weighted per assistant turn: input x1, output x5, cache write
+# x1.25, cache read x0.1 (millions). One API response counts once
+# (first line per message.id within a file).
+#
+#   tok-top                 today since local 00:00, top 10
+#   tok-top --since 7d      7d|24h|yesterday (yesterday = 00:00-00:00)
+#   tok-top -n N            top N rows
+#   tok-top --no-gh         skip the PR column (no gh calls)
+#   tok-top --tsv           machine output: tokens_m place pr turns
+#                           avg_ctx_k path, tab-separated, no header
+#   tok-top --fzf           pick a row: switch to its tmux session,
+#                           else `wt open <place>`, else print path
+#
+# Place = worktree slug (cwd under */.worktrees/<slug>), else the
+# repo dir name. PR = the worktree branch's PR (`gh pr list`, one
+# call per repo, cached 10 min in $LOCAL_CONFIG/tok-top-gh).
+import argparse, glob, json, os, subprocess, sys, time
+from datetime import datetime, timedelta, timezone
+
+W = dict(input_tokens=1, output_tokens=5,
+         cache_creation_input_tokens=1.25, cache_read_input_tokens=0.1)
+HOME = os.path.expanduser("~")
+CACHE = os.path.join(
+    os.environ.get("LOCAL_CONFIG", HOME + "/.config"), "tok-top-gh")
+
+
+def window(s):
+    now = datetime.now().astimezone()
+    mid = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    if s == "today":
+        return mid, None
+    if s == "yesterday":
+        return mid - timedelta(days=1), mid
+    if s.endswith("d"):
+        return now - timedelta(days=int(s[:-1])), None
+    if s.endswith("h"):
+        return now - timedelta(hours=int(s[:-1])), None
+    sys.exit("tok-top: --since today|yesterday|Nd|Nh")
+
+
+def scan(path, lo, hi, acc):
+    seen = set()
+    for line in open(path, errors="replace"):
+        if '"usage"' not in line:
+            continue
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        m = d.get("message") or {}
+        u = m.get("usage")
+        if d.get("type") != "assistant" or not u:
+            continue
+        mid = m.get("id") or d.get("requestId")
+        if mid in seen:
+            continue
+        seen.add(mid)
+        try:
+            t = datetime.fromisoformat(
+                d["timestamp"].replace("Z", "+00:00")).timestamp()
+        except (KeyError, ValueError):
+            continue
+        if t < lo or (hi and t >= hi):
+            continue
+        acc[0] += sum((u.get(k) or 0) * v for k, v in W.items())
+        acc[1] += 1
+        acc[2] += sum(u.get(k) or 0 for k in (
+            "input_tokens", "cache_read_input_tokens",
+            "cache_creation_input_tokens"))
+
+
+def first_cwd(path):
+    for line in open(path, errors="replace"):
+        if '"cwd"' in line:
+            try:
+                return json.loads(line).get("cwd") or ""
+            except ValueError:
+                pass
+    return ""
+
+
+def place_of(cwd):
+    if "/.worktrees/" in cwd:
+        repo, rest = cwd.split("/.worktrees/", 1)
+        return rest.split("/")[0], repo
+    return os.path.basename(cwd.rstrip("/")) or "?", cwd
+
+
+def branch_of(repo, slug):
+    try:
+        g = open(f"{repo}/.worktrees/{slug}/.git").read().split(":", 1)[1]
+        head = open(g.strip() + "/HEAD").read().strip()
+        return head.removeprefix("ref: refs/heads/")
+    except (OSError, IndexError):
+        return None
+
+
+def prs(repo):
+    os.makedirs(CACHE, exist_ok=True)
+    f = os.path.join(CACHE, repo.replace("/", "_") + ".json")
+    if not (os.path.exists(f) and time.time() - os.path.getmtime(f) < 600):
+        try:
+            out = subprocess.run(
+                ["gh", "pr", "list", "--state", "all", "--author", "@me",
+                 "--limit", "200", "--json", "number,state,headRefName"],
+                cwd=repo, capture_output=True, text=True, timeout=30,
+            ).stdout
+            json.loads(out)
+            open(f, "w").write(out)
+        except Exception:
+            if not os.path.exists(f):
+                return {}
+    try:
+        return {p["headRefName"]: p for p in json.load(open(f))}
+    except Exception:
+        return {}
+
+
+def main():
+    ap = argparse.ArgumentParser(add_help=True)
+    ap.add_argument("--since", default="today")
+    ap.add_argument("-n", type=int, default=10)
+    ap.add_argument("--no-gh", action="store_true")
+    ap.add_argument("--tsv", action="store_true")
+    ap.add_argument("--fzf", action="store_true")
+    ap.add_argument("--total", action="store_true")
+    a = ap.parse_args()
+    lo, hi = window(a.since)
+    lo, hi = lo.timestamp(), hi.timestamp() if hi else None
+
+    rows = {}  # (place, repo) -> [w, turns, ctx, cwd]
+    for f in glob.glob(HOME + "/.claude/projects/*/*.jsonl"):
+        if os.path.getmtime(f) < lo:
+            continue
+        cwd = first_cwd(f)
+        place, repo = place_of(cwd)
+        acc = [0.0, 0, 0]
+        for g in [f] + glob.glob(f[:-6] + "/subagents/*.jsonl"):
+            if os.path.getmtime(g) >= lo:
+                scan(g, lo, hi, acc)
+        if not acc[1]:
+            continue
+        r = rows.setdefault((place, repo), [0.0, 0, 0, cwd])
+        r[0] += acc[0]; r[1] += acc[1]; r[2] += acc[2]
+    total = sum(r[0] for r in rows.values()) / 1e6
+    if a.total:
+        print(f"{total:.1f}"); return
+    top = sorted(rows.items(), key=lambda kv: -kv[1][0])[:a.n]
+
+    cache, out = {}, []
+    for (place, repo), (w, turns, ctx, cwd) in top:
+        pr = "-"
+        if not a.no_gh:
+            if repo not in cache:
+                cache[repo] = prs(repo) if os.path.isdir(repo) else {}
+            b = branch_of(repo, place) if "/.worktrees/" in cwd else None
+            p = cache[repo].get(b) if b else None
+            pr = (f"#{p['number']} {p['state'].lower()}" if p else "no PR")
+        path = (f"{repo}/.worktrees/{place}"
+                if "/.worktrees/" in cwd else repo)
+        out.append((w / 1e6, place, pr, turns, ctx / turns / 1e3, path))
+
+    if a.tsv:
+        for o in out:
+            print("\t".join([f"{o[0]:.1f}", o[1], o[2], str(o[3]),
+                             f"{o[4]:.0f}", o[5]]))
+        return
+    lines = [f"{o[0]:7.1f}M  {o[1]:<42.42} {o[2]:<12} {o[3]:>6} "
+             f"{o[4]:>7.0f}k" for o in out]
+    head = f"{'TOKENS':>8}  {'PLACE':<42} {'PR':<12} {'TURNS':>6} " \
+           f"{'AVG_CTX':>8}"
+    if not a.fzf:
+        print(head)
+        print("\n".join(lines))
+        print(f"{total:7.1f}M  total ({a.since})")
+        return
+    if not out:
+        return
+    inp = "\n".join(f"{l}\t{o[1]}\t{o[5]}" for l, o in zip(lines, out))
+    r = subprocess.run(
+        ["fzf", "--delimiter", "\t", "--with-nth", "1", "--header", head,
+         "--header-first", "--no-sort"],
+        input=inp, text=True, capture_output=False, stdout=subprocess.PIPE)
+    if not r.stdout.strip():
+        return
+    _, place, path = r.stdout.rstrip("\n").split("\t")
+    if subprocess.run(["tmux", "has-session", "-t", "=" + place],
+                      capture_output=True).returncode == 0:
+        os.execvp("tmux", ["tmux", "switch-client", "-t", "=" + place])
+    if subprocess.run(["wt", "open", place]).returncode != 0:
+        print(path)
+        input("press enter")
+
+
+main()
