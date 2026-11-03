@@ -841,6 +841,26 @@ _wt_evict_current() {
   _wt_evict "$_branch" "$_wt_path" "$_cur_session"
 }
 
+# `wt cancel`: close my open PRs from this branch (only mine: a
+# `wt review` worktree carries someone else's). Reversible with
+# `gh pr reopen`; a failure warns and never blocks the removal.
+_close_my_prs() {
+  _cp_prs="$(cd "$1" && timeout 20 gh pr list --state open \
+    --author @me --head "$2" --json number -q '.[].number' \
+    2>/dev/null)" || {
+    echo "wt: couldn't list PRs for $2; close them by hand" >&2
+    return 0
+  }
+  for _cp_n in $_cp_prs; do
+    if (cd "$1" && timeout 20 gh pr close "$_cp_n" >/dev/null 2>&1)
+    then
+      echo "wt: closed PR #$_cp_n (undo: gh pr reopen $_cp_n)" >&2
+    else
+      echo "wt: couldn't close PR #$_cp_n" >&2
+    fi
+  done
+}
+
 _wt_evict() {
   _branch="${1:-}"
   _wt_path_arg="${2:-}"
@@ -890,6 +910,7 @@ _wt_evict() {
     git -C "$_root" update-ref "refs/wt/$_slug" "$_sha"
     _registry_append "$_slug" "$_branch" "$_sha" "$_left"
   fi
+  test "$_left" = Canceled && _close_my_prs "$_root" "$_branch"
   _repo_hook rm "$_slug"
   tsp unpin "$(_repo_name):$_slug" 2>/dev/null || true
 

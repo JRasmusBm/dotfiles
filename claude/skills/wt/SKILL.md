@@ -166,7 +166,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   with no session gets me a `check` ping.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
   that first moves the ticket to Done / Canceled (refuses
-  to remove if Linear fails). No arg = the current worktree.
+  to remove if Linear fails); `cancel` also closes my open
+  PRs from the branch (`gh pr reopen` undoes). No arg = the
+  current worktree.
   Reversible (`wt resume`), so an agent whose ticket is
   finished runs `wt done` itself and reports it; never
   "Should I run it?", and its stop then sends me no ping
