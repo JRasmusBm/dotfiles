@@ -297,6 +297,8 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   like vim/less/lazygit, see `bin/notif`), it instead sets
   `@notif_done` and zsh's `precmd` notifies when that
   command finishes ("done" / "FAILED (exit N)").
+- `M-$` — popup of sessions ranked by token burn (`tok-top
+  --fzf`); Enter jumps to the session.
 - `M-o` / `notif` — fzf picker: pending panes (`●`, latest
   message + `×N`, newest first), then the last 10 cleared
   ones (`·`) from `notifications.recent`, so "where was I"
