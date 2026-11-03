@@ -304,6 +304,12 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   median wait (cleared rows kept in `notifications.log`), and board
   rows with no ping and no visit in 24h, which nothing will bring
   back to me.
+- `wt-cold` — those cold rows, ranked by what a minute buys (stale
+  row with a merged/closed PR, green mergeable PR, stuck fix, work on
+  disk, empty; ties by recent token spend). `wt-sync` runs `wt-cold
+  --daily` once a weekday from 10:00: one batched ping for stale rows,
+  up to 3 `check` pings carrying each row's state, none repeated
+  within 3 days.
 - `M-$` — popup of sessions ranked by token burn (`tok-top
   --fzf`); Enter jumps to the session.
 - `M-o` / `notif` — fzf picker: pending panes (`●`, latest

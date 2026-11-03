@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+"""Bring cold board rows back to me, ranked by what a minute buys.
+
+  wt-cold            list cold rows, ranked (dry run)
+  wt-cold --ping     ping the top ones into the inbox now
+  wt-cold --daily    --ping once per weekday from 10:00 (wt-sync calls it)
+
+Cold = a board row outside SNOOZED/BLOCKED with a live worktree, no
+pending inbox ping and no tmux visit in 24h (`notif depth`'s list).
+Nothing else would bring it back.
+
+Rank, best first:
+  stale   PR merged or closed, row still parked: one batched ping
+          (`wt done` / `wt cancel`, seconds each)
+  ready   PR open, green and mergeable: nearly free throughput
+  fix     a fix branch stuck (PR conflicting, failing, draft, or no PR):
+          a customer keeps hitting it
+  work    anything else with commits or edits on disk
+  empty   nothing on disk beyond the base
+Ties: most tokens spent in the last 7 days (`tok-top`), since
+re-orienting is cheapest while it's fresh, then oldest visit.
+
+Each ping is a `check` row on the worktree (M-i lands there) whose
+message carries the state, so I decide without asking an agent.
+At most WT_COLD_MAX (3) row pings a day plus the stale batch; a row
+pinged in the last 3 days is skipped so the queue moves.
+"""
+import argparse
+import importlib.machinery
+import importlib.util
+import json
+import os
+import subprocess
+import sys
+import time
+from datetime import datetime
+
+HERE = os.path.dirname(os.path.realpath(__file__))
+CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
+    '~/.config/jrasmusbm')
+STAMP = os.path.join(CONF, 'wt-cold-stamp')
+PINGED = os.path.join(CONF, 'wt-cold-pinged')
+MAX = int(os.environ.get('WT_COLD_MAX', '3'))
+SKIP = {'SNOOZED', 'BLOCKED'}
+ORDER = ['stale', 'ready', 'fix', 'work', 'empty']
+
+
+def notif_depth():
+    path = os.path.join(HERE, 'notif-depth')
+    loader = importlib.machinery.SourceFileLoader('notif_depth', path)
+    spec = importlib.util.spec_from_loader('notif_depth', loader)
+    mod = importlib.util.module_from_spec(spec)
+    loader.exec_module(mod)
+    return mod
+
+
+def sh(*cmd, cwd=None):
+    try:
+        return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
+                              timeout=60).stdout
+    except (OSError, subprocess.TimeoutExpired):
+        return ''
+
+
+def worktrees(root):
+    """branch -> path."""
+    m, wt = {}, None
+    for ln in sh('git', '-C', root, 'worktree', 'list',
+                 '--porcelain').splitlines():
+        if ln.startswith('worktree '):
+            wt = ln[9:]
+        elif ln.startswith('branch refs/heads/') and wt:
+            m[ln[18:]] = wt
+    return m
+
+
+def prs(root):
+    """head branch -> my latest PR (open first)."""
+    out = sh('gh', 'pr', 'list', '--author', '@me', '--state', 'all',
+             '--limit', '400', '--json',
+             'number,headRefName,state,isDraft,createdAt', cwd=root)
+    best = {}
+    for p in json.loads(out or '[]'):
+        cur = best.get(p['headRefName'])
+        rank = (p['state'] == 'OPEN', p['createdAt'])
+        if not cur or rank > (cur['state'] == 'OPEN', cur['createdAt']):
+            best[p['headRefName']] = p
+    return best
+
+
+def merge_state(root, n):
+    # `pr list` reports UNKNOWN; only `pr view` computes it.
+    out = sh('gh', 'pr', 'view', str(n), '--json', 'mergeStateStatus',
+             '-q', '.mergeStateStatus', cwd=root)
+    return out.strip()
+
+
+def disk(path):
+    dirty = len([ln for ln in sh('git', '-C', path, 'status',
+                                 '--porcelain').splitlines() if ln])
+    ahead = sh('git', '-C', path, 'rev-list', '--count',
+               '@{u}..HEAD').strip()
+    if not ahead:
+        base = 'origin/dev' if sh('git', '-C', path, 'rev-parse', '--verify',
+                                  '--quiet', 'origin/dev') else 'origin/HEAD'
+        ahead = sh('git', '-C', path, 'rev-list', '--count',
+                   f'{base}..HEAD').strip()
+    return dirty, int(ahead or 0)
+
+
+def tokens():
+    m = {}
+    for ln in sh('tok-top', '--since', '7d', '--tsv', '--no-gh').splitlines():
+        p = ln.split('\t')
+        try:
+            m[p[1]] = float(p[0])
+        except (ValueError, IndexError):
+            pass
+    return m
+
+
+def pinged_recently():
+    out, now = {}, time.time()
+    try:
+        for ln in open(PINGED):
+            s, t = ln.rstrip('\n').split('\t')
+            if now - int(t) < 3 * 86400:
+                out[s] = int(t)
+    except (OSError, ValueError):
+        pass
+    return out
+
+
+def age(nd, sec):
+    return nd.age(sec)
+
+
+def cold_rows(nd):
+    now = time.time()
+    visits = nd.last_visits()
+    pend = {i[2] for i in nd.pings() if i[1] is None}
+    rows = []
+    for root in nd.repo_roots():
+        repo = os.path.basename(root.rstrip('/'))
+        live, mine = worktrees(root), None
+        for sec, br in nd.board(repo):
+            if sec.upper() in SKIP or br not in live:
+                continue
+            path = live[br]
+            slug = os.path.basename(path)
+            if slug in pend:
+                continue
+            v = visits.get(slug)
+            if v is not None and now - v <= 86400:
+                continue
+            if mine is None:
+                mine = prs(root)
+            rows.append(dict(root=root, repo=repo, sec=sec, branch=br,
+                             path=path, slug=slug, visit=v,
+                             pr=mine.get(br)))
+    return rows
+
+
+def classify(r):
+    pr = r['pr']
+    r['dirty'], r['ahead'] = disk(r['path'])
+    if pr and pr['state'] in ('MERGED', 'CLOSED'):
+        r['cls'] = 'stale'
+        r['why'] = f"#{pr['number']} {pr['state'].lower()}"
+        return
+    if pr and pr['state'] == 'OPEN':
+        ms = merge_state(r['root'], pr['number'])
+        r['why'] = f"#{pr['number']} {'draft' if pr['isDraft'] else ms.lower()}"
+        if ms == 'CLEAN' and not pr['isDraft']:
+            r['cls'] = 'ready'
+            return
+    else:
+        r['why'] = 'no PR'
+    on_disk = r['dirty'] or r['ahead']
+    if on_disk:
+        r['why'] += f", {r['ahead']} commits, {r['dirty']} files changed"
+    is_fix = r['branch'].split('/', 1)[0] == 'fix'
+    r['cls'] = 'fix' if is_fix else 'work' if on_disk or pr else 'empty'
+
+
+ASK = {'ready': 'ship?', 'fix': 'finish, hand to an agent, or drop?',
+       'work': 'finish, snooze or drop?', 'empty': 'start, snooze or drop?'}
+
+
+def ranked():
+    nd = notif_depth()
+    rows = cold_rows(nd)
+    for r in rows:
+        classify(r)
+    tok = tokens()
+    for r in rows:
+        r['tok'] = tok.get(r['slug'], 0)
+    rows.sort(key=lambda r: (ORDER.index(r['cls']), -r['tok'],
+                             r['visit'] or 0))
+    return nd, rows
+
+
+def label(nd, r):
+    now = time.time()
+    seen = f"cold {nd.age(now - r['visit'])}" if r['visit'] else 'never visited'
+    tok = f", {r['tok']:.0f}M tok/7d" if r['tok'] >= 1 else ''
+    return f"{seen} · {r['why']}{tok}"
+
+
+def notify(path, title, msg):
+    env = dict(os.environ, NOTIFY_CLASS='check', NOTIFY_MODE='sticky')
+    env.pop('TMUX_PANE', None)
+    subprocess.run(['notify', title, msg], cwd=path, env=env,
+                   capture_output=True, timeout=30)
+
+
+def ping(nd, rows):
+    recent = pinged_recently()
+    stale = [r for r in rows if r['cls'] == 'stale']
+    todo = [r for r in rows if r['cls'] != 'stale'
+            and r['slug'] not in recent][:MAX]
+    now = int(time.time())
+    done = []
+    if stale:
+        by_root = {}
+        for r in stale:
+            by_root.setdefault(r['root'], []).append(r)
+        for root, rs in by_root.items():
+            names = ', '.join(f"{r['slug'][:28]} ({r['why']})" for r in rs[:6])
+            more = f' +{len(rs) - 6}' if len(rs) > 6 else ''
+            notify(root, f'{len(rs)} stale board rows',
+                   f'PR merged or closed, row still parked: {names}{more}.'
+                   ' wt done / wt cancel each, or wt ip if work remains.')
+    for r in todo:
+        notify(r['path'], f"Cold: {r['slug'][:50]}",
+               f"{label(nd, r)}: {ASK[r['cls']]}")
+        done.append(r['slug'])
+    with open(PINGED, 'a') as f:
+        for s in done:
+            f.write(f'{s}\t{now}\n')
+    return len(stale), done
+
+
+def due():
+    now = datetime.now()
+    if now.weekday() >= 5 or now.hour < 10:
+        return False
+    try:
+        return open(STAMP).read().strip() != now.date().isoformat()
+    except OSError:
+        return True
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument('--ping', action='store_true')
+    ap.add_argument('--daily', action='store_true')
+    o = ap.parse_args()
+    if o.daily:
+        if not due():
+            return
+        with open(STAMP, 'w') as f:
+            f.write(datetime.now().date().isoformat())
+    nd, rows = ranked()
+    if o.ping or o.daily:
+        n_stale, done = ping(nd, rows)
+        print(f'pinged {len(done)} cold rows, {n_stale} stale in a batch')
+        return
+    for c in ORDER:
+        rs = [r for r in rows if r['cls'] == c]
+        if rs:
+            print(f'\n{c} ({len(rs)})')
+            for r in rs:
+                print(f"  {r['slug'][:52]:52}  {label(nd, r)}")
+
+
+if __name__ == '__main__':
+    sys.exit(main())
