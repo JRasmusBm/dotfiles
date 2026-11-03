@@ -1,0 +1,118 @@
+#!/bin/sh
+
+set -e
+
+# Fuzzy search what was said in recent Claude Code chats (my
+# prompts and Claude's replies, not tool calls) and jump to the
+# chat: its live pane when the session still runs, else its
+# worktree's tmux session (resumed via `wt resume` if removed).
+# No model involved: jq over the transcripts, cached per file.
+#
+#   chats                 picker over the last $CHATS_DAYS days (14)
+#   chats _index          print the index rows, newest first
+#   chats _preview <path> <uuid> <session> <cwd>
+#
+# Transcripts: ~/.claude/projects/<escaped cwd>/<session>.jsonl.
+# Live sessions: ~/.claude/sessions/<pid>.json (cwd, tmux pane).
+# Cache: ${XDG_CACHE_HOME:-~/.cache}/chats/<session>.tsv, rebuilt
+# when its transcript is newer.
+
+_projects="$HOME/.claude/projects"
+_cache="${XDG_CACHE_HOME:-$HOME/.cache}/chats"
+
+_extract() {
+  jq -r --arg path "$1" '
+    def clean: gsub("[\t\r\n]+"; " ") | gsub("  +"; " ");
+    def skip: test("^\\s*(<|\\[Request interrupted|Caveat:"
+      + "|Another Claude session)");
+    select((.type == "user" or .type == "assistant")
+      and (.isSidechain | not) and (.isMeta | not))
+    | .type as $role
+    | (.message.content
+        | if type == "string" then [.]
+          else [.[]? | select(.type == "text") | .text] end
+        | map(select(skip | not)) | join(" ") | clean) as $text
+    | select($text != "")
+    | (.timestamp | sub("\\.[0-9]+Z$"; "Z") | fromdate) as $t
+    | (.cwd // "" | if test("/\\.worktrees/")
+        then sub(".*/\\.worktrees/"; "") | sub("/.*"; "")
+        else sub(".*/"; "") end) as $slug
+    | [ $t, $path, .uuid, .sessionId, (.cwd // ""),
+        ($t | strflocaltime("%m-%d %H:%M")) + "  " + $slug
+          + (if $role == "user" then "  › " else "  ‹ " end)
+          + $text[0:400] ]
+    | @tsv
+  ' "$1" 2>/dev/null
+}
+
+_refresh() {
+  _r_out="$_cache/$(basename "$1" .jsonl).tsv"
+  if ! test "$_r_out" -nt "$1"; then
+    _extract "$1" > "$_r_out.tmp" && mv "$_r_out.tmp" "$_r_out"
+  fi
+  cat "$_r_out"
+}
+
+_index() {
+  mkdir -p "$_cache"
+  find "$_projects" -mindepth 2 -maxdepth 2 -name '*.jsonl' \
+    -mtime "-${CHATS_DAYS:-14}" -print0 \
+    | xargs -0 -n 8 -P 8 "$0" _refresh \
+    | sort -t "$(printf '\t')" -k1,1nr
+}
+
+_live_pane() {
+  for _l_f in "$HOME"/.claude/sessions/*.json; do
+    test -f "$_l_f" || continue
+    _l_pid="$(basename "$_l_f" .json)"
+    kill -0 "$_l_pid" 2>/dev/null || continue
+    jq -r --arg s "$1" \
+      'select(.sessionId == $s) | .tmux // "" | sub(".*\\."; "")' \
+      "$_l_f" 2>/dev/null
+  done | grep -m1 '^%' || true
+}
+
+_preview() {
+  _p_pane="$(_live_pane "$3")"
+  _p_cwd="$4"
+  _p_title="$(grep -F '"type":"custom-title"' "$1" | tail -1 \
+    | jq -r '.customTitle // ""' 2>/dev/null)"
+  if test -n "$_p_pane"; then
+    _p_where="live: $(tmux display-message -p -t "$_p_pane" \
+      '#S:#I.#P' 2>/dev/null || echo "$_p_pane")"
+  else
+    _p_where="not running"
+  fi
+  printf '%s\n%s\n%s\n\n' "${_p_title:-untitled}" "$_p_cwd" "$_p_where"
+  grep -F "\"uuid\":\"$2\"" "$1" | jq -r '
+    .message.content
+    | if type == "string" then .
+      else [.[]? | select(.type == "text") | .text] | join("\n") end
+  ' 2>/dev/null
+}
+
+_open() {
+  _sel="$(_index | fzf --reverse --tiebreak=index \
+    --delimiter='\t' --with-nth=6 \
+    --header 'enter: go to chat  (› me, ‹ Claude)' \
+    --preview "$0 _preview {2} {3} {4} {5}" \
+    --preview-window=down,50%,wrap || true)"
+  test -n "$_sel" || exit 0
+  _o_session="$(printf '%s' "$_sel" | cut -f4)"
+  _o_cwd="$(printf '%s' "$_sel" | cut -f5)"
+  _o_pane="$(_live_pane "$_o_session")"
+  notif go "$_o_pane" "" "$_o_cwd" \
+    || tmux display-message "Chat gone: $_o_cwd" 2>/dev/null \
+    || true
+}
+
+case "${1:-}" in
+  ""|:) _open ;;
+  _index) _index ;;
+  _refresh) shift; for _f in "$@"; do _refresh "$_f"; done ;;
+  _preview) shift; _preview "$@" ;;
+  *)
+    echo "Usage: chats" >&2
+    exit 1
+    ;;
+esac

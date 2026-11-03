@@ -29,6 +29,7 @@ set -e
 #   notif seen <key> [all]  drop a pane's rows; without `all` (the
 #                       Claude reply hooks) merge pings stay
 #   notif arrive <key>  drop its non-sticky rows (focus hooks)
+#   notif go <pane> <ctx> <path>  jump like the picker does
 #   notif count         status-bar badge
 #   notif clear         empty the inbox
 
@@ -428,6 +429,7 @@ case "${1:-}" in
   seen) shift; _notif_drop "${1:-}" "${2:-reply}" ;;
   seen-path) shift; _notif_drop "${1:-}" path ;;
   arrive) shift; _notif_drop "${1:-}" arrive ;;
+  go) shift; _notif_jump "${1:-}" "${2:-}" "${3:-}" ;;
   clear) _notif_clear ;;
   _list) _notif_list ;;
   _preview) shift; _notif_preview "$@" ;;
