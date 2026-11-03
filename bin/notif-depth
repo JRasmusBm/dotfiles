@@ -1,0 +1,289 @@
+#!/usr/bin/env python3
+"""How deep I get into my notification inbox, and which board rows
+nothing brings back to me.
+
+  notif depth [--days N] [--tsv] [--repo R]
+
+A ping is one inbox item: the rows one pane collected until they were
+cleared together. Sources:
+
+- `$LOCAL_CONFIG/notifications`      pending rows (`notif`)
+- `$LOCAL_CONFIG/notifications.log`  cleared rows: cleared epoch, then
+  the row (never trimmed; written by `notif` since 2026-11-03)
+- `$LOCAL_CONFIG/focus.log`          before the log existed: `notif-in`
+  is an arrival, the next `notif seen` of that session its clear
+  (approximate, marked `~`)
+- the board `$LOCAL_CONFIG/worktrees/<repo>` (default: the first repo in
+  `~/.config/wt-sync-repos`) and `git worktree list`,
+  for rows with no visit (`tmux` focus-log events) in a while
+
+Per workday: pings in, cleared, pending at end of day, the most
+pending at once, and the median minutes a cleared ping waited.
+`--tsv` prints the per-day table for scripts (my-impact).
+"""
+import argparse
+import os
+import statistics
+import subprocess
+import sys
+import time
+from collections import defaultdict
+from datetime import datetime, timedelta
+
+CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
+    '~/.config/jrasmusbm')
+INBOX = os.path.join(CONF, 'notifications')
+LOG = INBOX + '.log'
+FOCUS = os.path.join(CONF, 'focus.log')
+
+
+def key(row):
+    # Same key `notif` uses: the pane id, else the ctx.
+    return row[5] if len(row) > 5 and row[5] else row[1]
+
+
+def session(ctx):
+    return ctx.split(':', 1)[0]
+
+
+def read_rows(path, cleared):
+    out = []
+    try:
+        f = open(path, errors='replace')
+    except OSError:
+        return out
+    for line in f:
+        p = line.rstrip('\n').split('\t')
+        try:
+            if cleared:
+                c, row = int(p[0]), p[1:]
+            else:
+                c, row = None, p
+            out.append((int(row[0]), c, row))
+        except (ValueError, IndexError):
+            continue
+    return out
+
+
+def pings():
+    """[(arrived, cleared|None, session, class, approx)]"""
+    items = []
+    groups = defaultdict(list)
+    log = read_rows(LOG, True)
+    for arr, clr, row in log:
+        groups[(key(row), clr)].append((arr, row))
+    for (_, clr), rows in groups.items():
+        arr, row = min(rows, key=lambda r: r[0])
+        cls = row[7] if len(row) > 7 else ''
+        items.append((arr, clr, session(row[1]), cls, False))
+    pend = defaultdict(list)
+    for arr, _, row in read_rows(INBOX, False):
+        pend[key(row)].append((arr, row))
+    for rows in pend.values():
+        arr, row = min(rows, key=lambda r: r[0])
+        cls = row[7] if len(row) > 7 else ''
+        items.append((arr, None, session(row[1]), cls, False))
+    start = min([i[0] for i in items if i[1] is not None] or
+                [i[0] for i in items] or [time.time()])
+    return approx_before(start) + items
+
+
+def approx_before(start):
+    """focus.log arrivals before the log existed."""
+    out, open_ = [], {}
+    try:
+        f = open(FOCUS, errors='replace')
+    except OSError:
+        return out
+    for line in f:
+        p = line.rstrip('\n').split('\t')
+        if len(p) < 3:
+            continue
+        try:
+            t = int(p[0])
+        except ValueError:
+            continue
+        if t >= start:
+            break
+        if p[1] == 'notif-in':
+            open_.setdefault(p[2], t)
+        elif p[1] == 'notif' and len(p) > 3 and p[2] == 'seen':
+            a = open_.pop(p[3], None)
+            if a is not None:
+                out.append((a, t, p[3], '', True))
+    # Never seen before the log started: count as cleared then.
+    out += [(a, start, s, '', True) for s, a in open_.items()]
+    return out
+
+
+def workdays(n):
+    d = datetime.now().date()
+    days = []
+    while len(days) < n:
+        if d.weekday() < 5:
+            days.append(d)
+        d -= timedelta(days=1)
+    return sorted(days)
+
+
+def ts(d, end=False):
+    dt = datetime.combine(d, datetime.max.time() if end else
+                          datetime.min.time())
+    return int(dt.timestamp())
+
+
+def day_rows(items, days):
+    now = time.time()
+    rows = []
+    for d in days:
+        a, b = ts(d), min(ts(d, True), now)
+        arrived = [i for i in items if a <= i[0] <= b]
+        cleared = [i for i in items if i[1] and a <= i[1] <= b]
+        eod = sum(1 for i in items
+                  if i[0] <= b and (i[1] is None or i[1] > b))
+        # Most pending at once, sampled at each arrival.
+        peak = max([sum(1 for j in items if j[0] <= i[0] and
+                        (j[1] is None or j[1] > i[0]))
+                    for i in arrived] or [eod])
+        waits = [(i[1] - i[0]) / 60 for i in cleared]
+        approx = any(i[4] for i in arrived + cleared)
+        rows.append({
+            'day': d.isoformat(), 'in': len(arrived),
+            'cleared': len(cleared), 'eod': eod, 'peak': peak,
+            'wait_p50_min': round(statistics.median(waits))
+            if waits else '',
+            'approx': approx})
+    return rows
+
+
+def board(repo):
+    path = os.path.join(CONF, 'worktrees', repo)
+    try:
+        lines = open(path).read().splitlines()
+    except OSError:
+        return []
+    out, sec = [], ''
+    for ln in lines:
+        s = ln.strip()
+        if not s:
+            continue
+        if s.startswith('#') or s.endswith(':'):
+            sec = s.lstrip('# ').rstrip(':')
+            continue
+        out.append((sec, s))
+    return out
+
+
+def repo_roots():
+    """Main checkouts, from the list `wt-sync` reads."""
+    env = os.environ.get('WT_SYNC_REPOS')
+    if env:
+        return env.split()
+    try:
+        return open(os.path.expanduser('~/.config/wt-sync-repos')) \
+            .read().split()
+    except OSError:
+        return []
+
+
+def slugs(repo):
+    """branch -> worktree dir (= session name) for board <repo>."""
+    for root in repo_roots():
+        if os.path.basename(root.rstrip('/')) != repo:
+            continue
+        try:
+            out = subprocess.run(
+                ['git', '-C', root, 'worktree', 'list', '--porcelain'],
+                capture_output=True, text=True, timeout=10).stdout
+        except (OSError, subprocess.TimeoutExpired):
+            return {}
+        m, wt = {}, None
+        for ln in out.splitlines():
+            if ln.startswith('worktree '):
+                wt = ln[9:]
+            elif ln.startswith('branch refs/heads/') and wt:
+                m[ln[18:]] = os.path.basename(wt)
+        return m
+    return {}
+
+
+def last_visits():
+    seen = {}
+    try:
+        for line in open(FOCUS, errors='replace'):
+            p = line.split('\t')
+            if len(p) > 2 and p[1] == 'tmux':
+                seen[p[2]] = int(p[0])
+    except (OSError, ValueError):
+        pass
+    return seen
+
+
+def age(sec):
+    h = sec / 3600
+    return f'{h / 24:.0f}d' if h >= 48 else f'{h:.0f}h' if h >= 1 \
+        else f'{sec / 60:.0f}m'
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    ap.add_argument('--days', type=int, default=10)
+    ap.add_argument('--tsv', action='store_true')
+    ap.add_argument('--repo', default=os.path.basename(
+        (repo_roots() or [''])[0].rstrip('/')))
+    o = ap.parse_args()
+    items = pings()
+    rows = day_rows(items, workdays(o.days))
+    cols = ['day', 'in', 'cleared', 'eod', 'peak', 'wait_p50_min']
+    if o.tsv:
+        print('\t'.join(cols))
+        for r in rows:
+            print('\t'.join(str(r[c]) for c in cols))
+        return
+    now = time.time()
+    pend = sorted((i for i in items if i[1] is None), key=lambda i: i[0])
+    print(f'Pending now: {len(pend)}', end='')
+    if pend:
+        olds = [now - i[0] for i in pend]
+        print(f'  oldest {age(max(olds))}, '
+              f'{sum(a > 3600 for a in olds)} over 1h, '
+              f'{sum(a > 4 * 3600 for a in olds)} over 4h')
+        for i in pend[:8]:
+            print(f'  {age(now - i[0]):>4}  {i[3] or "-":7} {i[2][:60]}')
+        if len(pend) > 8:
+            print(f'  … {len(pend) - 8} more')
+    else:
+        print()
+    print('\nday         in  cleared  pending@eod  peak  wait p50')
+    for r in rows:
+        w = f"{r['wait_p50_min']}m" if r['wait_p50_min'] != '' else '-'
+        print(f"{r['day']}{'~' if r['approx'] else ' '} {r['in']:>3}  "
+              f"{r['cleared']:>7}  {r['eod']:>11}  {r['peak']:>4}  {w:>8}")
+    if any(r['approx'] for r in rows):
+        print('~ before the clear log: rebuilt from focus.log')
+    # Board rows nothing brings back: no pending ping, no visit 24h+.
+    m, visits = slugs(o.repo), last_visits()
+    pinged = {i[2] for i in pend}
+    cold = []
+    for sec, br in board(o.repo):
+        if sec.upper() in ('SNOOZED', 'BLOCKED'):
+            continue
+        sl = m.get(br, br.rsplit('/', 1)[-1])
+        if sl in pinged:
+            continue
+        v = visits.get(sl)
+        if v is None or now - v > 24 * 3600:
+            cold.append((v or 0, sec, sl))
+    cold.sort()
+    print(f'\nBoard rows with no ping and no visit in 24h: {len(cold)}')
+    for v, sec, sl in cold[:15]:
+        print(f"  {age(now - v) if v else 'never':>5}  {sec[:14]:14} "
+              f"{sl[:58]}")
+    if len(cold) > 15:
+        print(f'  … {len(cold) - 15} more')
+    if any(not c[0] for c in cold):
+        print('never = no visit since focus.log began')
+
+
+if __name__ == '__main__':
+    sys.exit(main())

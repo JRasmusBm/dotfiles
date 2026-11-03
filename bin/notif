@@ -8,9 +8,12 @@ set -e
 #   epoch ctx title message path pane mode
 # mode `sticky` (Claude) survives a visit and clears on reply;
 # anything else clears on arrival. Cleared rows move to the
-# recent file, listed under the pending ones in the picker.
+# recent file, listed under the pending ones in the picker. Every
+# cleared row also goes to the never-trimmed `.log` (same shape:
+# cleared epoch, then the row), which `notif-depth` reads.
 #
 #   notif               picker: pending, then recent
+#   notif depth         inbox depth per day, cold board rows
 #   notif next <pane>   pending pane after <pane> in rank order
 #                       (a focused worktree's pings first, and
 #                       from anywhere else straight to them; a
@@ -116,7 +119,7 @@ _notif_drop() {
   _now="$(date +%s)"
   awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
     hit() { print }' "$_f" \
-    | sed "s/^/$_now	/" >> "$(_recent)"
+    | sed "s/^/$_now	/" | tee -a "$(_inbox).log" >> "$(_recent)"
   _tmp="$(mktemp)"
   awk -F'\t' -v k="$_d_key" -v m="$_d_mode" "$_d_match"'
     !hit()' "$_f" > "$_tmp" && mv "$_tmp" "$_f"
@@ -127,6 +130,7 @@ _notif_drop() {
 
 _notif_clear() {
   _f="$(_inbox)"
+  test -s "$_f" && sed "s/^/$(date +%s)	/" "$_f" >> "$_f.log"
   : > "$_f" 2>/dev/null || true
 }
 
@@ -426,6 +430,7 @@ case "${1:-}" in
   later) shift; _notif_later "$@" ;;
   focus) shift; _notif_focus "$@" ;;
   count) _notif_count ;;
+  depth) shift; exec notif-depth "$@" ;;
   seen) shift; _notif_drop "${1:-}" "${2:-reply}" ;;
   seen-path) shift; _notif_drop "${1:-}" path ;;
   arrive) shift; _notif_drop "${1:-}" arrive ;;
@@ -434,7 +439,7 @@ case "${1:-}" in
   _list) _notif_list ;;
   _preview) shift; _notif_preview "$@" ;;
   *)
-    echo "Usage: notif [open|next|later|focus|seen|arrive|count|clear]" >&2
+    echo "Usage: notif [open|next|later|focus|seen|arrive|count|depth|clear]" >&2
     exit 1
     ;;
 esac
