@@ -299,6 +299,11 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   like vim/less/lazygit, see `bin/notif`), it instead sets
   `@notif_done` and zsh's `precmd` notifies when that
   command finishes ("done" / "FAILED (exit N)").
+- `notif depth` — the inbox as inventory: pending now with ages,
+  per workday pings in / cleared / pending at end of day / peak /
+  median wait (cleared rows kept in `notifications.log`), and board
+  rows with no ping and no visit in 24h, which nothing will bring
+  back to me.
 - `M-$` — popup of sessions ranked by token burn (`tok-top
   --fzf`); Enter jumps to the session.
 - `M-o` / `notif` — fzf picker: pending panes (`●`, latest
