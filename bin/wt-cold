@@ -3,7 +3,7 @@
 
   wt-cold            list cold rows, ranked (dry run)
   wt-cold --ping     ping the top ones into the inbox now
-  wt-cold --daily    --ping once per weekday from 10:00 (wt-sync calls it)
+  wt-cold --daily    --ping once per weekday, first wt-sync run from 08:00
 
 Cold = a board row outside SNOOZED/BLOCKED with a live worktree, no
 pending inbox ping and no tmux visit in 24h (`notif depth`'s list).
@@ -235,6 +235,8 @@ def ping(nd, rows):
         notify(r['path'], f"Cold: {r['slug'][:50]}",
                f"{label(nd, r)}: {ASK[r['cls']]}")
         done.append(r['slug'])
+    # notify only refreshes the status bar from inside a pane.
+    subprocess.run(['tmux', 'refresh-client', '-S'], capture_output=True)
     with open(PINGED, 'a') as f:
         for s in done:
             f.write(f'{s}\t{now}\n')
@@ -243,7 +245,7 @@ def ping(nd, rows):
 
 def due():
     now = datetime.now()
-    if now.weekday() >= 5 or now.hour < 10:
+    if now.weekday() >= 5 or now.hour < 8:
         return False
     try:
         return open(STAMP).read().strip() != now.date().isoformat()

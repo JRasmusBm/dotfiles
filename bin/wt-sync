@@ -8,7 +8,7 @@
 #   - every 5th minute, wt-pr-watch tells the agent of a worktree whose
 #     open PR has failing CI or a review newer than its last push, once
 #     per head sha / review.
-# Once a weekday from 10:00, wt-cold pings the board rows nothing else
+# Once a weekday, first run from 08:00, wt-cold pings the board rows nothing else
 # brings back (no ping, no visit in 24h), best minute-for-minute first.
 # On a phone hotspot it polls every 5th minute only; a poll without a
 # new deploy is ~10 KB. Android marks its hotspot's DHCP lease with

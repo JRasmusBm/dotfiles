@@ -307,7 +307,7 @@ the calling pane's id, its `#S:#W.#P` for display, and its
 - `wt-cold` — those cold rows, ranked by what a minute buys (stale
   row with a merged/closed PR, green mergeable PR, stuck fix, work on
   disk, empty; ties by recent token spend). `wt-sync` runs `wt-cold
-  --daily` once a weekday from 10:00: one batched ping for stale rows,
+  --daily` on its first run from 08:00 each weekday: one batched ping for stale rows,
   up to 3 `check` pings carrying each row's state, none repeated
   within 3 days.
 - `M-$` — popup of sessions ranked by token burn (`tok-top
