@@ -10,8 +10,8 @@ pending inbox ping and no tmux visit in 24h (`notif depth`'s list).
 Nothing else would bring it back.
 
 Rank, best first:
-  stale   PR merged or closed, row still parked: one batched ping
-          (`wt done` / `wt cancel`, seconds each)
+  stale   PR merged or closed, or the worktree is gone, row still
+          parked: one batched ping (`wt done` / `wt cancel` / `wt e`)
   ready   PR open, green and mergeable: nearly free throughput
   fix     a fix branch stuck (PR conflicting, failing, draft, or no PR):
           a customer keeps hitting it
@@ -144,7 +144,17 @@ def cold_rows(nd):
         repo = os.path.basename(root.rstrip('/'))
         live, mine = worktrees(root), None
         for sec, br in nd.board(repo):
-            if sec.upper() in SKIP or br not in live:
+            if sec.upper() in SKIP:
+                continue
+            if br not in live:
+                # Row outlived its worktree: nothing on disk to visit.
+                v = visits.get(br.rsplit('/', 1)[-1])
+                if v is not None and now - v <= 86400:
+                    continue
+                rows.append(dict(root=root, repo=repo, sec=sec, branch=br,
+                                 path=None, slug=br.rsplit('/', 1)[-1],
+                                 visit=visits.get(br.rsplit('/', 1)[-1]),
+                                 pr=None, gone=True))
                 continue
             path = live[br]
             slug = os.path.basename(path)
@@ -162,6 +172,9 @@ def cold_rows(nd):
 
 
 def classify(r):
+    if r.get('gone'):
+        r['cls'], r['why'], r['dirty'], r['ahead'] = 'stale', 'no worktree', 0, 0
+        return
     pr = r['pr']
     r['dirty'], r['ahead'] = disk(r['path'])
     if pr and pr['state'] in ('MERGED', 'CLOSED'):
@@ -230,7 +243,8 @@ def ping(nd, rows):
             more = f' +{len(rs) - 6}' if len(rs) > 6 else ''
             notify(root, f'{len(rs)} stale board rows',
                    f'PR merged or closed, row still parked: {names}{more}.'
-                   ' wt done / wt cancel each, or wt ip if work remains.')
+                   ' wt done / wt cancel each (wt e for a row with no worktree),'
+                   ' or wt ip if work remains.')
     for r in todo:
         notify(r['path'], f"Cold: {r['slug'][:50]}",
                f"{label(nd, r)}: {ASK[r['cls']]}")
