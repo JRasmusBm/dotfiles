@@ -10,7 +10,14 @@
 #
 #   cswap-auto           loop (launchd com.jrasmusbm.cswap-auto)
 #   cswap-auto --once    one tick
-#   cswap-auto -n        list panes it would reconnect
+#   cswap-auto -n        list panes it would reconnect, and print the
+#                        weekly pace forecast + message (no notify)
+#
+# Pace ping: weekdays, first tick at/after 10:00 and 15:00 (once per
+# slot per day, stamp in $LOCAL_CONFIG/cswap-pace-stamp). Pools the 7d
+# usage of enabled accounts (`cswap list`), extrapolates when the pool
+# runs out, and if that is before this Friday 18:00 notifies "Tokens"
+# with the day's top sessions (`tok-top`).
 
 _interval="${CSWAP_AUTO_INTERVAL:-60}"
 
@@ -54,13 +61,84 @@ _reconnect() {
   done
 }
 
+# Pooled 7d forecast over enabled accounts. Prints "<runs out?> <msg>"
+# as one line: first word "yes" when it runs out before Friday 18:00.
+_pace() {
+  _fri=$(gdate -d 'friday 18:00' +%s 2>/dev/null) || return 1
+  [ "$(gdate +%u)" = 5 ] && [ "$(gdate +%s)" -ge "$_fri" ] \
+    && _fri=$(gdate -d 'next friday 18:00' +%s)
+  cswap list 2>/dev/null | gawk -v fri="$_fri" -v now="$(date +%s)" '
+    BEGIN { split("Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec", m, " ")
+            for (i in m) mon[m[i]] = i; y = strftime("%Y", now) }
+    /^  [0-9]+:/ { off = ($0 ~ /\(disabled\)/) }
+    /7d:/ && !off {
+      used = $0; sub(/.*7d: */, "", used); sub(/%.*/, "", used)
+      r = $0; sub(/.*resets /, "", r); split(r, a, " ")
+      split(a[3], hm, ":")
+      t = mktime(y " " mon[a[1]] " " a[2] " " hm[1] " " hm[2] " 0")
+      if (t < now - 86400) t = mktime((y + 1) " " mon[a[1]] " " a[2] \
+        " " hm[1] " " hm[2] " 0")
+      st = t - 7 * 86400
+      if (!n++ || st < first) first = st
+      u += used; rem += 100 - used
+    }
+    END {
+      if (!n || now <= first || u <= 0) exit 1
+      rate = u / ((now - first) / 3600)
+      out = now + rem / rate * 3600
+      days = (fri - now) / 86400
+      msg = sprintf("Run out %s at this pace; %d%% of an account a day " \
+        "lasts to %s.", strftime("%a %H:%M", out),
+        days > 0 ? rem / days + 0.5 : 0, strftime("%a %H:%M", fri))
+      printf "%s %s\n", (out < fri ? "yes" : "no"), msg
+    }'
+}
+
+_top3() {
+  tok-top --tsv -n 3 2>/dev/null | gawk -F'\t' '
+    { name = $2
+      if ($6 !~ /\.worktrees\//) name = "main"
+      else if (match(name, /^[a-z]+-[0-9]+/)) name = substr(name, 1, RLENGTH)
+      s = name " " $1 "M"
+      if ($3 != "no PR" && $3 != "-") s = s " " $3
+      printf "%s%s", (NR > 1 ? " \302\267 " : ""), s }'
+}
+
+_pace_msg() {
+  _f=$(_pace) || return 1
+  _top=$(_top3)
+  _msg="${_f#* }"
+  [ -n "$_top" ] && _msg="$_msg Top today: $_top"
+  echo "${_f%% *} $_msg"
+}
+
+_pace_tick() {
+  [ "$(gdate +%u)" -le 5 ] || return 0
+  _h=$(gdate +%H)
+  if [ "$_h" -ge 15 ]; then _slot=15
+  elif [ "$_h" -ge 10 ]; then _slot=10
+  else return 0; fi
+  _stamp="${LOCAL_CONFIG:-$HOME/.config}/cswap-pace-stamp"
+  _key="$(gdate +%F)-$_slot"
+  [ "$(cat "$_stamp" 2>/dev/null)" = "$_key" ] && return 0
+  echo "$_key" > "$_stamp"
+  _r=$(_pace_msg) || return 0
+  echo "$(date +%H:%M:%S)  pace: ${_r#* }"
+  [ "${_r%% *}" = yes ] && NOTIFY_CLASS=env notify "Tokens" "${_r#* }"
+  return 0
+}
+
 _tick() {
   cswap auto --once --threshold "${CSWAP_AUTO_THRESHOLD:-98}"
   _reconnect
+  _pace_tick
 }
 
 case "${1:-}" in
-  -n) _stale_panes ;;
+  -n)
+    _stale_panes
+    _r=$(_pace_msg) && echo "pace ($(echo "${_r%% *}" | sed 's/yes/runs out early/;s/no/on track/')): ${_r#* }"
+    ;;
   --once) _tick ;;
   '')
     while :; do
