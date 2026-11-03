@@ -3,7 +3,10 @@
 # wt-pr-watch [repo] — for each open PR of mine with a worktree, tell
 # its agent (wt-tell: idle Claude, else it starts one) once per event:
 #   - CI failed on the head commit (once per head sha), or
-#   - someone else reviewed after the last push (once per newest review),
+#   - a person reviewed after the last push (once per newest review).
+#     Bot reviews (CodeRabbit & co.) get no tell: the agent's review
+#     loop already waits for them, and a tell per bot re-review (one
+#     per push) only re-read the PR mid-fix and burned tokens.
 #   - the stale bot labelled it (it closes the PR 7 days later; once
 #     per head sha).
 # Conflicts with dev get no tell: a rebase goes stale as dev moves and
@@ -30,7 +33,9 @@ _prs="$(timeout 60 gh pr list --state open --author @me --limit 100 \
       | unique | join(",")),
     ([.statusCheckRollup[]? | select(.status != null and .status != "COMPLETED")]
       | length),
-    ([.latestReviews[]? | select(.author.login != "'"$_me"'") | .submittedAt]
+    ([.latestReviews[]? | select(.author.login != "'"$_me"'"
+        and (.author.login | test("coderabbit|bot$|\\[bot\\]$") | not))
+      | .submittedAt]
       | max // ""),
     (if any(.labels[]?; .name == "stale") then "stale" else "" end)]
     | map(if . == "" then "-" else . end) | @tsv')" || exit 0
