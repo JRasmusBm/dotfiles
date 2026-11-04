@@ -92,7 +92,7 @@ _preview() {
 }
 
 _open() {
-  _sel="$(_index | fzf --reverse --tiebreak=index \
+  _sel="$(_index | fzf --reverse --exact --tiebreak=index \
     --delimiter='\t' --with-nth=6 \
     --header 'enter: go to chat  (› me, ‹ Claude)' \
     --preview "$0 _preview {2} {3} {4} {5}" \
