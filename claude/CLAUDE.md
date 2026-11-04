@@ -82,7 +82,9 @@ dialogs unless I ask to pick between options.
 
 My questions aren't instructions: "why X?", "could we Y?", "will
 that work if Z?" get an answer with the trade-off, then stop. Build
-only on "do it"; proactive means doing agreed work unasked.
+only on "do it"; proactive means doing agreed work unasked. A question
+that points out a flaw in your own work ("could we not have used X?")
+is a correction: if the answer is yes, fix it, then report.
 
 ## Communication
 
