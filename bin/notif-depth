@@ -83,8 +83,10 @@ def pings():
         arr, row = min(rows, key=lambda r: r[0])
         cls = row[7] if len(row) > 7 else ''
         items.append((arr, None, session(row[1]), cls, False))
-    start = min([i[0] for i in items if i[1] is not None] or
-                [i[0] for i in items] or [time.time()])
+    # The log began with its first clear; arrivals before then come
+    # from focus.log.
+    start = min([i[1] for i in items if i[1] is not None] or
+                [time.time()])
     return approx_before(start) + items
 
 
