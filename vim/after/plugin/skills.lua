@@ -4,18 +4,19 @@
 -- open at their source. No name: pick one (telescope via ui-select).
 
 local function skill_dirs()
+  local global = vim.fn.expand "~/.claude/skills"
   local dirs = {}
   local root = vim.fs.root(0, ".git") or vim.fn.getcwd()
   local dir = vim.fn.getcwd()
   while true do
-    table.insert(dirs, { label = "repo", path = dir .. "/.claude/skills" })
+    local path = dir .. "/.claude/skills"
+    if path ~= global then
+      table.insert(dirs, { label = "repo", path = path })
+    end
     if dir == root or dir == "/" then break end
     dir = vim.fs.dirname(dir)
   end
-  table.insert(dirs, {
-    label = "global",
-    path = vim.fn.expand "~/.claude/skills",
-  })
+  table.insert(dirs, { label = "global", path = global })
   return dirs
 end
 
