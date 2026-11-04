@@ -6,16 +6,18 @@
 #   merge    its PR is open, not draft, CLEAN, green and based on dev
 #            (a stacked PR is fyi until its base merges; wins over
 #            a question: the agent's offer rides along in the text)
-#   blocked  a permission prompt, its last message asks me, or it
-#            ran `ping-me "<what>"` this turn (wants my eyes now)
+#   blocked  a permission prompt, its last message asks me, or this
+#            turn it ran `ping-me "<what>"` (wants my eyes now) or
+#            parked for my decision (wt ra: send or skip the post;
+#            wt fx: needs my focus)
 #   fail     its PR has a failing check
 #   (merged) its PR is merged: the agent, not me, is told
 #            (pr-merged-tell; wt-sync retries)
 #   fyi      anything else ("done", nothing for me)
-#   fyi      also when it asks nothing, its PR isn't ready to merge
-#            and a background command or agent it started in the
-#            last 2h still runs: quiet, older rows kept; it wakes
-#            again when that ends and that stop is classified afresh
+#   (none)   it asks nothing, its PR isn't ready to merge, and a
+#            background command or agent it started in the last 2h
+#            still runs: older rows kept; it wakes again when that
+#            ends and that stop is classified afresh
 #   (none)   it ran wt done/cancel/rm since my last prompt and asks
 #            nothing: finished, so no ping
 
@@ -85,7 +87,8 @@ _after_local_command() {
     | last | .subtype // ""' 2>/dev/null | grep -qx local_command
 }
 
-# The message of the agent's last `ping-me "<what>"` this turn.
+# What the agent asked for this turn: its last `ping-me "<what>"`,
+# or a park for my decision (wt ra, wt fx).
 _ping_me() {
   test -f "$TRANSCRIPT" || return 0
   tail -300 "$TRANSCRIPT" | jq -rs '
@@ -94,8 +97,11 @@ _ping_me() {
     | [.[$from + 1:][] | .message.content[]?
         | select(.type == "tool_use" and .name == "Bash")
         | .input.command
-        | capture("(^|[;&|(]\\s*)ping-me +[\"\u0027](?<m>[^\"\u0027]+)")
-        | .m]
+        | (capture("(^|[;&|(]\\s*)ping-me +[\"\u0027](?<m>[^\"\u0027]+)").m,
+           (select(test("(^|[;&|(]\\s*)wt (ra|announce)( |$|;|&)"))
+             | "announce: send or skip?"),
+           (select(test("(^|[;&|(]\\s*)wt (fx|focus)( |$|;|&)"))
+             | "needs your focus"))]
     | last // ""' 2>/dev/null
 }
 
@@ -155,16 +161,11 @@ case "$_pr" in
     fi
     ;;
 esac
-# Still waiting on its own background work: a quiet inbox row (no
-# toast, sound or bell), so the worktree still pulls me back. Older
-# rows stay: a ping from before (wt ra, a question) keeps its rank.
+# Still waiting on its own background work and asks nothing: no
+# ping. Older rows stay (a question, a park for my decision).
 case "$_pr" in
   merge*) ;;
-  *) if [ -z "$_q" ] && _bg_pending; then
-       NOTIFY_CLASS=fyi notify "Claude: $CONTEXT" \
-         "waiting on its background work"
-       exit 0
-     fi ;;
+  *) [ -z "$_q" ] && _bg_pending && exit 0 ;;
 esac
 # Any newer ping supersedes this pane's old merge ping.
 case "$_pr" in
