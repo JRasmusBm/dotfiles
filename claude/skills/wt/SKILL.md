@@ -313,6 +313,10 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   --daily` on its first run from 08:00 each weekday: one batched ping for stale rows,
   up to 3 `check` pings carrying each row's state, none repeated
   within 3 days.
+- `btabs` — browser tabs as inventory: count, duplicates, by host;
+  `btabs tidy` closes duplicates and tabs of merged/closed PRs (logged,
+  `btabs reopen` undoes); `wt-sync` tidies once a weekday from 08:00
+  and logs the count every 5 minutes to `tabs.log`.
 - `M-$` — popup of sessions ranked by token burn (`tok-top
   --fzf`); Enter jumps to the session.
 - `M-o` / `notif` — fzf picker: pending panes (`●`, latest

@@ -51,3 +51,7 @@ done
 # Foreground: launchd kills what a job leaves behind when it exits.
 # Not due costs a date check; due runs once a day (~25 s).
 wt-cold --daily >/dev/null 2>&1
+# Browser tabs are inventory too: count them every 5th minute, and
+# close duplicates and finished PRs once a weekday from 08:00.
+btabs tidy --daily >/dev/null 2>&1
+test "$(( $(date +%-M) % 5 ))" != 0 || btabs log >/dev/null 2>&1

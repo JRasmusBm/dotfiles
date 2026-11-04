@@ -1,0 +1,210 @@
+#!/usr/bin/env python3
+"""Browser tabs as inventory: count them, close the ones that are done.
+
+  btabs              what's open: total, duplicates, done PRs, by host
+  btabs tidy [-n]    close duplicates (keeps the last copy) and tabs of
+                    merged or closed GitHub PRs; -n lists only
+  btabs tidy --daily  the same, once per weekday from 08:00 (wt-sync),
+                    before I start, so no tab vanishes while I read it
+  btabs reopen       reopen the last tidy's tabs
+  btabs log          append "epoch<TAB>count" to $LOCAL_CONFIG/tabs.log
+                    (wt-sync runs it every 5th minute)
+
+Browser: $TABS_BROWSER (default "Brave Browser"), any Chromium one that
+speaks AppleScript. Every closed URL is kept in
+$LOCAL_CONFIG/tabs-closed.log (epoch, batch, URL), so a tidy is undoable.
+"""
+import collections
+import json
+import os
+import re
+import subprocess
+import sys
+import time
+
+APP = os.environ.get('TABS_BROWSER', 'Brave Browser')
+CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
+    '~/.config/jrasmusbm')
+CLOSED = os.path.join(CONF, 'tabs-closed.log')
+COUNT_LOG = os.path.join(CONF, 'tabs.log')
+PR = re.compile(r'https://github\.com/([^/]+/[^/]+)/pull/(\d+)')
+
+
+def osa(script):
+    return subprocess.run(['osascript', '-e', script], capture_output=True,
+                          text=True, timeout=60).stdout
+
+
+def running():
+    return subprocess.run(['pgrep', '-f', f'/{APP}.app/Contents/MacOS'],
+                          capture_output=True).returncode == 0
+
+
+def tabs():
+    """[(window id, tab index 1-based, url)] in window order."""
+    if not running():
+        return []
+    out = osa(f'''set s to ""
+tell application "{APP}"
+  repeat with w in windows
+    set i to 0
+    repeat with t in tabs of w
+      set i to i + 1
+      set s to s & (id of w) & (character id 9) & i & (character id 9) ¬
+        & (URL of t) & (character id 10)
+    end repeat
+  end repeat
+end tell
+return s''')
+    rows = []
+    for ln in out.splitlines():
+        p = ln.split('\t')
+        if len(p) == 3:
+            rows.append((p[0], int(p[1]), p[2]))
+    return rows
+
+
+def norm(url):
+    # Same page = same URL without its fragment. A query is part of the
+    # page (searches, filters), except an artifact's share key.
+    url = url.split('#', 1)[0]
+    if re.match(r'https://claude\.ai/(code/)?artifact/', url):
+        url = url.split('?', 1)[0]
+    return url.rstrip('/')
+
+
+def pr_states(rows):
+    """'owner/repo#n' -> MERGED|CLOSED|OPEN, one gh call per PR."""
+    keys = {f'{m.group(1)}#{m.group(2)}' for _, _, u in rows
+            for m in [PR.match(u)] if m}
+    out = {}
+    for k in keys:
+        repo, n = k.split('#')
+        r = subprocess.run(['gh', 'pr', 'view', n, '-R', repo, '--json',
+                            'state', '-q', '.state'],
+                           capture_output=True, text=True, timeout=30)
+        out[k] = r.stdout.strip()
+    return out
+
+
+def plan(rows):
+    """Tabs to close: (row, reason)."""
+    close = []
+    last = {}
+    for r in rows:
+        last[norm(r[2])] = r
+    for r in rows:
+        if last[norm(r[2])] is not r:
+            close.append((r, 'duplicate'))
+    states = pr_states(rows)
+    dup = {id(r) for r, _ in close}
+    for r in rows:
+        m = PR.match(r[2])
+        if m and id(r) not in dup:
+            st = states.get(f'{m.group(1)}#{m.group(2)}')
+            if st in ('MERGED', 'CLOSED'):
+                close.append((r, f'PR {st.lower()}'))
+    return close
+
+
+def status():
+    rows = tabs()
+    if not rows:
+        print(f'{APP}: not running or no tabs')
+        return
+    n = collections.Counter(norm(u) for _, _, u in rows)
+    hosts = collections.Counter(re.sub(r'https?://([^/]+).*', r'\1', u)
+                                for _, _, u in rows)
+    wins = len({w for w, _, _ in rows})
+    print(f'{len(rows)} tabs in {wins} windows, '
+          f'{sum(v - 1 for v in n.values() if v > 1)} duplicates')
+    for h, c in hosts.most_common(8):
+        print(f'  {c:4}  {h}')
+    print('`btabs tidy -n` lists what tidy would close.')
+
+
+def tidy(dry):
+    rows = tabs()
+    close = plan(rows)
+    why = collections.Counter(r for _, r in close)
+    print(f'{len(rows)} tabs; closing {len(close)}: ' +
+          ', '.join(f'{c} {k}' for k, c in why.most_common()))
+    if dry:
+        for (w, i, u), r in close[:40]:
+            print(f'  {r:10} {u[:100]}')
+        return
+    batch = str(int(time.time()))
+    with open(CLOSED, 'a') as f:
+        for (w, i, u), r in close:
+            f.write(f'{batch}\t{r}\t{u}\n')
+    # Close from the highest index down so indexes stay valid.
+    by_win = collections.defaultdict(list)
+    for (w, i, u), _ in close:
+        by_win[w].append(i)
+    lines = [f'tell application "{APP}"']
+    for w, idx in by_win.items():
+        for i in sorted(idx, reverse=True):
+            lines.append(f'  close tab {i} of (first window whose id is {w})')
+    lines.append('end tell')
+    osa('\n'.join(lines))
+    print(f'{len(tabs())} tabs left; `btabs reopen` undoes it.')
+
+
+def reopen():
+    try:
+        rows = [ln.rstrip('\n').split('\t') for ln in open(CLOSED)]
+    except OSError:
+        print('nothing to reopen')
+        return
+    batch = rows[-1][0]
+    urls = [r[2] for r in rows if r[0] == batch and r[1] != 'duplicate']
+    if not urls:
+        print('last tidy closed only duplicates; nothing to reopen')
+        return
+    script = [f'tell application "{APP}"', '  set w to make new window']
+    for u in urls:
+        script.append(f'  make new tab at end of tabs of w with properties '
+                      f'{{URL:{json.dumps(u)}}}')
+    script.append('end tell')
+    osa('\n'.join(script))
+    print(f'reopened {len(urls)} tabs in a new window')
+
+
+def log():
+    if not running():
+        return
+    with open(COUNT_LOG, 'a') as f:
+        f.write(f'{int(time.time())}\t{len(tabs())}\n')
+
+
+def main():
+    a = sys.argv[1:]
+    cmd = a[0] if a else ''
+    if cmd == 'tidy' and '--daily' in a:
+        stamp = os.path.join(CONF, 'btabs-stamp')
+        now = time.localtime()
+        today = time.strftime('%Y-%m-%d', now)
+        try:
+            done = open(stamp).read().strip() == today
+        except OSError:
+            done = False
+        if done or now.tm_wday >= 5 or now.tm_hour < 8 or not running():
+            return
+        with open(stamp, 'w') as f:
+            f.write(today)
+        tidy(False)
+    elif cmd == 'tidy':
+        tidy('-n' in a)
+    elif cmd == 'reopen':
+        reopen()
+    elif cmd == 'log':
+        log()
+    elif cmd in ('', 'status'):
+        status()
+    else:
+        print(__doc__)
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
