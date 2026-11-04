@@ -832,6 +832,7 @@ _wt_evict_current() {
     && pwd)"
 
   if test "$_git_dir" = "$_common"; then
+    _wt_evict_leftover
     echo "Not in a worktree" >&2
     exit 1
   fi
@@ -853,6 +854,55 @@ _wt_evict_current() {
   cd "$_root"
   _switch_to "$_root"
   _wt_evict "$_branch" "$_wt_path" "$_cur_session"
+}
+
+# `wt rm .` from a removed worktree's dir: the dir comes back when
+# its session outlived the removal (a running Claude rewrites
+# .claude/ there), and git then sees the main checkout. Say it's
+# already removed and finish the job: drop the dir, kill the
+# session. Returns when cwd isn't such a dir; leaves a dir holding
+# anything besides .claude/ (work done after the removal).
+_wt_evict_leftover() {
+  _lo_cwd="$(pwd -P)"
+  case "$_lo_cwd" in
+    */.worktrees/?*) ;;
+    *) return 0 ;;
+  esac
+  _lo_root="${_lo_cwd%%/.worktrees/*}"
+  _lo_slug="${_lo_cwd#"$_lo_root"/.worktrees/}"
+  _lo_slug="${_lo_slug%%/*}"
+  _lo_dir="$_lo_root/.worktrees/$_lo_slug"
+  test -e "$_lo_dir/.git" && return 0
+  _lo_row="$(awk -F '\t' -v s="$_lo_slug" '$1 == s' \
+    "$(_registry_file)" 2>/dev/null | tail -1)"
+  test -n "$_lo_row" || return 0
+  _lo_branch="$(echo "$_lo_row" | cut -f2)"
+  _lo_date="$(echo "$_lo_row" | cut -f4)"
+  _lo_left="$(echo "$_lo_row" | cut -f5)"
+  echo "wt: $_lo_slug was already removed" \
+    "(${_lo_left:-removed} $_lo_date); undo with: wt resume $_lo_slug" >&2
+  if test -n "${_WT_STATE:-}" && test "$_WT_STATE" != "$_lo_left"; then
+    _linear "$_WT_STATE" "$_lo_branch" || true
+  fi
+  _lo_extra="$(ls -A "$_lo_dir" | $_grep -vx '.claude' || true)"
+  if test -n "$_lo_extra"; then
+    echo "wt: leaving $_lo_dir, it holds files written" \
+      "after the removal:" >&2
+    echo "$_lo_extra" | sed 's/^/  /' >&2
+    exit 1
+  fi
+  # By name, not the current session: a pane cd'd here from
+  # another session must not take that one down.
+  _lo_session="$(tmux-session-name-from-path "$_lo_dir")"
+  echo "wt: clearing its leftover dir and session" >&2
+  _notif_clear "$_lo_dir"
+  cd "$_lo_root"
+  _switch_to "$_lo_root"
+  nohup sh -c '
+    rm -rf "$1"
+    test -z "$2" || tmux kill-session -t "=$2" 2>/dev/null
+  ' sh "$_lo_dir" "$_lo_session" >/dev/null 2>&1 </dev/null &
+  exit 0
 }
 
 # `wt cancel`: close my open PRs from this branch (only mine: a
