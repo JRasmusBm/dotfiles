@@ -111,8 +111,8 @@ def approx_before(start):
             a = open_.pop(p[3], None)
             if a is not None:
                 out.append((a, t, p[3], '', True))
-    # Never seen before the log started: count as cleared then.
-    out += [(a, start, s, '', True) for s, a in open_.items()]
+    # Never seen before the log started: when they cleared is unknown,
+    # so they're left out rather than counted as one bulk clear.
     return out
 
 
