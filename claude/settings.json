@@ -52,6 +52,16 @@
             "timeout": 5
           }
         ]
+      },
+      {
+        "matcher": "Artifact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/artifact-ledger.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "PreToolUse": [

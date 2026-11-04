@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# artifacts [all|<query>] — artifacts published from Claude, across every
+# login (from the artifact-ledger hook). One row per page, by title
+# (scratchpad paths differ per session): the newest copy is `current`,
+# older copies on other logins `stale`. `*` marks the active login.
+#   artifacts          pages published from this dir (or under it)
+#   artifacts all      every page
+#   artifacts <query>  pages whose title, file or url match
+set -euo pipefail
+ledger="${LOCAL_CONFIG:-$HOME/.config}/artifacts.tsv"
+[ -s "$ledger" ] || { echo "no artifacts recorded yet ($ledger)"; exit 0; }
+me=$(jq -r '.oauthAccount.emailAddress // ""' ~/.claude.json)
+q="${1:-.}"
+gawk -F'\t' -v q="$q" -v pwd="$PWD" -v me="$me" '
+  q == "." && index($6, pwd) != 1 { next }
+  q != "." && q != "all" && index(tolower($4 " " $5 " " $3), tolower(q)) == 0 { next }
+  {
+    key = tolower($4)
+    if (!(key in first)) order[++n] = key
+    first[key] = 1
+    # latest publish per url, and newest url per page
+    ts[$3] = $1; login[$3] = $2; title[$3] = $4; page[$3] = key
+    if ($1 >= newest[key]) { newest[key] = $1; cur[key] = $3 }
+    urls[key] = urls[key] SUBSEP $3
+  }
+  END {
+    for (i = 1; i <= n; i++) {
+      k = order[i]; split(substr(urls[k], 2), us, SUBSEP)
+      delete seen
+      print title[cur[k]]
+      for (j in us) {
+        u = us[j]; if (u in seen) continue; seen[u] = 1
+        st = (u == cur[k]) ? "current" : "stale  "
+        mark = (login[u] == me) ? "*" : " "
+        printf "  %s %s %s %s  %s\n", st, strftime("%m-%d %H:%M", ts[u]),
+          mark, login[u], u
+      }
+    }
+  }' "$ledger"

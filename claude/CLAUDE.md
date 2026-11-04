@@ -152,8 +152,9 @@ macOS ships BSD awk and sed. Use `gawk` / `gsed` for GNU features
 Worktrees live at `${repo}/.worktrees/${branch}`, sessions are named
 by worktree slug, and work moves only through `wt` (never raw `git
 worktree add`). Load the `wt` skill before any `wt`, `notif` or
-`cswap` command or a question about the board, the inbox or where
-work runs; `work-management` for starting, parking or finishing work.
+`cswap` command, a question about the board, the inbox or where
+work runs, listing artifacts or one that reads "not found";
+`work-management` for starting, parking or finishing work.
 
 ## Dev stack
 

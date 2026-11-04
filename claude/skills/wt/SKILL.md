@@ -1,6 +1,6 @@
 ---
 name: wt
-description: "How my worktrees, board, notification inbox and Claude logins work: `wt` (add/fix/feat/review/rm/done/cancel/rt/rd/rp/ra/rb/fx/sz/ip/merged/night/resume/clean/pin), the board order files, `wt-sync` and `wt-tell` tells, `notif`/`notify` and the M-i/M-k/M-u/M-o/M-y keys, `cswap` accounts. MUST load before running any `wt`, `notif` or `cswap` command, before answering where work is happening or what is on the board, and before changing those scripts."
+description: "How my worktrees, board, notification inbox and Claude logins work: `wt` (add/fix/feat/review/rm/done/cancel/rt/rd/rp/ra/rb/fx/sz/ip/merged/night/resume/clean/pin), the board order files, `wt-sync` and `wt-tell` tells, `notif`/`notify` and the M-i/M-k/M-u/M-o/M-y keys, `cswap` accounts. MUST load before running any `wt`, `notif` or `cswap` command, before answering where work is happening or what is on the board, before listing artifacts or when one reads \"not found\" or \"no access\" (a login swap), and before changing those scripts."
 ---
 
 # wt, notifications, accounts
@@ -346,6 +346,13 @@ so the phone sees it under the new account (log:
 `$LOCAL_CONFIG/cswap-auto.log`; `cswap-auto -n` lists targets). `cswap list` shows usage; add an
 account with `/login` then `cswap add --alias <name>`.
 An artifact published before a swap reads "not found" after it
-unless I shared it with my other login (only the page's Share
-menu can, Claude can't): ask me to share it, or
-republish under the new login and update links to it.
+unless I shared it with my other login. Don't report that or ask
+me to share: republish it under the active login (no `url`) and
+from then on update that copy, never the one you can't reach.
+A session sees only its active login's artifacts; the
+`artifact-ledger.sh` hook logs every publish with its login, and
+`artifacts` (this dir; `all`; or a query) lists them across logins,
+newest copy `current`, older ones `stale`. Listing artifacts =
+Artifact `list` plus `artifacts`. Every artifact link you report
+names its login (`artifacts` shows it) unless it's shared, and
+when copies exist on both logins, say which is current.
