@@ -14,6 +14,9 @@
                     also closes "This artifact is private" tabs (an
                     artifact of my other Claude login) unless active
   btabs reopen      reopen the last batch closed by tidy or expire
+
+Call tabs (Meet, Zoom, Teams, Slack huddles, Whereby, Jitsi, Webex,
+Gather, Discord) are never closed; BTABS_KEEP adds a regex.
   btabs log          append "epoch<TAB>count" to $LOCAL_CONFIG/tabs.log
                     (wt-sync runs it every 5th minute)
 
@@ -38,6 +41,16 @@ OPENED = os.path.join(CONF, 'tabs-opened')     # epoch, url
 ACTIVE = os.path.join(CONF, 'tabs-active')     # url, last epoch active
 EXPIRE_S = int(os.environ.get('BTABS_EXPIRE_S', '300'))
 PR = re.compile(r'https://github\.com/([^/]+/[^/]+)/pull/(\d+)')
+# Never closed by tidy or expire: a call keeps its URL the whole time,
+# so "navigated away" can't protect it, and closing it hangs up.
+# BTABS_KEEP adds a regex of your own.
+KEEP = re.compile('|'.join(filter(None, [
+    r'^https://(meet\.google\.com|([a-z0-9-]+\.)?zoom\.us|'
+    r'teams\.(microsoft|live)\.com|app\.slack\.com/huddle|'
+    r'([a-z0-9-]+\.)?whereby\.com|meet\.jit\.si|'
+    r'([a-z0-9-]+\.)?webex\.com|app\.gather\.town|discord\.com/channels)',
+    os.environ.get('BTABS_KEEP', ''),
+])))
 
 
 def osa(script):
@@ -104,7 +117,7 @@ def plan(rows):
     for r in rows:
         last[norm(r[2])] = r
     for r in rows:
-        if last[norm(r[2])] is not r:
+        if last[norm(r[2])] is not r and not KEEP.search(r[2]):
             close.append((r, 'duplicate'))
     states = pr_states(rows)
     dup = {id(r) for r, _ in close}
@@ -218,7 +231,8 @@ def expire():
         seen[u] = now
     due = {norm(u) for t, u in opened if now - t >= EXPIRE_S
            and now - seen.get(norm(u), 0) >= EXPIRE_S}
-    rows = [r for r in tabs() if norm(r[2]) in due]
+    rows = [r for r in tabs() if norm(r[2]) in due
+            and not KEEP.search(r[2])]
     if rows:
         batch = str(now)
         with open(CLOSED, 'a') as f:
