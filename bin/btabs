@@ -10,7 +10,9 @@
                     (`browse` and $BROWSER point here)
   btabs expire      close shell-opened tabs older than 5 minutes that
                     haven't been the active tab for 5 minutes and still
-                    show the URL they opened with (wt-sync, every minute)
+                    show the URL they opened with (wt-sync, every minute);
+                    also closes "This artifact is private" tabs (an
+                    artifact of my other Claude login) unless active
   btabs reopen      reopen the last batch closed by tidy or expire
   btabs log          append "epoch<TAB>count" to $LOCAL_CONFIG/tabs.log
                     (wt-sync runs it every 5th minute)
@@ -179,9 +181,26 @@ return s''')
     return {norm(u) for u in out.splitlines() if u}
 
 
+def close_denied():
+    """Close artifact tabs that only say "This artifact is private"
+    (published under my other Claude login), unless one is the active
+    tab: nothing on them is readable, and sessions started before
+    CLAUDE_CODE_ARTIFACT_AUTO_OPEN=0 keep opening them."""
+    osa(f'''tell application "{APP}"
+  repeat with w in windows
+    set a to active tab index of w
+    repeat with i from (count of tabs of w) to 1 by -1
+      if i is not a and title of tab i of w starts with "Request access" ¬
+        and URL of tab i of w contains "claude.ai/" then close tab i of w
+    end repeat
+  end repeat
+end tell''')
+
+
 def expire():
     if not running():
         return
+    close_denied()
     now = int(time.time())
     try:
         opened = [ln.rstrip('\n').split('\t', 1) for ln in open(OPENED)]
