@@ -218,6 +218,11 @@ function claude() {
   # were 4.2% of 11-02's tokens, one review ran at 465k.
   [[ -z "$CLAUDE_CODE_AUTO_COMPACT_WINDOW" ]] \
     && local -x CLAUDE_CODE_AUTO_COMPACT_WINDOW=200000
+  # Artifacts open from the chat link, /artifacts or ctrl+], not as a
+  # new browser tab on every publish: with ~20 agents that left 304
+  # tabs, 142 of them artifact pages (11-04).
+  [[ -z "$CLAUDE_CODE_ARTIFACT_AUTO_OPEN" ]] \
+    && local -x CLAUDE_CODE_ARTIFACT_AUTO_OPEN=0
   [[ $# -eq 0 || "$1" == -* || "$1" == *" "* ]] \
     || { command claude "$@"; return; }
   # Private settings layered on ~/.claude/settings.json (set by an
