@@ -52,3 +52,9 @@
   autostash = true
 [includeIf "gitdir:~/projects/career/netlight/"]
   path = ~/projects/career/netlight/.gitconfig
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
