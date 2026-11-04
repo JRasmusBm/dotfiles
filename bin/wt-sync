@@ -48,4 +48,6 @@ for _repo in ${WT_SYNC_REPOS:-$(cat "$HOME/.config/wt-sync-repos" \
   jrb-hook "$_repo" sync
 done
 
-wt-cold --daily >/dev/null 2>&1 &
+# Foreground: launchd kills what a job leaves behind when it exits.
+# Not due costs a date check; due runs once a day (~25 s).
+wt-cold --daily >/dev/null 2>&1
