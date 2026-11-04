@@ -43,14 +43,19 @@ _last_text() {
     | last // ""' 2>/dev/null
 }
 
-# Background commands/agents launched in the last 2h with no
-# <task-notification> yet. The 2h bound keeps a task killed without
+# Background commands/agents launched in the last 2h that haven't
+# finished yet. The 2h bound keeps a task killed without
 # notice (session restarted) from muting pings for good.
 _bg_pending() {
   test -f "$TRANSCRIPT" || return 1
   _since=$(gdate -u -d '-2 hours' +%Y-%m-%dT%H:%M:%S)
-  _done=$(command grep -o '<task-id>[^<]*</task-id>' "$TRANSCRIPT" \
-    | sed 's/<[^>]*>//g' | jq -Rsc 'split("\n")')
+  # Done = its latest notification isn't a subagent's interim "is
+  # waiting on its own background work" stop.
+  _done=$(perl -ne 'while (m{<task-id>([^<]+)</task-id>(.*?)</summary>}g) {
+      print "$1\t", ($2 =~ /waiting on its own background work/
+        ? "wait" : "done"), "\n" }' "$TRANSCRIPT" \
+    | awk -F '\t' '{ s[$1] = $2 } END { for (k in s)
+        if (s[k] == "done") print k }' | jq -Rsc 'split("\n")')
   command grep -E 'backgroundTaskId|async_launched' "$TRANSCRIPT" \
     | jq -rs --arg since "$_since" --argjson done "${_done:-[]}" '
       [ .[] | select((.timestamp // "") >= $since)
