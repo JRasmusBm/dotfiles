@@ -12,10 +12,10 @@
 #   (merged) its PR is merged: the agent, not me, is told
 #            (pr-merged-tell; wt-sync retries)
 #   fyi      anything else ("done", nothing for me)
-#   (none)   it asks nothing, its PR isn't ready to merge, and a
-#            background command or agent it started in the last 2h
-#            is still running: it wakes again when that ends, and
-#            that stop is classified afresh
+#   fyi      also when it asks nothing, its PR isn't ready to merge
+#            and a background command or agent it started in the
+#            last 2h still runs: quiet, older rows kept; it wakes
+#            again when that ends and that stop is classified afresh
 #   (none)   it ran wt done/cancel/rm since my last prompt and asks
 #            nothing: finished, so no ping
 
@@ -155,11 +155,14 @@ case "$_pr" in
     fi
     ;;
 esac
-# Still waiting on its own background work, nothing for me yet.
+# Still waiting on its own background work: a quiet inbox row (no
+# toast, sound or bell), so the worktree still pulls me back. Older
+# rows stay: a ping from before (wt ra, a question) keeps its rank.
 case "$_pr" in
   merge*) ;;
   *) if [ -z "$_q" ] && _bg_pending; then
-       [ -z "$TMUX_PANE" ] || notif seen "$TMUX_PANE" all >/dev/null 2>&1 || true
+       NOTIFY_CLASS=fyi notify "Claude: $CONTEXT" \
+         "waiting on its background work"
        exit 0
      fi ;;
 esac
