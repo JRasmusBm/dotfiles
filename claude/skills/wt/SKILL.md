@@ -21,6 +21,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   the delete itself runs in the background. Then runs the
   repo's trusted `.jrb/wt-hook rm <slug>` (e.g. releasing
   the worktree's ports); `forget` runs it with `forget`.
+  `.` in a dir already removed (its session lived on and
+  Claude recreated `.claude/`) says so and drops dir +
+  session; more than `.claude/` there, it lists and keeps it.
 - `wt :` — fzf pick worktree to switch to. Lists from disk
   (`git worktree list`), so it always reflects reality;
   preview (`wt-preview`) shows branch, last commit, PR state,
