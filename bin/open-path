@@ -19,7 +19,7 @@ def main():
 
     if path.startswith("http"):
         if platform.system() == "Darwin":
-            run(["open", path])
+            run(["browse", path])
         else:
             run(["xdg-open", path])
         return

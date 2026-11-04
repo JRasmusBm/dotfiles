@@ -3,7 +3,7 @@
 set -e
 
 _git_open() {
-  xdg-open "https://github.com/$1" 2> /dev/null
+  browse "https://github.com/$1"
 }
 
 _git_open "$@"

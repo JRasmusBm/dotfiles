@@ -52,6 +52,8 @@ done
 # Not due costs a date check; due runs once a day (~25 s).
 wt-cold --daily >/dev/null 2>&1
 # Browser tabs are inventory too: count them every 5th minute, and
-# close duplicates and finished PRs once a weekday from 08:00.
+# close duplicates and finished PRs once a weekday from 08:00, and
+# shell-opened tabs 5 minutes after they last had focus.
 btabs tidy --daily >/dev/null 2>&1
+btabs expire >/dev/null 2>&1
 test "$(( $(date +%-M) % 5 ))" != 0 || btabs log >/dev/null 2>&1

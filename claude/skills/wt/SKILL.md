@@ -316,7 +316,10 @@ the calling pane's id, its `#S:#W.#P` for display, and its
 - `btabs` — browser tabs as inventory: count, duplicates, by host;
   `btabs tidy` closes duplicates and tabs of merged/closed PRs (logged,
   `btabs reopen` undoes); `wt-sync` tidies once a weekday from 08:00
-  and logs the count every 5 minutes to `tabs.log`.
+  and logs the count every 5 minutes to `tabs.log`. Tabs opened from
+  the shell (`browse`, `$BROWSER` so `gh … --web`, URL clicks via
+  `open-path`, `git open`) close 5 minutes after they last were the
+  active tab, unless navigated away (`btabs expire`, every minute).
 - `M-$` — popup of sessions ranked by token burn (`tok-top
   --fzf`); Enter jumps to the session.
 - `M-o` / `notif` — fzf picker: pending panes (`●`, latest

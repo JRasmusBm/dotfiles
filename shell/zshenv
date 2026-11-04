@@ -3,6 +3,8 @@
 export FZF_DEFAULT_OPTS="--preview 'preview {}'"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export XDG_CONFIG_HOME="$HOME/.config"
+# Shell-opened tabs close 5 minutes after they last had focus (btabs).
+export BROWSER=browse
 
 # Aliases
 alias "q"="exit"

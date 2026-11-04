@@ -1,0 +1,5 @@
+#!/bin/sh
+# browse URL... — open in the browser as a shell-opened tab: `btabs
+# expire` closes it 5 minutes after it last had focus. $BROWSER points
+# here, so `gh ... --web` goes through it too.
+exec btabs open "$@"
