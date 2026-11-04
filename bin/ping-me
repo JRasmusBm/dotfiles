@@ -1,0 +1,12 @@
+#!/bin/sh
+
+# ping-me "what to look at"
+#
+# An agent's explicit "I want your eyes now", even while its own
+# background work still runs (claude-notify stays quiet then by
+# default). Prints only: claude-notify finds this call in the turn
+# when the agent stops and pings with the message. A direct notify
+# here would be cleared by the next tool call's PostToolUse hook.
+
+[ -n "$1" ] || { echo "usage: ping-me \"what to look at\"" >&2; exit 2; }
+echo "ping-me: Rasmus gets pinged with this when your turn ends"

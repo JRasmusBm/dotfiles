@@ -6,7 +6,8 @@
 #   merge    its PR is open, not draft, CLEAN, green and based on dev
 #            (a stacked PR is fyi until its base merges; wins over
 #            a question: the agent's offer rides along in the text)
-#   blocked  a permission prompt, or its last message asks me
+#   blocked  a permission prompt, its last message asks me, or it
+#            ran `ping-me "<what>"` this turn (wants my eyes now)
 #   fail     its PR has a failing check
 #   (merged) its PR is merged: the agent, not me, is told
 #            (pr-merged-tell; wt-sync retries)
@@ -84,6 +85,20 @@ _after_local_command() {
     | last | .subtype // ""' 2>/dev/null | grep -qx local_command
 }
 
+# The message of the agent's last `ping-me "<what>"` this turn.
+_ping_me() {
+  test -f "$TRANSCRIPT" || return 0
+  tail -300 "$TRANSCRIPT" | jq -rs '
+    (map(.type == "user" and (.message.content | type) == "string")
+      | rindex(true) // -1) as $from
+    | [.[$from + 1:][] | .message.content[]?
+        | select(.type == "tool_use" and .name == "Bash")
+        | .input.command
+        | capture("(^|[;&|(]\\s*)ping-me +[\"\u0027](?<m>[^\"\u0027]+)")
+        | .m]
+    | last // ""' 2>/dev/null
+}
+
 # Since my last prompt, the agent closed its worktree (wt done,
 # cancel or rm, without error): it is finished, nothing for me.
 _closed_worktree() {
@@ -120,6 +135,7 @@ _q=""
 case "$_text" in
   *\?) _q="$(printf '%s\n' "$_text" | tail -1 | cut -c1-80)" ;;
 esac
+[ -n "$_q" ] || _q="$(_ping_me | cut -c1-80)"
 
 if [ -z "$_q" ] && _closed_worktree; then
   [ -z "$TMUX_PANE" ] || notif seen "$TMUX_PANE" all >/dev/null 2>&1 || true

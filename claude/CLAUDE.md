@@ -39,7 +39,10 @@ released/deployed?":
 confirm it is live, then run read-only checks that it behaves as
 intended (logs, replica, live bundle). Long pipelines, polls and
 browser loops run in a background agent; the main thread stays free
-to talk. A wait is one blocking command (`gh pr checks --watch`),
+to talk. A stop while your own background work runs doesn't
+ping me unless it ends in a question or you ran `ping-me
+"<what>"` that turn: use it when you want my eyes before the
+work ends. A wait is one blocking command (`gh pr checks --watch`),
 never a sleep loop, and a bot review is requested at most once per
 pushed commit. A finished subagent gets follow-ups only on its own
 result; a new task (review round, rebase, re-test, browser pass) goes
