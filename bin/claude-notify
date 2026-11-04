@@ -11,6 +11,10 @@
 #   (merged) its PR is merged: the agent, not me, is told
 #            (pr-merged-tell; wt-sync retries)
 #   fyi      anything else ("done", nothing for me)
+#   (none)   it asks nothing, its PR isn't ready to merge, and a
+#            background command or agent it started in the last 2h
+#            is still running: it wakes again when that ends, and
+#            that stop is classified afresh
 #   (none)   it ran wt done/cancel/rm since my last prompt and asks
 #            nothing: finished, so no ping
 
@@ -34,6 +38,23 @@ _last_text() {
     [ .[] | select(.type == "assistant")
       | .message.content[]? | select(.type == "text") | .text ]
     | last // ""' 2>/dev/null
+}
+
+# Background commands/agents launched in the last 2h with no
+# <task-notification> yet. The 2h bound keeps a task killed without
+# notice (session restarted) from muting pings for good.
+_bg_pending() {
+  test -f "$TRANSCRIPT" || return 1
+  _since=$(gdate -u -d '-2 hours' +%Y-%m-%dT%H:%M:%S)
+  _done=$(command grep -o '<task-id>[^<]*</task-id>' "$TRANSCRIPT" \
+    | sed 's/<[^>]*>//g' | jq -Rsc 'split("\n")')
+  command grep -E 'backgroundTaskId|async_launched' "$TRANSCRIPT" \
+    | jq -rs --arg since "$_since" --argjson done "${_done:-[]}" '
+      [ .[] | select((.timestamp // "") >= $since)
+        | .toolUseResult? | objects
+        | (.backgroundTaskId // (select(.status == "async_launched")
+            | .agentId)) // empty ]
+      | (. - $done | length) > 0' 2>/dev/null | grep -qx true
 }
 
 _pr_class() {
@@ -117,6 +138,14 @@ case "$_pr" in
       exit 0
     fi
     ;;
+esac
+# Still waiting on its own background work, nothing for me yet.
+case "$_pr" in
+  merge*) ;;
+  *) if [ -z "$_q" ] && _bg_pending; then
+       [ -z "$TMUX_PANE" ] || notif seen "$TMUX_PANE" all >/dev/null 2>&1 || true
+       exit 0
+     fi ;;
 esac
 # Any newer ping supersedes this pane's old merge ping.
 case "$_pr" in
