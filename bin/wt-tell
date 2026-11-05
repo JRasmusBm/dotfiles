@@ -11,12 +11,18 @@
 # reach its full size, so the gauge lags), and fails without
 # recording the tell, so the caller's next run tells it once Claude
 # is up. A worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check) with <ping>
-# once instead. Claude busy: fails too.
+# once instead. Claude busy: fails too. A tell or ping delivered ends
+# the worktree's `wt w8`: what it waited on has arrived.
 
 _root="$1" _key="$2" _msg="$3" _prompt="$4"
 test -n "$_root" && test -n "$_key" && test -n "$_prompt" \
   || { sed -n '3,6s/^# \{0,1\}//p' "$0" >&2; exit 2; }
 _told="${LOCAL_CONFIG:?}/wt-told"
+_w8_done() {
+  _wf="$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting"
+  test -f "$_wf" || return 0
+  awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
+}
 grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
 
 _pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
@@ -54,6 +60,7 @@ fi
 if test -z "$_pane"; then
   if ! grep -qxF "$_root	ping:$_key" "$_told" 2>/dev/null; then
     echo "$_root	ping:$_key" >> "$_told"
+    _w8_done
     ( cd "$_root" && TMUX_PANE= NOTIFY_CLASS=check \
       notify "$(basename "$_root")" "$_msg" )
   fi
@@ -62,6 +69,7 @@ fi
 claude-pane-idle "$_pane" || exit 1
 
 echo "$_root	$_key" >> "$_told"
+_w8_done
 notif seen "$_pane" all >/dev/null 2>&1 || true
 tmux send-keys -t "$_pane" -l "$_prompt"
 sleep 0.5

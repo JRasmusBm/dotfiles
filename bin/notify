@@ -5,9 +5,11 @@
 # NOTIFY_CLASS ranks it for `notif next` (M-i), most valuable stop
 # first: env (machine-wide: VPN, disk; one fix unblocks many
 # agents), merge (one keystroke ships a PR), blocked (an agent
-# waits on my answer), fail, check (verify after deploy), fyi
-# (nothing needed: inbox only, no toast, sound or bell). Unset
-# (git-w8, bw8, ...) pings as before and ranks after check.
+# waits on my answer), fail, check (verify after deploy), unset
+# (git-w8, bw8, ...), stalled (`wt-cold`: a work item stopped moving;
+# inbox only, no toast, sound or bell), fyi (nothing needed: inbox
+# only too). NOTIFY_CTX names the row's place when not called from a
+# pane (default: the cwd's basename).
 
 _title="${1:-Notification}"
 _msg="${2:-done}"
@@ -27,13 +29,14 @@ case "$_here" in
 esac
 
 _class="${NOTIFY_CLASS:-}"
-[ "$_class" = fyi ] || {
+case "$_class" in fyi|stalled) ;; *)
 osascript -e "display notification \"$_msg\" with title \"$_title\""
 afplay "$_sound" &
-}
+;; esac
 
 # Tmux bell for status bar highlight
-if [ -n "$TMUX_PANE" ] && [ "$_class" != fyi ]; then
+if [ -n "$TMUX_PANE" ] && [ "$_class" != fyi ] \
+  && [ "$_class" != stalled ]; then
   _tty="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_tty}')"
   if [ -n "$_tty" ]; then
     printf '\a' > "$_tty"
@@ -57,7 +60,7 @@ if [ -n "$LOCAL_CONFIG" ]; then
     _path="$(tmux display-message -p -t "$TMUX_PANE" \
       '#{pane_current_path}' 2>/dev/null)"
   else
-    _ctx="$(basename "$PWD")"
+    _ctx="${NOTIFY_CTX:-$(basename "$PWD")}"
     _path="$PWD"
   fi
   mkdir -p "$(dirname "$_inbox")"

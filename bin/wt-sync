@@ -10,8 +10,8 @@
 #     per head sha / review.
 # First, offline too: tmux-revive snapshots the Claude panes and, once
 # the tmux server died or restarted, brings them back a few at a time.
-# Once a weekday, first run from 08:00, wt-cold pings the board rows nothing else
-# brings back (no ping, no visit in 24h), best minute-for-minute first.
+# Weekdays 08:00-19:00, every 10th minute, wt-cold syncs the inbox
+# with every work item that stopped moving (a `stalled` row each).
 # On a phone hotspot it polls every 5th minute only; a poll without a
 # new deploy is ~10 KB. Android marks its hotspot's DHCP lease with
 # vendor option ANDROID_METERED; an iPhone's gateway is 172.20.10.1.
@@ -53,8 +53,8 @@ for _repo in ${WT_SYNC_REPOS:-$(cat "$HOME/.config/wt-sync-repos" \
 done
 
 # Foreground: launchd kills what a job leaves behind when it exits.
-# Not due costs a date check; due runs once a day (~25 s).
-wt-cold --daily >/dev/null 2>&1
+# Not due costs a stamp check; due runs ~25 s.
+wt-cold --sync >/dev/null 2>&1
 # Browser tabs are inventory too: count them every 5th minute, and
 # close duplicates and finished PRs once a weekday from 08:00, and
 # shell-opened tabs 5 minutes after they last had focus.

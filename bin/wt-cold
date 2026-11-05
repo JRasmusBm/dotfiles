@@ -1,48 +1,73 @@
 #!/usr/bin/env python3
-"""Bring cold board rows back to me, ranked by what a minute buys.
+"""Put every work item that stopped moving in my inbox, until it moves.
 
-  wt-cold            list cold rows, ranked (dry run)
-  wt-cold --ping     ping the top ones into the inbox now
-  wt-cold --daily    --ping once per weekday, first wt-sync run from 08:00
+  wt-cold            every item with its state and reason (dry run)
+  wt-cold --ping     sync the inbox: a `stalled` row per STALLED item
+  wt-cold --sync     --ping on weekdays 08:00-19:00, every 10 minutes
+                     (wt-sync, every minute)
+  wt-cold --brief    counts per state and the STALLED list (notif depth);
+                     reuses the last run's result when under 10 min old
 
-Cold = a board row outside SNOOZED/BLOCKED with a live worktree, no
-pending inbox ping and no tmux visit in 24h (`notif depth`'s list).
-Nothing else would bring it back.
+Items: every row of the board in each repo of wt-sync, in every section,
+with or without a worktree on disk; plus one batched item each for my
+open PRs not on the board and worktrees on disk with no board row.
 
-Rank, best first:
-  stale   PR merged or closed, or the worktree is gone, row still
-          parked: one batched ping (`wt done` / `wt cancel` / `wt e`)
-  ready   PR open, green and mergeable: nearly free throughput
-  fix     a fix branch stuck (PR conflicting, failing, draft, or no PR):
-          a customer keeps hitting it
-  work    anything else with commits or edits on disk
-  empty   nothing on disk beyond the base
-Ties: most tokens spent in the last 7 days (`tok-top`), since
-re-orienting is cheapest while it's fresh, then oldest visit.
+Each item is in exactly one state, checked in this order:
+  SNOOZED  `wt sz` until a date, or BLOCKED on a worktree that is
+  WAITING  `wt w8 <when> "<what>"` before its deadline (an agent may
+           poll meanwhile); or the agent waits on a background agent
+           or shell, for up to 60 minutes
+  ACTIVE   a Claude agent of the worktree is mid-turn, unless its pane
+           and branch haven't changed for 60 minutes (spinning)
+  STALLED  everything else, waiting on me included:
+             w8 deadline passed: "overdue: <what> (expected HH:MM)"
+             BLOCKED on a worktree: that worktree's state
+             BLOCKED on a ticket (ABC-123 in the reason): WAITING while
+             it is started in Linear and changed in the last workday
+             BLOCKED on free text: make it a ticket or snooze it
+             a pending inbox row on it: "waiting on you: <its message>"
+             else the one touch it needs, read from PR, disk and section
+Weekends don't count toward any elapsed time.
 
-Each ping is a `check` row on the worktree (M-i lands there) whose
-message carries the state, so I decide without asking an agent.
-At most WT_COLD_MAX (3) row pings a day plus the stale batch; a row
-pinged in the last 3 days is skipped so the queue moves.
+Pinging: one `stalled` row (`notify`, ranked after merge and blocked)
+per STALLED item with no pending row on it, once it has stalled for
+WT_STALL_MIN (30) minutes; an overdue w8 at once. A cleared row comes
+back after WT_STALL_MIN while the item is still STALLED. A row clears
+itself on the next run once its item is no longer STALLED, or is
+replaced when the touch it needs changed. Rows whose PR merged or closed
+while the board row is still live, rows with no worktree in a live
+section, unboarded PRs and orphan worktrees each go in one batched row
+per repo.
+
+State between runs: $LOCAL_CONFIG/wt-cold-state (JSON).
 """
 import argparse
+import hashlib
 import importlib.machinery
 import importlib.util
 import json
 import os
+import re
 import subprocess
 import sys
 import time
-from datetime import datetime
+import urllib.request
+from datetime import datetime, timedelta
 
 HERE = os.path.dirname(os.path.realpath(__file__))
 CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
     '~/.config/jrasmusbm')
 STAMP = os.path.join(CONF, 'wt-cold-stamp')
-PINGED = os.path.join(CONF, 'wt-cold-pinged')
-MAX = int(os.environ.get('WT_COLD_MAX', '3'))
-SKIP = {'SNOOZED', 'BLOCKED'}
-ORDER = ['stale', 'ready', 'fix', 'work', 'empty']
+STATE = os.path.join(CONF, 'wt-cold-state')
+LAST = os.path.join(CONF, 'wt-cold-last')
+STALL = int(os.environ.get('WT_STALL_MIN', '30')) * 60
+CAP = 3600
+STATES = ['STALLED', 'WAITING', 'ACTIVE', 'SNOOZED']
+# Sections where a merged PR or a missing worktree means the row is
+# left over, not on its way.
+LIVE = {'IN PROGRESS', 'TEAM REVIEW', 'PAUSED', 'BLOCKED', 'NEEDS FOCUS'}
+TICKET = re.compile(r'\b[A-Z][A-Z0-9]*-[0-9]+\b')
+NOW = time.time()
 
 
 def notif_depth():
@@ -54,240 +79,666 @@ def notif_depth():
     return mod
 
 
-def sh(*cmd, cwd=None):
+def sh(*cmd, cwd=None, timeout=60):
     try:
         return subprocess.run(cmd, cwd=cwd, capture_output=True, text=True,
-                              timeout=60).stdout
+                              timeout=timeout).stdout
     except (OSError, subprocess.TimeoutExpired):
         return ''
 
 
+def wk(a, b=None):
+    """Seconds from a to b (now) that fall on a weekday."""
+    b = NOW if b is None else b
+    if b <= a:
+        return 0
+    t, n = a, 0
+    while t < b:
+        d = datetime.fromtimestamp(t)
+        nxt = datetime.combine(d.date() + timedelta(days=1),
+                               datetime.min.time()).timestamp()
+        if d.weekday() < 5:
+            n += min(nxt, b) - t
+        t = nxt
+    return n
+
+
+def ago(sec):
+    h = sec / 3600
+    return f'{h / 24:.0f}d' if h >= 48 else f'{h:.0f}h' if h >= 1 \
+        else f'{sec / 60:.0f}m'
+
+
+def hm(t):
+    return datetime.fromtimestamp(t).strftime('%H:%M')
+
+
+def day(iso):
+    return iso[:10] if iso else '?'
+
+
+def parse_when(s):
+    for fmt in ('%Y-%m-%dT%H:%M', '%Y-%m-%d'):
+        try:
+            return datetime.strptime(s, fmt).timestamp()
+        except ValueError:
+            pass
+    return None
+
+
+def iso_ts(s):
+    try:
+        return datetime.fromisoformat(s.replace('Z', '+00:00')).timestamp()
+    except (ValueError, AttributeError):
+        return None
+
+
+def tsv(path):
+    try:
+        return [ln.rstrip('\n').split('\t') for ln in open(path)
+                if ln.strip()]
+    except OSError:
+        return []
+
+
 def worktrees(root):
-    """branch -> path."""
+    """branch -> path, for worktrees under <root>/.worktrees."""
     m, wt = {}, None
     for ln in sh('git', '-C', root, 'worktree', 'list',
                  '--porcelain').splitlines():
         if ln.startswith('worktree '):
             wt = ln[9:]
-        elif ln.startswith('branch refs/heads/') and wt:
+        elif ln.startswith('branch refs/heads/') and wt \
+                and '/.worktrees/' in wt:
             m[ln[18:]] = wt
     return m
 
 
 def prs(root):
-    """head branch -> my latest PR (open first)."""
+    """(head -> my latest PR, open first; open PRs), or (None, None)."""
     out = sh('gh', 'pr', 'list', '--author', '@me', '--state', 'all',
              '--limit', '400', '--json',
-             'number,headRefName,state,isDraft,createdAt', cwd=root)
+             'number,headRefName,state,isDraft,createdAt,mergedAt,closedAt',
+             cwd=root)
+    opn = sh('gh', 'pr', 'list', '--author', '@me', '--state', 'open',
+             '--limit', '100', '--json',
+             'number,headRefName,isDraft,mergeStateStatus,statusCheckRollup',
+             cwd=root)
+    try:
+        allp, opn = json.loads(out), json.loads(opn)
+    except ValueError:
+        return None, None
     best = {}
-    for p in json.loads(out or '[]'):
+    for p in allp:
         cur = best.get(p['headRefName'])
         rank = (p['state'] == 'OPEN', p['createdAt'])
         if not cur or rank > (cur['state'] == 'OPEN', cur['createdAt']):
             best[p['headRefName']] = p
-    return best
+    detail = {p['number']: p for p in opn}
+    for p in best.values():
+        p.update(detail.get(p['number'], {}))
+    return best, opn
 
 
-def merge_state(root, n):
-    # `pr list` reports UNKNOWN; only `pr view` computes it.
-    out = sh('gh', 'pr', 'view', str(n), '--json', 'mergeStateStatus',
-             '-q', '.mergeStateStatus', cwd=root)
-    return out.strip()
+def ci(pr):
+    """running / failing / green / none, and when the earliest run began."""
+    checks = pr.get('statusCheckRollup') or []
+    if not checks:
+        return 'none', None
+    run = fail = False
+    starts = []
+    for c in checks:
+        st = c.get('status') or ''
+        concl = (c.get('conclusion') or c.get('state') or '').upper()
+        if st and st != 'COMPLETED' or concl == 'PENDING':
+            run = True
+            t = iso_ts(c.get('startedAt') or '')
+            if t:
+                starts.append(t)
+        elif concl in ('FAILURE', 'TIMED_OUT', 'ERROR',
+                       'ACTION_REQUIRED', 'STARTUP_FAILURE'):
+            fail = True
+    return ('failing' if fail else 'running' if run else 'green'), \
+        min(starts) if starts else None
 
 
 def disk(path):
     dirty = len([ln for ln in sh('git', '-C', path, 'status',
                                  '--porcelain').splitlines() if ln])
+    base = 'origin/dev' if sh('git', '-C', path, 'rev-parse', '--verify',
+                              '--quiet', 'origin/dev') else 'origin/HEAD'
     ahead = sh('git', '-C', path, 'rev-list', '--count',
-               '@{u}..HEAD').strip()
-    if not ahead:
-        base = 'origin/dev' if sh('git', '-C', path, 'rev-parse', '--verify',
-                                  '--quiet', 'origin/dev') else 'origin/HEAD'
-        ahead = sh('git', '-C', path, 'rev-list', '--count',
-                   f'{base}..HEAD').strip()
-    return dirty, int(ahead or 0)
+               f'{base}..HEAD').strip()
+    head = sh('git', '-C', path, 'log', '-1', '--format=%H %ct').split()
+    return dirty, int(ahead or 0), head[0] if head else '', \
+        int(head[1]) if len(head) > 1 else 0
 
 
-def tokens():
-    m = {}
-    for ln in sh('tok-top', '--since', '7d', '--tsv', '--no-gh').splitlines():
+def panes():
+    """Claude panes: [(id, session, path)]."""
+    out = []
+    for ln in sh('tmux', 'list-panes', '-a', '-F',
+                 '#{pane_id}\t#{session_name}\t#{pane_current_command}'
+                 '\t#{pane_current_path}').splitlines():
         p = ln.split('\t')
-        try:
-            m[p[1]] = float(p[0])
-        except (ValueError, IndexError):
-            pass
-    return m
-
-
-def pinged_recently():
-    out, now = {}, time.time()
-    try:
-        for ln in open(PINGED):
-            s, t = ln.rstrip('\n').split('\t')
-            if now - int(t) < 3 * 86400:
-                out[s] = int(t)
-    except (OSError, ValueError):
-        pass
+        if len(p) == 4 and (p[2] == 'claude' or
+                            re.fullmatch(r'\d+\.\d+\.\d+', p[2])):
+            out.append((p[0], p[1], p[3]))
     return out
 
 
-def age(nd, sec):
-    return nd.age(sec)
+SPIN = re.compile(r'esc to interrupt')
+BG = re.compile(r'Waiting for \d+ background agent|'
+                r'\d+ (background )?shells? (still )?running|· \d+ shells? ·')
 
 
-def cold_rows(nd):
-    now = time.time()
-    visits = nd.last_visits()
-    pend = {i[2] for i in nd.pings() if i[1] is None}
-    rows = []
-    for root in nd.repo_roots():
-        repo = os.path.basename(root.rstrip('/'))
-        live, mine = worktrees(root), None
-        for sec, br in nd.board(repo):
-            if sec.upper() in SKIP:
-                continue
-            if br not in live:
-                # Row outlived its worktree: nothing on disk to visit.
-                v = visits.get(br.rsplit('/', 1)[-1])
-                if v is not None and now - v <= 86400:
-                    continue
-                rows.append(dict(root=root, repo=repo, sec=sec, branch=br,
-                                 path=None, slug=br.rsplit('/', 1)[-1],
-                                 visit=visits.get(br.rsplit('/', 1)[-1]),
-                                 pr=None, gone=True))
-                continue
-            path = live[br]
-            slug = os.path.basename(path)
-            if slug in pend:
-                continue
-            v = visits.get(slug)
-            if v is not None and now - v <= 86400:
-                continue
-            if mine is None:
-                mine = prs(root)
-            rows.append(dict(root=root, repo=repo, sec=sec, branch=br,
-                             path=path, slug=slug, visit=v,
-                             pr=mine.get(br)))
-    return rows
+def pane_state(pid):
+    """busy, background-wait, hash of the pane minus digits and spinner."""
+    txt = sh('tmux', 'capture-pane', '-p', '-t', pid, '-S', '-60')
+    lines = [ln for ln in txt.splitlines() if ln.strip()]
+    tail = '\n'.join(lines[-12:])
+    busy = bool(SPIN.search(tail))
+    bg = not busy and bool(BG.search(tail))
+    body = '\n'.join(ln for ln in lines[:-6] if not SPIN.search(ln))
+    h = hashlib.sha1(re.sub(r'\d', '', body).encode()).hexdigest()[:12]
+    return busy, bg, h
 
 
-def classify(r):
-    if r.get('gone'):
-        r['cls'], r['why'], r['dirty'], r['ahead'] = 'stale', 'no worktree', 0, 0
+def transcript(path):
+    """Newest main-chat write and newest subagent (mtime, birth)."""
+    d = os.path.join(os.path.expanduser('~/.claude/projects'),
+                     re.sub(r'[/.]', '-', path))
+    main, sub = 0, (0, 0)
+    try:
+        ents = os.listdir(d)
+    except OSError:
+        return main, sub
+    for e in ents:
+        p = os.path.join(d, e)
+        if e.endswith('.jsonl'):
+            main = max(main, os.path.getmtime(p))
+        sd = os.path.join(p, 'subagents')
+        if os.path.isdir(sd):
+            for s in os.listdir(sd):
+                if s.endswith('.jsonl'):
+                    st = os.stat(os.path.join(sd, s))
+                    if st.st_mtime > sub[0]:
+                        sub = (st.st_mtime,
+                               getattr(st, 'st_birthtime', st.st_mtime))
+    return main, sub
+
+
+def linear_key():
+    k = os.environ.get('LINEAR_API_KEY')
+    if k:
+        return k
+    try:
+        for ln in open(os.path.expanduser('~/.config/linear.env')):
+            m = re.match(r'\s*(?:export\s+)?LINEAR_API_KEY=(.*)', ln)
+            if m:
+                return m.group(1).strip().strip('"\'')
+    except OSError:
+        pass
+    return None
+
+
+_tickets = {}
+
+
+def ticket(tid):
+    """(state type, updatedAt epoch) or None when Linear can't say."""
+    if tid in _tickets:
+        return _tickets[tid]
+    res, key = None, linear_key()
+    if key:
+        q = json.dumps({'query': 'query($id:String!){issue(id:$id)'
+                        '{state{type} updatedAt}}', 'variables': {'id': tid}})
+        req = urllib.request.Request(
+            'https://api.linear.app/graphql', data=q.encode(),
+            headers={'Authorization': key,
+                     'Content-Type': 'application/json'})
+        try:
+            with urllib.request.urlopen(req, timeout=15) as r:
+                i = json.load(r)['data']['issue']
+            res = (i['state']['type'], iso_ts(i['updatedAt']))
+        except Exception:
+            res = None
+    _tickets[tid] = res
+    return res
+
+
+def load_state():
+    try:
+        return json.load(open(STATE))
+    except (OSError, ValueError):
+        return {}
+
+
+class Board:
+    """Everything one repo's items are judged on."""
+
+    def __init__(self, nd, root, inbox, claude):
+        self.root = root
+        self.repo = os.path.basename(root.rstrip('/'))
+        base = os.path.join(CONF, 'worktrees', self.repo)
+        self.rows = nd.board(self.repo)
+        self.live = worktrees(root)
+        self.prs, self.open = prs(root)
+        self.blocked = {r[0]: r for r in tsv(base + '.blocked')}
+        self.snoozed = {r[0]: r for r in tsv(base + '.snoozed')}
+        self.waiting = {r[0]: r for r in tsv(base + '.waiting')}
+        self.focus = {r[0]: r for r in tsv(base + '.needsfocus')}
+        self.inbox = inbox
+        self.claude = claude
+        self.items = {}
+        self.slug_of = {}
+        for sec, br in self.rows:
+            slug = os.path.basename(self.live[br]) if br in self.live \
+                else br.rsplit('/', 1)[-1]
+            self.slug_of[br] = slug
+            self.items[slug] = dict(repo=self.repo, root=root, sec=sec,
+                                    branch=br, slug=slug,
+                                    path=self.live.get(br))
+
+    def find(self, ref):
+        if ref in self.items:
+            return ref
+        return self.slug_of.get(ref) or next(
+            (s for s in self.items if ref and ref.rsplit('/', 1)[-1] == s),
+            None)
+
+
+def pending_for(it, inbox):
+    """Pending inbox rows on this item: (own stalled rows, others)."""
+    own, other = [], []
+    path, slug = it['path'] or '\0', it['slug']
+    ids = {p[0] for p in it.get('panes', [])}
+    for r in inbox:
+        r = r + [''] * (9 - len(r))
+        on = r[1] == slug or r[1].split(':', 1)[0] == slug \
+            or r[4] == path or r[4].startswith(path + '/') or r[5] in ids
+        if on:
+            (own if r[7] == 'stalled' else other).append(r)
+    return own, other
+
+
+def judge(b, it, st, seen=()):
+    """Set it['state'], it['why'] (and 'since', 'pin') for one item."""
+    if 'state' in it:
         return
-    pr = r['pr']
-    r['dirty'], r['ahead'] = disk(r['path'])
-    if pr and pr['state'] in ('MERGED', 'CLOSED'):
-        r['cls'] = 'stale'
-        r['why'] = f"#{pr['number']} {pr['state'].lower()}"
+    if it['slug'] in seen:
+        it.update(state='STALLED', why='blocked in a cycle: wt ip one')
         return
-    if pr and pr['state'] == 'OPEN':
-        ms = merge_state(r['root'], pr['number'])
-        r['why'] = f"#{pr['number']} {'draft' if pr['isDraft'] else ms.lower()}"
-        if ms == 'CLEAN' and not pr['isDraft']:
-            r['cls'] = 'ready'
+    seen = seen + (it['slug'],)
+    s = st.setdefault(f"{b.repo}/{it['slug']}", {})
+    slug, sec = it['slug'], it['sec'].upper()
+
+    sz = b.snoozed.get(slug)
+    until = parse_when(sz[2]) if sz and len(sz) > 2 else None
+    if until and until > NOW:
+        it.update(state='SNOOZED', why=f'until {sz[2].replace("T", " ")}')
+        return
+    if sec == 'SNOOZED' and not sz:
+        it.update(state='SNOOZED', why='under SNOOZED, no date: wt sz')
+        return
+
+    w8 = b.waiting.get(slug)
+    if w8 and len(w8) > 3:
+        dl = parse_when(w8[2]) or 0
+        if dl > NOW:
+            it.update(state='WAITING', why=f'on {w8[3]} until {hm(dl)}')
+            s['moved'] = NOW
             return
+        it.update(state='STALLED', since=dl, now=True,
+                  why=f'overdue: {w8[3]} (expected {hm(dl)}): investigate')
+        return
+
+    path = it['path']
+    it['panes'] = [p for p in b.claude if p[1] == slug or (
+        path and (p[2] == path or p[2].startswith(path + '/')))]
+    dirty = ahead = 0
+    head, ctime = '', 0
+    if path:
+        dirty, ahead, head, ctime = disk(path)
+    main, sub = transcript(path) if path else (0, (0, 0))
+    busy = bg = False
+    hashes = []
+    for pid, _, _ in it['panes']:
+        pb, pg, ph = pane_state(pid)
+        busy, bg = busy or pb, bg or pg
+        hashes.append(ph)
+    if not busy and sub[0] and NOW - sub[0] < 600:
+        bg = True
+    h = ','.join(sorted(hashes))
+    if busy:
+        if s.get('hash') != h or s.get('head') != head:
+            s['hash'], s['head'], s['hash_at'] = h, head, NOW
+        s.pop('bg_at', None)
+        if wk(s['hash_at']) < CAP:
+            it.update(state='ACTIVE', why='agent mid-turn')
+            s['moved'] = NOW
+            return
+        it.update(state='STALLED', since=s['hash_at'],
+                  why=f"agent spinning? no pane change or commit for "
+                      f"{ago(wk(s['hash_at']))}")
+        return
+    s.pop('hash', None)
+
+    pr = (b.prs or {}).get(it['branch'])
+    gone = not path
+    closed = pr and pr['state'] in ('MERGED', 'CLOSED')
+    if sec in LIVE and (gone or closed):
+        what = 'no worktree' if gone else \
+            f"#{pr['number']} {pr['state'].lower()}"
+        it.update(state='STALLED', why=f'left over: {what}', batch='stale')
+        return
+
+    blk = b.blocked.get(slug) or (sec == 'BLOCKED' and [slug, '', '', ''])
+    if blk:
+        blk = blk + [''] * (4 - len(blk))
+        if not blk[2] and re.fullmatch(r'\S+/\S+', blk[3]):
+            blk[2] = blk[3]
+        ref = b.find(blk[2]) or b.find(blk[3])
+        if ref and ref != slug:
+            dep = b.items[ref]
+            judge(b, dep, st, seen)
+            if dep['state'] == 'STALLED':
+                it.update(state='STALLED', since=dep.get('since'),
+                          why=f"blocked by {ref[:30]}, which is stalled: "
+                              f"{dep['why']}")
+            else:
+                it.update(state=dep['state'],
+                          why=f"blocked by {ref[:30]}: "
+                              f"{dep['state'].lower()} {dep['why']}")
+                if dep['state'] != 'SNOOZED':
+                    s['moved'] = NOW
+            return
+        if blk[2] and not ref:
+            it.update(state='STALLED', now=True,
+                      why=f'blocker {blk[2][:40]} is gone: wt ip')
+            return
+        tids = TICKET.findall(blk[3])
+        if not tids:
+            it.update(state='STALLED', now=True,
+                      why='make the blocker a ticket or wt sz <date>: '
+                          f'{blk[3][:50] or "no reason recorded"}')
+            return
+        tid = tids[0]
+        t = ticket(tid)
+        if t is None:
+            it.update(state='STALLED', now=True,
+                      why=f"couldn't read {tid}")
+        elif t[0] == 'started' and t[1] and wk(t[1]) < 86400:
+            it.update(state='WAITING', why=f'on {tid}, in progress')
+            s['moved'] = NOW
+        else:
+            when = datetime.fromtimestamp(t[1]).strftime('%m-%d') \
+                if t[1] else '?'
+            it.update(state='STALLED', now=True,
+                      why=f'{tid} idle since {when}: nudge?')
+        return
+
+    if bg:
+        s.setdefault('bg_at', min(main or NOW, sub[1] or NOW))
+        if wk(s['bg_at']) < CAP:
+            it.update(state='WAITING',
+                      why=f"on a background agent or shell "
+                          f"({ago(NOW - s['bg_at'])})")
+            s['moved'] = NOW
+            return
+        it.update(state='STALLED', since=s['bg_at'] + CAP,
+                  why=f"background agent overdue "
+                      f"({ago(NOW - s['bg_at'])}): investigate")
+        return
+    s.pop('bg_at', None)
+
+    agent = 'agent idle' if it['panes'] else 'no agent'
+    if pr and pr['state'] == 'OPEN':
+        n, ms = pr['number'], pr.get('mergeStateStatus', '')
+        if ms in ('', 'UNKNOWN') and not pr.get('isDraft'):
+            # `pr list` leaves it UNKNOWN until something computes it.
+            ms = sh('gh', 'pr', 'view', str(n), '--json',
+                    'mergeStateStatus', '-q', '.mergeStateStatus',
+                    cwd=b.root).strip()
+        c, _ = ci(pr)
+        if pr.get('isDraft'):
+            why = f'#{n} draft, {agent}: brief or drop'
+        elif ms == 'DIRTY':
+            why = f'#{n} conflicting: rebase'
+        elif ms == 'CLEAN':
+            why = f'#{n} clean+green: ship?'
+        elif c == 'failing':
+            why = f'#{n} CI failing: fix'
+        elif c == 'running':
+            why = f'#{n} CI running, no wt w8: brief the agent'
+        elif ms == 'BEHIND':
+            why = f'#{n} behind base: rebase'
+        elif ms == 'BLOCKED':
+            why = f'#{n} waits on review: nudge reviewer?' \
+                if sec == 'TEAM REVIEW' else f'#{n} needs review: wt rt?'
+        else:
+            why = f'#{n} {ms.lower() or "open"}, {agent}: next step?'
+    elif sec == 'TO ANNOUNCE':
+        why = f"merged {day(pr and pr.get('mergedAt'))}: announce"
+    elif sec == 'PROD REVIEW':
+        why = 'verify in prod'
+    elif sec == 'READY TO DEPLOY':
+        why = 'merged: ship it' if closed else 'ready to deploy: ship?'
+    elif dirty or ahead:
+        why = f'{dirty} dirty files, {ahead} commits, no PR, {agent}: ' \
+              'brief or drop'
     else:
-        r['why'] = 'no PR'
-    on_disk = r['dirty'] or r['ahead']
-    if on_disk:
-        r['why'] += f", {r['ahead']} commits, {r['dirty']} files changed"
-    is_fix = r['branch'].split('/', 1)[0] == 'fix'
-    r['cls'] = 'fix' if is_fix else 'work' if on_disk or pr else 'empty'
+        why = f'nothing on disk, {agent}: brief, snooze or drop'
+    if sec == 'NEEDS FOCUS':
+        f = b.focus.get(slug)
+        why = f'needs focus: {(f[2] if f and len(f) > 2 else why)[:70]}'
+    elif sec == 'PAUSED':
+        why = f'paused, {why}'
+    it.update(state='STALLED', why=why,
+              since=max(main, ctime, s.get('moved', 0)))
 
 
-ASK = {'ready': 'ship?', 'fix': 'finish, hand to an agent, or drop?',
-       'work': 'finish, snooze or drop?', 'empty': 'start, snooze or drop?'}
-
-
-def ranked():
+def collect():
     nd = notif_depth()
-    rows = cold_rows(nd)
-    for r in rows:
-        classify(r)
-    tok = tokens()
-    for r in rows:
-        r['tok'] = tok.get(r['slug'], 0)
-    rows.sort(key=lambda r: (ORDER.index(r['cls']), -r['tok'],
-                             r['visit'] or 0))
-    return nd, rows
+    inbox = tsv(nd.INBOX)
+    claude = panes()
+    st = load_state()
+    boards, batches = [], []
+    for root in nd.repo_roots():
+        b = Board(nd, root, inbox, claude)
+        for it in b.items.values():
+            judge(b, it, st)
+            _, other = pending_for(it, inbox)
+            if it['state'] == 'STALLED' and other and not it.get('batch'):
+                it['why'] = f'waiting on you: {other[-1][3][:70]}'
+                it['pin'] = True
+        boards.append(b)
+        stale = [it for it in b.items.values() if it.get('batch')]
+        if stale:
+            names = ', '.join(f"{i['slug'][:28]} ({i['why'][11:]})"
+                              for i in stale[:6])
+            more = f' +{len(stale) - 6}' if len(stale) > 6 else ''
+            batches.append(dict(
+                ctx=f'{b.repo}:stale', root=root, n=len(stale),
+                title=f'{len(stale)} left-over board rows',
+                why=f'{names}{more}: wt done / wt cancel each '
+                    '(wt e for one with no worktree), or wt ip'))
+        if b.open is not None:
+            onb = {br for _, br in b.rows}
+            loose = [p for p in b.open if p['headRefName'] not in onb]
+            if loose:
+                batches.append(dict(
+                    ctx=f'{b.repo}:loose-prs', root=root, n=len(loose),
+                    title=f'{len(loose)} open PRs not on the board',
+                    why=', '.join(f"#{p['number']}" for p in loose[:10]) +
+                    ': adopt (wt add <branch>) or close'))
+        onb = {br for _, br in b.rows}
+        orph = [os.path.basename(p) for br, p in b.live.items()
+                if br not in onb]
+        if orph:
+            batches.append(dict(
+                ctx=f'{b.repo}:orphans', root=root, n=len(orph),
+                title=f'{len(orph)} worktrees with no board row',
+                why=', '.join(o[:28] for o in orph[:6]) +
+                ': adopt (wt :) or wt rm'))
+    keep = {f"{b.repo}/{s}" for b in boards for s in b.items}
+    st = {k: v for k, v in st.items() if k in keep}
+    with open(STATE + '.tmp', 'w') as f:
+        json.dump(st, f)
+    os.replace(STATE + '.tmp', STATE)
+    return nd, inbox, boards, batches
 
 
-def label(nd, r):
-    now = time.time()
-    seen = f"cold {nd.age(now - r['visit'])}" if r['visit'] else 'never visited'
-    tok = f", {r['tok']:.0f}M tok/7d" if r['tok'] >= 1 else ''
-    return f"{seen} · {r['why']}{tok}"
+def last_clears(nd):
+    """ctx/session -> when its last stalled row was cleared."""
+    out = {}
+    for arr, clr, row in nd.read_rows(nd.LOG, True):
+        if len(row) > 7 and row[7] == 'stalled':
+            for k in (row[1], row[1].split(':', 1)[0]):
+                out[k] = max(out.get(k, 0), clr)
+    return out
 
 
-def notify(path, title, msg):
-    env = dict(os.environ, NOTIFY_CLASS='check', NOTIFY_MODE='sticky')
+def notify(cwd, ctx, title, msg):
+    env = dict(os.environ, NOTIFY_CLASS='stalled', NOTIFY_CTX=ctx)
     env.pop('TMUX_PANE', None)
-    subprocess.run(['notify', title, msg], cwd=path, env=env,
+    env.pop('NOTIFY_MODE', None)
+    subprocess.run(['notify', title, msg], cwd=cwd, env=env,
                    capture_output=True, timeout=30)
 
 
-def ping(nd, rows):
-    recent = pinged_recently()
-    stale = [r for r in rows if r['cls'] == 'stale']
-    todo = [r for r in rows if r['cls'] != 'stale'
-            and r['slug'] not in recent][:MAX]
-    now = int(time.time())
-    done = []
-    if stale:
-        by_root = {}
-        for r in stale:
-            by_root.setdefault(r['root'], []).append(r)
-        for root, rs in by_root.items():
-            names = ', '.join(f"{r['slug'][:28]} ({r['why']})" for r in rs[:6])
-            more = f' +{len(rs) - 6}' if len(rs) > 6 else ''
-            notify(root, f'{len(rs)} stale board rows',
-                   f'PR merged or closed, row still parked: {names}{more}.'
-                   ' wt done / wt cancel each (wt e for a row with no worktree),'
-                   ' or wt ip if work remains.')
-    for r in todo:
-        notify(r['path'], f"Cold: {r['slug'][:50]}",
-               f"{label(nd, r)}: {ASK[r['cls']]}")
-        done.append(r['slug'])
-    # notify only refreshes the status bar from inside a pane.
+def drop(ctx):
+    subprocess.run(['notif', 'seen', ctx, 'stalled'], capture_output=True,
+                   timeout=30)
+
+
+def ping(nd, inbox, boards, batches):
+    clears = last_clears(nd)
+    want = {}
+    for b in boards:
+        for it in b.items.values():
+            if it['state'] != 'STALLED' or it.get('batch') \
+                    or it.get('pin'):
+                continue
+            since = it.get('since') or 0
+            if not it.get('now') and wk(since) < STALL:
+                continue
+            want[it['slug']] = (it['path'] or b.root, it['slug'],
+                                it['why'])
+    for x in batches:
+        want[x['ctx']] = (x['root'], x['title'], x['why'])
+    pend = {}
+    for r in inbox:
+        if len(r) > 7 and r[7] == 'stalled':
+            pend.setdefault(r[1], []).append(r[3])
+    dropped = sent = 0
+    for ctx, msgs in pend.items():
+        w = want.get(ctx)
+        if not w or msgs[-1] != w[2]:
+            drop(ctx)
+            dropped += 1
+            if w:
+                clears[ctx] = 0
+    for ctx, (cwd, title, msg) in want.items():
+        if ctx in pend and pend[ctx][-1] == msg:
+            continue
+        if ctx not in pend and wk(clears.get(ctx, 0)) < STALL:
+            continue
+        notify(cwd, ctx, title, msg)
+        sent += 1
     subprocess.run(['tmux', 'refresh-client', '-S'], capture_output=True)
-    with open(PINGED, 'a') as f:
-        for s in done:
-            f.write(f'{s}\t{now}\n')
-    return len(stale), done
+    return sent, dropped
+
+
+def flat(boards):
+    return [it for b in boards for it in b.items.values()]
+
+
+def summary(items, batches):
+    n = {s: sum(1 for i in items if i['state'] == s) for s in STATES}
+    out = ' · '.join(f'{s} {n[s]}' for s in STATES)
+    if batches:
+        out += f" (+{len(batches)} batched)"
+    return out
+
+
+def line(it):
+    sec = it['sec'][:14]
+    return f"  {it['slug'][:50]:50} {sec:14} {it['why']}"
+
+
+def save_last(items, batches):
+    data = dict(at=NOW, items=[{k: it[k] for k in
+                                ('slug', 'sec', 'state', 'why')}
+                               for it in items], batches=batches)
+    with open(LAST + '.tmp', 'w') as f:
+        json.dump(data, f)
+    os.replace(LAST + '.tmp', LAST)
+
+
+def brief():
+    try:
+        d = json.load(open(LAST))
+        if NOW - d['at'] > 600:
+            raise ValueError
+        items, batches = d['items'], d['batches']
+    except (OSError, ValueError, KeyError):
+        _, _, boards, batches = collect()
+        items = flat(boards)
+        save_last(items, batches)
+    print(summary(items, batches))
+    stalled = [i for i in items if i['state'] == 'STALLED']
+    for i in stalled[:15]:
+        print(line(i))
+    if len(stalled) > 15:
+        print(f'  … {len(stalled) - 15} more (wt-cold)')
+    for x in batches:
+        print(f"  {x['title']}")
 
 
 def due():
     now = datetime.now()
-    if now.weekday() >= 5 or now.hour < 8:
+    if now.weekday() >= 5 or not 8 <= now.hour < 19:
         return False
     try:
-        return open(STAMP).read().strip() != now.date().isoformat()
+        return NOW - os.path.getmtime(STAMP) >= 590
     except OSError:
         return True
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    ap.add_argument('--ping', action='store_true')
-    ap.add_argument('--daily', action='store_true')
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument('--ping', action='store_true')
+    g.add_argument('--sync', action='store_true')
+    g.add_argument('--brief', action='store_true')
     o = ap.parse_args()
-    if o.daily:
+    if o.brief:
+        return brief()
+    if o.sync:
         if not due():
             return
-        with open(STAMP, 'w') as f:
-            f.write(datetime.now().date().isoformat())
-    nd, rows = ranked()
-    if o.ping or o.daily:
-        n_stale, done = ping(nd, rows)
-        print(f'pinged {len(done)} cold rows, {n_stale} stale in a batch')
+        open(STAMP, 'w').close()
+    nd, inbox, boards, batches = collect()
+    items = flat(boards)
+    save_last(items, batches)
+    if o.ping or o.sync:
+        sent, dropped = ping(nd, inbox, boards, batches)
+        print(f'{summary(items, batches)}: {sent} rows sent, '
+              f'{dropped} cleared')
         return
-    for c in ORDER:
-        rs = [r for r in rows if r['cls'] == c]
+    print(summary(items, batches))
+    for s in STATES:
+        rs = sorted((i for i in items if i['state'] == s),
+                    key=lambda i: i['why'])
         if rs:
-            print(f'\n{c} ({len(rs)})')
-            for r in rs:
-                print(f"  {r['slug'][:52]:52}  {label(nd, r)}")
+            print(f'\n{s} ({len(rs)})')
+            for i in rs:
+                print(line(i))
+    if batches:
+        print(f'\nBATCHED ({len(batches)})')
+        for x in batches:
+            print(f"  {x['title']}: {x['why']}")
 
 
 if __name__ == '__main__':

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""How deep I get into my notification inbox, and which board rows
-nothing brings back to me.
+"""How deep I get into my notification inbox, and which work items
+stopped moving.
 
   notif depth [--days N] [--tsv] [--repo R]
 
@@ -13,9 +13,8 @@ cleared together. Sources:
 - `$LOCAL_CONFIG/focus.log`          before the log existed: `notif-in`
   is an arrival, the next `notif seen` of that session its clear
   (approximate, marked `~`)
-- the board `$LOCAL_CONFIG/worktrees/<repo>` (default: the first repo in
-  `~/.config/wt-sync-repos`) and `git worktree list`,
-  for rows with no visit (`tmux` focus-log events) in a while
+- `wt-cold --brief`: every work item counted per state (STALLED,
+  WAITING, ACTIVE, SNOOZED) and the STALLED ones with their reason
 
 Per workday: pings in, cleared, pending at end of day, the most
 pending at once, and the median minutes a cleared ping waited.
@@ -263,29 +262,11 @@ def main():
               f"{r['cleared']:>7}  {r['eod']:>11}  {r['peak']:>4}  {w:>8}")
     if any(r['approx'] for r in rows):
         print('~ before the clear log: rebuilt from focus.log')
-    # Board rows nothing brings back: no pending ping, no visit 24h+.
-    m, visits = slugs(o.repo), last_visits()
-    pinged = {i[2] for i in pend}
-    cold = []
-    for sec, br in board(o.repo):
-        if sec.upper() in ('SNOOZED', 'BLOCKED'):
-            continue
-        sl = m.get(br, br.rsplit('/', 1)[-1])
-        if sl in pinged:
-            continue
-        v = visits.get(sl)
-        if v is None or now - v > 24 * 3600:
-            cold.append((v or 0, sec, sl))
-    cold.sort()
-    print(f'\nBoard rows with no ping and no visit in 24h: {len(cold)}')
-    for v, sec, sl in cold[:15]:
-        print(f"  {age(now - v) if v else 'never':>5}  {sec[:14]:14} "
-              f"{sl[:58]}")
-    if len(cold) > 15:
-        print(f'  … {len(cold) - 15} more')
-    if any(not c[0] for c in cold):
-        print('never = no visit since focus.log began')
-
+    # Every work item by state (wt-cold): what is STALLED pings.
+    print()
+    sys.stdout.flush()
+    subprocess.run([os.path.join(os.path.dirname(
+        os.path.realpath(__file__)), 'wt-cold'), '--brief'])
 
 if __name__ == '__main__':
     sys.exit(main())

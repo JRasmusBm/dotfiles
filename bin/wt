@@ -120,6 +120,18 @@ _board_has_section() {
     END { exit !f }' "$(_order_file)"
 }
 
+# What each waiting worktree waits on and until when (`wt w8`):
+# slug<TAB>branch<TAB>deadline (YYYY-MM-DDTHH:MM)<TAB>what<TAB>start.
+_waiting_file() {
+  echo "$LOCAL_CONFIG/worktrees/$(_repo_name).waiting"
+}
+
+_w8_drop() {
+  _wf="$(_waiting_file)"
+  test -f "$_wf" || return 0
+  awk -F '\t' -v s="$1" '$1 != s' "$_wf" | sponge "$_wf"
+}
+
 _snooze_drop() {
   _sf="$(_snoozed_file)"
   test -f "$_sf" || return 0
@@ -993,6 +1005,7 @@ _wt_evict() {
   _of_drop_line "$_ln" "$_of"
   _unblock_dependents "$_slug"
   _snooze_drop "$_slug"
+  _w8_drop "$_slug"
   _nf_drop "$_slug"
   _notif_clear "$_wt_path"
 
@@ -1044,6 +1057,7 @@ _wt_park() {
   _branch="$(git branch --show-current)"
   _block_drop "$_wt_name"
   _snooze_drop "$_wt_name"
+  _w8_drop "$_wt_name"
   _board_move "$_branch" "$_wt_name" "$1"
   _linear "$2" "$_branch" || true
   test "$1" = 'IN PROGRESS' \
@@ -1148,6 +1162,7 @@ _wt_snooze() {
     SNOOZED) _from='' ;;
   esac
   _snooze_drop "$_self"
+  _w8_drop "$_self"
   printf '%s\t%s\t%s\t%s\t%s\n' "$_self" "$_branch" "$_until" "${_from:--}" \
     "$(date +%s)" >> "$(_snoozed_file)"
   _board_move "$_branch" "$_self" 'SNOOZED'
@@ -1169,6 +1184,42 @@ _snooze_timer() {
   nohup sh -c 'while [ "$(date +%s)" -lt "$1" ]; do sleep 30; done
     cd "$2" && exec "$3" wake' \
     sh "$_st_at" "$2" "$_st_wt" >/dev/null 2>&1 &
+}
+
+# The current worktree waits on <what> (a deploy, CI, a review, a
+# colleague's answer) until <when>: a duration (`1h`, `30m`, `+2
+# hours`) or a time (`15:30`, `tomorrow 9am`). Until then `wt-cold`
+# counts it WAITING and sends no stalled ping; after it, the row is
+# STALLED with "overdue: <what>", and a detached timer runs
+# `wt-cold --ping` at the deadline so that lands on time. `ip`, `rt`,
+# `rd`, `rp`, `ra`, `sz`, `done`, `rm` and any `wt-tell` delivered to
+# the worktree (the event arrived) end the wait.
+_wt_w8() {
+  _require_worktree
+  _self="$(basename "$(git rev-parse --show-toplevel)")"
+  if test -z "${1:-}" || test -z "${2:-}"; then
+    echo "wt: usage: wt w8 <1h|30m|15:30|...> \"<what>\"" >&2
+    exit 1
+  fi
+  _w8_in="$(echo "$1" | sed -E 's/^\+?([0-9]+) ?h$/+\1 hours/;
+    s/^\+?([0-9]+) ?m$/+\1 minutes/')"
+  _until="$(gdate -d "$_w8_in" +%FT%H:%M 2>/dev/null)" || _until=""
+  if test -z "$_until"; then
+    echo "wt: can't read '$1' as a duration or time" >&2
+    exit 1
+  fi
+  if test "$(gdate -d "$_until" +%s)" -le "$(date +%s)"; then
+    echo "wt: $(echo "$_until" | tr T ' ') is not in the future" >&2
+    exit 1
+  fi
+  _w8_drop "$_self"
+  printf '%s\t%s\t%s\t%s\t%s\n' "$_self" "$(git branch --show-current)" \
+    "$_until" "$(printf '%s' "$2" | tr '\t\n' '  ')" "$(date +%s)" \
+    >> "$(_waiting_file)"
+  _w8_at=$(gdate -d "$_until" +%s)
+  nohup sh -c 'while [ "$(date +%s)" -lt "$1" ]; do sleep 30; done
+    exec wt-cold --ping' sh "$_w8_at" >/dev/null 2>&1 &
+  echo "wt: waiting on $2 until $(echo "$_until" | tr T ' ')" >&2
 }
 
 # Pin the current worktree to Alt-N (`tsp pin`), as
@@ -1501,7 +1552,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|fx|sz|night|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|fx|sz|w8|night|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
 }
 
 # Snoozed worktrees whose date has come wake up on any wt run.
@@ -1538,6 +1589,7 @@ case "${1:-}" in
   rb) shift; _wt_block "$@" ;;
   fx|focus) shift; _wt_focus "$@" ;;
   sz|snooze) shift; _wt_snooze "$@" ;;
+  w8|wait) shift; _wt_w8 "$@" ;;
   night) shift; exec wt-night "$@" ;;
   wake) _wt_wake ;;
   ip) _wt_park 'IN PROGRESS' 'In Progress' ;;

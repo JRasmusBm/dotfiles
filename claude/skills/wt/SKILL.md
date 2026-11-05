@@ -1,6 +1,6 @@
 ---
 name: wt
-description: "How my worktrees, board, notification inbox and Claude logins work: `wt` (add/fix/feat/review/rm/done/cancel/rt/rd/rp/ra/rb/fx/sz/ip/merged/night/resume/clean/pin), the board order files, `wt-sync` and `wt-tell` tells, `notif`/`notify` and the M-i/M-k/M-u/M-o/M-y keys, `cswap` accounts. MUST load before running any `wt`, `notif` or `cswap` command, before answering where work is happening or what is on the board, before listing artifacts or when one reads \"not found\" or \"no access\" (a login swap), and before changing those scripts."
+description: "How my worktrees, board, notification inbox and Claude logins work: `wt` (add/fix/feat/review/rm/done/cancel/rt/rd/rp/ra/rb/fx/sz/w8/ip/merged/night/resume/clean/pin), the board order files, `wt-sync` and `wt-tell` tells, `notif`/`notify` and the M-i/M-k/M-u/M-o/M-y keys, `cswap` accounts. MUST load before running any `wt`, `notif` or `cswap` command, before answering where work is happening or what is on the board, before listing artifacts or when one reads \"not found\" or \"no access\" (a login swap), and before changing those scripts."
 ---
 
 # wt, notifications, accounts
@@ -149,6 +149,14 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt ip` — move the current worktree back to `# IN
   PROGRESS`, ticket → In Progress (clears a block;
   `rt`/`rd`/`rp` clear it too).
+- `wt w8 <duration|time> "<what>"` (`wait`) — the worktree
+  waits on an event until a deadline (`45m`, `2h`, `15:00`),
+  in `<repo>.waiting`. Agents: before starting any wait or poll
+  (deploy, CI, review, a colleague's answer, logs), run `wt w8
+  <your estimate> "<what>"`. When the event arrives, `wt ip`.
+  Past the deadline it pings "overdue: <what>: investigate".
+  Cleared by `ip`/`rt`/`rd`/`rp`/`ra`/`sz`/`done`/`rm` and by
+  any delivered `wt-tell`.
 - `wt merged` — its PR merged: parks the worktree in `# PROD
   REVIEW` (ticket → Needs live verification) when the repo's
   hook says it's already shipping to production (`jrb-hook
@@ -319,15 +327,29 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   command finishes ("done" / "FAILED (exit N)").
 - `notif depth` — the inbox as inventory: pending now with ages,
   per workday pings in / cleared / pending at end of day / peak /
-  median wait (cleared rows kept in `notifications.log`), and board
-  rows with no ping and no visit in 24h, which nothing will bring
-  back to me.
-- `wt-cold` — those cold rows, ranked by what a minute buys (stale
-  row with a merged/closed PR, green mergeable PR, stuck fix, work on
-  disk, empty; ties by recent token spend). `wt-sync` runs `wt-cold
-  --daily` on its first run from 08:00 each weekday: one batched ping for stale rows,
-  up to 3 `check` pings carrying each row's state, none repeated
-  within 3 days.
+  median wait (cleared rows kept in `notifications.log`), then
+  `wt-cold --brief`: work items per state and the STALLED list.
+- `wt-cold` — stalled work reaches me. The design follows
+  Goldratt's The Goal: my attention is the constraint, so it must
+  never idle while work waits in front of it. Every item is active,
+  waiting, snoozed or stalled. Stalled pings until touched, so an
+  empty inbox means nothing is waiting on me. Don't add rules that
+  let work go quiet without a state. States, checked in order:
+  SNOOZED (`wt sz` to a future date; the only parking), WAITING (a
+  `wt w8` before its deadline, beating everything else; else a
+  background agent/shell under 60 min), ACTIVE (agent mid-turn; 60
+  min with no pane change or commit = STALLED "spinning?"), STALLED
+  (the rest, incl. waiting on me). BLOCKED inherits its blocker's
+  state; blocked on a ticket = WAITING while it's started and
+  touched within a workday (Linear), else STALLED; a free-text block
+  is STALLED until it's a ticket or snoozed. Each STALLED item gets
+  one silent `stalled` row (ranked below merge/blocked, above fyi)
+  saying the next move; a pending row of its own makes it "waiting
+  on you: …" instead. Re-pings `WT_STALL_MIN` (30) weekday-minutes
+  after a clear; auto-clears once it isn't stalled. Batched rows:
+  stale board rows, open PRs off the board, worktrees off the
+  board. `wt-sync` runs it every 10 min, weekdays 08–19; bare
+  `wt-cold` is the dry run.
 - `btabs` — browser tabs as inventory: count, duplicates, by host;
   `btabs tidy` closes duplicates and tabs of merged/closed PRs (logged,
   `btabs reopen` undoes); `wt-sync` tidies once a weekday from 08:00
@@ -356,7 +378,8 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   its rows (also what the reply hooks run). `notif seen-path
   <dir>` drops every row at or under a dir; `wt rm`/`done`/
   `clean`/`rb`/`rt`/`rd`/`rp` run it for the worktree (not
-  `ip`: that's picking work back up). `notif clear` —
+  `ip`: that's picking work back up). `notif seen <key>
+  stalled` drops only that key's `stalled` rows. `notif clear` —
   empty the inbox.
 
 `bin/notify` only appends (atomic single-line `>>`, safe
