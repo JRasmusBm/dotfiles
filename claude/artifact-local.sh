@@ -4,12 +4,12 @@
 # link I can't follow. So publishes there are refused and the page is
 # opened locally instead, and logged to the artifact ledger with its
 # file:// path so `artifacts` still lists it. The logins, one per line,
-# live in ~/.config/artifact-local-logins (private overlay).
+# live in ~/.config/borrowed-logins (private overlay).
 input=$(cat)
 action=$(jq -r '.tool_input.action // "publish"' <<<"$input")
 [ "$action" = publish ] || exit 0
 login=$(jq -r '.oauthAccount.emailAddress // ""' ~/.claude.json)
-grep -qixF -- "$login" "$HOME/.config/artifact-local-logins" 2>/dev/null ||
+grep -qixF -- "$login" "$HOME/.config/borrowed-logins" 2>/dev/null ||
   exit 0
 
 file=$(jq -r '.tool_input.file_path // ""' <<<"$input")

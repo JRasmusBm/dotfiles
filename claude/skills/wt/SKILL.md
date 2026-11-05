@@ -362,10 +362,13 @@ from then on update that copy, never the one you can't reach.
 A session sees only its active login's artifacts; the
 `artifact-ledger.sh` hook logs every publish with its login, and
 `artifacts` (this dir; `all`; or a query) lists them across logins,
-newest copy `current`, older ones `stale`. Logins I can't open
-claude.ai with (`~/.config/artifact-local-logins`, overlay) never
-publish: `artifact-local.sh` refuses, opens the file locally and logs
-it as a `file://` row; report that path and SendUserFile it. Listing artifacts =
+newest copy `current`, older ones `stale`. Borrowed logins (someone
+else's, `~/.config/borrowed-logins`, overlay) never publish:
+`artifact-local.sh` refuses, opens the file locally and logs
+it as a `file://` row; report that path and SendUserFile it. They
+never write to Slack either (`slack-borrowed.sh` denies the
+connector's send/react/canvas tools, which act as that person): hand
+me the full text plus the target permalink to paste. Listing artifacts =
 Artifact `list` plus `artifacts`. Every artifact link you report
 names its login (`artifacts` shows it) unless it's shared, and
 when copies exist on both logins, say which is current.

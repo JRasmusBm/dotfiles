@@ -104,6 +104,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "mcp__.*[Ss]lack.*__slack_(send_message|send_message_draft|schedule_message|add_reaction|create_canvas|update_canvas|create_conversation)",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/slack-borrowed.sh",
+            "timeout": 5
+          }
+        ]
       }
     ],
     "SessionEnd": [
