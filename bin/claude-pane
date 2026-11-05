@@ -7,6 +7,7 @@
 # claude-pane open <sid>  the live pane, else resume <sid> in a new
 #                         window of its checkout's tmux session
 #                         (created if missing); print that pane
+# claude-pane map         every live chat: <pane><TAB><sid><TAB><cwd>
 #
 # A Claude chat's identity is its session id, not the pane it runs
 # in: panes get killed and reused, and the main checkout's session
@@ -14,13 +15,15 @@
 # inbox (`notif`), `chats` (M-/) and `slack-inbox` watches keep the
 # id and ask here where it is now.
 #
-# Live: ~/.claude/sessions/<pid>.json (sessionId, cwd, tmux
-# "sess:@win.%pane") of a running pid whose ancestry holds that
-# pane's shell (pane ids restart with the tmux server).
+# Live: ${CLAUDE_CONFIG_DIR:-~/.claude}/sessions/<pid>.json (sessionId,
+# cwd, tmux "sess:@win.%pane") of a running pid whose ancestry holds
+# that pane's shell (pane ids restart with the tmux server).
 # Gone: the cwd comes from its transcript's first row.
 
+_cd="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+
 _live() {
-  for _f in "$HOME"/.claude/sessions/*.json; do
+  for _f in "$_cd"/sessions/*.json; do
     test -f "$_f" || continue
     _pid="$(basename "$_f" .json)"
     kill -0 "$_pid" 2>/dev/null || continue
@@ -44,12 +47,12 @@ _live() {
 }
 
 _cwd() {
-  for _f in "$HOME"/.claude/sessions/*.json; do
+  for _f in "$_cd"/sessions/*.json; do
     test -f "$_f" || continue
     jq -r --arg s "$1" 'select(.sessionId == $s) | .cwd // empty' \
       "$_f" 2>/dev/null
   done | grep -m1 . && return 0
-  _t="$(find "$HOME/.claude/projects" -mindepth 2 -maxdepth 2 \
+  _t="$(find "$_cd/projects" -mindepth 2 -maxdepth 2 \
     -name "$1.jsonl" 2>/dev/null | head -1)"
   test -n "$_t" || return 1
   grep -m1 -F '"cwd":"' "$_t" | jq -r '.cwd // empty' 2>/dev/null \
@@ -57,13 +60,40 @@ _cwd() {
 }
 
 _of() {
-  for _f in "$HOME"/.claude/sessions/*.json; do
+  for _f in "$_cd"/sessions/*.json; do
     test -f "$_f" || continue
     kill -0 "$(basename "$_f" .json)" 2>/dev/null || continue
     jq -r --arg p "$1" \
       'select((.tmux // "") | endswith("." + $p)) | .sessionId // empty' \
       "$_f" 2>/dev/null
   done | grep -m1 .
+}
+
+_map() {
+  _ps="$(ps -A -o pid=,ppid=)"
+  _panes="$(tmux list-panes -a -F '#{pane_id} #{pane_pid}' 2>/dev/null)"
+  for _f in "$_cd"/sessions/*.json; do
+    test -f "$_f" || continue
+    _pid="$(basename "$_f" .json)"
+    kill -0 "$_pid" 2>/dev/null || continue
+    jq -r '[(.tmux // "" | sub(".*\\."; "")), .sessionId // "", .cwd // ""]
+      | @tsv' "$_f" 2>/dev/null | while IFS="$(printf '\t')" read -r _p _s _c
+    do
+      case "$_p" in %*) ;; *) continue ;; esac
+      _shell="$(printf '%s\n' "$_panes" \
+        | awk -v p="$_p" '$1 == p { print $2 }')"
+      test -n "$_shell" || continue
+      printf '%s\n' "$_ps" | awk -v pid="$_pid" -v sh="$_shell" '
+        { up[$1] = $2 }
+        END {
+          for (p = pid; p > 1 && n < 6; n++) {
+            if (p == sh) exit 0
+            p = up[p]
+          }
+          exit 1
+        }' && printf '%s\t%s\t%s\n' "$_p" "$_s" "$_c"
+    done
+  done
 }
 
 _open() {
@@ -89,9 +119,10 @@ _open() {
 }
 
 case "${1:-}" in
-  "") sed -n '3,10s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
+  "") sed -n '3,11s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
   cwd) _cwd "${2:?sid}" ;;
   of) _of "${2:?pane}" ;;
   open) _open "${2:?sid}" ;;
+  map) _map ;;
   *) _live "$1" ;;
 esac

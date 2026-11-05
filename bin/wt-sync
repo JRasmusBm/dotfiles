@@ -8,6 +8,8 @@
 #   - every 5th minute, wt-pr-watch tells the agent of a worktree whose
 #     open PR has failing CI or a review newer than its last push, once
 #     per head sha / review.
+# First, offline too: tmux-revive snapshots the Claude panes and, once
+# the tmux server died or restarted, brings them back a few at a time.
 # Once a weekday, first run from 08:00, wt-cold pings the board rows nothing else
 # brings back (no ping, no visit in 24h), best minute-for-minute first.
 # On a phone hotspot it polls every 5th minute only; a poll without a
@@ -20,6 +22,8 @@ _metered() {
   ipconfig getpacket "$_if" 2>/dev/null | grep -q ANDROID_METERED \
     || route -n get default | grep -q 'gateway: 172\.20\.10\.1$'
 }
+
+tmux-revive >/dev/null 2>&1
 
 if _metered && test "$(( $(date +%-M) % 5 ))" != 0; then
   exit 0

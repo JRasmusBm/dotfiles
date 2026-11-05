@@ -223,6 +223,17 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 Sessions are always named by worktree slug (the main
 checkout by repo name).
 
+The tmux server dying or restarting (crash, `kill-server`,
+upgrade) doesn't strand the Claude chats: each `wt-sync` run
+snapshots every Claude pane (session, window, cwd, sid) and,
+once it sees another server (or none), `tmux-revive` rebuilds
+the sessions under their old names and runs `claude --resume
+<sid>` (`--continue` without a sid) in `cli`, 3 a minute and
+only while memory is free, once per dead server, then sends one
+ping summing up revived and failed (`tmux-revive.log`). Panes
+it didn't build are never touched. To keep a deliberate
+`kill-server` dead, run `tmux-revive forget` right after it.
+
 Order files at `$LOCAL_CONFIG/worktrees/<repo>` are the
 board: sections under `# Foo`/`Foo:` headings. `add`/`fix`/
 `feat` append to `# IN PROGRESS` (reusing a freed slot
