@@ -342,7 +342,9 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   (the rest, incl. waiting on me). BLOCKED inherits its blocker's
   state; blocked on a ticket = WAITING while it's started and
   touched within a workday (Linear), else STALLED; a free-text block
-  is STALLED until it's a ticket or snoozed. Each STALLED item gets
+  is STALLED until it's a ticket or snoozed. Blocked on a stalled
+  worktree, it has no row of its own: the blocker's row says "+N
+  blocked on this". Each other STALLED item gets
   one silent `stalled` row (ranked below merge/blocked, above fyi)
   saying the next move; a pending row of its own makes it "waiting
   on you: …" instead. Re-pings `WT_STALL_MIN` (30) weekday-minutes

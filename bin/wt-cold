@@ -31,14 +31,15 @@ Weekends don't count toward any elapsed time.
 
 Pinging: one `stalled` row (`notify`, ranked after merge and blocked)
 per STALLED item with no pending row on it, once it has stalled for
-WT_STALL_MIN (30) minutes; an overdue w8 at once. A cleared row comes
-back after WT_STALL_MIN while the item is still STALLED. A row clears
-itself on the next run once its item is no longer STALLED, or is
-replaced when the touch it needs changed; rows carry a ref (NOTIFY_REF)
-so this holds after a jump re-keyed them onto a pane. Rows whose PR
-merged or closed while the board row is still live, rows with no
-worktree in a live section, unboarded PRs and orphan worktrees each go
-in one batched row per repo.
+WT_STALL_MIN (30) minutes; an overdue w8 at once. An item blocked on a
+stalled worktree gets none: the blocker's row says "+N blocked on
+this". A cleared row comes back after WT_STALL_MIN while the item is
+still STALLED. A row clears itself on the next run once its item is no
+longer STALLED, or is replaced when the touch it needs changed; rows
+carry a ref (NOTIFY_REF) so this holds after a jump re-keyed them onto
+a pane. Rows whose PR merged or closed while the board row is still
+live, rows with no worktree in a live section, unboarded PRs and
+orphan worktrees each go in one batched row per repo.
 
 State between runs: $LOCAL_CONFIG/wt-cold-state (JSON).
 """
@@ -444,9 +445,9 @@ def judge(b, it, st, seen=()):
             dep = b.items[ref]
             judge(b, dep, st, seen)
             if dep['state'] == 'STALLED':
+                # Its why and ping are folded into the blocker's (fold).
                 it.update(state='STALLED', since=dep.get('since'),
-                          why=f"blocked by {ref[:30]}, which is stalled: "
-                              f"{dep['why']}")
+                          dep=ref, why=f'blocked by {ref[:30]}')
             else:
                 it.update(state=dep['state'],
                           why=f"blocked by {ref[:30]}: "
@@ -539,6 +540,32 @@ def judge(b, it, st, seen=()):
               since=max(main, ctime, s.get('moved', 0)))
 
 
+def fold(b):
+    """An item blocked on a stalled worktree pings through its blocker:
+    one row for the blocker, naming how many wait on it."""
+    def root(it):
+        seen = set()
+        while it.get('dep') and it['slug'] not in seen:
+            seen.add(it['slug'])
+            it = b.items[it['dep']]
+        return it
+    roots = {}
+    for it in b.items.values():
+        if it.get('dep'):
+            r = root(it)
+            roots.setdefault(r['slug'], []).append(it)
+    for slug, deps in roots.items():
+        r = b.items[slug]
+        for it in deps:
+            if not it.get('pin'):
+                via = '' if it['dep'] == slug else f', via {it["dep"][:20]}'
+                it['why'] = f"blocked by {slug[:30]}{via}, which is " \
+                    f"stalled: {r['why']}"
+        n = len(deps)
+        r['why'] += f', +{n} blocked on this' if r.get('batch') \
+            else f' (+{n} blocked on this)'
+
+
 def collect():
     nd = notif_depth()
     inbox = tsv(nd.INBOX)
@@ -554,6 +581,7 @@ def collect():
             if it['state'] == 'STALLED' and other and not it.get('batch'):
                 it['why'] = f'waiting on you: {other[-1][3][:70]}'
                 it['pin'] = True
+        fold(b)
         boards.append(b)
         stale = [it for it in b.items.values() if it.get('batch')]
         if stale:
@@ -623,7 +651,7 @@ def ping(nd, inbox, boards, batches):
     for b in boards:
         for it in b.items.values():
             if it['state'] != 'STALLED' or it.get('batch') \
-                    or it.get('pin'):
+                    or it.get('pin') or it.get('dep'):
                 continue
             since = it.get('since') or 0
             if not it.get('now') and wk(since) < STALL:
