@@ -354,7 +354,9 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   onto a pane doesn't strand it). Batched rows:
   stale board rows, open PRs off the board, worktrees off the
   board. `wt-sync` runs it every 10 min, weekdays 08–19; bare
-  `wt-cold` is the dry run.
+  `wt-cold` is the dry run. Each pinging run appends its counts to
+  `stalled.log` (epoch, stalled, waiting, active, snoozed, inbox
+  pending), which the my-impact daily review reads.
 - `btabs` — browser tabs as inventory: count, duplicates, by host;
   `btabs tidy` closes duplicates and tabs of merged/closed PRs (logged,
   `btabs reopen` undoes); `wt-sync` tidies once a weekday from 08:00

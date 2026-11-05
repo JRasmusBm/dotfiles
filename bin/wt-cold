@@ -43,7 +43,9 @@ a pane. Rows whose PR merged or closed while the board row is still
 live, rows with no worktree in a live section, unboarded PRs and
 orphan worktrees each go in one batched row per repo.
 
-State between runs: $LOCAL_CONFIG/wt-cold-state (JSON).
+State between runs: $LOCAL_CONFIG/wt-cold-state (JSON). Each --ping /
+--sync run appends its counts to $LOCAL_CONFIG/stalled.log: epoch,
+stalled, waiting, active, snoozed, inbox pending.
 """
 import argparse
 import hashlib
@@ -64,6 +66,7 @@ CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
 STAMP = os.path.join(CONF, 'wt-cold-stamp')
 STATE = os.path.join(CONF, 'wt-cold-state')
 LAST = os.path.join(CONF, 'wt-cold-last')
+COUNTS = os.path.join(CONF, 'stalled.log')
 STALL = int(os.environ.get('WT_STALL_MIN', '30')) * 60
 CAP = 3600
 STATES = ['STALLED', 'WAITING', 'ACTIVE', 'SNOOZED']
@@ -739,6 +742,15 @@ def ping(nd, inbox, boards, batches):
     return sent, dropped
 
 
+def log_counts(nd, items):
+    """One line per pinging run: epoch, stalled, waiting, active,
+    snoozed, inbox pending (distinct keys, as `notif count`)."""
+    n = [sum(1 for i in items if i['state'] == s) for s in STATES]
+    pend = len({nd.key(r) for r in tsv(nd.INBOX)})
+    with open(COUNTS, 'a') as f:
+        f.write('\t'.join(map(str, [int(NOW), *n, pend])) + '\n')
+
+
 def flat(boards):
     return [it for b in boards for it in b.items.values()]
 
@@ -813,6 +825,7 @@ def main():
     save_last(items, batches)
     if o.ping or o.sync:
         sent, dropped = ping(nd, inbox, boards, batches)
+        log_counts(nd, items)
         print(f'{summary(items, batches)}: {sent} rows sent, '
               f'{dropped} cleared')
         return
