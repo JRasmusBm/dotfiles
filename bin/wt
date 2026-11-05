@@ -354,7 +354,10 @@ _wt_pick() {
 
   # No worktrees → just open an empty fzf (no error). printf
   # (not echo) so an empty list is truly empty, not a blank row.
-  _sel="$(printf '%s' "$_list" | fzf --reverse \
+  # --exact: each space-separated term is a literal substring
+  # (so `pause rel` hits dev-stack-pause-release), not a
+  # char-by-char fuzzy match across the whole branch name.
+  _sel="$(printf '%s' "$_list" | fzf --reverse --exact \
     --preview "wt-preview '$_root' {}" \
     --preview-window=right,55%,wrap || true)"
 
