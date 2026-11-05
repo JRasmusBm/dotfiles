@@ -1157,13 +1157,15 @@ _wt_snooze() {
 }
 
 # Detached timer: at <when> run `wt wake` from <dir>, so a timed
-# snooze wakes even when nobody runs wt.
+# snooze wakes even when nobody runs wt. Polls the wall clock: a
+# plain `sleep N` stops counting while the Mac sleeps, so it fires
+# hours late after a night with the lid closed.
 _snooze_timer() {
-  _st_secs=$(( $(gdate -d "$1" +%s) - $(date +%s) ))
-  test "$_st_secs" -ge 0 || _st_secs=0
+  _st_at=$(gdate -d "$1" +%s)
   _st_wt="$(command -v wt || echo "$0")"
-  nohup sh -c 'sleep "$1"; cd "$2" && exec "$3" wake' \
-    sh "$_st_secs" "$2" "$_st_wt" >/dev/null 2>&1 &
+  nohup sh -c 'while [ "$(date +%s)" -lt "$1" ]; do sleep 30; done
+    cd "$2" && exec "$3" wake' \
+    sh "$_st_at" "$2" "$_st_wt" >/dev/null 2>&1 &
 }
 
 # Pin the current worktree to Alt-N (`tsp pin`), as
