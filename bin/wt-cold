@@ -25,7 +25,9 @@ Each item is in exactly one state, checked in this order:
              BLOCKED on a ticket (ABC-123 in the reason): WAITING while
              it is started in Linear and changed in the last workday
              BLOCKED on free text: make it a ticket or snooze it
-             a pending inbox row on it: "waiting on you: <its message>"
+             a pending inbox row on it: "waiting on you: <its message>",
+             or for a bare "done" the agent's last question, else its
+             section and PR state
              else the one touch it needs, read from PR, disk and section
 Weekends don't count toward any elapsed time.
 
@@ -540,6 +542,54 @@ def judge(b, it, st, seen=()):
               since=max(main, ctime, s.get('moved', 0)))
 
 
+def last_question(sid):
+    """The last line ending in `?` the chat's agent wrote since my last
+    prompt, or ''."""
+    if not sid:
+        return ''
+    base = os.path.expanduser('~/.claude/projects')
+    try:
+        path = next(os.path.join(base, d, sid + '.jsonl')
+                    for d in os.listdir(base)
+                    if os.path.exists(os.path.join(base, d, sid + '.jsonl')))
+        with open(path, 'rb') as f:
+            f.seek(max(0, os.path.getsize(path) - 400000))
+            raw = f.read().decode('utf-8', 'replace').splitlines()[1:]
+    except (OSError, StopIteration):
+        return ''
+    texts = []
+    for ln in raw:
+        try:
+            e = json.loads(ln)
+        except ValueError:
+            continue
+        c = (e.get('message') or {}).get('content')
+        if e.get('type') == 'user' and isinstance(c, str):
+            texts = []
+        elif e.get('type') == 'assistant' and isinstance(c, list):
+            texts += [x.get('text', '') for x in c
+                      if isinstance(x, dict) and x.get('type') == 'text']
+    for t in reversed(texts):
+        for ln in reversed(t.splitlines()):
+            ln = ln.strip().strip('*_` ')
+            if ln.endswith('?') and not ln.startswith('>'):
+                return ln
+    return ''
+
+
+def asks(it, rows):
+    """What the pending rows on an item wait on me for: a question its
+    agent asked, else its PR state and board section."""
+    for r in reversed(rows):
+        if r[3] not in ('done', ''):
+            return r[3][:70]
+    for r in reversed(rows):
+        q = last_question(r[8])
+        if q:
+            return f'asks: {q[:65]}'
+    return f"{it['sec'].lower()}, {it['why']}"[:70]
+
+
 def fold(b):
     """An item blocked on a stalled worktree pings through its blocker:
     one row for the blocker, naming how many wait on it."""
@@ -579,7 +629,7 @@ def collect():
         for it in b.items.values():
             _, other = pending_for(it, inbox)
             if it['state'] == 'STALLED' and other and not it.get('batch'):
-                it['why'] = f'waiting on you: {other[-1][3][:70]}'
+                it['why'] = f'waiting on you: {asks(it, other)}'
                 it['pin'] = True
         fold(b)
         boards.append(b)

@@ -347,7 +347,8 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   blocked on this". Each other STALLED item gets
   one silent `stalled` row (ranked below merge/blocked, above fyi)
   saying the next move; a pending row of its own makes it "waiting
-  on you: …" instead. Re-pings `WT_STALL_MIN` (30) weekday-minutes
+  on you: …" instead (for a bare "done": the agent's last question,
+  else section and PR state). Re-pings `WT_STALL_MIN` (30) weekday-minutes
   after a clear; auto-clears on the next run once it isn't stalled
   (rows carry a ref, `notif seen-ref`, so a jump that re-keyed one
   onto a pane doesn't strand it). Batched rows:
