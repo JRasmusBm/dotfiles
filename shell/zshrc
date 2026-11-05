@@ -227,9 +227,18 @@ function claude() {
     || { command claude "$@"; return; }
   # Private settings layered on ~/.claude/settings.json (set by an
   # overlay outside dotfiles); --settings merges, it doesn't replace.
+  # On a borrowed login (~/.config/borrowed-logins, overlay) Remote
+  # Control at startup would list my sessions in its owner's claude.ai
+  # (11-05: a dozen showed up there), so it's off for those launches.
   local -a extra
-  [[ -r "$CLAUDE_EXTRA_SETTINGS" ]] \
-    && extra=(--settings "$CLAUDE_EXTRA_SETTINGS")
+  local s='{}' login
+  [[ -r "$CLAUDE_EXTRA_SETTINGS" ]] && s="$(<"$CLAUDE_EXTRA_SETTINGS")"
+  login="$(jq -r '.oauthAccount.emailAddress // ""' ~/.claude.json \
+    2>/dev/null)"
+  [[ -n "$login" ]] && grep -qixF -- "$login" \
+      "$HOME/.config/borrowed-logins" 2>/dev/null \
+    && s="$(jq -c '. + {remoteControlAtStartup: false}' <<<"$s")"
+  [[ "$s" != '{}' ]] && extra=(--settings "$s")
   for a in "$@"; do
     case "$a" in
       -n|--name|--name=*|-r|--resume|--resume=*|-c|--continue|\
