@@ -16,7 +16,8 @@ Each item is in exactly one state, checked in this order:
   SNOOZED  `wt sz` until a date, or BLOCKED on a worktree that is
   WAITING  `wt w8 <when> "<what>"` before its deadline (an agent may
            poll meanwhile); or the agent waits on a background agent
-           or shell, for up to 60 minutes
+           or shell, for up to 60 minutes (no cap while a subagent
+           keeps writing its transcript)
   ACTIVE   a Claude agent of the worktree is mid-turn, unless its pane
            and branch haven't changed for 60 minutes (spinning)
   STALLED  everything else, waiting on me included:
@@ -234,7 +235,9 @@ def panes():
     return out
 
 
-SPIN = re.compile(r'esc to interrupt')
+# Claude's busy line: "✽ Misting… (15m 46s · ↓ 5.5k tokens"; older
+# builds printed "esc to interrupt".
+SPIN = re.compile(r'^\S \S+… \(\d+[hms]|esc to interrupt', re.M)
 BG = re.compile(r'Waiting for \d+ background agent|'
                 r'\d+ (background )?shells? (still )?running|· \d+ shells? ·')
 
@@ -487,6 +490,14 @@ def judge(b, it, st, seen=()):
 
     if bg:
         s.setdefault('bg_at', min(main or NOW, sub[1] or NOW))
+        # A subagent still writing its transcript is moving, however
+        # long it runs; the cap is for silent ones (and shells).
+        if sub[0] and NOW - sub[0] < 15 * 60:
+            it.update(state='WAITING',
+                      why=f"on a background agent, working "
+                          f"({ago(NOW - s['bg_at'])})")
+            s['moved'] = NOW
+            return
         if wk(s['bg_at']) < CAP:
             it.update(state='WAITING',
                       why=f"on a background agent or shell "
