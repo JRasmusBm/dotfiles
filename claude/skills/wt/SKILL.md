@@ -368,7 +368,7 @@ else's, `~/.config/borrowed-logins`, overlay) never publish:
 it as a `file://` row; report that path and SendUserFile it. They
 never write to Slack either (`slack-borrowed.sh` denies the
 connector's send/react/canvas tools, which act as that person): hand
-me the full text plus the target permalink to paste. Listing artifacts =
+`slack-post` (overlay) posts as me instead, else I paste. Listing artifacts =
 Artifact `list` plus `artifacts`. Every artifact link you report
 names its login (`artifacts` shows it) unless it's shared, and
 when copies exist on both logins, say which is current.
