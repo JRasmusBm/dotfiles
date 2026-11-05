@@ -11,7 +11,13 @@
 #                          TAG's; --try takes one only if it's free
 #                          now, else waits (dev up: a running stack)
 #   heavy-slot free TAG    release TAG's slot
-#   heavy-slot ls          list held slots
+#   heavy-slot ls          list held slots and rushes
+#   heavy-slot rush SLUG [MINS]
+#                          cut the line for a worktree (by its tmux
+#                          session or its .worktrees/SLUG path) for
+#                          MINS (120): its runs may take one extra
+#                          slot, HEAVY_SLOTS+1, that no one else can
+#   heavy-slot unrush SLUG end that early
 #   heavy-slot hook        PreToolUse hook for Bash: prefixes agents'
 #                          eslint/tsc/lint commands with
 #                          `heavy-slot take $$`, so the slot lives
@@ -23,6 +29,8 @@
 # seconds (default 600) is hung (e.g. tsc after a full disk), so its
 # tree is TERMed and the slot freed; the agent sees the command fail.
 # A `hold` slot has no pid: it expires at its `until` time instead.
+# A rush costs one more full TS program in RAM while it's used, so it
+# is for one urgent worktree at a time, not a priority system.
 
 set -e
 
@@ -50,9 +58,30 @@ _stalled() {
   fi
   test $((_now - ${_at:-$_now})) -ge "$_stall"
 }
+_rush="$_dir/.rush"
+# The caller's worktree: its tmux session (subagents in scratch
+# worktrees share their parent's pane), else its .worktrees/<slug>.
+_whoami() {
+  test -z "${TMUX_PANE:-}" \
+    || tmux display-message -p -t "$TMUX_PANE" '#S' 2>/dev/null || true
+  case "$PWD" in */.worktrees/*) _w="${PWD#*/.worktrees/}"; echo "${_w%%/*}" ;; esac
+}
+_rushed() {
+  test -f "$_rush" || return 1
+  _me="$(_whoami)"
+  test -n "$_me" || return 1
+  _now="$(date +%s)"
+  while read -r _u _r; do
+    test "$_now" -lt "${_u:-0}" || continue
+    printf '%s\n' "$_me" | grep -qxF "$_r" && return 0
+  done < "$_rush"
+  return 1
+}
+_lim="$_max"
+_rushed && _lim=$((_max + 1))
 _take() {
   _i=1
-  while test "$_i" -le "$_max"; do
+  while test "$_i" -le "$_lim"; do
     _s="$_dir/$_i"
     if mkdir "$_s" 2>/dev/null; then
       test -z "${_until:-}" || echo "$_until $_tag" > "$_s/until"
@@ -91,7 +120,7 @@ _wait() {
   _said=''
   until _locked "${1:-_take}"; do
     if test -z "$_said"; then
-      echo "heavy-slot: all $_max slots held (heavy-slot ls), waiting" >&2
+      echo "heavy-slot: all $_lim slots held (heavy-slot ls), waiting" >&2
       _said=1
       mkdir -p "$_dir/.wait"
       printf '%s %s %s\n' "$(date +%s)" "$_owner" "${_tag:-}" \
@@ -191,8 +220,24 @@ _ago() {
   printf '%d:%02d' $((_d / 60)) $((_d % 60))
 }
 
+_rush_set() {
+  _now="$(date +%s)"
+  { test ! -f "$_rush" || awk -v n="$_now" -v r="$1" \
+      '$1 > n && $2 != r' "$_rush"
+    test -z "$2" || echo "$((_now + $2 * 60)) $1"
+  } > "$_rush.tmp"
+  mv "$_rush.tmp" "$_rush"
+}
+
 _ls() {
   _gap=''
+  if test -f "$_rush"; then
+    while read -r _u _r; do
+      test "$(date +%s)" -lt "${_u:-0}" || continue
+      printf 'rush\t%s until %s (slot %s)\n' "$_r" \
+        "$(date -r "$_u" +%H:%M)" "$((_max + 1))"
+    done < "$_rush"
+  fi
   for _s in "$_dir"/*; do
     test -d "$_s" || continue
     if test -f "$_s/until"; then
@@ -239,5 +284,8 @@ case "${1:-}" in
   free) _s="$(_tagged "${2:?usage: heavy-slot free TAG}")" && rm -rf "$_s" ;;
   hook) _hook ;;
   ls) _ls ;;
+  rush) _locked _rush_set "${2:?usage: heavy-slot rush SLUG [MINS]}" \
+    "${3:-120}"; _ls | grep '^rush' ;;
+  unrush) _locked _rush_set "${2:?usage: heavy-slot unrush SLUG}" "" ;;
   *) sed -n '2,/^$/s/^# \{0,1\}//p' "$0" >&2; exit 1 ;;
 esac
