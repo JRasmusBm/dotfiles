@@ -362,7 +362,10 @@ from then on update that copy, never the one you can't reach.
 A session sees only its active login's artifacts; the
 `artifact-ledger.sh` hook logs every publish with its login, and
 `artifacts` (this dir; `all`; or a query) lists them across logins,
-newest copy `current`, older ones `stale`. Listing artifacts =
+newest copy `current`, older ones `stale`. Logins I can't open
+claude.ai with (`~/.config/artifact-local-logins`, overlay) never
+publish: `artifact-local.sh` refuses, opens the file locally and logs
+it as a `file://` row; report that path and SendUserFile it. Listing artifacts =
 Artifact `list` plus `artifacts`. Every artifact link you report
 names its login (`artifacts` shows it) unless it's shared, and
 when copies exist on both logins, say which is current.
