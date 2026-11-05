@@ -27,8 +27,8 @@ if [ "$asset" != true ] && [ -f "$file" ]; then
   why="Not published: the active login ($login) is not Rasmus's own, so
 he can't open claude.ai links from it. The page is open in his local
 browser instead and logged in the artifacts ledger. Report it as the
-local path file://$file (on its own line) and also send the file with
-SendUserFile so he gets it on other devices. Keep editing this file and
+local path file://$file (on its own line) and, if the SendUserFile tool
+is available, send the file with it for other devices. Keep editing this file and
 'publishing' it the same way: each publish reopens it locally. Don't
 retry the publish or work around this hook."
 else
@@ -36,7 +36,7 @@ else
 he can't open claude.ai links from it. Asset uploads and pages created
 from an Artifact type need claude.ai: build the page as a local
 self-contained .html file instead and publish that file (this hook opens
-it locally), or send it with SendUserFile."
+it locally)."
 fi
 jq -n --arg why "$why" '{hookSpecificOutput: {hookEventName: "PreToolUse",
   permissionDecision: "deny", permissionDecisionReason: $why}}'
