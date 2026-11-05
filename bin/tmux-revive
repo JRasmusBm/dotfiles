@@ -96,7 +96,7 @@ fi
 test -s "$_q" || exit 0
 
 # Sessions this run built (their windows run nothing yet), and the
-# windows it typed into.
+# pane ids it typed into.
 _built=""
 _used=""
 
@@ -116,15 +116,24 @@ _start() {
       || { _st="failed:no session"; return; }
     _built="$_built$_s$_t"
   fi
+  # A chat already back (started by hand, or this very session) is
+  # never typed into again: the text would land in its prompt.
+  if test "$_sid" != - \
+    && claude-pane map | cut -f2 | grep -qxF "$_sid"; then
+    _st=ok; return
+  fi
+  # Reuse only a shell pane of a session this run built that no
+  # earlier start typed into (a pane still shows zsh right after
+  # send-keys, so the pane id list is what guards it).
   case "$_t$_built" in *"$_t$_s$_t"*)
-    case "$_t$_used" in *"$_t$_s:$_w$_t"*) ;; *)
-      _pane="$(tmux -u list-panes -t "=$_s:=$_w" \
-        -F "#{pane_id}$_t#{pane_current_path}" 2>/dev/null \
-        | awk -F "$_t" -v d="$_cwd" '$2 == d { print $1; exit }')" ;;
-    esac ;;
+    _pane="$(tmux -u list-panes -t "=$_s:=$_w" \
+      -F "#{pane_id}$_t#{pane_current_path}$_t#{pane_current_command}" \
+      2>/dev/null | awk -F "$_t" -v d="$_cwd" -v u="$_t$_used" '
+        $2 == d && $3 ~ /^-?(zsh|bash|sh|fish)$/ \
+          && index(u, "\t" $1 "\t") == 0 { print $1; exit }')" ;;
   esac
   if test -n "$_pane"; then
-    _used="$_used$_s:$_w$_t"
+    _used="$_used$_pane$_t"
   else
     _pane="$(tmux new-window -d -P -F '#{pane_id}' -t "=$_s:" \
       -c "$_cwd" -n "$_w")" || { _st="failed:no window"; return; }
