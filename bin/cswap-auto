@@ -6,7 +6,8 @@
 # Claude pane whose last Remote Control notice is "disconnected" gets
 # `/remote-control`. Idle as in `claude-pane-idle`, so nothing typed
 # is touched. Only while the login is mine (`CSWAP_RC_ACCOUNTS`): on a
-# borrowed account, Remote Control would hand its owner my sessions.
+# borrowed account, Remote Control would hand its owner my sessions,
+# so there it disconnects connected idle panes instead.
 #
 #   cswap-auto           loop (launchd com.jrasmusbm.cswap-auto)
 #   cswap-auto --once    one tick
@@ -44,10 +45,46 @@ _own_login() {
   return 1
 }
 
+# Idle Claude panes whose status line shows Remote Control connected
+# (`/rc`, not `/rc failed`).
+_live_panes() {
+  tmux list-panes -a -F '#{pane_id}' 2>/dev/null \
+  | while read -r _p; do
+      claude-pane-idle "$_p" || continue
+      tmux capture-pane -p -t "$_p" | grep -q '⠀.* /rc[[:space:]]*$' \
+        && echo "$_p"
+    done
+}
+
+# On a borrowed login, a connected session is listed in its owner's
+# claude.ai (11-05: archived ones kept coming back), so switch it off:
+# /remote-control → Disconnect, Enter only with the cursor on it.
+_disconnect() {
+  for _p in $(_live_panes); do
+    tmux send-keys -t "$_p" -l '/remote-control'
+    sleep 0.5
+    tmux send-keys -t "$_p" Enter
+    sleep 3
+    if tmux capture-pane -p -t "$_p" | grep -q 'Disconnect this session'
+    then
+      tmux send-keys -t "$_p" Up Up
+      sleep 0.5
+      if tmux capture-pane -p -t "$_p" \
+        | grep -q '❯ Disconnect this session'; then
+        tmux send-keys -t "$_p" Enter
+        echo "$(date +%H:%M:%S)  disconnected Remote Control in $_p"
+        continue
+      fi
+    fi
+    tmux send-keys -t "$_p" Escape
+    echo "$(date +%H:%M:%S)  couldn't disconnect Remote Control in $_p"
+  done
+}
+
 _reconnect() {
+  _own_login || { _disconnect; return 0; }
   _panes=$(_stale_panes)
   [ -n "$_panes" ] || return 0
-  _own_login || return 0
   for _p in $_panes; do
     tmux send-keys -t "$_p" -l '/remote-control'
     sleep 0.5
