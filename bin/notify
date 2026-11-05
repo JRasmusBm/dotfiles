@@ -61,12 +61,14 @@ if [ -n "$LOCAL_CONFIG" ]; then
     _path="$PWD"
   fi
   mkdir -p "$(dirname "$_inbox")"
-  # Row: epoch  ctx  title  message  path  pane  mode  class. The path
-  # is the stable anchor `notif` reopens from when the session
-  # has since been killed (e.g. by `wt rt`/`rm`).
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  # Row: epoch  ctx  title  message  path  pane  mode  class  sid.
+  # NOTIFY_SID (a Claude session id) finds the chat again once its
+  # pane is gone (`claude-pane`); the path is the anchor `notif`
+  # reopens from otherwise (e.g. after `wt rt`/`rm`).
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" \
-    "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" >> "$_inbox"
+    "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" "${NOTIFY_SID:-}" \
+    >> "$_inbox"
   focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
   # Update the status-bar counter (`notif count`) right away.
   if [ -n "$TMUX_PANE" ]; then

@@ -5,7 +5,11 @@ set -e
 # Persistent notification inbox, keyed per tmux pane. `notify`
 # appends rows here; this viewer collapses them to one entry
 # per pane and jumps back to it. Rows:
-#   epoch ctx title message path pane mode
+#   epoch ctx title message path pane mode class sid
+# A Claude row's sid (session id) is where a jump goes first
+# (`claude-pane open`): the chat's live pane, else the chat
+# resumed in a new window. Panes die and the main checkout's
+# session holds many chats, so pane and path can't find it.
 # mode `sticky` (Claude) survives a visit and clears on reply;
 # anything else clears on arrival. Cleared rows move to the
 # recent file, listed under the pending ones in the picker. Every
@@ -24,7 +28,8 @@ set -e
 #                       most follow-ups blocked on it; then
 #                       oldest)
 #   notif focus <pane>  toggle focus on <pane>'s worktree (else
-#                       the pane): its pings rank above everything
+#                       its Claude chat, else the pane): its pings
+#                       rank above everything
 #   notif later <pane>  re-queue <pane> at the back; if it runs
 #                       a command (not a shell, Claude or an
 #                       interactive app like vim), notify
@@ -32,7 +37,7 @@ set -e
 #   notif seen <key> [all]  drop a pane's rows; without `all` (the
 #                       Claude reply hooks) merge pings stay
 #   notif arrive <key>  drop its non-sticky rows (focus hooks)
-#   notif go <pane> <ctx> <path>  jump like the picker does
+#   notif go <pane> <ctx> <path> [sid]  jump like the picker does
 #   notif count         status-bar badge
 #   notif clear         empty the inbox
 
@@ -58,7 +63,8 @@ function slug(p,  i, s) {
 }
 function focused(k, p,  s) {
   s = slug(p)
-  return index(foc, " " (s != "" ? s : k) " ") > 0
+  if (s != "") return index(foc, " " s " ") > 0
+  return index(foc, " " k " ") > 0 || ($9 != "" && index(foc, " " $9 " ") > 0)
 }
 function prio(c, p, k,  s, kids, rest, j) {
   s = slug(p)
@@ -149,7 +155,7 @@ _notif_count() {
 
 # Collapse rows (on stdin, epoch first) to one line per key,
 # newest first:
-# key<TAB>mark<TAB>ctx<TAB>×N<TAB>message<TAB>path. Keys in
+# key<TAB>mark<TAB>ctx<TAB>×N<TAB>message<TAB>path<TAB>sid. Keys in
 # `skip` (space-separated) are left out; at most `max` lines.
 _collapse() {
   awk -F'\t' -v mark="$1" -v skip=" $2 " -v max="${3:-0}" \
@@ -163,6 +169,7 @@ _collapse() {
       count[k]++
       if ($1 + 0 >= ts[k] + 0) {
         ts[k] = $1; ctx[k] = $2; msg[k] = $4; path[k] = $5
+        if ($9 != "") sid[k] = $9
       }
     }
     END {
@@ -176,8 +183,8 @@ _collapse() {
       for (i = 1; i <= n; i++) {
         k = order[i]
         cnt = (count[k] > 1 ? "\303\227" count[k] : "")
-        printf "%s\t%s\t%s\t%s\t%s\t%s\n", \
-          k, mark, ctx[k], cnt, msg[k], path[k]
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\n", \
+          k, mark, ctx[k], cnt, msg[k], path[k], sid[k]
       }
     }'
 }
@@ -194,26 +201,33 @@ _notif_list() {
   cut -f2- "$(_recent)" | _collapse '·' "$(_pending_keys)" 10
 }
 
-# Move key $1's rows onto the pane we landed on ($2, a tmux
-# target), so M-y and M-i rotation see them as this pane's.
+# Move key $1's rows (and chat $4's, from any pane it ran in)
+# onto the pane we landed on ($2, a tmux target), so M-y and
+# M-i rotation see them as this pane's.
 # With $3 `sticky` they also turn sticky: a session started for
 # them showed me nothing yet, so the focus hooks must not clear
 # them.
 _notif_rekey() {
   _r_new="$(tmux display-message -p -t "$2" '#{pane_id}' \
     2>/dev/null)" || return 0
-  test -n "$_r_new" && test "$_r_new" != "$1" || return 0
+  test -n "$_r_new" || return 0
+  test "$_r_new" != "$1" || test -n "${4:-}" || return 0
   _r_ctx="$(tmux display-message -p -t "$_r_new" '#S:#W.#P')"
   _f="$(_inbox)"
   _tmp="$(mktemp)"
   awk -F'\t' -v k="$1" -v n="$_r_new" -v c="$_r_ctx" \
-    -v s="${3:-}" "$_KEY"'
-    key() == k { $2 = c; $6 = n; if (s) $7 = "sticky" } { print }
+    -v s="${3:-}" -v sid="${4:-}" "$_KEY"'
+    (k != "" && key() == k) || (sid != "" && $9 == sid) {
+      $2 = c; $6 = n; if (s) $7 = "sticky"
+    }
+    { print }
   ' OFS='\t' "$_f" > "$_tmp" && mv "$_tmp" "$_f"
   tmux refresh-client -S 2>/dev/null || true
 }
 
-# Jump to a pane: by id while it lives, else its session:window,
+# Jump to a Claude chat by its sid ($4) wherever it runs now, or
+# resumed in a new window when it runs nowhere; else to a pane:
+# by id while it lives, else its session:window,
 # else recreate the session at its path (its worktree root, for
 # a worktree; a removed one comes back via `wt resume`, Claude
 # continuing). A fallback landing re-keys the rows to the pane
@@ -222,6 +236,22 @@ _notif_jump() {
   _j_key="$1"
   _j_ctx="$2"
   _j_path="$3"
+  _j_sid="${4:-}"
+  if test -n "$_j_sid"; then
+    _j_live="$(claude-pane "$_j_sid" || true)"
+    _j_to="${_j_live:-$(claude-pane open "$_j_sid" 2>/dev/null || true)}"
+    if test -n "$_j_to" && tmux switch-client -t "$_j_to" 2>/dev/null; then
+      tmux select-window -t "$_j_to" 2>/dev/null || true
+      tmux select-pane -t "$_j_to" 2>/dev/null || true
+      if test -n "$_j_live"; then
+        _notif_rekey "$_j_key" "$_j_to" "" "$_j_sid"
+        _notif_drop "$_j_to" arrive
+      else
+        _notif_rekey "$_j_key" "$_j_to" sticky "$_j_sid"
+      fi
+      return 0
+    fi
+  fi
   case "$_j_key" in
     %*)
       if tmux switch-client -t "$_j_key" 2>/dev/null; then
@@ -272,7 +302,7 @@ _notif_jump() {
 # _notif_jump); starting or resuming a session for them does
 # not. A gone place is dropped entirely.
 _go() {
-  _notif_jump "$1" "$2" "$3" && return 0
+  _notif_jump "$1" "$2" "$3" "${4:-}" && return 0
   _notif_drop "$1"
   return 1
 }
@@ -293,7 +323,7 @@ _notif_next() {
         if (prio($8, $5, k) < r[k]) r[k] = prio($8, $5, k)
         if (focused(k, $5)) fk[k] = 1
         if ($1 + 0 < t[k] + 0) t[k] = $1
-        row[k] = k "\t" $2 "\t" $5
+        row[k] = k "\t" $2 "\t" $5 "\t" $9
       }
       END {
         for (i = 2; i <= n; i++)
@@ -309,7 +339,8 @@ _notif_next() {
     test -n "$_line" || break
     _go "$(printf '%s' "$_line" | cut -f1)" \
       "$(printf '%s' "$_line" | cut -f2)" \
-      "$(printf '%s' "$_line" | cut -f3)" && return 0
+      "$(printf '%s' "$_line" | cut -f3)" \
+      "$(printf '%s' "$_line" | cut -f4)" && return 0
   done
   tmux display-message "No other notifications" 2>/dev/null || true
 }
@@ -351,11 +382,12 @@ _notif_later() {
   tmux display-message "Snoozed" 2>/dev/null || true
 }
 
-# Toggle focus on this pane's worktree (its slug), else the pane.
+# Toggle focus on this pane's worktree (its slug), else its Claude
+# chat (sid, which outlives the pane), else the pane.
 _notif_focus() {
   _fo_key="${1:?usage: notif focus <pane>}"
   _fo_path="$(tmux display-message -p -t "$_fo_key" '#{pane_current_path}')"
-  _fo_id="$_fo_key"
+  _fo_id="$(claude-pane of "$_fo_key" || echo "$_fo_key")"
   case "$_fo_path" in
     */.worktrees/*)
       _fo_id="${_fo_path#*/.worktrees/}"; _fo_id="${_fo_id%%/*}" ;;
@@ -393,6 +425,7 @@ _notif_open() {
   _go "$(printf '%s' "$_sel" | cut -f1)" \
     "$(printf '%s' "$_sel" | cut -f3)" \
     "$(printf '%s' "$_sel" | cut -f6)" \
+    "$(printf '%s' "$_sel" | cut -f7)" \
     || tmux display-message "Place gone; cleared" 2>/dev/null \
     || true
 }
@@ -434,7 +467,7 @@ case "${1:-}" in
   seen) shift; _notif_drop "${1:-}" "${2:-reply}" ;;
   seen-path) shift; _notif_drop "${1:-}" path ;;
   arrive) shift; _notif_drop "${1:-}" arrive ;;
-  go) shift; _notif_jump "${1:-}" "${2:-}" "${3:-}" ;;
+  go) shift; _notif_jump "${1:-}" "${2:-}" "${3:-}" "${4:-}" ;;
   clear) _notif_clear ;;
   _list) _notif_list ;;
   _preview) shift; _notif_preview "$@" ;;

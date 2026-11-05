@@ -1,0 +1,97 @@
+#!/bin/sh
+
+# claude-pane <sid>       print the tmux pane running Claude session
+#                         <sid>, or fail when it runs nowhere
+# claude-pane cwd <sid>   print the directory <sid> runs or ran in
+# claude-pane of <pane>   print the session id of the Claude in <pane>
+# claude-pane open <sid>  the live pane, else resume <sid> in a new
+#                         window of its checkout's tmux session
+#                         (created if missing); print that pane
+#
+# A Claude chat's identity is its session id, not the pane it runs
+# in: panes get killed and reused, and the main checkout's session
+# holds many chats, so a pane or path can't find one again. The
+# inbox (`notif`), `chats` (M-/) and `slack-inbox` watches keep the
+# id and ask here where it is now.
+#
+# Live: ~/.claude/sessions/<pid>.json (sessionId, cwd, tmux
+# "sess:@win.%pane") of a running pid whose ancestry holds that
+# pane's shell (pane ids restart with the tmux server).
+# Gone: the cwd comes from its transcript's first row.
+
+_live() {
+  for _f in "$HOME"/.claude/sessions/*.json; do
+    test -f "$_f" || continue
+    _pid="$(basename "$_f" .json)"
+    kill -0 "$_pid" 2>/dev/null || continue
+    _pane="$(jq -r --arg s "$1" \
+      'select(.sessionId == $s) | .tmux // "" | sub(".*\\."; "")' \
+      "$_f" 2>/dev/null)"
+    case "$_pane" in %*) ;; *) continue ;; esac
+    _shell="$(tmux display-message -p -t "$_pane" '#{pane_pid}' \
+      2>/dev/null)" || continue
+    _p="$_pid" _n=0
+    while test -n "$_p" && test "$_p" -gt 1 && test "$_n" -lt 6; do
+      if test "$_p" = "$_shell"; then
+        echo "$_pane"
+        return 0
+      fi
+      _p="$(ps -o ppid= -p "$_p" 2>/dev/null | tr -d ' ')"
+      _n=$((_n + 1))
+    done
+  done
+  return 1
+}
+
+_cwd() {
+  for _f in "$HOME"/.claude/sessions/*.json; do
+    test -f "$_f" || continue
+    jq -r --arg s "$1" 'select(.sessionId == $s) | .cwd // empty' \
+      "$_f" 2>/dev/null
+  done | grep -m1 . && return 0
+  _t="$(find "$HOME/.claude/projects" -mindepth 2 -maxdepth 2 \
+    -name "$1.jsonl" 2>/dev/null | head -1)"
+  test -n "$_t" || return 1
+  grep -m1 -F '"cwd":"' "$_t" | jq -r '.cwd // empty' 2>/dev/null \
+    | grep .
+}
+
+_of() {
+  for _f in "$HOME"/.claude/sessions/*.json; do
+    test -f "$_f" || continue
+    kill -0 "$(basename "$_f" .json)" 2>/dev/null || continue
+    jq -r --arg p "$1" \
+      'select((.tmux // "") | endswith("." + $p)) | .sessionId // empty' \
+      "$_f" 2>/dev/null
+  done | grep -m1 .
+}
+
+_open() {
+  _live "$1" && return 0
+  _dir="$(_cwd "$1")" || return 1
+  test -d "$_dir" || return 1
+  _home="$_dir"
+  case "$_dir" in
+    */.worktrees/?*)
+      _s="${_dir#*/.worktrees/}"
+      _home="${_dir%%/.worktrees/*}/.worktrees/${_s%%/*}"
+      ;;
+  esac
+  _sess="$(tmux-session-name-from-path "$_home")"
+  if ! tmux has-session -t "=$_sess" 2>/dev/null; then
+    ( cd "$_home" && INITIATED_EXTERNALLY=true default_tmux_session ) \
+      >/dev/null 2>&1 || true
+  fi
+  _new="$(tmux new-window -d -P -F '#{pane_id}' -t "=$_sess:" \
+    -c "$_dir" -n claude)" || return 1
+  tmux send-keys -t "$_new" "claude --resume $1" Enter
+  echo "$_new"
+}
+
+case "${1:-}" in
+  "") sed -n '3,10s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
+  cwd) _cwd "${2:?sid}" ;;
+  of) _of "${2:?pane}" ;;
+  open) _open "${2:?sid}" ;;
+  *) _live "$1" ;;
+esac

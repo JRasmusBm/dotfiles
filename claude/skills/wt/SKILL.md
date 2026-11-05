@@ -276,9 +276,13 @@ through `bin/notify` (Claude's hook via `claude-notify`,
 `git-w8`, `bw8`, …), so `notify` is the one chokepoint:
 alongside the macOS toast + sound + tmux bell it appends a
 row to `$LOCAL_CONFIG/notifications`
-(`epoch ctx title message path pane mode`, tab-separated):
-the calling pane's id, its `#S:#W.#P` for display, and its
-`pane_current_path` as a stable fallback.
+(`epoch ctx title message path pane mode class sid`,
+tab-separated): the calling pane's id, its `#S:#W.#P` for
+display, its `pane_current_path` as a stable fallback, and for
+Claude its session id (sid). A chat is its sid, not its pane:
+panes die and the main checkout's session holds many chats, so
+anything that must find a chat again (inbox jumps, `chats`
+M-/, Slack watches) keeps the sid and asks `claude-pane`.
 
 - Two clear modes. Claude rows are `sticky`
   (`NOTIFY_MODE=sticky`): visiting doesn't clear them; my
@@ -291,7 +295,7 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   queued after the current one (oldest if here isn't
   pending), so repeated `M-i` rotates through them.
 - `M-k` / `notif focus <pane>` — toggle focus on this pane's
-  worktree: when it pings, it ranks above every class and `M-i`
+  worktree (main checkout: its Claude chat, by sid): when it pings, it ranks above every class and `M-i`
   from anywhere goes there first. No ping, no pull: it only calls
   me back when it needs me. For "this one matters most, don't
   lose it behind 30 others".
@@ -327,7 +331,10 @@ the calling pane's id, its `#S:#W.#P` for display, and its
   ones (`·`) from `notifications.recent`, so "where was I"
   is one pick away. `<Enter>` jumps to the exact pane;
   `ctrl-x` dismisses a pending one.
-- Jumps go by pane id, then `session:window` (exact name),
+- Jumps go by sid first: the chat's live pane, else
+  `claude --resume` in a new window of its checkout's session
+  (`claude-pane open`). Then by pane id, then `session:window`
+  (exact name),
   then recreate the session at the stored path (its worktree
   root). A removed worktree comes back first via `wt resume`
   (Claude continues in `cli`); a place with nothing to

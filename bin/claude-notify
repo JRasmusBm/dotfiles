@@ -24,6 +24,9 @@
 INPUT=$(cat)
 TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
 TRANSCRIPT=$(echo "$INPUT" | jq -r '.transcript_path // empty')
+# The chat's id, so `notif` finds it once its pane is gone.
+NOTIFY_SID=$(echo "$INPUT" | jq -r '.session_id // empty')
+export NOTIFY_SID
 
 # Tmux context (session:window.pane) or fallback to cwd
 if [ -n "$TMUX_PANE" ]; then
