@@ -824,6 +824,11 @@ def main():
     items = flat(boards)
     save_last(items, batches)
     if o.ping or o.sync:
+        if any(b.prs is None for b in boards):
+            # gh failed (a 504): PR-based judgements are blind, so
+            # syncing now would clear rows and re-ping them next run.
+            print('wt-cold: gh failed, inbox left as is')
+            return
         sent, dropped = ping(nd, inbox, boards, batches)
         log_counts(nd, items)
         print(f'{summary(items, batches)}: {sent} rows sent, '
