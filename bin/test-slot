@@ -16,6 +16,11 @@
 #   test-slot :         fzf-pick a slot holder, switch to its pane
 #   test-slot hook      PreToolUse hook for chrome-devtools tools:
 #                       acquire or block the call with a wait message
+#   test-slot rush SESSION [MINS]
+#                       cut the line: SESSION (a worktree slug) may
+#                       take slot TEST_SLOTS+1, which nobody else can,
+#                       for MINS (default 120); costs one more stack
+#                       of RAM while used. `unrush SESSION` ends it
 #
 # Slots: TEST_SLOTS (default 2), one per tmux session, claimed by the
 # panes (agents) using it. A slot is freed when its last claim is
@@ -30,6 +35,7 @@ _max="${TEST_SLOTS:-2}"
 _idle="${TEST_SLOT_IDLE:-1800}"
 _dir="${LOCAL_CONFIG:-$HOME/.config}/test-slots"
 _tab="$(printf '\t')"
+_rush="$_dir/.rush"
 mkdir -p "$_dir"
 
 _now() {
@@ -205,6 +211,27 @@ _count() {
   find "$_dir" -name '*.slot' | wc -l | tr -d ' '
 }
 
+_rushed() {
+  test -f "$_rush" || return 1
+  awk -v n="$(_now)" -v r="$1" '$1 > n && $2 == r { f = 1 } END { exit !f }' \
+    "$_rush"
+}
+
+_rush_set() {
+  { test ! -f "$_rush" || awk -v n="$(_now)" -v r="$1" \
+      '$1 > n && $2 != r' "$_rush"
+    test -z "$2" || echo "$(( $(_now) + $2 * 60 )) $1"
+  } > "$_rush.tmp"
+  mv "$_rush.tmp" "$_rush"
+}
+
+_rushes() {
+  test -f "$_rush" || return 0
+  awk -v n="$(_now)" '$1 > n' "$_rush" | while read -r _u _r; do
+    echo "rush $_r until $(_clock "$_u") (slot $((_max + 1)))"
+  done
+}
+
 _take() {
   _t="$(_now)"
   printf '%s\t%s\t%s\n' "$1" "$_t" "$_t" > "$(_file "$1")"
@@ -244,7 +271,9 @@ _acquire() {
     _unlock
     return 0
   fi
-  if test "$(_count)" -lt "$_max"; then
+  _lim="$_max"
+  if _rushed "$_who"; then _lim=$((_max + 1)); fi
+  if test "$(_count)" -lt "$_lim"; then
     _take "$_who"
     _claim "$_who" "$(_pane)"
     _unlock
@@ -305,6 +334,7 @@ _ls() {
   _reap
   echo "slots: $(_count)/$_max"
   _holders | sed 's/^/  /'
+  _rushes
   _unlock
 }
 
@@ -339,8 +369,13 @@ case "${1:-}" in
   ''|ls) _ls ;;
   :) _pick ;;
   hook) _hook ;;
+  rush)
+    _lock; _rush_set "${2:?usage: test-slot rush SESSION [MINS]}" "${3:-120}"
+    _unlock; _rushes ;;
+  unrush)
+    _lock; _rush_set "${2:?usage: test-slot unrush SESSION}" ""; _unlock ;;
   *)
-    echo "Usage: test-slot [acquire|wait|release|touch|ls|:|hook]" >&2
+    echo "Usage: test-slot [acquire|wait|release|touch|ls|:|hook|rush|unrush]" >&2
     exit 1
     ;;
 esac
