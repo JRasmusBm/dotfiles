@@ -38,6 +38,8 @@ set -e
 #   notif seen <key> [all]  drop a pane's rows; without `all` (the
 #                       Claude reply hooks) merge pings stay;
 #                       `stalled` drops only its `stalled` rows
+#   notif seen-ref <ref>  drop the rows tagged <ref> (NOTIFY_REF),
+#                       wherever a jump re-keyed them
 #   notif arrive <key>  drop its non-sticky rows (focus hooks)
 #   notif go <pane> <ctx> <path> [sid]  jump like the picker does
 #   notif count         status-bar badge
@@ -121,6 +123,7 @@ _notif_drop() {
   _d_match="$_KEY"'
     function hit() {
       if (m == "path") return $5 == k || index($5, k "/") == 1
+      if (m == "ref") return $10 == k
       return key() == k && (m != "arrive" || $7 != "sticky") \
         && (m != "reply" || $8 != "merge") \
         && (m != "stalled" || $8 == "stalled")
@@ -471,6 +474,7 @@ case "${1:-}" in
   depth) shift; exec notif-depth "$@" ;;
   seen) shift; _notif_drop "${1:-}" "${2:-reply}" ;;
   seen-path) shift; _notif_drop "${1:-}" path ;;
+  seen-ref) shift; _notif_drop "${1:-}" ref ;;
   arrive) shift; _notif_drop "${1:-}" arrive ;;
   go) shift; _notif_jump "${1:-}" "${2:-}" "${3:-}" "${4:-}" ;;
   clear) _notif_clear ;;

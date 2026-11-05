@@ -9,7 +9,9 @@
 # (git-w8, bw8, ...), stalled (`wt-cold`: a work item stopped moving;
 # inbox only, no toast, sound or bell), fyi (nothing needed: inbox
 # only too). NOTIFY_CTX names the row's place when not called from a
-# pane (default: the cwd's basename).
+# pane (default: the cwd's basename). NOTIFY_REF tags the row with an
+# id that survives a jump re-keying it to another pane, so its sender
+# can drop it later (`notif seen-ref`; `wt-cold` does).
 
 _title="${1:-Notification}"
 _msg="${2:-done}"
@@ -64,14 +66,14 @@ if [ -n "$LOCAL_CONFIG" ]; then
     _path="$PWD"
   fi
   mkdir -p "$(dirname "$_inbox")"
-  # Row: epoch  ctx  title  message  path  pane  mode  class  sid.
-  # NOTIFY_SID (a Claude session id) finds the chat again once its
-  # pane is gone (`claude-pane`); the path is the anchor `notif`
+  # Row: epoch  ctx  title  message  path  pane  mode  class  sid
+  # [ref]. NOTIFY_SID (a Claude session id) finds the chat again once
+  # its pane is gone (`claude-pane`); the path is the anchor `notif`
   # reopens from otherwise (e.g. after `wt rt`/`rm`).
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s\n' \
     "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" \
     "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" "${NOTIFY_SID:-}" \
-    >> "$_inbox"
+    "${NOTIFY_REF:+	$NOTIFY_REF}" >> "$_inbox"
   focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
   # Update the status-bar counter (`notif count`) right away.
   if [ -n "$TMUX_PANE" ]; then

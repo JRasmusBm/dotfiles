@@ -346,7 +346,9 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   one silent `stalled` row (ranked below merge/blocked, above fyi)
   saying the next move; a pending row of its own makes it "waiting
   on you: …" instead. Re-pings `WT_STALL_MIN` (30) weekday-minutes
-  after a clear; auto-clears once it isn't stalled. Batched rows:
+  after a clear; auto-clears on the next run once it isn't stalled
+  (rows carry a ref, `notif seen-ref`, so a jump that re-keyed one
+  onto a pane doesn't strand it). Batched rows:
   stale board rows, open PRs off the board, worktrees off the
   board. `wt-sync` runs it every 10 min, weekdays 08–19; bare
   `wt-cold` is the dry run.
