@@ -7,9 +7,11 @@
         with RUN_SLOT_ID=ID so its own gate passes. No CMD: the
         caller asks again by itself (every minute), and its slot
         waits RUN_SLOT_RESERVE seconds for it. KIND is `tell` (a
-        reply to a tell, ahead of the rest) or `start` (a new agent
-        or a revive). Asking again with the same ID keeps its place
-        and replaces CMD; one admit lets one caller through.
+        reply to a tell, or the revive it needs: ahead of the rest)
+        or `start` (a new agent, a crash revive). Asking again with
+        the same ID keeps its place and replaces CMD; one admit lets
+        one caller through. IDs starting `tell:` deliver to a running
+        Claude; any other starts one.
   run-slot pump [--except SID]
         start queued items while there is room (wt-sync every
         minute, and the Stop hook: SID is the agent that just
@@ -27,13 +29,16 @@
   run-slot ls          room, working agents, queue, closed sessions
 
 Room: fewer than RUN_SLOTS (cores) agents working, at least
-RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. An agent
-works while Claude marks its session `busy` (a turn or its background
-agents running); one waiting on me (`waiting`, `idle`) holds no slot.
-An admitted start (a row in reserved) counts as working, and as RUN_SLOT_START_GB (0.5)
-less free memory, for RUN_SLOT_RESERVE seconds (120): a new Claude
-takes that long to show busy and reach its size. A running turn is
-never paused; only starts wait, first in first out, tells first.
+RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. An
+agent works while Claude marks its session `busy` (a turn or its
+background agents running); one waiting on me (`waiting`, `idle`)
+holds no slot. An admitted start (a row in reserved) counts as
+working, and as RUN_SLOT_START_GB (0.5) less free memory, for
+RUN_SLOT_RESERVE seconds (120): a new Claude takes that long to show
+busy and reach its size, so the gauge lags; for the same reason at
+most RUN_SLOT_BURST (3) new Claudes start per RUN_SLOT_RESERVE. A
+running turn is never paused; only starts wait, first in first out,
+tells first.
 
 heavy-slot can't deadlock with it: a heavy slot is taken from a Bash
 call, so its agent is busy and holds a run-slot; nothing that waits
@@ -46,9 +51,10 @@ shell) and scrollback, its board row and inbox rows; the next tell
 
 State in $LOCAL_CONFIG/run-slots/: queue, reserved, closed (one row
 per close: epoch sid pane session cwd ctx last_turn_end state).
-Every admit, queue, run, close and revive is a row in run-slot.log
-there: epoch event id working free_gb pressure detail; closes and
-revives carry their token estimate (input-token equivalents).
+Every admit, queue, run, hold, close and revive is a row in
+run-slot.log there: epoch event id working free_gb pressure detail;
+closes and revives carry their token estimate (input-token
+equivalents). What pumped commands print goes to run-slot.out.
 Tests: RUN_SLOT_DIR, CLAUDE_CONFIG_DIR, RUN_SLOT_FREE_GB,
 RUN_SLOT_PRESSURE, RUN_SLOT_TMUX (a tmux command, e.g. with -L).
 """
@@ -72,11 +78,13 @@ QUEUE = os.path.join(DIR, 'queue')
 RESERVED = os.path.join(DIR, 'reserved')
 CLOSED = os.path.join(DIR, 'closed')
 LOG = os.path.join(DIR, 'run-slot.log')
+OUT = os.path.join(DIR, 'run-slot.out')
 CAP = int(os.environ.get('RUN_SLOTS') or os.cpu_count() or 12)
 MIN_GB = float(os.environ.get('RUN_SLOT_MIN_GB')
                or os.environ.get('WT_NIGHT_MIN_GB') or 8)
 START_GB = float(os.environ.get('RUN_SLOT_START_GB') or 0.5)
 RESERVE = int(os.environ.get('RUN_SLOT_RESERVE') or 120)
+BURST = int(os.environ.get('RUN_SLOT_BURST') or 3)
 TMUX = shlex.split(os.environ.get('RUN_SLOT_TMUX') or 'tmux')
 PRIO = {'tell': 0, 'start': 1}
 # Prompt cache: a revive within an hour of the last turn rewrites what
@@ -187,13 +195,20 @@ class Room:
     def free_after(self):
         return self.free - START_GB * len(self.res)
 
-    def ok(self):
-        return (self.working < CAP and self.pressure <= 1
-                and self.free_after >= MIN_GB)
+    @property
+    def starting(self):
+        return sum(not r[1].startswith('tell:') for r in self.res)
 
-    def why(self):
+    def ok(self, id_):
+        return (self.working < CAP and self.pressure <= 1
+                and self.free_after >= MIN_GB
+                and (id_.startswith('tell:') or self.starting < BURST))
+
+    def why(self, id_=''):
         if self.working >= CAP:
             return f'{self.working} working (cap {CAP})'
+        if not id_.startswith('tell:') and self.starting >= BURST:
+            return f'{self.starting} starting (burst {BURST})'
         if self.pressure > 1:
             return f'pressure {self.pressure}'
         if self.free_after < MIN_GB:
@@ -240,7 +255,7 @@ def gate(kind, id_, cmd):
                 break
             if PRIO.get(r[1], 9) <= PRIO.get(kind, 9):
                 ahead.append(r)
-        if room.ok() and not ahead:
+        if room.ok(id_) and not ahead:
             write(QUEUE, [r for r in q if r[2] != id_])
             room.take(id_, True)
             log('admit', id_, room, kind)
@@ -251,8 +266,8 @@ def gate(kind, id_, cmd):
               + ([] if old else [row]))
         if not old:
             log('queue', id_, room,
-                f'{room.why()}; {len(ahead)} ahead' if ahead
-                else room.why())
+                f'{room.why(id_)}; {len(ahead)} ahead' if ahead
+                else room.why(id_))
         return 75
 
 
@@ -261,27 +276,36 @@ def pump(skip=()):
     with Lock():
         room = Room(skip)
         q = queue()
-        while q and room.ok():
-            r = q.pop(0)
+        rest = []
+        for r in q:
+            # A start held back by the burst lets the tells behind it go.
+            if not room.ok(r[2]):
+                rest.append(r)
+                if room.ok('tell:'):
+                    continue
+                rest += q[q.index(r) + 1:]
+                break
             cmd = json.loads(r[3])
             room.take(r[2], bool(cmd))
             log('run' if cmd else 'hold', r[2], room, ' '.join(cmd)[:200])
             if cmd:
                 started.append(r)
-        write(QUEUE, q)
+        write(QUEUE, rest)
     env = {k: v for k, v in os.environ.items() if k != 'TMUX_PANE'}
     for r in started:
-        with open(LOG, 'a') as out:
-            subprocess.Popen(json.loads(r[3]), env=dict(env, RUN_SLOT_ID=r[2]),
-                             stdin=subprocess.DEVNULL, stdout=out, stderr=out,
-                             start_new_session=True)
+        with open(OUT, 'a') as out:
+            subprocess.Popen(json.loads(r[3]),
+                             env=dict(env, RUN_SLOT_ID=r[2]),
+                             stdin=subprocess.DEVNULL, stdout=out,
+                             stderr=out, start_new_session=True)
     return len(started)
 
 
 # --- closing stalled sessions -------------------------------------
 
 BG = re.compile(r'Waiting for \d+ background agent|'
-                r'\d+ (background )?shells? (still )?running|· \d+ shells? ·')
+                r'\d+ (background )?shells? (still )?running|'
+                r'· \d+ shells? ·')
 
 
 def transcript(sid):
@@ -419,11 +443,24 @@ def close(dry, verbose):
                    f'ctx {ctx} worst {worst}')
         if dry:
             continue
-        tmux('send-keys', '-t', pane, '-l', '/exit')
-        time.sleep(0.3)
-        tmux('send-keys', '-t', pane, 'Enter')
         with Lock():
-            rs = [r for r in rows(CLOSED) if r[1] != sid]
+            # wt-tell types right after its gate: a live reservation
+            # for this session means a tell is on its way.
+            if any(r[1].startswith((f'tell:{name}:', f'revive:{name}'))
+                   for r in reserved()):
+                continue
+            tmux('send-keys', '-t', pane, '-l', '/exit')
+            time.sleep(0.3)
+            tmux('send-keys', '-t', pane, 'Enter')
+            for _ in range(20):
+                if not alive(s['pid']):
+                    break
+                time.sleep(0.25)
+            else:
+                log('close-failed', sid, room, f'{name} {pane} still up')
+                continue
+            rs = [r for r in rows(CLOSED) if r[1] != sid
+                  and NOW - float(r[0]) < 7 * 86400]
             rs.append([int(NOW), sid, pane, name, s.get('cwd', ''), ctx,
                        int(end), 'closed'])
             write(CLOSED, rs)
@@ -440,27 +477,29 @@ def revive(key, focus=False):
     only in its pane."""
     if key == '.':
         key = os.environ.get('TMUX_PANE', '')
-    rs = rows(CLOSED)
-    hit = next((r for r in reversed(rs) if r[7] == 'closed'
-                and key in (r[1], r[2])), None)
-    if not hit:
-        return 1
-    _, sid, pane, name, cwd, ctx, end = hit[:7]
-    at = (tmux('display-message', '-p', '-t', pane,
-               '#{session_name}\t#{pane_current_command}') or '\t')
-    sess, cmd = at.split('\t', 1)
-    if sess == name and cmd in ('zsh', 'bash', 'sh', 'fish'):
-        tmux('send-keys', '-t', pane, f'claude --resume {sid}', 'Enter')
-        where = pane
-    elif focus:
-        return 1
-    else:
-        where = sh('claude-pane', 'open', sid) or '?'
+    # Locked: the three focus hooks fire at once.
+    with Lock():
+        rs = rows(CLOSED)
+        hit = next((r for r in reversed(rs) if r[7] == 'closed'
+                    and key in (r[1], r[2])), None)
+        if not hit:
+            return 1
+        _, sid, pane, name, cwd, ctx, end = hit[:7]
+        at = (tmux('display-message', '-p', '-t', pane,
+                   '#{session_name}\t#{pane_current_command}') or '\t')
+        sess, cmd = at.split('\t', 1)
+        if sess == name and cmd in ('zsh', 'bash', 'sh', 'fish'):
+            tmux('send-keys', '-t', pane, f'claude --resume {sid}',
+                 'Enter')
+            where = pane
+        elif focus:
+            return 1
+        else:
+            where = sh('claude-pane', 'open', sid) or '?'
+        write(CLOSED, [r[:7] + ['revived'] if r[1] == sid
+                       and r[7] == 'closed' else r for r in rs])
     gap = NOW - int(end)
     cost = int(int(ctx) * REVIVE_COST) if gap < CACHE_TTL else 0
-    with Lock():
-        write(CLOSED, [r[:7] + ['revived'] if r[1] == sid
-                       and r[7] == 'closed' else r for r in rows(CLOSED)])
     log('revive', sid, None,
         f'{name} {where} after={gap / 60:.0f}m ctx={ctx} cost={cost}')
     print(where)
@@ -469,12 +508,14 @@ def revive(key, focus=False):
 
 def ls():
     room = Room()
-    print(f'room: {room.why()}; {room.busy} busy + {len(room.res)} starting'
-          f' / {CAP}, {room.free:.1f} GB free, pressure {room.pressure}')
+    print(f'room: {room.why()}; {room.busy} busy + {len(room.res)} '
+          f'starting / {CAP}, {room.free:.1f} GB free, '
+          f'pressure {room.pressure}')
     for s in busy():
         print(f'busy\t{(s.get("tmux") or s.get("cwd", "")).split(":")[0]}')
     for r in room.res:
-        print(f'starting\t{r[1]} until {time.strftime("%H:%M:%S", time.localtime(float(r[0])))}')
+        until = time.strftime('%H:%M:%S', time.localtime(float(r[0])))
+        print(f'starting\t{r[1]} until {until}')
     for r in queue():
         age = int(NOW - float(r[0])) // 60
         print(f'queued\t{r[1]}\t{r[2]}\t{age}m')

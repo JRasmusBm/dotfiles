@@ -24,9 +24,11 @@ _w8_done() {
   awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
 }
 grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
-# $1: revive or tell, each its own turn in run-slot.
+# $1: a run-slot id, revive per worktree (two tells, one revive) or
+# tell per key. A pumped rerun keeps WT_TELL_NO_REVIVE.
 _gate() {
-  run-slot gate tell "$1:$(basename "$_root"):$_key" -- \
+  run-slot gate tell "$1" -- env \
+    WT_TELL_NO_REVIVE="${WT_TELL_NO_REVIVE:-}" \
     wt-tell "$_root" "$_key" "$_msg" "$_prompt" >/dev/null
 }
 
@@ -37,7 +39,7 @@ _cmd="$(tmux display-message -p -t "$_pane" '#{pane_current_command}' \
 case "$_cmd" in zsh|bash|sh|fish) _shell=1 ;; *) _shell="" ;; esac
 if { test -z "$_pane" || test -n "$_shell"; } \
   && test -z "${WT_TELL_NO_REVIVE:-}" && test -d "$_root"; then
-  _gate revive || exit 1
+  _gate "revive:$(basename "$_root")" || exit 1
   if test -n "$_pane"; then
     run-slot revive "$_pane" >/dev/null \
       || tmux send-keys -t "$_pane" "claude --continue || claude" Enter
@@ -57,7 +59,7 @@ if test -z "$_pane"; then
   exit 1
 fi
 claude-pane-idle "$_pane" || exit 1
-_gate tell || exit 1
+_gate "tell:$(basename "$_root"):$_key" || exit 1
 
 echo "$_root	$_key" >> "$_told"
 _w8_done
