@@ -1,8 +1,10 @@
 #!/bin/sh
 
 # tmux status badge: the current worktree's board section
-# (`wt` order file), as coloured text. Blocked wins over
-# the section. Prints nothing outside a worktree.
+# (`wt` order file), as coloured text. Blocked wins, then an
+# active `wt w8` (`w8 15:40 <what…>`, red `overdue` once past
+# its deadline; the reason is cut to $WT_BADGE_W8_LEN, 24),
+# then the section. Prints nothing outside a worktree.
 # Usage: wt-badge [dir]
 
 cd "${1:-.}" 2>/dev/null || exit 0
@@ -21,6 +23,24 @@ if test -f "$_cfg.blocked" \
     "$_cfg.blocked"; then
   echo '#[fg=red]blocked '
   exit 0
+fi
+
+if test -f "$_cfg.waiting"; then
+  _w8="$(awk -F '\t' -v s="$_slug" -v now="$(date +%FT%H:%M)" \
+    -v n="${WT_BADGE_W8_LEN:-24}" '
+    $1 == s {
+      t = substr($3, 12)
+      if (substr($3, 1, 10) != substr(now, 1, 10)) t = substr($3, 6, 5) " " t
+      w = $4
+      if (length(w) > n) w = substr(w, 1, n - 1) "…"
+      if ($3 <= now) print "#[fg=red]w8 overdue " t " " w " "
+      else print "#[fg=#5fafd7]w8 " t " " w " "
+      exit
+    }' "$_cfg.waiting")"
+  if test -n "$_w8"; then
+    echo "$_w8"
+    exit 0
+  fi
 fi
 
 _section="$(test -f "$_cfg" && awk -v b="$_branch" -v s="$_slug" '

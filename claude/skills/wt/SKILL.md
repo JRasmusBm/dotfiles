@@ -250,7 +250,9 @@ the registry, where `wt resume` brings it back.
 
 `wt-badge` puts the current worktree's section in tmux
 `status-right`, before the inbox count, as coloured text
-(`in progress`, `team review`, `blocked`, `off board`, …).
+(`in progress`, `team review`, `blocked`, `off board`, …); an
+active `wt w8` shows instead as `w8 15:40 <what…>` (red
+`overdue` past the deadline).
 
 Alt-N speed-dial is separate: line N of the current ts
 profile (`tsp`, `$LOCAL_CONFIG/ts-profiles/…`; Alt-0 = line
