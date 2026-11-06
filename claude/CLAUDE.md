@@ -94,6 +94,8 @@ When investigating: explain approach.
 Voice typing: interpret phonetic errors from context
 (cloud MD → CLAUDE.md, sim link → symlink, get hub → GitHub).
 Link to open → bare URL on its own line, not only [text](url).
+Naming a live object (a customer's record, dashboard, setting)
+→ deep-link it in the product, so I click instead of searching.
 Drafts I'll send: literal plain phrasing, no idioms; links
 `[text](url)`, never `<url|text>`; the whole draft each revision.
 Slack posts: edit here, send only on my "send", never save drafts.
