@@ -82,6 +82,14 @@ _rushed() {
 _lim="$_max"
 _rushed && _lim=$((_max + 1))
 _take() {
+  # Re-entrant: an owner already holding one goes on with it (a shell
+  # that runs `heavy-slot take $$` again would otherwise hold every
+  # slot and wait on itself, stalling all others).
+  for _s in "$_dir"/[0-9]*; do
+    test "$(cat "$_s/pid" 2>/dev/null)" = "$_owner" || continue
+    _held=''
+    return 0
+  done
   _i=1
   while test "$_i" -le "$_lim"; do
     _s="$_dir/$_i"

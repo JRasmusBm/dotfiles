@@ -31,19 +31,21 @@
 Room: fewer than RUN_SLOTS (cores) agents working, at least
 RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. An
 agent works while Claude marks its session `busy` (a turn or its
-background agents running); one waiting on me (`waiting`, `idle`)
-holds no slot. An admitted start (a row in reserved) counts as
-working, and as RUN_SLOT_START_GB (0.5) less free memory, for
+background agents running), unless every tool call it runs only
+waits (a queued heavy slot, `gh … --watch`, a poll loop's sleep):
+waiters must not fill the slots. One waiting on me (`waiting`,
+`idle`) or on background shells only (`shell`) holds no slot. An
+admitted start (a row in reserved) counts as working, and as
+RUN_SLOT_START_GB (0.5) less free memory, for
 RUN_SLOT_RESERVE seconds (120): a new Claude takes that long to show
 busy and reach its size, so the gauge lags; for the same reason at
 most RUN_SLOT_BURST (3) new Claudes start per RUN_SLOT_RESERVE. A
 running turn is never paused; only starts wait, first in first out,
 tells first.
 
-heavy-slot can't deadlock with it: a heavy slot is taken from a Bash
-call, so its agent is busy and holds a run-slot; nothing that waits
-for a heavy slot waits here, since only starts wait here, and a start
-runs no Bash.
+heavy-slot can't deadlock with it: only starts wait here, and a
+start runs no Bash, so nothing waiting here holds or wants a heavy
+slot; an agent queued for one holds no run-slot either.
 
 Close rule: see CLOSE_MIN. A closed session keeps its pane (now a
 shell) and scrollback, its board row and inbox rows; the next tell
@@ -171,9 +173,47 @@ def sessions():
     return out
 
 
+# A tool call that only waits: queued for a heavy slot, watching CI,
+# or a poll loop's sleep.
+WAITS = re.compile(r'gh .*(--watch|run watch)|sleep ([5-9]|\d\d)')
+HEAVY_WAIT = os.path.join(
+    os.environ.get('LOCAL_CONFIG') or os.path.expanduser('~/.config'),
+    'heavy-slots', '.wait')
+
+
+def procs():
+    """{pid: (ppid, command)} for every process."""
+    out = {}
+    for ln in (sh('ps', '-axo', 'pid=,ppid=,command=') or '').splitlines():
+        p = ln.split(None, 2)
+        if len(p) == 3:
+            out[int(p[0])] = (int(p[1]), p[2])
+    return out
+
+
+def parked(pid, ps):
+    """pid's tool calls (Bash shells it started) all only wait."""
+    kids = {}
+    for p, (pp, _) in ps.items():
+        kids.setdefault(pp, []).append(p)
+    queued = {int(w) for w in os.listdir(HEAVY_WAIT)
+              if w.isdigit()} if os.path.isdir(HEAVY_WAIT) else set()
+
+    def waits(p):
+        return (p in queued or bool(WAITS.match(ps[p][1]))
+                or any(waits(k) for k in kids.get(p, [])))
+    shells = [p for p in kids.get(pid, [])
+              if 'shell-snapshots/' in ps[p][1]]
+    return bool(shells) and all(waits(p) for p in shells)
+
+
 def busy(skip=()):
-    return [s for s in sessions()
-            if s.get('status') == 'busy' and s.get('sessionId') not in skip]
+    """Sessions working: busy, and not only waiting (a waiter would
+    hold a slot while nothing moves)."""
+    b = [s for s in sessions()
+         if s.get('status') == 'busy' and s.get('sessionId') not in skip]
+    ps = procs() if b else {}
+    return [s for s in b if not parked(s['pid'], ps)]
 
 
 def reserved():
@@ -362,6 +402,66 @@ def last_turn(sid):
     return ctx, text, end
 
 
+def cron_next(cron, after):
+    """When a one-shot `m h dom mon *` fires, first after `after`."""
+    f = cron.split()
+    if len(f) != 5 or not all(x.isdigit() for x in f[:4]):
+        return None
+    m, h, dom, mon = (int(x) for x in f[:4])
+    y = time.localtime(after).tm_year
+    t = time.mktime((y, mon, dom, h, m, 0, 0, 0, -1))
+    return t if t >= after - 60 else time.mktime(
+        (y + 1, mon, dom, h, m, 0, 0, 0, -1))
+
+
+def timers(sid):
+    """A wakeup or cron sid set that has yet to fire: both live only in
+    the Claude process, so closing it would drop them."""
+    p = transcript(sid)
+    try:
+        with open(p, 'rb') as f:
+            raw = f.read()
+    except (OSError, TypeError):
+        return None
+    if b'"ScheduleWakeup"' not in raw and b'"CronCreate"' not in raw:
+        return None
+    uses, jobs, wake = {}, {}, None
+    for ln in raw.splitlines():
+        try:
+            r = json.loads(ln)
+        except ValueError:
+            continue
+        c = (r.get('message') or {}).get('content') \
+            if isinstance(r.get('message'), dict) else None
+        for b in c if isinstance(c, list) else []:
+            if not isinstance(b, dict):
+                continue
+            i = b.get('input') or {}
+            if b.get('type') == 'tool_use' and not r.get('isSidechain'):
+                if b.get('name') == 'ScheduleWakeup':
+                    wake = None if i.get('stop') else \
+                        stamp(r) + float(i.get('delaySeconds') or 0)
+                elif b.get('name') == 'CronCreate':
+                    uses[b.get('id')] = (i, stamp(r))
+                elif b.get('name') == 'CronDelete':
+                    jobs.pop(i.get('id'), None)
+            elif b.get('type') == 'tool_result' \
+                    and b.get('tool_use_id') in uses:
+                m = re.search(r'task (\w+)', str(b.get('content')))
+                if m:
+                    jobs[m.group(1)] = uses[b['tool_use_id']]
+    if wake and wake > NOW - 300:
+        return 'wakeup at ' + time.strftime('%H:%M', time.localtime(wake))
+    for job, (i, at) in jobs.items():
+        if i.get('recurring', True):
+            return f'cron {job} recurring'
+        t = cron_next(i.get('cron', ''), at)
+        if t is None or t > NOW - 300:
+            return f'cron {job} at ' + (time.strftime(
+                '%m-%d %H:%M', time.localtime(t)) if t else '?')
+    return None
+
+
 def asks(text):
     """The turn ended on a question for me (its last line)."""
     lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
@@ -393,8 +493,9 @@ CLOSE_MIN = float(os.environ.get('RUN_SLOT_CLOSE_MIN') or 60)
 
 def candidate(s, focus):
     """Why s stays open, or None to close it: idle, its turn ended
-    CLOSE_MIN minutes ago, not asking me, not focused, an empty prompt
-    and no background work. Sets s['turn'] = (ctx, text, end)."""
+    CLOSE_MIN minutes ago, not asking me, not focused, an empty prompt,
+    no background work and no wakeup or cron still to fire. Sets
+    s['turn'] = (ctx, text, end)."""
     if s.get('kind', 'interactive') != 'interactive':
         return 'not interactive'
     if s.get('status') != 'idle':
@@ -418,7 +519,7 @@ def candidate(s, focus):
     screen = tmux('capture-pane', '-p', '-t', pane, '-S', '-40') or ''
     if BG.search(screen):
         return 'background work'
-    return None
+    return timers(s.get('sessionId', ''))
 
 
 def close(dry, verbose):
