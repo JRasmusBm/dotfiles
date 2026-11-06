@@ -87,6 +87,13 @@ type-aware eslint server 1.2–2.6 GB per big-TS-repo nvim) were the bulk.
   `:LspSuspend`/`:LspResume`. Each nvim answers
   `require("jrasmusbm.lsp.idle").status()` → `<unfocused_since> <n
   clients>` over `/tmp/nvim-server-*`.
+- nvim quits itself (`vim/lua/jrasmusbm/idle_quit.lua`) after
+  `vim.g.idle_quit_minutes` (10) unfocused with no key, saving its
+  windows to `<worktree git dir>/nvim-idle-session.vim`; `v` and
+  `nr` restore it (`nr` starts nvim in the `vim` window, made at slot
+  2 if missing), `v fresh` skips and drops it. A tmux revive starts an
+  nvim per session (~100, 11 GB on 2026-11-06); these close on their
+  own now.
 - `lsp-reclaim`: at `kern.memorystatus_vm_pressure_level` ≥ 2,
   suspends the longest-unfocused nvim (≥ 5 min), one per minute.
 - macOS has no usable per-process/tree memory cap (no cgroups,

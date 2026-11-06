@@ -27,6 +27,8 @@ require("lazy").setup("plugins", {
   },
 })
 
+require("jrasmusbm.idle_quit").setup()
+
 vim.cmd "syntax on"
 vim.cmd "filetype plugin indent on"
 

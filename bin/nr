@@ -1,4 +1,9 @@
 #!/bin/sh
+#
+# nr [nvr args | :cmd] — send to this tmux session's nvim. If it isn't
+# running (idle_quit closed it, or never started), start it with `v`
+# (which restores its session) in the session's `vim` window, made at
+# slot 2 when missing, then send.
 
 set -e
 
@@ -14,7 +19,38 @@ if ! (pip list 2>/dev/null | "$grep_cmd" -q neovim-remote); then
   pip install neovim-remote
 fi
 
-_server_name="$(nvim-server-name)" 
+_server_name="$(nvim-server-name)"
+
+_alive() {
+  test -S "$_server_name" \
+    && nvim --server "$_server_name" --remote-expr 1 >/dev/null 2>&1
+}
+
+_start() {
+  test -n "$TMUX" || { echo "nr: no nvim at $_server_name" >&2; exit 1; }
+  _s="$(tmux display-message -p '#S')"
+  _pane="$(tmux list-panes -t "=$_s:=vim" \
+    -F '#{pane_id} #{pane_current_command}' 2>/dev/null \
+    | awk '$2 ~ /^-?(zsh|bash|sh|fish)$/ { print $1; exit }')"
+  if test -z "$_pane"; then
+    if tmux list-windows -t "=$_s" -F '#{window_index}' | grep -qx 2; then
+      _pane="$(tmux new-window -d -a -t "=$_s:1" -n vim -c "$PWD" \
+        -P -F '#{pane_id}')"
+    else
+      _pane="$(tmux new-window -d -t "=$_s:2" -n vim -c "$PWD" \
+        -P -F '#{pane_id}')"
+    fi
+  fi
+  tmux send-keys -t "$_pane" "v" Enter
+  _i=0
+  until _alive; do
+    _i=$((_i + 1))
+    test "$_i" -le 100 || { echo "nr: nvim didn't start" >&2; exit 1; }
+    sleep 0.1
+  done
+}
+
+_alive || _start
 
 if test "$(echo "$1" | cut -c1-1)" = ":"; then
   (

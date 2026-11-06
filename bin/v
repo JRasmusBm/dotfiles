@@ -1,13 +1,44 @@
 #!/bin/sh
+#
+# v [args] — nvim listening on this tmux session's server name, so
+# `nr` can reach it. With no file to open, restores the session an
+# idle nvim saved when it quit (jrasmusbm.idle_quit).
+# v fresh [args] — start without restoring, and drop that session.
 
 set -e
 
-if test -x "$(which nvim-server-name)"; then
+_fresh=0
+if test "${1:-}" = fresh; then
+  _fresh=1
+  shift
+fi
+
+_files=0
+_skip=0
+for _a in "$@"; do
+  if test "$_skip" = 1; then _skip=0; continue; fi
+  case "$_a" in
+    -c|--cmd|-S|-u|-i|-s|-w|-W|-t|-q|--listen|--server) _skip=1 ;;
+    -*|+*) ;;
+    *) _files=1 ;;
+  esac
+done
+
+if test -x "$(command -v nvim-server-name)"; then
   NVIM_LISTEN_ADDRESS="$(nvim-server-name)"
   if ! test -e "$NVIM_LISTEN_ADDRESS"; then
-    nvim --listen "$NVIM_LISTEN_ADDRESS" "$@"
-    exit 0
+    # Where jrasmusbm.idle_quit saves it: the worktree's git dir.
+    if _gd="$(git rev-parse --absolute-git-dir 2>/dev/null)"; then
+      _session="$_gd/nvim-idle-session.vim"
+    else
+      _session="${XDG_STATE_HOME:-$HOME/.local/state}/nvim/idle-sessions/$(basename "$NVIM_LISTEN_ADDRESS").vim"
+    fi
+    test "$_fresh" = 0 || rm -f "$_session"
+    if test "$_files" = 0 && test -s "$_session"; then
+      exec nvim --listen "$NVIM_LISTEN_ADDRESS" -S "$_session" "$@"
+    fi
+    exec nvim --listen "$NVIM_LISTEN_ADDRESS" "$@"
   fi
 fi
 
-nvim "$@"
+exec nvim "$@"
