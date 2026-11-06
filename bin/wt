@@ -19,8 +19,9 @@ _repo_name() {
   basename "$(_main_root)"
 }
 
+# The board of the repo at main root $1 (default: this one).
 _order_file() {
-  echo "$LOCAL_CONFIG/worktrees/$(_repo_name)"
+  echo "$LOCAL_CONFIG/worktrees/$(basename "${1:-$(_main_root)}")"
 }
 
 _default_branch() {
@@ -309,9 +310,9 @@ _switch_to() {
 
 # All worktrees under .worktrees/ (the disk is the source
 # of truth), one per line as "<path>\t<branch>" — branch
-# empty when detached.
+# empty when detached. $1: another repo's main root.
 _wt_worktrees() {
-  _root="$(_main_root)"
+  _root="${1:-$(_main_root)}"
   git -C "$_root" worktree list --porcelain | awk '
     /^worktree /{ p=$2; b=""; next }
     /^branch /{ b=$2; sub(/^refs\/heads\//, "", b); next }
@@ -335,25 +336,32 @@ _wt_match() {
 # One "<main root>\t<label>" row per repo, the current repo first.
 _wt_group() {
   _g_here="$(cd "$(_main_root)" && pwd -P)"
-  _g_rows="$(printf '%s\n' "${WT_GROUP:-}" | tr ':' '\n' \
+  printf '%s\n' "${WT_GROUP:-}" | tr ':' '\n' \
     | while IFS= read -r _g_e; do
         test -n "$_g_e" || continue
-        case "$_g_e" in
-          (*=*) _g_l="${_g_e%%=*}"; _g_p="${_g_e#*=}" ;;
-          (*) _g_l=""; _g_p="$_g_e" ;;
+        # A label is what precedes the first `=`, unless that holds a /.
+        _g_l="${_g_e%%=*}"
+        case "$_g_l" in
+          (*/*|"$_g_e") _g_l=""; _g_p="$_g_e" ;;
+          (*) _g_p="${_g_e#*=}" ;;
         esac
-        _g_c="$(git -C "$_g_p" rev-parse --path-format=absolute \
-          --git-common-dir 2>/dev/null)" || continue
+        case "$_g_p" in ('~'/*) _g_p="$HOME/${_g_p#'~'/}" ;; esac
+        if ! _g_c="$(git -C "$_g_p" rev-parse --path-format=absolute \
+          --git-common-dir 2>/dev/null)"; then
+          echo "wt: WT_GROUP: no repo at $_g_p, skipped" >&2
+          continue
+        fi
         _g_p="$(cd "$(dirname "$_g_c")" && pwd -P)" || continue
         printf '%s\t%s\n' "$_g_p" "${_g_l:-${_g_p##*/}}"
-      done)"
-  if printf '%s\n' "$_g_rows" | cut -f1 | $_grep -qxF "$_g_here"; then
-    printf '%s\n' "$_g_rows" | awk -F '\t' -v h="$_g_here" '
-      $1 == h && !s++ { print; next } $1 != h { o[++n] = $0 }
-      END { for (i = 1; i <= n; i++) print o[i] }'
-  else
-    printf '%s\t\n' "$(_main_root)"
-  fi
+      done \
+    | awk -F '\t' -v h="$_g_here" -v m="$(_main_root)" '
+        seen[$1]++ { next }
+        $1 == h { print; f = 1; next }
+        { o[++n] = $0 }
+        END {
+          if (!f) { print m "\t"; exit }
+          for (i = 1; i <= n; i++) print o[i]
+        }'
 }
 
 # Picker rows of one repo: "<root>\t<line>\t<label: line>", where
@@ -364,13 +372,9 @@ _wt_pick_rows() {
   _pr_root="$1"
   _tab="$(printf '\t')"
   { printf '#DISK\n'
-    git -C "$_pr_root" worktree list --porcelain | awk '
-      /^worktree /{ p=$2; b=""; next }
-      /^branch /{ b=$2; sub(/^refs\/heads\//, "", b); next }
-      /^$/{ if (p ~ /\/\.worktrees\//) print p "\t" b; p=""; b="" }
-      END{ if (p != "" && p ~ /\/\.worktrees\//) print p "\t" b }'
+    _wt_worktrees "$_pr_root"
     printf '#ORDER\n'
-    cat "$LOCAL_CONFIG/worktrees/${_pr_root##*/}" 2>/dev/null || true
+    cat "$(_order_file "$_pr_root")" 2>/dev/null || true
   } | awk -F"$_tab" -v root="$_pr_root" -v lbl="$2" '
         function row(l) {
           print root "\t" l "\t" (lbl != "" ? lbl ": " : "") l
@@ -408,8 +412,6 @@ _wt_pick_rows() {
 }
 
 _wt_pick() {
-  _of="$(_order_file)"
-  test -f "$_of" || touch "$_of"
   _list="$(_wt_group | while IFS="$(printf '\t')" read -r _r _l; do
     _wt_pick_rows "$_r" "$_l"
   done)"
@@ -431,6 +433,7 @@ _wt_pick() {
   # The rest runs in the picked row's repo, which may not be this one.
   cd "$(printf '%s' "$_sel" | cut -f1)"
   _of="$(_order_file)"
+  test -f "$_of" || touch "$_of"
   _sel="$(printf '%s' "$_sel" | cut -f2)"
   case "$_sel" in
     '⊘ '*)
