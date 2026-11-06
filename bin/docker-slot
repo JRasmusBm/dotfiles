@@ -574,7 +574,7 @@ _cmd_ls() {
   echo "last start/quit: ${_sq:-none}"
 }
 
-# Docker hours per day: our own minute ticks, else the memlog (one
+# Docker hours per day from our minute ticks and the memlog (one
 # snapshot a minute; the Docker VM shows as a Virtualization process).
 _cmd_stats() {
   _days="${1:-7}"
@@ -584,15 +584,16 @@ _cmd_stats() {
   while test "$_i" -ge 0; do
     _day="$(date -v-"$_i"d +%F)"
     _i=$((_i - 1))
-    if test -f "$_dir/up/$_day"; then
-      _h="$(wc -l < "$_dir/up/$_day" | awk '{ printf "%.1f", $1 / 60 }')"
-      _src=ticks
-    elif test -f "$_ml/$_day.log"; then
-      _h="$(awk '/^===/ { d = 0 } /Virtualization.VirtualMachine/ { if (!d) { c++; d = 1 } } END { printf "%.1f", c / 60 }' "$_ml/$_day.log")"
-      _src=memlog
-    else
-      continue
-    fi
+    # The larger: ticks start mid-day on install, memlog may lapse.
+    _t=0 _m=0
+    test ! -f "$_dir/up/$_day" || _t="$(wc -l < "$_dir/up/$_day")"
+    test ! -f "$_ml/$_day.log" || _m="$(awk '/^===/ { d = 0 }
+      /Virtualization.VirtualMachine/ { if (!d) { c++; d = 1 } }
+      END { print c + 0 }' "$_ml/$_day.log")"
+    test "$_t" -gt 0 || test "$_m" -gt 0 || continue
+    _src=ticks
+    test "$_m" -le "$_t" || { _src=memlog; _t="$_m"; }
+    _h="$(echo "$_t" | awk '{ printf "%.1f", $1 / 60 }')"
     _ev="$(grep "^$_day" "$_dir/log" 2>/dev/null || true)"
     _st="$(printf '%s\n' "$_ev" | grep -c "${_tab}start${_tab}" || true)"
     _qu="$(printf '%s\n' "$_ev" | grep -c "${_tab}quit${_tab}" || true)"
