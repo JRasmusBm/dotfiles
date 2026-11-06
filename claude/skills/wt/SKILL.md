@@ -33,6 +33,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   not on the board as `⊘ branch`. Selecting one opens its
   session (named by slug, like every entry point); picking
   an orphan also offers to adopt it onto the board.
+  `WT_GROUP` (`:`-separated `[label=]path`, set privately)
+  makes it list a group of repos together, each row as
+  `label: HEADING: branch`, from any repo in the group;
+  repos outside it list alone, as before.
 - `wt add <branch>` — create worktree + register
 - `wt fix <url|text>` / `wt feat <url|text>` — Linear-aware
   add. A Linear issue URL becomes

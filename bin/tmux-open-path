@@ -8,6 +8,10 @@ PATH = re.compile(r"[-_/.@a-z:0-9~#?=&%+]+", re.IGNORECASE)
 # Lines a TUI hard-wrapped (Claude Code does, with a newline and an
 # indent) still hold one path: follow it onto neighbours this far.
 REACH = 6
+# Tokens that can only open a path, so nothing joins in front of them.
+START = re.compile(r"[a-z]+://|~|git@", re.IGNORECASE)
+# A fragment without one of these is a word, not a piece of a path.
+SEP = re.compile(r"[/.:]")
 
 
 def get(command):
@@ -52,11 +56,13 @@ def main():
 
     path = match.group(0)
     # Backward: our token opens the line and the line above ran full.
+    # A prose word ending that line ("either") is not part of the path.
     j, start = i, match.start()
-    while j > 0 and not lines[j][:start].strip() and wraps(
-            lines[j - 1], width):
+    while j > 0 and not START.match(path) and not lines[j][:start].strip(
+            ) and wraps(lines[j - 1], width):
         prev = PATH.search(lines[j - 1].rstrip()[::-1])
-        if prev is None or prev.start() != 0:
+        if prev is None or prev.start() != 0 or not SEP.search(
+                prev.group(0)[::-1].rstrip(".,:")):
             break
         path = prev.group(0)[::-1] + path
         j -= 1

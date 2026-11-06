@@ -9,8 +9,10 @@ set -e
 
 if test "$(uname)" = 'Darwin' ; then
   grep_cmd='ggrep'
+  timeout_cmd='gtimeout'
 else
   grep_cmd='grep'
+  timeout_cmd='timeout'
 fi
 
 . "$DOTFILES/.venv/bin/activate"
@@ -21,9 +23,11 @@ fi
 
 _server_name="$(nvim-server-name)"
 
+# Answers within 2s and finished startup: a request sent earlier runs
+# before plugins load, and one to an nvim stuck at a prompt never returns.
 _alive() {
-  test -S "$_server_name" \
-    && nvim --server "$_server_name" --remote-expr 1 >/dev/null 2>&1
+  test -S "$_server_name" && test "$("$timeout_cmd" 2 nvim --headless \
+    --server "$_server_name" --remote-expr v:vim_did_enter 2>/dev/null)" = 1
 }
 
 _start() {

@@ -77,11 +77,13 @@ def main():
         run(["open", "-R", os.path.realpath(file_path)])
         return
 
-    if len(path_components) > 1:
-        run(["nr", f"+{path_components[1]}", "--remote", file_path])
-        return
-
-    result = run(["nr", "--remote", file_path])
+    # `silent`: a file-info message wider than the screen leaves nvim
+    # at "Press ENTER", which blocks the RPC call (and tmux with it).
+    line = path_components[1] if len(path_components) > 1 else ""
+    line = f"+{line} " if line.isdigit() else ""
+    quoted = os.path.abspath(file_path).replace("'", "''")
+    result = run(["nr", "-c",
+                  f"exe 'silent edit {line}' . fnameescape('{quoted}')"])
 
     if result.returncode != 0:
         print(f"Exited with {result.returncode}")
