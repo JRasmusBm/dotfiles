@@ -114,10 +114,19 @@ _ttl() {
   else echo "$_ttl_user"; fi
 }
 
-# Sessions, one per line; fails when no tmux server answers, so a
-# reaper that can't see tmux never takes it for "everyone is gone".
+# Sessions, one per line; fails when a tmux server runs but doesn't
+# answer, so a reaper that can't see tmux never takes it for
+# "everyone is gone". No tmux process at all: the server exited with
+# its last session, so "-" (known empty, never an owner name).
 _sessions() {
-  tmux list-sessions -F '#S' 2>/dev/null
+  if _sl="$(tmux list-sessions -F '#S' 2>/dev/null)"; then
+    echo "${_sl:--}"
+    return 0
+  fi
+  _r=0
+  pgrep -x tmux >/dev/null 2>&1 || _r=$?
+  test "$_r" = 1 || return 1
+  echo -
 }
 
 _alive() {
@@ -213,15 +222,20 @@ _in() {
 }
 
 # An agent's containers outlive its check-in; `user` is never alive-
-# checked, so it never gets the mark. tmux/OWNER: last seen in tmux,
-# so it is gone with its session; outside tmux, its check-in decides.
+# checked, so it never gets the mark. tmux/OWNER: last seen in its
+# own tmux session, so it is gone with it; outside tmux, its check-in
+# decides. An owner named from another session's pane is left as is.
 # (A 2nd arg: called from the hook, which only agents run.)
 _mark() {
   test "$1" != user || return 0
-  if test -n "${TMUX_PANE:-}"; then : > "$_dir/tmux/$1"
-  else rm -f "$_dir/tmux/$1"; fi
-  test "${CLAUDECODE:-}${2:-}" = '' \
-    || echo "${TMUX_PANE:+tmux}" > "$_dir/agent/$1"
+  _tm=''
+  if test -z "${TMUX_PANE:-}"; then rm -f "$_dir/tmux/$1"
+  elif test "$(tmux display-message -p -t "$TMUX_PANE" '#S' \
+    2>/dev/null || true)" = "$1"; then
+    _tm=tmux
+    : > "$_dir/tmux/$1"
+  fi
+  test "${CLAUDECODE:-}${2:-}" = '' || echo "$_tm" > "$_dir/agent/$1"
 }
 
 _cmd_in() {
