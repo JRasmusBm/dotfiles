@@ -58,7 +58,7 @@ _label='docker-slot.owner'
 _tab="$(printf '\t')"
 _sep='|' # not whitespace: IFS keeps its empty fields
 mkdir -p "$_dir/in" "$_dir/compose" "$_dir/up" "$_dir/seen" \
-  "$_dir/agent"
+  "$_dir/agent" "$_dir/tmux"
 
 _now() { date +%s; }
 
@@ -127,14 +127,16 @@ _alive() {
   esac
   test -n "${_sess:-}" || return 0
   printf '%s\n' "$_sess" | grep -qxF "$1" && return 0
-  # An agent outside tmux has no session to end: it lives while
-  # checked in, or while its mark (renewed by every Bash call) is
-  # fresh. Anyone else is gone with their session.
-  test -f "$_dir/agent/$1" || return 1
-  ! grep -qx tmux "$_dir/agent/$1" || return 1
+  # Last seen in tmux: gone with its session.
+  test ! -f "$_dir/tmux/$1" || return 1
+  ! grep -qxs tmux "$_dir/agent/$1" || return 1
+  # Outside tmux there is no session to end: alive while checked in,
+  # or, for an agent, while its mark (renewed by every Bash call) is
+  # fresh.
   _ua=''
   test ! -f "$_dir/in/$1" || read -r _ua < "$_dir/in/$1" || true
   test "${_ua:-0}" -le "$(_now)" || return 0
+  test -f "$_dir/agent/$1" || return 1
   test -n "$(find "$_dir/agent/$1" -mmin "-$((_ttl_agent / 60))" \
     2>/dev/null)"
 }
@@ -211,10 +213,14 @@ _in() {
 }
 
 # An agent's containers outlive its check-in; `user` is never alive-
-# checked, so it never gets the mark.
+# checked, so it never gets the mark. tmux/OWNER: last seen in tmux,
+# so it is gone with its session; outside tmux, its check-in decides.
 # (A 2nd arg: called from the hook, which only agents run.)
 _mark() {
-  test "${CLAUDECODE:-}${2:-}" = '' || test "$1" = user \
+  test "$1" != user || return 0
+  if test -n "${TMUX_PANE:-}"; then : > "$_dir/tmux/$1"
+  else rm -f "$_dir/tmux/$1"; fi
+  test "${CLAUDECODE:-}${2:-}" = '' \
     || echo "${TMUX_PANE:+tmux}" > "$_dir/agent/$1"
 }
 
@@ -315,7 +321,7 @@ _out() {
     rm -f "$_dir/in/$1"
     _log out "owner=$1 why=$2"
   fi
-  rm -f "$_dir/agent/$1"
+  rm -f "$_dir/agent/$1" "$_dir/tmux/$1"
   _remove_owned "$1"
 }
 
@@ -338,9 +344,11 @@ _cmd_out() {
   _unlock
 }
 
+# Only an agent's own check-in: a human's 8h one (or `user`'s, shared
+# with any agent outside tmux and a worktree) isn't the agent's to cut.
 _cmd_linger() {
   _o="${1:-$(_owner)}"
-  test -f "$_dir/in/$_o" || return 0
+  test -f "$_dir/in/$_o" && test -f "$_dir/agent/$_o" || return 0
   _lock
   test ! -f "$_dir/in/$_o" || _put "$_dir/in/$_o" "$(($(_now) + _linger))"
   _unlock
@@ -721,7 +729,7 @@ _cmd_reap() {
   done
   # Records of gone owners.
   if test -n "$_sess"; then
-    for _f in "$_dir"/agent/*; do
+    for _f in "$_dir"/agent/* "$_dir"/tmux/*; do
       test ! -f "$_f" || _alive "${_f##*/}" || rm -f "$_f"
     done
     for _f in "$_dir"/compose/*; do
@@ -733,8 +741,11 @@ _cmd_reap() {
   fi
   printf '%s\n' "$_rows" | grep -q '^busy ' && _busy=1
   ls "$_dir"/in/* >/dev/null 2>&1 && _busy=1
-  # No tmux answer: can't tell whose test DBs these are, so keep them.
-  test -n "$_sess" || _busy=1
+  # No tmux answer (or no server left): can't tell whose test DBs
+  # these are, so keep them, and Docker, while any runs.
+  test -n "$_sess" \
+    || ! printf '%s\n' "$_all" | grep -q "${_sep}running${_sep}" \
+    || _busy=1
   _lp="$(cat "$_dir/last-prune" 2>/dev/null || echo 0)"
   if test -n "$_busy"; then
     rm -f "$_dir/idle"
