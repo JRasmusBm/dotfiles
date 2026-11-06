@@ -357,13 +357,14 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   `wt-cold` is the dry run. Each pinging run appends its counts to
   `stalled.log` (epoch, stalled, waiting, active, snoozed, inbox
   pending), which the my-impact daily review reads.
-- `btabs` — browser tabs as inventory: count, duplicates, by host;
-  `btabs tidy` closes duplicates and tabs of merged/closed PRs (logged,
-  `btabs reopen` undoes); `wt-sync` tidies once a weekday from 08:00
-  and logs the count every 5 minutes to `tabs.log`. Tabs opened from
-  the shell (`browse`, `$BROWSER` so `gh … --web`, URL clicks via
-  `open-path`, `git open`) close 5 minutes after they last were the
-  active tab, unless navigated away (`btabs expire`, every minute).
+- `btabs` — browser tabs as inventory: count, duplicates, by host.
+  `btabs expire` (`wt-sync`, every minute, before anything that can
+  hang) closes any tab left unfocused `BTABS_IDLE_MIN` (240) awake
+  minutes, shell-opened and sign-in leftovers after 5, extra copies of
+  a page at once; never a window's active tab or a call. `-n` lists.
+  `btabs tidy` adds tabs of merged/closed PRs (once a weekday from
+  08:00). Logged; `btabs reopen` undoes. Count every 5 min in
+  `tabs.log`.
 - `M-$` — popup of sessions ranked by token burn (`tok-top
   --fzf`); Enter jumps to the session.
 - `M-o` / `notif` — fzf picker: pending panes (`●`, latest
