@@ -26,6 +26,11 @@ done
 
 if test -x "$(command -v nvim-server-name)"; then
   NVIM_LISTEN_ADDRESS="$(nvim-server-name)"
+  # A socket left by a dead or hung nvim blocks --listen: drop it.
+  if test -S "$NVIM_LISTEN_ADDRESS" && ! gtimeout 2 nvim --headless \
+    --server "$NVIM_LISTEN_ADDRESS" --remote-expr 1 >/dev/null 2>&1; then
+    rm -f "$NVIM_LISTEN_ADDRESS"
+  fi
   if ! test -e "$NVIM_LISTEN_ADDRESS"; then
     # Where jrasmusbm.idle_quit saves it: the worktree's git dir.
     if _gd="$(git rev-parse --absolute-git-dir 2>/dev/null)"; then
