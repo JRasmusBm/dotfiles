@@ -62,6 +62,11 @@ mkdir -p "$_dir/in" "$_dir/compose" "$_dir/up" "$_dir/seen" \
 
 _now() { date +%s; }
 
+# Write a check-in atomically: readers never see it empty.
+_put() {
+  echo "$2" > "$_dir/.put.$$" && mv -f "$_dir/.put.$$" "$1"
+}
+
 _log() {
   _e="$1"
   shift
@@ -184,12 +189,12 @@ _start() {
 _in() {
   _f="$_dir/in/$1"
   _u=''
-  test -f "$_f" && read -r _u < "$_f"
+  test ! -f "$_f" || read -r _u < "$_f" || true
   if test -z "$_u"; then
     _log in "owner=$1 until=$(date -r "$2" +%H:%M)"
-    echo "$2" > "$_f"
+    _put "$_f" "$2"
   elif test "$2" -gt "$_u"; then
-    echo "$2" > "$_f"
+    _put "$_f" "$2"
   fi
   _mark "$1"
   rm -f "$_dir/idle"
@@ -293,7 +298,7 @@ _cmd_linger() {
   _o="${1:-$(_owner)}"
   test -f "$_dir/in/$_o" || return 0
   _lock
-  test ! -f "$_dir/in/$_o" || echo "$(($(_now) + _linger))" > "$_dir/in/$_o"
+  test ! -f "$_dir/in/$_o" || _put "$_dir/in/$_o" "$(($(_now) + _linger))"
   _unlock
 }
 
@@ -374,7 +379,7 @@ _cmd_docker() {
     if ! _start; then
       # Undo only this call's check-in.
       if test -z "$_u"; then rm -f "$_dir/in/$_o"
-      else echo "$_u" > "$_dir/in/$_o"; fi
+      else _put "$_dir/in/$_o" "$_u"; fi
       _unlock
       exit 1
     fi
@@ -430,7 +435,7 @@ _cmd_hook() {
   elif test -n "$_u"; then
     # An agent checked in before its marks existed gets one here.
     test "$_o" = user || : > "$_dir/agent/$_o"
-    test "$_n" -le "$_u" || echo "$_n" > "$_f"
+    test "$_n" -le "$_u" || _put "$_f" "$_n"
   fi
 }
 
