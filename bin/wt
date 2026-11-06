@@ -321,18 +321,53 @@ _wt_match() {
     $2 == a || d == a || d == n { print; exit }'
 }
 
-_wt_pick() {
-  _root="$(_main_root)"
-  _of="$(_order_file)"
-  test -f "$_of" || touch "$_of"
-  _tab="$(printf '\t')"
+# Repos `wt :` lists together. $WT_GROUP holds `:`-separated
+# entries, each a repo path or `label=path` (label defaults to the
+# main checkout's dir name). It applies only when the current repo
+# is one of them; else the picker lists this repo alone, unlabelled.
+# One "<main root>\t<label>" row per repo, the current repo first.
+_wt_group() {
+  _g_here="$(cd "$(_main_root)" && pwd -P)"
+  _g_rows="$(printf '%s\n' "${WT_GROUP:-}" | tr ':' '\n' \
+    | while IFS= read -r _g_e; do
+        test -n "$_g_e" || continue
+        case "$_g_e" in
+          (*=*) _g_l="${_g_e%%=*}"; _g_p="${_g_e#*=}" ;;
+          (*) _g_l=""; _g_p="$_g_e" ;;
+        esac
+        _g_c="$(git -C "$_g_p" rev-parse --path-format=absolute \
+          --git-common-dir 2>/dev/null)" || continue
+        _g_p="$(cd "$(dirname "$_g_c")" && pwd -P)" || continue
+        printf '%s\t%s\n' "$_g_p" "${_g_l:-${_g_p##*/}}"
+      done)"
+  if printf '%s\n' "$_g_rows" | cut -f1 | $_grep -qxF "$_g_here"; then
+    printf '%s\n' "$_g_rows" | awk -F '\t' -v h="$_g_here" '
+      $1 == h && !s++ { print; next } $1 != h { o[++n] = $0 }
+      END { for (i = 1; i <= n; i++) print o[i] }'
+  else
+    printf '%s\t\n' "$(_main_root)"
+  fi
+}
 
-  # Show on-disk worktrees on the board, prefixed with their
-  # heading (a FOO: line). On-disk worktrees not on the board
-  # show as ⊘ and can be adopted.
-  _list="$( { printf '#DISK\n'; _wt_worktrees; \
-    printf '#ORDER\n'; cat "$_of"; } \
-    | awk -F"$_tab" '
+# Picker rows of one repo: "<root>\t<line>\t<label: line>", where
+# <line> is what `wt open`/wt-preview take. On-disk worktrees on the
+# board show prefixed with their heading (a FOO: line); on-disk
+# worktrees not on the board show as ⊘ and can be adopted.
+_wt_pick_rows() {
+  _pr_root="$1"
+  _tab="$(printf '\t')"
+  { printf '#DISK\n'
+    git -C "$_pr_root" worktree list --porcelain | awk '
+      /^worktree /{ p=$2; b=""; next }
+      /^branch /{ b=$2; sub(/^refs\/heads\//, "", b); next }
+      /^$/{ if (p ~ /\/\.worktrees\//) print p "\t" b; p=""; b="" }
+      END{ if (p != "" && p ~ /\/\.worktrees\//) print p "\t" b }'
+    printf '#ORDER\n'
+    cat "$LOCAL_CONFIG/worktrees/${_pr_root##*/}" 2>/dev/null || true
+  } | awk -F"$_tab" -v root="$_pr_root" -v lbl="$2" '
+        function row(l) {
+          print root "\t" l "\t" (lbl != "" ? lbl ": " : "") l
+        }
         $0 == "#DISK"  { sec = "D"; next }
         $0 == "#ORDER" { sec = "O"; h = ""; next }
         sec == "D" {
@@ -355,26 +390,41 @@ _wt_pick() {
           n = split($0, ra, "/"); rdir = ra[n]
           seen[$0] = 1; seen[rdir] = 1
           if (ondisk[$0] || ondisk[rdir])
-            print (h != "" ? h ": " : "") $0
+            row((h != "" ? h ": " : "") $0)
         }
         END {
           for (i = 1; i <= c; i++)
             if (!seen[wbr[i]] && !seen[wdir[i]])
-              print "\342\212\230 " wname[i]
+              row("\342\212\230 " wname[i])
         }
-      ')"
+      '
+}
+
+_wt_pick() {
+  _of="$(_order_file)"
+  test -f "$_of" || touch "$_of"
+  _list="$(_wt_group | while IFS="$(printf '\t')" read -r _r _l; do
+    _wt_pick_rows "$_r" "$_l"
+  done)"
 
   # No worktrees → just open an empty fzf (no error). printf
   # (not echo) so an empty list is truly empty, not a blank row.
   # --exact: each space-separated term is a literal substring
   # (so `pause rel` hits dev-stack-pause-release), not a
   # char-by-char fuzzy match across the whole branch name.
+  # Only the labelled line shows and is searched; the repo root and
+  # bare line ride along for the preview and the pick.
   _sel="$(printf '%s' "$_list" | fzf --reverse --exact \
-    --preview "wt-preview '$_root' {}" \
+    --delimiter="$(printf '\t')" --with-nth=3 \
+    --preview 'wt-preview {1} {2}' \
     --preview-window=right,55%,wrap || true)"
 
   test -z "$_sel" && exit 0
 
+  # The rest runs in the picked row's repo, which may not be this one.
+  cd "$(printf '%s' "$_sel" | cut -f1)"
+  _of="$(_order_file)"
+  _sel="$(printf '%s' "$_sel" | cut -f2)"
   case "$_sel" in
     '⊘ '*)
       # Orphan: open its session regardless, and offer to
