@@ -20,16 +20,26 @@ if [ "$asset" != true ] && [ -f "$file" ]; then
   [ -n "$title" ] ||
     title=$(grep -o -m1 '<title>[^<]*' "$file" | sed 's/<title>//')
   [ -n "$title" ] || title=$(basename "$file")
-  open "$file"
+  # Scratchpad paths run ~200 chars and wrap in the terminal, which
+  # breaks search in tmux copy-mode: report a short symlink instead.
+  base=$(basename "$file")
+  link=/tmp/art/$base
+  if [ -e "$link" ] && [ "$(readlink "$link")" != "$file" ]; then
+    hash=$(printf %s "$file" | shasum | cut -c1-4)
+    link=/tmp/art/${base%.*}-$hash.${base##*.}
+  fi
+  mkdir -p /tmp/art && ln -sfn "$file" "$link"
+  open "$link"
   ledger="${LOCAL_CONFIG:-$HOME/.config}/artifacts.tsv"
   printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$(date +%s)" "$login" \
-    "file://$file" "$title" "$file" "$PWD" >>"$ledger"
+    "file://$link" "$title" "$file" "$PWD" >>"$ledger"
   why="Not published: the active login ($login) is not Rasmus's own, so
 he can't open claude.ai links from it. The page is open in his local
 browser instead and logged in the artifacts ledger. Report it as the
-local path file://$file (on its own line) and, if the SendUserFile tool
-is available, send the file with it for other devices. Keep editing this file and
-'publishing' it the same way: each publish reopens it locally. Don't
+local path file://$link (on its own line) and, if the SendUserFile tool
+is available, send the file with it for other devices. Keep editing
+$file and 'publishing' it the same way: each publish reopens it
+locally. Don't
 retry the publish or work around this hook."
 else
   why="Not published: the active login ($login) is not Rasmus's own, so
