@@ -1042,6 +1042,7 @@ _wt_evict() {
     git -C "$root" branch -D "$branch" 2>/dev/null
 
     if [ -n "$sess" ]; then
+      docker-slot out "$sess" 2>/dev/null
       tmux kill-session -t "=$sess" 2>/dev/null
     fi
   ' sh \

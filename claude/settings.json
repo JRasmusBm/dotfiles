@@ -32,6 +32,11 @@
             "type": "command",
             "command": "~/.bin/run-slot stop",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.bin/docker-slot linger",
+            "timeout": 10
           }
         ]
       }
@@ -87,6 +92,11 @@
             "type": "command",
             "command": "~/.bin/heavy-slot hook",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "~/.bin/docker-slot hook",
+            "timeout": 5
           }
         ]
       },
@@ -127,6 +137,11 @@
           {
             "type": "command",
             "command": "~/.bin/test-slot release --quiet",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "~/.bin/docker-slot linger",
             "timeout": 10
           }
         ]

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Every docker call checks in with docker-slot (starting Docker
+# Desktop if it's off) and labels the containers it starts.
+exec docker-slot docker "$@"

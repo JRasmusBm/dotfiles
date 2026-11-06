@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jrasmusbm.docker-slot</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/jrasmusbm/projects/dotfiles/bin/docker-slot</string>
+    <string>reap</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>LOCAL_CONFIG</key>
+    <string>/Users/jrasmusbm/.config/jrasmusbm</string>
+    <key>PATH</key>
+    <string>/Users/jrasmusbm/.local/bin:/Users/jrasmusbm/projects/dotfiles/bin:/Users/jrasmusbm/.private/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>StartInterval</key>
+  <integer>60</integer>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>Nice</key>
+  <integer>10</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/jrasmusbm/.config/jrasmusbm/docker-slot/reap.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/jrasmusbm/.config/jrasmusbm/docker-slot/reap.log</string>
+</dict>
+</plist>
