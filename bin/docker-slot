@@ -126,7 +126,12 @@ _alive() {
     pid-*) kill -0 "${1#pid-}" 2>/dev/null; return ;;
   esac
   test -n "${_sess:-}" || return 0
-  printf '%s\n' "$_sess" | grep -qxF "$1"
+  printf '%s\n' "$_sess" | grep -qxF "$1" && return 0
+  # An agent outside tmux (no session of its own): its mark, renewed
+  # by every Bash call, is its heartbeat.
+  ! grep -qx tmux "$_dir/agent/$1" 2>/dev/null \
+    && test -n "$(find "$_dir/agent/$1" -mmin "-$((_ttl_agent / 60))" \
+      2>/dev/null)"
 }
 
 # A pre-label container's session from its name: exp721-test-db and
@@ -202,9 +207,10 @@ _in() {
 
 # An agent's containers outlive its check-in; `user` is never alive-
 # checked, so it never gets the mark.
+# (A 2nd arg: called from the hook, which only agents run.)
 _mark() {
-  test "${CLAUDECODE:-}" != 1 || test "$1" = user \
-    || : > "$_dir/agent/$1"
+  test "${CLAUDECODE:-}${2:-}" = '' || test "$1" = user \
+    || echo "${TMUX_PANE:+tmux}" > "$_dir/agent/$1"
 }
 
 _cmd_in() {
@@ -242,10 +248,36 @@ _dirkey() {
 _row_owner() {
   if test -n "$2"; then echo "$2"; return; fi
   if test -n "$5" && test -f "$_dir/compose/$(_dirkey "$5")"; then
-    cat "$_dir/compose/$(_dirkey "$5")"
+    _cowner "$_dir/compose/$(_dirkey "$5")" "${6:-}"
     return
   fi
   _wt_sess "$5" || true
+}
+
+# A compose record lists everyone who ran `up` there, one per line;
+# its containers are the first live one's, other than SKIP. None: SKIP
+# if listed (so SKIP's removal takes them), else the first.
+_cowner() {
+  _c1='' _cs=''
+  while read -r _co; do
+    test -n "$_co" || continue
+    test -n "$_c1" || _c1="$_co"
+    if test "$_co" = "${2:-}"; then _cs="$_co"; continue; fi
+    if _alive "$_co"; then echo "$_co"; return; fi
+  done < "$1"
+  echo "${_cs:-$_c1}"
+}
+
+# Add OWNER to compose record FILE (once), or drop it (-d).
+_crec() {
+  if test "$1" = -d; then
+    _cl="$(grep -vxF "$3" "$2" || true)"
+    if test -n "$_cl"; then _put "$2" "$_cl"; else rm -f "$2"; fi
+  else
+    grep -qxF "$2" "$1" 2>/dev/null \
+      || _put "$1" "$(cat "$1" 2>/dev/null || true)
+$2"
+  fi
 }
 
 # Remove OWNER's containers (labelled or its compose projects) with
@@ -253,16 +285,19 @@ _row_owner() {
 _remove_owned() {
   _up || return 0
   _ids="$(_ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
-    test "$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")" = "$1" || continue
+    test "$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w" "$1")" = "$1" \
+      || continue
     echo "$_i $_n"
   done)"
+  for _f in "$_dir"/compose/*; do
+    test ! -f "$_f" || _crec -d "$_f" "$1"
+  done
   test -n "$_ids" || return 0
   echo "$_ids" | while read -r _i _n; do
     if _d rm -f -v "$_i" >/dev/null 2>&1; then
       _log rm "owner=$1 container=$_n"
     fi
   done
-  grep -lxF "$1" "$_dir"/compose/* 2>/dev/null | xargs rm -f
 }
 
 # _out OWNER WHY: end the check-in and remove OWNER's containers.
@@ -397,7 +432,9 @@ _cmd_docker() {
       # the owner.
       case "$_csub" in
         up|run|create|start)
-          echo "$_o" > "$_dir/compose/$(_dirkey "$_cdir")" ;;
+          _lock
+          _crec "$_dir/compose/$(_dirkey "$_cdir")" "$_o"
+          _unlock ;;
       esac ;;
   esac
   case "$1 ${2:-}" in
@@ -424,7 +461,7 @@ _cmd_hook() {
   _re="$_re"'(sudo\s+|exec\s+|time\s+)*(\S*/)?docker(-compose)?(\s|$)'
   if jq -e --arg re "$_re" '(.tool_input.command // "") | test($re)' \
     >/dev/null 2>&1; then
-    test "$_o" = user || : > "$_dir/agent/$_o"
+    test "$_o" = user || _mark "$_o" 1
     # Checked in for over half a TTL still and Docker answers.
     test -n "$_u" && test "$_u" -ge $((_n - _ttl_agent / 2)) && _ping \
       && return 0
@@ -434,7 +471,7 @@ _cmd_hook() {
     _unlock
   elif test -n "$_u"; then
     # An agent checked in before its marks existed gets one here.
-    test "$_o" = user || : > "$_dir/agent/$_o"
+    test "$_o" = user || _mark "$_o" 1
     test "$_n" -le "$_u" || _put "$_f" "$_n"
   fi
 }
@@ -672,10 +709,14 @@ _cmd_reap() {
   done
   # Records of gone owners.
   if test -n "$_sess"; then
-    for _f in "$_dir"/compose/* "$_dir"/agent/*; do
+    for _f in "$_dir"/agent/*; do
+      test ! -f "$_f" || _alive "${_f##*/}" || rm -f "$_f"
+    done
+    for _f in "$_dir"/compose/*; do
       test -f "$_f" || continue
-      case "$_f" in */agent/*) _ow="${_f##*/}" ;; *) _ow="$(cat "$_f")" ;; esac
-      _alive "$_ow" || rm -f "$_f"
+      for _ow in $(cat "$_f"); do
+        _alive "$_ow" || _crec -d "$_f" "$_ow"
+      done
     done
   fi
   printf '%s\n' "$_rows" | grep -q '^busy ' && _busy=1
