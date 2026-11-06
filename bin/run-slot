@@ -29,10 +29,11 @@
   run-slot ls          room, working agents, queue, closed sessions
 
 Room: fewer than RUN_SLOTS (cores) agents working, at least
-RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal, or
-at pressure warn (2) while fewer than RUN_SLOT_FLOOR (4) work: the
-memory is then held by what isn't working, which waiting won't free,
-so a pressure gate alone would stall everything with room left. An
+RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. Below
+RUN_SLOT_FLOOR (4) working, pressure warn (2) is fine too and
+RUN_SLOT_FLOOR_GB (4) free is enough: the memory is then held by
+what isn't working, which waiting won't free, so those gates alone
+would stall everything with room left. An
 agent works while Claude marks its session `busy` (a turn or its
 background agents running), unless every tool call it runs only
 waits (a queued heavy slot, `gh … --watch`, a poll loop's sleep):
@@ -88,6 +89,7 @@ CAP = int(os.environ.get('RUN_SLOTS') or os.cpu_count() or 12)
 FLOOR = int(os.environ.get('RUN_SLOT_FLOOR') or 4)
 MIN_GB = float(os.environ.get('RUN_SLOT_MIN_GB')
                or os.environ.get('WT_NIGHT_MIN_GB') or 8)
+FLOOR_GB = float(os.environ.get('RUN_SLOT_FLOOR_GB') or 4)
 START_GB = float(os.environ.get('RUN_SLOT_START_GB') or 0.5)
 RESERVE = int(os.environ.get('RUN_SLOT_RESERVE') or 120)
 BURST = int(os.environ.get('RUN_SLOT_BURST') or 3)
@@ -245,12 +247,19 @@ class Room:
 
     def ok(self, id_):
         return (self.working < CAP and self.calm()
-                and self.free_after >= MIN_GB
+                and self.free_after >= self.min_gb
                 and (id_.startswith('tell:') or self.starting < BURST))
 
+    @property
+    def floor(self):
+        return self.working < FLOOR
+
+    @property
+    def min_gb(self):
+        return min(MIN_GB, FLOOR_GB) if self.floor else MIN_GB
+
     def calm(self):
-        return self.pressure <= 1 or (
-            self.pressure == 2 and self.working < FLOOR)
+        return self.pressure <= 1 or (self.pressure == 2 and self.floor)
 
     def why(self, id_=''):
         if self.working >= CAP:
@@ -260,8 +269,8 @@ class Room:
         if not self.calm():
             return f'pressure {self.pressure}' + (
                 f', {self.working} working' if self.pressure == 2 else '')
-        if self.free_after < MIN_GB:
-            return f'{self.free_after:.1f} GB free (min {MIN_GB:g})'
+        if self.free_after < self.min_gb:
+            return f'{self.free_after:.1f} GB free (min {self.min_gb:g})'
         return 'room'
 
     def take(self, id_, used):
