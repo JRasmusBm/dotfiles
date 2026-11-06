@@ -254,8 +254,11 @@ snapshots every Claude pane (session, window, cwd, sid) and,
 once it sees another server (or none), `tmux-revive` rebuilds
 the sessions under their old names and runs `claude --resume
 <sid>` (`--continue` without a sid) in `cli` as `run-slot` makes
-room, once per dead server, then sends one
-ping summing up revived and failed (`tmux-revive.log`). Panes
+room, once per dead server. A chat that was mid-turn (spinner or
+background wait in the last snapshot) is then told, at its empty
+prompt, that tmux restarted while it worked and to check git status
+and carry on. One ping sums up revived, told and failed
+(`tmux-revive.log`). Panes
 it didn't build are never touched. To keep a deliberate
 `kill-server` dead, run `tmux-revive forget` right after it.
 
