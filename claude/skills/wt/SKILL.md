@@ -173,6 +173,13 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   sync`, which `wt-sync` runs per repo. All go
   through `wt-tell`: idle Claude gets the prompt, a worktree
   with no session gets me a `check` ping.
+- `run-slot` — every agent start (tells, revives, detached
+  `wt feat|fix`, swarm `launch`) waits there until the Mac has
+  room (under 12 working, 8 GB free, pressure normal; tells
+  first). `wt-sync` closes a Claude whose turn ended an hour
+  ago (not asking me, unfocused, nothing running) and the next
+  tell, a focus on its pane or `run-slot revive` resumes it.
+  `run-slot ls` shows room, queue and closed sessions.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
   that first moves the ticket to Done / Canceled (refuses
   to remove if Linear fails); `cancel` also closes my open
@@ -234,8 +241,8 @@ upgrade) doesn't strand the Claude chats: each `wt-sync` run
 snapshots every Claude pane (session, window, cwd, sid) and,
 once it sees another server (or none), `tmux-revive` rebuilds
 the sessions under their old names and runs `claude --resume
-<sid>` (`--continue` without a sid) in `cli`, 3 a minute and
-only while memory is free, once per dead server, then sends one
+<sid>` (`--continue` without a sid) in `cli` as `run-slot` makes
+room, once per dead server, then sends one
 ping summing up revived and failed (`tmux-revive.log`). Panes
 it didn't build are never touched. To keep a deliberate
 `kill-server` dead, run `tmux-revive forget` right after it.

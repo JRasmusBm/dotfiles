@@ -3,6 +3,8 @@
 # heavy-slot — cap how many type-aware eslint / tsc runs go at once.
 # Each builds a full TypeScript program (1.5–4 GB), and agents in
 # separate worktrees share nothing, so a few at once swap the laptop.
+# Only an agent holding a run-slot (busy, see run-slot) reaches here,
+# and run-slot never waits on this, so the two can't deadlock.
 #
 #   heavy-slot run CMD...  wait for a free slot, run CMD, free it
 #   heavy-slot take PID    wait for a free slot and hold it for PID

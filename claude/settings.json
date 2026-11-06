@@ -27,6 +27,11 @@
             "type": "command",
             "command": "~/.claude/accretion-check.sh",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "~/.bin/run-slot stop",
+            "timeout": 5
           }
         ]
       }

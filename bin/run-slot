@@ -1,0 +1,523 @@
+#!/usr/bin/env python3
+"""run-slot — start Claude agents only when the Mac has room for them.
+
+  run-slot gate KIND ID -- [CMD...]
+        A start asks first. 0: go now (CMD is not run, the caller
+        goes on). 75: queued; `pump` runs CMD once it is ID's turn,
+        with RUN_SLOT_ID=ID so its own gate passes. No CMD: the
+        caller asks again by itself (every minute), and its slot
+        waits RUN_SLOT_RESERVE seconds for it. KIND is `tell` (a
+        reply to a tell, ahead of the rest) or `start` (a new agent
+        or a revive). Asking again with the same ID keeps its place
+        and replaces CMD; one admit lets one caller through.
+  run-slot pump [--except SID]
+        start queued items while there is room (wt-sync every
+        minute, and the Stop hook: SID is the agent that just
+        stopped and still reads busy)
+  run-slot stop      Stop hook: pump, detached
+  run-slot close [-n] [-v]
+        close the stalled sessions the close rule picks (wt-sync,
+        every minute); -n prints them instead, -v also why the
+        others stay
+  run-slot revive PANE|SID|.
+        bring a closed session back in its pane (shell there), else
+        in a new window; `.` is this pane
+  run-slot focus PANE  tmux focus hook: revive PANE if run-slot
+                       closed the Claude that ran there
+  run-slot ls          room, working agents, queue, closed sessions
+
+Room: fewer than RUN_SLOTS (cores) agents working, at least
+RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. An agent
+works while Claude marks its session `busy` (a turn or its background
+agents running); one waiting on me (`waiting`, `idle`) holds no slot.
+An admitted start (a row in reserved) counts as working, and as RUN_SLOT_START_GB (0.5)
+less free memory, for RUN_SLOT_RESERVE seconds (120): a new Claude
+takes that long to show busy and reach its size. A running turn is
+never paused; only starts wait, first in first out, tells first.
+
+heavy-slot can't deadlock with it: a heavy slot is taken from a Bash
+call, so its agent is busy and holds a run-slot; nothing that waits
+for a heavy slot waits here, since only starts wait here, and a start
+runs no Bash.
+
+Close rule: see CLOSE_MIN. A closed session keeps its pane (now a
+shell) and scrollback, its board row and inbox rows; the next tell
+(wt-tell), focus (tmux hook) or `run-slot revive` resumes it.
+
+State in $LOCAL_CONFIG/run-slots/: queue, reserved, closed (one row
+per close: epoch sid pane session cwd ctx last_turn_end state).
+Every admit, queue, run, close and revive is a row in run-slot.log
+there: epoch event id working free_gb pressure detail; closes and
+revives carry their token estimate (input-token equivalents).
+Tests: RUN_SLOT_DIR, CLAUDE_CONFIG_DIR, RUN_SLOT_FREE_GB,
+RUN_SLOT_PRESSURE, RUN_SLOT_TMUX (a tmux command, e.g. with -L).
+"""
+import calendar
+import fcntl
+import glob
+import json
+import os
+import re
+import shlex
+import subprocess
+import sys
+import time
+
+CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
+    '~/.config/jrasmusbm')
+DIR = os.environ.get('RUN_SLOT_DIR') or os.path.join(CONF, 'run-slots')
+CLAUDE = os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser(
+    '~/.claude')
+QUEUE = os.path.join(DIR, 'queue')
+RESERVED = os.path.join(DIR, 'reserved')
+CLOSED = os.path.join(DIR, 'closed')
+LOG = os.path.join(DIR, 'run-slot.log')
+CAP = int(os.environ.get('RUN_SLOTS') or os.cpu_count() or 12)
+MIN_GB = float(os.environ.get('RUN_SLOT_MIN_GB')
+               or os.environ.get('WT_NIGHT_MIN_GB') or 8)
+START_GB = float(os.environ.get('RUN_SLOT_START_GB') or 0.5)
+RESERVE = int(os.environ.get('RUN_SLOT_RESERVE') or 120)
+TMUX = shlex.split(os.environ.get('RUN_SLOT_TMUX') or 'tmux')
+PRIO = {'tell': 0, 'start': 1}
+# Prompt cache: a revive within an hour of the last turn rewrites what
+# a kept session would have read: cache write 1.25 vs read 0.1.
+CACHE_TTL = 3600
+REVIVE_COST = 1.25 - 0.1
+NOW = time.time()
+os.makedirs(DIR, exist_ok=True)
+
+
+def sh(*args):
+    r = subprocess.run(args, capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def tmux(*args):
+    return sh(*TMUX, *args)
+
+
+def rows(path):
+    try:
+        with open(path) as f:
+            return [ln.rstrip('\n').split('\t') for ln in f if ln.strip()]
+    except FileNotFoundError:
+        return []
+
+
+def write(path, rs):
+    tmp = path + '.tmp'
+    with open(tmp, 'w') as f:
+        for r in rs:
+            f.write('\t'.join(str(x) for x in r) + '\n')
+    os.replace(tmp, path)
+
+
+class Lock:
+    def __enter__(self):
+        self.f = open(os.path.join(DIR, '.lock'), 'w')
+        fcntl.flock(self.f, fcntl.LOCK_EX)
+
+    def __exit__(self, *a):
+        fcntl.flock(self.f, fcntl.LOCK_UN)
+        self.f.close()
+
+
+def free_gb():
+    if os.environ.get('RUN_SLOT_FREE_GB'):
+        return float(os.environ['RUN_SLOT_FREE_GB'])
+    out = sh('vm_stat') or ''
+    ps = int(re.search(r'page size of (\d+)', out).group(1))
+    n = sum(int(m) for m in re.findall(
+        r'Pages (?:free|inactive|speculative):\s+(\d+)', out))
+    return n * ps / 2**30
+
+
+def pressure():
+    v = os.environ.get('RUN_SLOT_PRESSURE') \
+        or sh('sysctl', '-n', 'kern.memorystatus_vm_pressure_level')
+    return int(v or 1)
+
+
+def alive(pid):
+    try:
+        os.kill(int(pid), 0)
+        return True
+    except (OSError, ValueError):
+        return False
+
+
+def sessions():
+    """Live Claude sessions: their sessions/<pid>.json plus pid."""
+    out = []
+    for f in glob.glob(os.path.join(CLAUDE, 'sessions', '*.json')):
+        pid = os.path.basename(f)[:-5]
+        if not alive(pid):
+            continue
+        try:
+            with open(f) as fh:
+                s = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        s['pid'] = int(pid)
+        out.append(s)
+    return out
+
+
+def busy(skip=()):
+    return [s for s in sessions()
+            if s.get('status') == 'busy' and s.get('sessionId') not in skip]
+
+
+def reserved():
+    return [r for r in rows(RESERVED) if float(r[0]) > NOW]
+
+
+class Room:
+    def __init__(self, skip=()):
+        self.busy = len(busy(skip))
+        self.res = reserved()
+        self.free = free_gb()
+        self.pressure = pressure()
+
+    @property
+    def working(self):
+        return self.busy + len(self.res)
+
+    @property
+    def free_after(self):
+        return self.free - START_GB * len(self.res)
+
+    def ok(self):
+        return (self.working < CAP and self.pressure <= 1
+                and self.free_after >= MIN_GB)
+
+    def why(self):
+        if self.working >= CAP:
+            return f'{self.working} working (cap {CAP})'
+        if self.pressure > 1:
+            return f'pressure {self.pressure}'
+        if self.free_after < MIN_GB:
+            return f'{self.free_after:.1f} GB free (min {MIN_GB:g})'
+        return 'room'
+
+    def take(self, id_, used):
+        self.res.append([NOW + RESERVE, id_, int(used)])
+        write(RESERVED, self.res)
+
+
+def log(event, id_, room, detail=''):
+    with open(LOG, 'a') as f:
+        f.write('\t'.join(str(x) for x in (
+            int(NOW), event, id_, room.working if room else '-',
+            f'{room.free_after:.1f}' if room else '-',
+            room.pressure if room else '-', detail)) + '\n')
+
+
+def queue():
+    """Queued rows (ts, kind, id, cmd json), in the order they go."""
+    q = [r for r in rows(QUEUE) if NOW - float(r[0]) < 86400]
+    return sorted(q, key=lambda r: (PRIO.get(r[1], 9), float(r[0])))
+
+
+def gate(kind, id_, cmd):
+    if os.environ.get('RUN_SLOT_ID') == id_:
+        return 0
+    with Lock():
+        room = Room()
+        held = next((r for r in room.res if r[1] == id_), None)
+        if held:
+            # Admitted already: the first caller to ask uses it, a
+            # second (pump's run racing the caller's retry) waits.
+            if held[2:] == ['1']:
+                return 75
+            held[2:] = ['1']
+            write(RESERVED, room.res)
+            return 0
+        q = queue()
+        ahead = []
+        for r in q:
+            if r[2] == id_:
+                break
+            if PRIO.get(r[1], 9) <= PRIO.get(kind, 9):
+                ahead.append(r)
+        if room.ok() and not ahead:
+            write(QUEUE, [r for r in q if r[2] != id_])
+            room.take(id_, True)
+            log('admit', id_, room, kind)
+            return 0
+        old = next((r for r in q if r[2] == id_), None)
+        row = [old[0] if old else f'{NOW:.0f}', kind, id_, json.dumps(cmd)]
+        write(QUEUE, [row if r[2] == id_ else r for r in q]
+              + ([] if old else [row]))
+        if not old:
+            log('queue', id_, room,
+                f'{room.why()}; {len(ahead)} ahead' if ahead
+                else room.why())
+        return 75
+
+
+def pump(skip=()):
+    started = []
+    with Lock():
+        room = Room(skip)
+        q = queue()
+        while q and room.ok():
+            r = q.pop(0)
+            cmd = json.loads(r[3])
+            room.take(r[2], bool(cmd))
+            log('run' if cmd else 'hold', r[2], room, ' '.join(cmd)[:200])
+            if cmd:
+                started.append(r)
+        write(QUEUE, q)
+    env = {k: v for k, v in os.environ.items() if k != 'TMUX_PANE'}
+    for r in started:
+        with open(LOG, 'a') as out:
+            subprocess.Popen(json.loads(r[3]), env=dict(env, RUN_SLOT_ID=r[2]),
+                             stdin=subprocess.DEVNULL, stdout=out, stderr=out,
+                             start_new_session=True)
+    return len(started)
+
+
+# --- closing stalled sessions -------------------------------------
+
+BG = re.compile(r'Waiting for \d+ background agent|'
+                r'\d+ (background )?shells? (still )?running|· \d+ shells? ·')
+
+
+def transcript(sid):
+    f = glob.glob(os.path.join(CLAUDE, 'projects', '*', sid + '.jsonl'))
+    return f[0] if f else None
+
+
+def tail(path, n=400):
+    with open(path, 'rb') as f:
+        f.seek(0, 2)
+        f.seek(max(0, f.tell() - 2**20))
+        lines = f.read().decode('utf-8', 'replace').splitlines()[-n:]
+    out = []
+    for ln in lines:
+        try:
+            out.append(json.loads(ln))
+        except ValueError:
+            pass
+    return out
+
+
+def stamp(r):
+    try:
+        return calendar.timegm(time.strptime(
+            (r.get('timestamp') or '')[:19], '%Y-%m-%dT%H:%M:%S'))
+    except ValueError:
+        return 0
+
+
+def last_turn(sid):
+    """(context tokens, last assistant text, when the chat last moved)
+    at the end of sid's chat. Claude refreshes statusUpdatedAt on idle
+    sessions too, so the transcript tells when the turn ended."""
+    p = transcript(sid)
+    if not p:
+        return 0, '', 0
+    ctx, text, end = 0, '', 0
+    for r in tail(p):
+        if r.get('type') in ('user', 'assistant') \
+                and not r.get('isSidechain'):
+            end = max(end, stamp(r))
+        if r.get('type') != 'assistant' or r.get('isSidechain'):
+            continue
+        m = r.get('message') or {}
+        u = m.get('usage') or {}
+        c = (u.get('input_tokens', 0) + u.get('cache_read_input_tokens', 0)
+             + u.get('cache_creation_input_tokens', 0))
+        if c:
+            ctx = c
+        t = [b.get('text', '') for b in m.get('content') or []
+             if isinstance(b, dict) and b.get('type') == 'text']
+        if t:
+            text = t[-1]
+    return ctx, text, end
+
+
+def asks(text):
+    """The turn ended on a question for me (its last line)."""
+    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
+    return bool(lines) and lines[-1].rstrip('*_` )').endswith('?')
+
+
+def rss_mb(pid):
+    v = sh('ps', '-o', 'rss=', '-p', str(pid))
+    return int(v) // 1024 if v else 0
+
+
+def pane_of(s):
+    t = s.get('tmux') or ''
+    return t.rsplit('.', 1)[-1] if '.%' in t else None
+
+
+def focused_panes():
+    out = tmux('list-clients', '-F', '#{pane_id}') or ''
+    return set(out.split())
+
+
+# The close rule (RAS-3, measured over 7 days of transcripts and
+# memlog): a turn that ended an hour ago. Its prompt cache has expired
+# by then, so a revive costs no more than keeping it open would have;
+# closing earlier buys little memory (gaps are short or very long) for
+# real tokens, and gating on pressure only frees less.
+CLOSE_MIN = float(os.environ.get('RUN_SLOT_CLOSE_MIN') or 60)
+
+
+def candidate(s, focus):
+    """Why s stays open, or None to close it: idle, its turn ended
+    CLOSE_MIN minutes ago, not asking me, not focused, an empty prompt
+    and no background work. Sets s['turn'] = (ctx, text, end)."""
+    if s.get('kind', 'interactive') != 'interactive':
+        return 'not interactive'
+    if s.get('status') != 'idle':
+        return s.get('status') or 'no status'
+    pane = pane_of(s)
+    if not pane:
+        return 'no tmux pane'
+    ctx, text, end = s['turn'] = last_turn(s.get('sessionId', ''))
+    if not end:
+        return 'no turn yet'
+    idle = (NOW - end) / 60
+    if idle < CLOSE_MIN:
+        return f'idle {idle:.0f}m < {CLOSE_MIN:g}m'
+    if asks(text):
+        return 'asked me'
+    if pane in focus:
+        return 'focused'
+    if subprocess.run(['claude-pane-idle', pane],
+                      capture_output=True).returncode != 0:
+        return 'prompt not empty'
+    screen = tmux('capture-pane', '-p', '-t', pane, '-S', '-40') or ''
+    if BG.search(screen):
+        return 'background work'
+    return None
+
+
+def close(dry, verbose):
+    room = Room()
+    focus = focused_panes()
+    out = []
+    for s in sessions():
+        sid = s.get('sessionId', '')
+        name = (s.get('tmux') or s.get('cwd', '')).split(':')[0]
+        why = candidate(s, focus)
+        if why:
+            if verbose:
+                out.append(f'keep\t{name}\t{why}')
+            continue
+        ctx, _, end = s['turn']
+        pane = pane_of(s)
+        idle = (NOW - end) / 60
+        rss = rss_mb(s['pid'])
+        # Paid only if revived before the cache would have expired.
+        worst = int(ctx * REVIVE_COST) if NOW - end < CACHE_TTL else 0
+        out.append(f'close\t{name}\t{pane} idle {idle:.0f}m {rss} MB '
+                   f'ctx {ctx} worst {worst}')
+        if dry:
+            continue
+        tmux('send-keys', '-t', pane, '-l', '/exit')
+        time.sleep(0.3)
+        tmux('send-keys', '-t', pane, 'Enter')
+        with Lock():
+            rs = [r for r in rows(CLOSED) if r[1] != sid]
+            rs.append([int(NOW), sid, pane, name, s.get('cwd', ''), ctx,
+                       int(end), 'closed'])
+            write(CLOSED, rs)
+        log('close', sid, room, f'{name} {pane} idle={idle:.0f}m '
+            f'rss={rss}MB ctx={ctx} worst={worst}')
+    if out:
+        print('\n'.join(out))
+
+
+def revive(key, focus=False):
+    """Resume the session closed in pane or with sid KEY: in its pane
+    while that is still the shell it left in the same tmux session (a
+    restarted tmux reuses pane ids), else in a new window; on focus
+    only in its pane."""
+    if key == '.':
+        key = os.environ.get('TMUX_PANE', '')
+    rs = rows(CLOSED)
+    hit = next((r for r in reversed(rs) if r[7] == 'closed'
+                and key in (r[1], r[2])), None)
+    if not hit:
+        return 1
+    _, sid, pane, name, cwd, ctx, end = hit[:7]
+    at = (tmux('display-message', '-p', '-t', pane,
+               '#{session_name}\t#{pane_current_command}') or '\t')
+    sess, cmd = at.split('\t', 1)
+    if sess == name and cmd in ('zsh', 'bash', 'sh', 'fish'):
+        tmux('send-keys', '-t', pane, f'claude --resume {sid}', 'Enter')
+        where = pane
+    elif focus:
+        return 1
+    else:
+        where = sh('claude-pane', 'open', sid) or '?'
+    gap = NOW - int(end)
+    cost = int(int(ctx) * REVIVE_COST) if gap < CACHE_TTL else 0
+    with Lock():
+        write(CLOSED, [r[:7] + ['revived'] if r[1] == sid
+                       and r[7] == 'closed' else r for r in rows(CLOSED)])
+    log('revive', sid, None,
+        f'{name} {where} after={gap / 60:.0f}m ctx={ctx} cost={cost}')
+    print(where)
+    return 0
+
+
+def ls():
+    room = Room()
+    print(f'room: {room.why()}; {room.busy} busy + {len(room.res)} starting'
+          f' / {CAP}, {room.free:.1f} GB free, pressure {room.pressure}')
+    for s in busy():
+        print(f'busy\t{(s.get("tmux") or s.get("cwd", "")).split(":")[0]}')
+    for r in room.res:
+        print(f'starting\t{r[1]} until {time.strftime("%H:%M:%S", time.localtime(float(r[0])))}')
+    for r in queue():
+        age = int(NOW - float(r[0])) // 60
+        print(f'queued\t{r[1]}\t{r[2]}\t{age}m')
+    for r in rows(CLOSED):
+        if r[7] == 'closed':
+            print(f'closed\t{r[3]}\t{r[2]}\t{r[1]}\t'
+                  f'{time.strftime("%H:%M", time.localtime(int(r[0])))}')
+
+
+def main(a):
+    cmd = a[0] if a else ''
+    if cmd == 'gate' and len(a) >= 4 and a[3] == '--':
+        if a[1] not in PRIO:
+            sys.exit(f'run-slot: kind is tell or start, not {a[1]}')
+        return gate(a[1], a[2], a[4:])
+    if cmd == 'pump':
+        skip = a[2:3] if a[1:2] == ['--except'] else []
+        print(pump(skip))
+        return 0
+    if cmd == 'stop':
+        try:
+            sid = json.load(sys.stdin).get('session_id', '')
+        except ValueError:
+            sid = ''
+        subprocess.Popen([sys.argv[0], 'pump', '--except', sid],
+                         stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL, start_new_session=True)
+        return 0
+    if cmd == 'close':
+        close('-n' in a, '-v' in a)
+        return 0
+    if cmd == 'revive' and len(a) == 2:
+        return revive(a[1])
+    if cmd == 'focus' and len(a) == 2:
+        if any(r[2] == a[1] and r[7] == 'closed' for r in rows(CLOSED)):
+            revive(a[1], focus=True)
+        return 0
+    if cmd == 'ls':
+        ls()
+        return 0
+    print(__doc__, file=sys.stderr)
+    return 2
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))

@@ -5,13 +5,13 @@
 # ($LOCAL_CONFIG/wt-told). No session (or tmux down, as after a
 # reboot) or no Claude in its cli window: starts it with
 # `claude --continue` there (plain `claude` when the worktree has
-# no conversation yet), only while memory is free (wt-night's
-# limits), at most one per WT_TELL_REVIVE_SECS (default by free GB:
-# 30 from 16, 60 from 12, else 120: a new Claude takes a while to
-# reach its full size, so the gauge lags), and fails without
-# recording the tell, so the caller's next run tells it once Claude
-# is up. A worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check) with <ping>
-# once instead. Claude busy: fails too. A tell or ping delivered ends
+# no conversation yet; the session `run-slot close` closed there,
+# if it did), and fails without recording the tell, so the caller's
+# next run tells it once Claude is up. Reviving and telling both wait
+# their turn in `run-slot` (room on the Mac, tells first); a queued
+# one is run from there once there is room. A worktree that is gone
+# (or WT_TELL_NO_REVIVE set): pings me (check) with <ping> once
+# instead. Claude busy: fails too. A tell or ping delivered ends
 # the worktree's `wt w8`: what it waited on has arrived.
 
 _root="$1" _key="$2" _msg="$3" _prompt="$4"
@@ -24,6 +24,11 @@ _w8_done() {
   awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
 }
 grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
+# $1: revive or tell, each its own turn in run-slot.
+_gate() {
+  run-slot gate tell "$1:$(basename "$_root"):$_key" -- \
+    wt-tell "$_root" "$_key" "$_msg" "$_prompt" >/dev/null
+}
 
 _pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
   '#{pane_id}' 2>/dev/null)" || _pane=""
@@ -32,28 +37,13 @@ _cmd="$(tmux display-message -p -t "$_pane" '#{pane_current_command}' \
 case "$_cmd" in zsh|bash|sh|fish) _shell=1 ;; *) _shell="" ;; esac
 if { test -z "$_pane" || test -n "$_shell"; } \
   && test -z "${WT_TELL_NO_REVIVE:-}" && test -d "$_root"; then
-  _rv="$LOCAL_CONFIG/wt-tell.revived"
-  _now="$(date +%s)"
-  _gb="$(vm_stat | awk '/page size of/ { ps = $8 }
-    /Pages (free|inactive|speculative)/ { sub(/\./, "", $NF); n += $NF }
-    END { print int(n * ps / 1073741824) }')"
-  _gap="${WT_TELL_REVIVE_SECS:-}"
-  if test -z "$_gap"; then
-    if test "$_gb" -ge 16; then _gap=30
-    elif test "$_gb" -ge 12; then _gap=60
-    else _gap=120; fi
-  fi
-  if test "$(sysctl -n kern.memorystatus_vm_pressure_level)" -le 1 \
-    && test "$_gb" -ge "${WT_NIGHT_MIN_GB:-8}" \
-    && test "$(( _now - $(cat "$_rv" 2>/dev/null || echo 0) ))" \
-      -ge "$_gap"; then
-    echo "$_now" > "$_rv"
-    if test -n "$_pane"; then
-      tmux send-keys -t "$_pane" "claude --continue || claude" Enter
-    else
-      ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
-        wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true
-    fi
+  _gate revive || exit 1
+  if test -n "$_pane"; then
+    run-slot revive "$_pane" >/dev/null \
+      || tmux send-keys -t "$_pane" "claude --continue || claude" Enter
+  else
+    ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
+      wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true
   fi
   exit 1
 fi
@@ -67,6 +57,7 @@ if test -z "$_pane"; then
   exit 1
 fi
 claude-pane-idle "$_pane" || exit 1
+_gate tell || exit 1
 
 echo "$_root	$_key" >> "$_told"
 _w8_done

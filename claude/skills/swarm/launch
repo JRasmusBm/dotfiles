@@ -27,6 +27,13 @@ sed -e "s#{{URL}}#$url#" -e "s#{{EXTRA}}#$extra#" "$here/brief.md" \
 cmd="$(tmux display -p -t "$sess:cli" '#{pane_current_command}')"
 case "$cmd" in
   zsh|bash|sh)
+    # A new agent waits its turn in run-slot, which reruns this.
+    if ! run-slot gate start "new:$sess" -- "$here/launch" "$wt_path" "$url" \
+      ${resume:+--resume} "$extra" >/dev/null; then
+      echo "$sess queued (run-slot ls)" >&2
+      echo "$sess"
+      exit 0
+    fi
     tmux send-keys -t "$sess:cli" -l "claude $resume \"\$(cat '$brief')\""
     ;;
   *)

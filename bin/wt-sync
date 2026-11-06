@@ -9,7 +9,9 @@
 #     open PR has failing CI or a review newer than its last push, once
 #     per head sha / review.
 # First, offline too: tmux-revive snapshots the Claude panes and, once
-# the tmux server died or restarted, brings them back a few at a time.
+# the tmux server died or restarted, brings them back as run-slot
+# makes room; run-slot closes stalled Claude sessions and starts queued agents
+# (run-slot ls).
 # Weekdays 08:00-19:00, every 10th minute, wt-cold syncs the inbox
 # with every work item that stopped moving (a `stalled` row each).
 # On a phone hotspot it polls every 5th minute only; a poll without a
@@ -24,6 +26,9 @@ _metered() {
 }
 
 tmux-revive >/dev/null 2>&1
+# Close stalled Claude sessions, then start what waits for room.
+run-slot close >/dev/null 2>&1
+run-slot pump >/dev/null 2>&1
 # Browser tabs are inventory too: close the ones left unfocused, count
 # them every 5th minute. Local, so before anything that can hang.
 btabs expire >/dev/null 2>&1
