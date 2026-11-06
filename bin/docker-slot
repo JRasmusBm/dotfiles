@@ -34,10 +34,11 @@
 # A check-in also ends when its tmux session is gone.
 #
 # Containers `run`/`create` started are labelled docker-slot.owner;
-# `compose up` records its project. They stay while their owner's
-# tmux session lives, check-in or not (an idle agent's seeded test DB
-# survives its TTL), and keep Docker up meanwhile. `out`, `wt rm` and
-# the session ending remove them with their volumes. One with no
+# `compose up` records its project. An agent's stay while its tmux
+# session lives, check-in or not (an idle agent's seeded test DB
+# survives its TTL), and keep Docker up meanwhile; anyone else's go
+# when the check-in expires. `out`, `wt rm` and the session ending
+# remove them with their volumes. One with no
 # known owner (Docker Desktop UI, devcontainers) keeps Docker up for
 # DOCKER_SLOT_TTL_USER after it started, then is stopped. Containers
 # from before labels are matched to a session by name (exp721-test-db
@@ -56,7 +57,8 @@ _raw="$HOME/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw"
 _label='docker-slot.owner'
 _tab="$(printf '\t')"
 _sep='|' # not whitespace: IFS keeps its empty fields
-mkdir -p "$_dir/in" "$_dir/compose" "$_dir/up" "$_dir/seen"
+mkdir -p "$_dir/in" "$_dir/compose" "$_dir/up" "$_dir/seen" \
+  "$_dir/agent"
 
 _now() { date +%s; }
 
@@ -150,6 +152,12 @@ _unlock() {
   trap - EXIT INT TERM
 }
 
+# Cheap: the daemon's socket answers. For the fast paths.
+_ping() {
+  curl -s -m 2 --unix-socket "$HOME/.docker/run/docker.sock" \
+    http://d/_ping 2>/dev/null | grep -qx OK
+}
+
 _up() {
   timeout 10 "$_docker" info --format '{{.ServerVersion}}' \
     >/dev/null 2>&1
@@ -183,6 +191,7 @@ _in() {
   elif test "$2" -gt "$_u"; then
     echo "$2" > "$_f"
   fi
+  test "${CLAUDECODE:-}" != 1 || : > "$_dir/agent/$1"
   rm -f "$_dir/idle"
 }
 
@@ -203,9 +212,13 @@ _cmd_in() {
 }
 
 # Containers as: id, owner label, name, compose project, compose dir,
-# state. All of them with -a.
+# state, image. All of them with -a.
 _ps() {
-  _d ps ${1:-} --no-trunc --format "{{.ID}}$_sep{{.Label \"$_label\"}}$_sep{{.Names}}$_sep{{.Label \"com.docker.compose.project\"}}$_sep{{.Label \"com.docker.compose.project.working_dir\"}}$_sep{{.State}}" 2>/dev/null
+  _c='com.docker.compose.project'
+  _f="{{.ID}}$_sep{{.Label \"$_label\"}}$_sep{{.Names}}"
+  _f="$_f$_sep{{.Label \"$_c\"}}$_sep{{.Label \"$_c.working_dir\"}}"
+  _d ps ${1:-} --no-trunc --format "$_f$_sep{{.State}}$_sep{{.Image}}" \
+    2>/dev/null
 }
 
 _dirkey() {
@@ -227,13 +240,15 @@ _row_owner() {
 # their anonymous volumes. Docker down: the reaper does it later.
 _remove_owned() {
   _up || return 0
-  _ids="$(_ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s; do
+  _ids="$(_ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
     test "$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")" = "$1" || continue
     echo "$_i $_n"
   done)"
   test -n "$_ids" || return 0
   echo "$_ids" | while read -r _i _n; do
-    _d rm -f -v "$_i" >/dev/null 2>&1 && _log rm "owner=$1 container=$_n"
+    if _d rm -f -v "$_i" >/dev/null 2>&1; then
+      _log rm "owner=$1 container=$_n"
+    fi
   done
   grep -lxF "$1" "$_dir"/compose/* 2>/dev/null | xargs rm -f
 }
@@ -244,14 +259,20 @@ _out() {
     rm -f "$_dir/in/$1"
     _log out "owner=$1 why=$2"
   fi
+  rm -f "$_dir/agent/$1"
   _remove_owned "$1"
 }
 
-# _expire OWNER: the check-in ran out; its containers stay while the
-# owner's session lives (the reap keeps them, and Docker, up).
+# _expire OWNER: the check-in ran out. An agent's containers stay
+# while its session lives (the reap keeps them, and Docker, up);
+# anyone else's go now.
 _expire() {
-  rm -f "$_dir/in/$1"
-  _log out "owner=$1 why=expired"
+  if test -f "$_dir/agent/$1"; then
+    rm -f "$_dir/in/$1"
+    _log out "owner=$1 why=expired"
+  else
+    _out "$1" expired
+  fi
 }
 
 _cmd_out() {
@@ -270,29 +291,48 @@ _cmd_linger() {
 }
 
 # `docker compose [OPTS] SUB ...` → "SUB DIR": its subcommand and
-# project dir (--project-directory, else $PWD).
+# project dir as compose picks it: --project-directory, else the
+# first -f file's dir, else the nearest dir up from $PWD with a
+# compose file.
 _compose_sub() {
-  _cd="$(pwd -P)"
+  _pd='' _ff=''
   while test $# -gt 0; do
     case "$1" in
-      --project-directory) _cd="$2"; shift 2 ;;
-      --project-directory=*) _cd="${1#*=}"; shift ;;
-      -f|--file|-p|--project-name|--env-file|--profile|--ansi|--progress|--parallel)
-        shift 2 ;;
+      --project-directory) _pd="${2:-}"; shift; shift ;;
+      --project-directory=*) _pd="${1#*=}"; shift ;;
+      -f|--file) test -n "$_ff" || _ff="${2:-}"; shift; shift ;;
+      --file=*) test -n "$_ff" || _ff="${1#*=}"; shift ;;
+      -p|--project-name|--env-file|--profile|--ansi|--progress) shift; shift ;;
+      --parallel) shift; shift ;;
       -*) shift ;;
-      *) echo "$1 $_cd"; return ;;
+      *) break ;;
     esac
   done
-  echo " $_cd"
+  if test -n "$_pd"; then _cd="$(cd "$_pd" 2>/dev/null && pwd -P)"
+  elif test -n "$_ff"; then
+    _cd="$(cd "$(dirname "$_ff")" 2>/dev/null && pwd -P)"
+  else
+    _cd="$(pwd -P)"
+    while test "$_cd" != /; do
+      for _y in compose.yaml compose.yml docker-compose.yml \
+        docker-compose.yaml; do
+        test ! -f "$_cd/$_y" || break 2
+      done
+      _cd="$(dirname "$_cd")"
+    done
+    test "$_cd" != / || _cd="$(pwd -P)"
+  fi
+  echo "${1:-} ${_cd:-$(pwd -P)}"
 }
 
-# Verbs that only tear down: with Docker down there is nothing to do,
-# so they don't start it.
+# Verbs that only stop what runs: with Docker down nothing runs, so
+# they don't start it. rm and compose down do start it: stopped
+# containers and volumes outlive a quit.
 _teardown() {
   case "$1" in
-    stop|rm|kill) return 0 ;;
-    container) case "${2:-}" in stop|rm|kill) return 0 ;; esac ;;
-    compose) case "$_csub" in down|stop|rm|kill) return 0 ;; esac ;;
+    stop|kill) return 0 ;;
+    container) case "${2:-}" in stop|kill) return 0 ;; esac ;;
+    compose) case "$_csub" in stop|kill) return 0 ;; esac ;;
   esac
   return 1
 }
@@ -312,16 +352,23 @@ _cmd_docker() {
   _t="$(_ttl)"
   _u=''
   test ! -f "$_dir/in/$_o" || read -r _u < "$_dir/in/$_o" || true
-  # Fast path: checked in for over half a TTL still, so Docker is up
-  # (the reap never quits it under a check-in).
-  if test -z "$_u" || test "$_u" -lt $(($(_now) + _t / 2)); then
+  # Fast path: checked in for over half a TTL still and the socket
+  # answers: no lock, no `docker info`.
+  if test -z "$_u" || test "$_u" -lt $(($(_now) + _t / 2)) || ! _ping
+  then
     if _teardown "$@" && ! _up; then
-      echo "docker-slot: Docker is down, nothing to tear down" >&2
+      echo "docker-slot: Docker is down, nothing runs to stop" >&2
       exit 0
     fi
     _lock
     _in "$_o" "$(($(_now) + _t))"
-    _start || { rm -f "$_dir/in/$_o"; _unlock; exit 1; }
+    if ! _start; then
+      # Undo only this call's check-in.
+      if test -z "$_u"; then rm -f "$_dir/in/$_o"
+      else echo "$_u" > "$_dir/in/$_o"; fi
+      _unlock
+      exit 1
+    fi
     _unlock
   fi
   case "$1" in
@@ -340,7 +387,8 @@ _cmd_docker() {
       esac ;;
   esac
   case "$1 ${2:-}" in
-    run*|create*|pull*|build*|compose*|'container run'|'container create'|'image pull'|'image build')
+    run*|create*|pull*|build*|compose*|'container run'|'container create'\
+      |'image pull'|'image build')
       printf '%s\t%s\t%s\n' "$(date +%F)" "$_o" "$*" >> "$_dir/uses" ;;
   esac
   exec "$_docker" "$@"
@@ -356,10 +404,16 @@ _cmd_hook() {
   _u=''
   test ! -f "$_f" || read -r _u < "$_f" || true
   _n=$(($(_now) + _ttl_agent))
-  if jq -e '(.tool_input.command // "") | test("(^|[;&|({`]|\\n|\\$\\()\\s*([A-Za-z_]+=\\S*\\s+)*(sudo\\s+|exec\\s+|time\\s+)*(\\S*/)?docker(-compose)?(\\s|$)")' \
+  # docker at a command start: after ; & | ( { ` newline or $(, past
+  # VAR=x, sudo, exec, time and a path.
+  _re='(^|[;&|({`]|\n|\$\()\s*([A-Za-z_]+=\S*\s+)*'
+  _re="$_re"'(sudo\s+|exec\s+|time\s+)*(\S*/)?docker(-compose)?(\s|$)'
+  if jq -e --arg re "$_re" '(.tool_input.command // "") | test($re)' \
     >/dev/null 2>&1; then
-    # Checked in for over half a TTL still: Docker is up already.
-    test -n "$_u" && test "$_u" -ge $((_n - _ttl_agent / 2)) && return 0
+    : > "$_dir/agent/$_o"
+    # Checked in for over half a TTL still and Docker answers.
+    test -n "$_u" && test "$_u" -ge $((_n - _ttl_agent / 2)) && _ping \
+      && return 0
     _lock
     _in "$_o" "$_n"
     _start >/dev/null 2>&1 || true
@@ -371,7 +425,8 @@ _cmd_hook() {
 
 _avail_mb() {
   vm_stat | awk '/page size of/ { ps = $8 }
-    /Pages (free|inactive|speculative|purgeable)/ { gsub(/\./, "", $NF); n += $NF }
+    /Pages (free|inactive|speculative|purgeable)/ {
+      gsub(/\./, "", $NF); n += $NF }
     END { printf "%d", n * ps / 1048576 }'
 }
 
@@ -406,8 +461,9 @@ _quit() {
 
 # What a prune may remove. Image refs used in the last KEEP days are
 # kept: from agents' transcripts (Claude Code keeps every Bash call),
-# the shim log and the images the reap saw running. So are images created in that window, images of
-# any container, and the patterns in $_dir/keep.
+# the shim log and the images the reap saw running. So are images
+# created in that window, images of any container, and the patterns
+# in $_dir/keep.
 _used_refs() {
   {
     find "$HOME/.claude/projects" -name '*.jsonl' -mtime -"$_keep_days" \
@@ -460,7 +516,7 @@ _cmd_prune() {
   _n_c=0 _n_i=0
   # Stopped containers whose owner is gone and that stopped over KEEP
   # days ago (a seeded test DB of a live session stays).
-  _ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s; do
+  _ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
     test "$_s" != running || continue
     _ow="$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")"
     if test -n "$_ow"; then
@@ -478,13 +534,15 @@ _cmd_prune() {
   done
   # Tagged images nobody used in KEEP days; dangling ones always.
   _inuse="$(_d ps -a --format '{{.Image}}' | sort -u)"
-  _d images --format "{{.Repository}}$_sep{{.Tag}}$_sep{{.ID}}$_sep{{.CreatedAt}}$_sep{{.Size}}" \
+  _f="{{.Repository}}$_sep{{.Tag}}$_sep{{.ID}}$_sep{{.CreatedAt}}"
+  _d images --format "$_f$_sep{{.Size}}" \
     | while IFS="$_sep" read -r _r _t _id _c _sz; do
       test "$_r" != '<none>' && test "$_t" != '<none>' || continue
       printf '%s\n' "$_inuse" | grep -qxF -e "$_r:$_t" -e "$_id" && continue
       test "$_t" != latest || ! printf '%s\n' "$_inuse" | grep -qxF "$_r" \
         || continue
-      _cs="$(date -j -f '%Y-%m-%d %H:%M:%S' "$(echo "$_c" | cut -c1-19)" +%s 2>/dev/null || echo 0)"
+      _cs="$(date -j -f '%Y-%m-%d %H:%M:%S' "$(echo "$_c" | cut -c1-19)" \
+        +%s 2>/dev/null || echo 0)"
       test "$_cs" -lt "$_cut" || continue
       _image_kept "$_r" "$_t" && continue
       echo "image $_r:$_t ($_sz)"
@@ -492,28 +550,44 @@ _cmd_prune() {
     done
   if test -n "$_dry"; then
     _d images -f dangling=true --format 'image <none> {{.ID}} ({{.Size}})'
-    echo "volumes: $(_d volume ls -q -f dangling=true | grep -cE '^[0-9a-f]{64}$') anonymous unused"
+    _nv="$(_d volume ls -q -f dangling=true | grep -cE '^[0-9a-f]{64}$')"
+    echo "volumes: $_nv anonymous unused"
     return 0
   fi
   _d image prune -f >/dev/null 2>&1 || true
   # Anonymous unused volumes only; named ones (someone chose to keep
   # them) stay.
   _d volume prune -f >/dev/null 2>&1 || true
-  _d builder prune -f --filter "until=$((_cache_days * 24))h" >/dev/null 2>&1 || true
+  _d builder prune -f --filter "until=$((_cache_days * 24))h" \
+    >/dev/null 2>&1 || true
   _d network prune -f >/dev/null 2>&1 || true
+  find "$_dir/seen" -type f -mtime +"$_keep_days" -delete 2>/dev/null \
+    || true
   _now > "$_dir/last-prune"
   _log prune "before: ${_df0}raw_mb=$_raw0 after: $(_df)raw_mb=$(_raw_mb)"
 }
 
-# Running container rows → "busy NAME", "stop NAME [OWNER]" or
-# "unknown NAME": keep a live owner's, stop the rest.
+# Container rows (-a) → "busy NAME" or "stop NAME [OWNER]" (with an
+# OWNER: remove with its volumes). Running: keep an owner's while it
+# is checked in, or while an agent's session lives; stop the rest.
+# Stopped: remove a gone owner's.
 _classify() {
-  while IFS="$_sep" read -r _i _l _n _p _w _s; do
+  while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
     test -n "$_i" || continue
     _ow="$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")"
+    if test "$_s" != running; then
+      test -z "$_ow" || _alive "$_ow" || echo "stop $_n $_ow"
+      continue
+    fi
     if test -n "$_ow"; then
-      if _alive "$_ow"; then echo "busy $_n"
-      else echo "stop $_n $_ow"; fi
+      if test -f "$_dir/in/$_ow"; then echo "busy $_n"
+      elif ! _alive "$_ow"; then echo "stop $_n $_ow"
+      elif test -f "$_dir/agent/$_ow"; then echo "busy $_n"
+      # Pre-label compose in a live worktree: whose, unknown.
+      elif test -z "$_l" && ! test -f "$_dir/compose/$(_dirkey "$_w")"
+      then echo "busy $_n"
+      else echo "stop $_n $_ow"
+      fi
       continue
     fi
     _r=0
@@ -555,23 +629,38 @@ _cmd_reap() {
     return 0
   fi
   echo x >> "$_dir/up/$(date +%F)"
-  _d ps --format '{{.Image}}' 2>/dev/null | sort -u | while read -r _im; do
-    touch "$_dir/seen/$(_dirkey "$_im")"
-  done
+  _all="$(_ps -a)"
+  # Running containers' images count as used; marked once a day.
+  if test "$(cat "$_dir/seen/.day" 2>/dev/null)" != "$(date +%F)"; then
+    printf '%s\n' "$_all" | while IFS="$_sep" read -r _i _l _n _p _w _s _im
+    do
+      test "$_s" != running || test -z "$_im" \
+        || : > "$_dir/seen/$(_dirkey "$_im")"
+    done
+    date +%F > "$_dir/seen/.day"
+  fi
   _busy=''
-  _rows="$(_ps | _classify)"
+  _rows="$(printf '%s\n' "$_all" | _classify)"
   # Ours (labelled or compose we saw) go with their volumes; one
   # matched by name only is stopped, its data kept for the prune.
   printf '%s\n' "$_rows" | while read -r _a _n _ow; do
     test "$_a" = stop || continue
     if test -n "$_ow"; then
-      _d rm -f -v "$_n" >/dev/null 2>&1 \
-        && _log rm "owner=$_ow container=$_n why=owner-out"
-    else
-      _d stop "$_n" >/dev/null 2>&1 \
-        && _log stop "container=$_n why=no-live-owner"
+      if _d rm -f -v "$_n" >/dev/null 2>&1; then
+        _log rm "owner=$_ow container=$_n why=owner-out"
+      fi
+    elif _d stop "$_n" >/dev/null 2>&1; then
+      _log stop "container=$_n why=no-live-owner"
     fi
   done
+  # Records of gone owners.
+  if test -n "$_sess"; then
+    for _f in "$_dir"/compose/* "$_dir"/agent/*; do
+      test -f "$_f" || continue
+      case "$_f" in */agent/*) _ow="${_f##*/}" ;; *) _ow="$(cat "$_f")" ;; esac
+      _alive "$_ow" || rm -f "$_f"
+    done
+  fi
   printf '%s\n' "$_rows" | grep -q '^busy ' && _busy=1
   ls "$_dir"/in/* >/dev/null 2>&1 && _busy=1
   # No tmux answer: can't tell whose test DBs these are, so keep them.
@@ -616,11 +705,13 @@ _cmd_ls() {
   test -n "$_any" || echo "  nobody"
   if _up; then
     _st="up"
-    test ! -f "$_dir/idle" \
-      || _st="up, idle since $(date -r "$(cat "$_dir/idle")" +%H:%M), quits after ${_grace}s"
+    if test -f "$_dir/idle"; then
+      _st="up, idle since $(date -r "$(cat "$_dir/idle")" +%H:%M)"
+      _st="$_st, quits after ${_grace}s"
+    fi
     echo "docker: $_st"
     echo "containers:"
-    _ps | while IFS="$_sep" read -r _i _l _n _p _w _s; do
+    _ps | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
       test -n "$_i" || continue
       _ow="$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")"
       if test -z "$_ow"; then
@@ -668,10 +759,12 @@ _cmd_stats() {
     _st="$(printf '%s\n' "$_ev" | grep -c "${_tab}start${_tab}" || true)"
     _qu="$(printf '%s\n' "$_ev" | grep -c "${_tab}quit${_tab}" || true)"
     _ram="$(printf '%s\n' "$_ev" | grep "${_tab}quit${_tab}" \
-      | sed -n 's/.*avail_mb_before=\([0-9]*\) avail_mb_after=\([0-9]*\).*/\1 \2/p' \
+      | sed -n 's/.*avail_mb_before=\([0-9]*\) avail_mb_after=/\1 /p' \
+      | sed 's/^\([0-9]* [0-9]*\).*/\1/' \
       | awk '{ s += $2 - $1 } END { printf "%d", s }')"
     _disk="$(printf '%s\n' "$_ev" | grep "${_tab}prune${_tab}" \
-      | sed -n 's/.*before: .*raw_mb=\([0-9]*\) after: .*raw_mb=\([0-9]*\).*/\1 \2/p' \
+      | sed -n 's/.*before: .*raw_mb=\([0-9]*\) after: .*raw_mb=/\1 /p' \
+      | sed 's/^\([0-9]* [0-9]*\).*/\1/' \
       | awk '{ s += $1 - $2 } END { printf "%dMB", s }')"
     printf '%s  %8s  %-7s  %6s %5s %12s %s\n' "$_day" "$_h" "$_src" \
       "$_st" "$_qu" "$_ram" "$_disk"
