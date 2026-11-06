@@ -197,29 +197,40 @@ def procs():
     return out
 
 
-def parked(pid, ps):
-    """pid's tool calls (Bash shells it started) all only wait."""
+def parker(ps):
+    """parked(pid): pid's tool calls (Bash shells it started) all only
+    wait: every process under them is a waiter or a shell around one,
+    so `yarn build & sleep 30` still works."""
     kids = {}
     for p, (pp, _) in ps.items():
         kids.setdefault(pp, []).append(p)
-    queued = {int(w) for w in os.listdir(HEAVY_WAIT)
-              if w.isdigit()} if os.path.isdir(HEAVY_WAIT) else set()
+    # A live heavy-slot waiter (a marker left by a killed one may name
+    # a reused pid, so check the command too).
+    queued = {int(w) for w in (os.listdir(HEAVY_WAIT)
+                               if os.path.isdir(HEAVY_WAIT) else [])
+              if w.isdigit() and 'heavy-slot' in ps.get(int(w), (0, ''))[1]}
 
     def waits(p):
-        return (p in queued or bool(WAITS.match(ps[p][1]))
-                or any(waits(k) for k in kids.get(p, [])))
-    shells = [p for p in kids.get(pid, [])
-              if 'shell-snapshots/' in ps[p][1]]
-    return bool(shells) and all(waits(p) for p in shells)
+        if p in queued or WAITS.match(ps[p][1]):
+            return True
+        ks = kids.get(p, [])
+        return bool(ks) and all(waits(k) for k in ks)
+
+    def parked(pid):
+        shells = [p for p in kids.get(pid, [])
+                  if 'shell-snapshots/' in ps[p][1]]
+        return bool(shells) and all(waits(p) for p in shells)
+    return parked
 
 
 def busy(skip=()):
-    """Sessions working: busy, and not only waiting (a waiter would
-    hold a slot while nothing moves)."""
+    """Busy sessions as (working, parked): parked ones only wait, and a
+    waiter must not hold a slot while nothing moves."""
     b = [s for s in sessions()
          if s.get('status') == 'busy' and s.get('sessionId') not in skip]
-    ps = procs() if b else {}
-    return [s for s in b if not parked(s['pid'], ps)]
+    parked = parker(procs()) if b else None
+    w = [s for s in b if not parked(s['pid'])]
+    return w, [s for s in b if s not in w]
 
 
 def reserved():
@@ -228,7 +239,8 @@ def reserved():
 
 class Room:
     def __init__(self, skip=()):
-        self.busy = len(busy(skip))
+        w, p = busy(skip)
+        self.busy, self.parked = len(w), len(p)
         self.res = reserved()
         self.free = free_gb()
         self.pressure = pressure()
@@ -252,7 +264,9 @@ class Room:
 
     @property
     def floor(self):
-        return self.working < FLOOR
+        # Parked agents count here: one queued for a heavy slot is about
+        # to take 1.5-4 GB, and a parked guess may be wrong.
+        return self.working + self.parked < FLOOR
 
     @property
     def min_gb(self):
@@ -432,9 +446,10 @@ def cron_next(cron, after):
         (y + 1, mon, dom, h, m, 0, 0, 0, -1))
 
 
-def timers(sid):
-    """A wakeup or cron sid set that has yet to fire: both live only in
-    the Claude process, so closing it would drop them."""
+def timers(sid, since=0):
+    """A wakeup or cron sid set since its process started (`since`) that
+    has yet to fire: both live only in the Claude process, so closing
+    it would drop them (and a restart already did, for older ones)."""
     p = transcript(sid)
     try:
         with open(p, 'rb') as f:
@@ -456,7 +471,8 @@ def timers(sid):
                 continue
             i = b.get('input') or {}
             if b.get('type') == 'tool_use' and not r.get('isSidechain'):
-                if b.get('name') == 'ScheduleWakeup':
+                if b.get('name') == 'ScheduleWakeup' \
+                        and stamp(r) >= since:
                     wake = None if i.get('stop') else \
                         stamp(r) + float(i.get('delaySeconds') or 0)
                 elif b.get('name') == 'CronCreate':
@@ -471,7 +487,11 @@ def timers(sid):
     if wake and wake > NOW - 300:
         return 'wakeup at ' + time.strftime('%H:%M', time.localtime(wake))
     for job, (i, at) in jobs.items():
+        if at < since:
+            continue
         if i.get('recurring', True):
+            if at < NOW - 7 * 86400:  # Claude expires them after 7 days
+                continue
             return f'cron {job} recurring'
         t = cron_next(i.get('cron', ''), at)
         if t is None or t > NOW - 300:
@@ -537,7 +557,8 @@ def candidate(s, focus):
     screen = tmux('capture-pane', '-p', '-t', pane, '-S', '-40') or ''
     if BG.search(screen):
         return 'background work'
-    return timers(s.get('sessionId', ''))
+    return timers(s.get('sessionId', ''),
+                  (s.get('startedAt') or 0) / 1000)
 
 
 def close(dry, verbose):
@@ -627,10 +648,14 @@ def revive(key, focus=False):
 
 def ls():
     room = Room()
-    print(f'room: {room.why()}; {room.busy} busy + {len(room.res)} '
+    print(f'room: {room.why()}; {room.busy} busy + {room.parked} parked + '
+          f'{len(room.res)} '
           f'starting / {CAP}, {room.free:.1f} GB free, '
           f'pressure {room.pressure}')
-    for s in busy():
+    w, p = busy()
+    for s in p:
+        print(f'parked\t{(s.get("tmux") or s.get("cwd", "")).split(":")[0]}')
+    for s in w:
         print(f'busy\t{(s.get("tmux") or s.get("cwd", "")).split(":")[0]}')
     for r in room.res:
         until = time.strftime('%H:%M:%S', time.localtime(float(r[0])))

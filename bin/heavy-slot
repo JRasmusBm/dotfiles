@@ -3,8 +3,10 @@
 # heavy-slot — cap how many type-aware eslint / tsc runs go at once.
 # Each builds a full TypeScript program (1.5–4 GB), and agents in
 # separate worktrees share nothing, so a few at once swap the laptop.
-# Only an agent holding a run-slot (busy, see run-slot) reaches here,
-# and run-slot never waits on this, so the two can't deadlock.
+# run-slot only holds back starts, which run no Bash, so nothing
+# waiting there holds or wants a slot here; an agent queued here
+# holds no run-slot (run-slot counts it parked), so they can't
+# deadlock.
 #
 #   heavy-slot run CMD...  wait for a free slot, run CMD, free it
 #   heavy-slot take PID    wait for a free slot and hold it for PID
@@ -84,8 +86,9 @@ _rushed && _lim=$((_max + 1))
 _take() {
   # Re-entrant: an owner already holding one goes on with it (a shell
   # that runs `heavy-slot take $$` again would otherwise hold every
-  # slot and wait on itself, stalling all others).
-  for _s in "$_dir"/[0-9]*; do
+  # slot and wait on itself, stalling all others). Not `hold`: every
+  # hold shares that owner, and _hold_once matches by tag already.
+  test "$_owner" = hold || for _s in "$_dir"/[0-9]*; do
     test "$(cat "$_s/pid" 2>/dev/null)" = "$_owner" || continue
     _held=''
     return 0
@@ -133,6 +136,8 @@ _wait() {
       echo "heavy-slot: all $_lim slots held (heavy-slot ls), waiting" >&2
       _said=1
       mkdir -p "$_dir/.wait"
+      trap 'rm -f "$_dir/.wait/$$"' EXIT
+      trap 'exit 130' INT TERM
       printf '%s %s %s\n' "$(date +%s)" "$_owner" "${_tag:-}" \
         > "$_dir/.wait/$$"
     fi
