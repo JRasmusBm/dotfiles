@@ -552,11 +552,17 @@ _wt_open_with_claude() {
 
   # Long prompts get truncated when typed into a shell that's
   # still starting, so hand Claude the prompt via a file.
+  # A detached kickoff (a script's) waits its turn in run-slot.
   if test -n "$_prompt" && test "$_created" = true; then
     _pf="$(mktemp -t wt-prompt)"
     printf '%s' "$_prompt" >"$_pf"
-    tmux send-keys -t "$_session:cli" \
-      "claude \"\$(cat $_pf)\"" Enter 2>/dev/null || true
+    set -- tmux send-keys -t "$_session:cli" "claude \"\$(cat $_pf)\"" Enter
+    if test -z "$WT_NO_ATTACH" \
+      || run-slot gate start "new:$_session" -- "$@"; then
+      "$@" 2>/dev/null || true
+    else
+      echo "wt: $_session queued until the Mac has room (run-slot ls)" >&2
+    fi
   elif test -n "${_WT_CONTINUE:-}" && test "$_created" = true; then
     tmux send-keys -t "$_session:cli" "claude --continue || claude" Enter \
       2>/dev/null || true

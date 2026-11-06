@@ -41,12 +41,11 @@ stopped until morning.
    file, and `rg -l '<ID>|<title words>' ~/.claude/projects`. If a
    worktree already exists, reuse it with `launch <path> <url>
    --resume "<what it is>"`.
-3. **Pick concurrency.** Away or overnight: at most 3
-   agents at once, and start the next as one goes done or blocked.
-   Present: more is fine, since `heavy` caps the expensive part.
-   Don't launch a new agent when free memory is under about 8 GB.
+3. **Concurrency** is `run-slot`'s: `launch` queues an agent until
+   the Mac has room and starts it from there (`run-slot ls`), so
+   launch all of them.
 4. **Create** with `wt fix|feat <url> </dev/null`, then run `launch`
-   on the new path. Stagger launches by about 20s.
+   on the new path.
 5. **Queue:** use `temp_queue/swarm/INDEX.md` in the repo, after
    checking `git check-ignore -v`. One line per ticket with its
    session, state, PR and blockers.

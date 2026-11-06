@@ -24,12 +24,24 @@ brief="$state/briefs/$slug.md"
 sed -e "s#{{URL}}#$url#" -e "s#{{EXTRA}}#$extra#" "$here/brief.md" \
   | tr '\n' ' ' > "$brief"
 
+grep -qF "$sess	" "$state/sessions.tsv" 2>/dev/null \
+  || printf '%s\t%s\t%s\n' "$sess" "$wt_path" "$url" >> "$state/sessions.tsv"
+
 cmd="$(tmux display -p -t "$sess:cli" '#{pane_current_command}')"
 case "$cmd" in
   zsh|bash|sh)
+    # A new agent waits its turn in run-slot, which reruns this.
+    if ! run-slot gate start "new:$sess" -- "$here/launch" "$wt_path" "$url" \
+      ${resume:+--resume} "$extra" >/dev/null; then
+      echo "$sess queued (run-slot ls)" >&2
+      echo "$sess"
+      exit 0
+    fi
     tmux send-keys -t "$sess:cli" -l "claude $resume \"\$(cat '$brief')\""
     ;;
   *)
+    # Pumped rerun: someone started this agent while it queued.
+    test -n "${RUN_SLOT_ID:-}" && { echo "$sess"; exit 0; }
     tmux send-keys -t "$sess:cli" Escape
     sleep 2
     tmux capture-pane -p -t "$sess:cli" | tail -3 \
@@ -39,7 +51,4 @@ case "$cmd" in
 esac
 sleep 1
 tmux send-keys -t "$sess:cli" Enter
-
-grep -qF "$sess	" "$state/sessions.tsv" 2>/dev/null \
-  || printf '%s\t%s\t%s\n' "$sess" "$wt_path" "$url" >> "$state/sessions.tsv"
 echo "$sess"

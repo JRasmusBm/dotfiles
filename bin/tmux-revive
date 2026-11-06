@@ -9,8 +9,8 @@
 #   - A run that finds no server, or one with another start_time than
 #     the snapshot's, queues each chat of the snapshot that isn't live
 #     again (tmux-revive.queue), once per dead server (tmux-revive.done).
-#   - Each run starts up to TMUX_REVIVE_BATCH (3) queued chats, none
-#     while free memory is under WT_NIGHT_MIN_GB (8) or pressure is up:
+#   - Each run starts the queued chats `run-slot` has room for (the
+#     rest wait their turn there, for a later run):
 #     a missing session is rebuilt like `wt open` does (its .tmux, else
 #     the run/vim/cli layout) under its old name, and
 #     `claude --resume <sid>` (no sid: `claude --continue || claude`)
@@ -42,12 +42,6 @@ fi
 _is_claude() {
   case "$1" in claude|[0-9]*.[0-9]*.[0-9]*) return 0 ;; esac
   return 1
-}
-
-_free_gb() {
-  vm_stat | awk '/page size of/ { ps = $8 }
-    /Pages (free|inactive|speculative)/ { sub(/\./, "", $NF); n += $NF }
-    END { print int(n * ps / 1073741824) }'
 }
 
 # pane<TAB>session<TAB>window<TAB>cwd<TAB>sid of every Claude pane.
@@ -147,18 +141,13 @@ _start() {
 }
 
 _now="$(date +%s)"
-_n=0
 _tmp="$(mktemp)"
 while IFS="$_t" read -r _st _s _w _cwd _sid _pane _at; do
   case "$_st" in
     todo)
-      if test "$_n" -lt "${TMUX_REVIVE_BATCH:-3}" \
-        && test "$(sysctl -n kern.memorystatus_vm_pressure_level)" -le 1 \
-        && test "$(_free_gb)" -ge "${WT_NIGHT_MIN_GB:-8}"; then
-        _n=$((_n + 1))
+      if run-slot gate start "revive:$_s:$_w:$_sid" -- >/dev/null; then
         _start "$_s" "$_w" "$_cwd" "$_sid"
         _at="$_now"
-        echo "$_now" > "$_dir/wt-tell.revived"
       fi ;;
     started)
       _c="$(tmux display-message -p -t "$_pane" \
