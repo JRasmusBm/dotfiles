@@ -1,0 +1,881 @@
+#!/bin/sh
+#
+# docker-slot — Docker Desktop runs only while someone needs it, and
+# its cache stays lean. The last one out turns the lights out.
+#
+#   docker-slot                 who is checked in, whether Docker is
+#                               up, containers by owner, last prune
+#   docker-slot in [OWNER] [--ttl SECS]
+#                               check in (start Docker and wait until
+#                               it answers); renews, never shortens
+#   docker-slot out [OWNER]     check out now: remove OWNER's
+#                               containers and their volumes
+#   docker-slot linger [OWNER]  check out in DOCKER_SLOT_LINGER secs
+#                               unless renewed first (Stop hook)
+#   docker-slot docker ARGS     run docker as OWNER: check in, label
+#                               what `run`/`create` start (the shim)
+#   docker-slot hook            PreToolUse hook for Bash: any command
+#                               renews a checked-in agent's TTL
+#   docker-slot reap            expire check-ins, stop dead owners'
+#                               containers, prune daily, quit Docker
+#                               after DOCKER_SLOT_GRACE idle (launchd)
+#   docker-slot prune [-n]      remove what no live owner needs; -n
+#                               lists it only
+#   docker-slot stats [DAYS]    Docker hours per day, RAM freed at
+#                               quits, disk freed by prunes
+#   docker-slot log [N]         last N (20) events
+#
+# Every `docker` goes through shims/docker (first on PATH), so humans,
+# agents and the scripts they run all check in. OWNER is the caller's
+# tmux session (a worktree slug), else the worktree in $PWD, else
+# `user`. Agents (CLAUDECODE=1) check in for DOCKER_SLOT_TTL (1800s),
+# renewed by every Bash call they make and cut to DOCKER_SLOT_LINGER
+# (900s) when their turn stops; others for DOCKER_SLOT_TTL_USER (8h).
+# A check-in also ends when its tmux session is gone.
+#
+# Containers `run`/`create` started are labelled docker-slot.owner;
+# `compose up` records its project. An agent's stay while its tmux
+# session lives, check-in or not (an idle agent's seeded test DB
+# survives its TTL), and keep Docker up meanwhile; anyone else's go
+# when the check-in expires. `out`, `wt rm` and the session ending
+# remove them with their volumes. One with no
+# known owner (Docker Desktop UI, devcontainers) keeps Docker up for
+# DOCKER_SLOT_TTL_USER after it started, then is stopped. Containers
+# from before labels are matched to a session by name (exp721-test-db
+# → exp-721*).
+
+set -e
+
+_dir="${LOCAL_CONFIG:-$HOME/.config}/docker-slot"
+_ttl_agent="${DOCKER_SLOT_TTL:-1800}"
+_ttl_user="${DOCKER_SLOT_TTL_USER:-28800}"
+_linger="${DOCKER_SLOT_LINGER:-900}"
+_grace="${DOCKER_SLOT_GRACE:-300}"
+_keep_days="${DOCKER_SLOT_KEEP_DAYS:-7}"
+_cache_days="${DOCKER_SLOT_CACHE_DAYS:-3}"
+_raw="$HOME/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw"
+_label='docker-slot.owner'
+_tab="$(printf '\t')"
+_sep='|' # not whitespace: IFS keeps its empty fields
+mkdir -p "$_dir/in" "$_dir/compose" "$_dir/up" "$_dir/seen" \
+  "$_dir/agent" "$_dir/tmux"
+
+_now() { date +%s; }
+
+# Write a check-in atomically: readers never see it empty.
+_put() {
+  echo "$2" > "$_dir/.put.$$" && mv -f "$_dir/.put.$$" "$1"
+}
+
+_log() {
+  _e="$1"
+  shift
+  printf '%s\t%s\t%s\n' "$(date '+%F %T')" "$_e" "$*" >> "$_dir/log"
+}
+
+# The real docker: first on PATH that isn't our shim.
+_ifs="$IFS"
+IFS=:
+for _p in $PATH /opt/homebrew/bin /usr/local/bin; do
+  # Any */shims dir: ours, also a worktree's copy while testing.
+  case "$_p" in */shims) continue ;; esac
+  test -x "$_p/docker" || continue
+  _docker="$_p/docker"
+  break
+done
+IFS="$_ifs"
+_d() {
+  "${_docker:?docker-slot: no docker on PATH}" "$@"
+}
+
+_owner() {
+  if test -n "${DOCKER_SLOT_OWNER:-}"; then
+    echo "$DOCKER_SLOT_OWNER"
+    return
+  fi
+  if test -n "${TMUX_PANE:-}"; then
+    _o="$(tmux display-message -p -t "$TMUX_PANE" '#S' 2>/dev/null || true)"
+    test -z "$_o" || { echo "$_o"; return; }
+  fi
+  _wt_sess "$PWD" || echo user
+}
+
+# The tmux session of a worktree path: its slug, with the `.` and `:`
+# tmux won't take in a session name as `_`.
+_wt_sess() {
+  case "$1" in
+    */.worktrees/*) _w="${1#*/.worktrees/}"; echo "${_w%%/*}" | tr '.:' '__' ;;
+    *) return 1 ;;
+  esac
+}
+
+_ttl() {
+  if test "${CLAUDECODE:-}" = 1; then echo "$_ttl_agent"
+  else echo "$_ttl_user"; fi
+}
+
+# Sessions, one per line; fails when a tmux server runs but doesn't
+# answer, so a reaper that can't see tmux never takes it for
+# "everyone is gone". No tmux process at all: the server exited with
+# its last session, so "-" (known empty, never an owner name).
+_sessions() {
+  if _sl="$(tmux list-sessions -F '#S' 2>/dev/null)"; then
+    echo "${_sl:--}"
+    return 0
+  fi
+  _r=0
+  pgrep -x tmux >/dev/null 2>&1 || _r=$?
+  test "$_r" = 1 || return 1
+  echo -
+}
+
+_alive() {
+  case "$1" in
+    user) return 0 ;;
+    pid-*) kill -0 "${1#pid-}" 2>/dev/null; return ;;
+  esac
+  test -n "${_sess:-}" || return 0
+  printf '%s\n' "$_sess" | grep -qxF "$1" && return 0
+  # Last seen in tmux: gone with its session.
+  test ! -f "$_dir/tmux/$1" || return 1
+  ! grep -qxs tmux "$_dir/agent/$1" || return 1
+  # Outside tmux there is no session to end: alive while checked in,
+  # or, for an agent, while its mark (renewed by every Bash call) is
+  # fresh.
+  _ua=''
+  test ! -f "$_dir/in/$1" || read -r _ua < "$_dir/in/$1" || true
+  test "${_ua:-0}" -le "$(_now)" || return 0
+  test -f "$_dir/agent/$1" || return 1
+  test -n "$(find "$_dir/agent/$1" -mmin "-$((_ttl_agent / 60))" \
+    2>/dev/null)"
+}
+
+# A pre-label container's session from its name: exp721-test-db and
+# pg-exp721 → a session named exp-721 or exp-721-*.
+# Only prefixes some session has (exp-, pla-...), so a name like
+# web-1 stays unknown instead of "owner gone". 0 live, 1 gone, 2 ?
+_name_alive() {
+  test -n "${_sess:-}" || return 2
+  _k="$(printf '%s\n' "$1" | grep -oE '[a-z]+-?[0-9]+' | head -1 \
+    | sed -E 's/^([a-z]+)-?([0-9]+)$/\1-\2/')"
+  test -n "$_k" || return 2
+  printf '%s\n' "$_sess" | grep -q "^${_k%-*}-[0-9]" || return 2
+  printf '%s\n' "$_sess" | grep -qE "^$_k(-|\$)"
+}
+
+_lock() {
+  until mkdir "$_dir/.lock" 2>/dev/null; do
+    # Starting or quitting Docker holds it up to a few minutes.
+    find "$_dir/.lock" -maxdepth 0 -mmin +6 -exec rmdir {} \; 2>/dev/null
+    sleep 0.2
+  done
+  trap 'rmdir "$_dir/.lock" 2>/dev/null || true' EXIT
+  trap 'exit 130' INT TERM
+}
+
+_unlock() {
+  rmdir "$_dir/.lock" 2>/dev/null || true
+  trap - EXIT INT TERM
+}
+
+# Cheap: the daemon's socket answers. For the fast paths.
+_ping() {
+  curl -s -m 2 --unix-socket "$HOME/.docker/run/docker.sock" \
+    http://d/_ping 2>/dev/null | grep -qx OK
+}
+
+_up() {
+  timeout 10 "$_docker" info --format '{{.ServerVersion}}' \
+    >/dev/null 2>&1
+}
+
+_start() {
+  _up && return 0
+  _t0="$(_now)"
+  echo "docker-slot: starting Docker Desktop for $_o" >&2
+  _d desktop start --detach >/dev/null 2>&1 || open -ga Docker
+  until _up; do
+    if test $(($(_now) - _t0)) -ge 300; then
+      _log start-failed "owner=$_o secs=$(($(_now) - _t0))"
+      echo "docker-slot: Docker didn't answer in 300s" >&2
+      return 1
+    fi
+    sleep 1
+  done
+  _log start "owner=$_o secs=$(($(_now) - _t0))"
+  echo "docker-slot: Docker up in $(($(_now) - _t0))s" >&2
+}
+
+# _in OWNER UNTIL: renew, never shorten; log a new check-in.
+_in() {
+  _f="$_dir/in/$1"
+  _u=''
+  test ! -f "$_f" || read -r _u < "$_f" || true
+  if test -z "$_u"; then
+    _log in "owner=$1 until=$(date -r "$2" +%H:%M)"
+    _put "$_f" "$2"
+  elif test "$2" -gt "$_u"; then
+    _put "$_f" "$2"
+  fi
+  _mark "$1"
+  rm -f "$_dir/idle"
+}
+
+# An agent's containers outlive its check-in; `user` is never alive-
+# checked, so it never gets the mark. tmux/OWNER: last seen in its
+# own tmux session, so it is gone with it; outside tmux, its check-in
+# decides. An owner named from another session's pane is left as is.
+# (A 2nd arg: called from the hook, which only agents run.)
+_mark() {
+  test "$1" != user || return 0
+  _tm=''
+  if test -z "${TMUX_PANE:-}"; then rm -f "$_dir/tmux/$1"
+  elif test "$(tmux display-message -p -t "$TMUX_PANE" '#S' \
+    2>/dev/null || true)" = "$1"; then
+    _tm=tmux
+    : > "$_dir/tmux/$1"
+  fi
+  test "${CLAUDECODE:-}${2:-}" = '' || echo "$_tm" > "$_dir/agent/$1"
+}
+
+_cmd_in() {
+  _o="$(_owner)"
+  _t="$(_ttl)"
+  while test $# -gt 0; do
+    case "$1" in
+      --ttl) _t="$2"; shift ;;
+      *) _o="$1" ;;
+    esac
+    shift
+  done
+  _lock
+  _in "$_o" "$(($(_now) + _t))"
+  _start
+  _unlock
+}
+
+# Containers as: id, owner label, name, compose project, compose dir,
+# state, image. All of them with -a.
+_ps() {
+  _c='com.docker.compose.project'
+  _f="{{.ID}}$_sep{{.Label \"$_label\"}}$_sep{{.Names}}"
+  _f="$_f$_sep{{.Label \"$_c\"}}$_sep{{.Label \"$_c.working_dir\"}}"
+  _d ps ${1:-} --no-trunc --format "$_f$_sep{{.State}}$_sep{{.Image}}" \
+    2>/dev/null
+}
+
+_dirkey() {
+  printf '%s' "$1" | tr '/' '%'
+}
+
+# Owner of a container row: label, then who ran compose in its
+# project dir, then the worktree that dir is in. Empty: unknown.
+_row_owner() {
+  if test -n "$2"; then echo "$2"; return; fi
+  if test -n "$5" && test -f "$_dir/compose/$(_dirkey "$5")"; then
+    _cowner "$_dir/compose/$(_dirkey "$5")" "${6:-}"
+    return
+  fi
+  _wt_sess "$5" || true
+}
+
+# A compose record lists everyone who ran `up` there, one per line;
+# its containers are the first live one's, other than SKIP. None: SKIP
+# if listed (so SKIP's removal takes them), else the first.
+_cowner() {
+  _c1='' _cs='' _cl=''
+  while read -r _co; do
+    test -n "$_co" || continue
+    test -n "$_c1" || _c1="$_co"
+    if test "$_co" = "${2:-}"; then _cs="$_co"; continue; fi
+    _alive "$_co" || continue
+    # One that holds them (checked in, or an agent) beats a live one
+    # that doesn't, so the reap never stops them for the latter.
+    if test -f "$_dir/in/$_co" || test -f "$_dir/agent/$_co"; then
+      echo "$_co"; return
+    fi
+    test -n "$_cl" || _cl="$_co"
+  done < "$1"
+  echo "${_cl:-${_cs:-$_c1}}"
+}
+
+# Add OWNER to compose record FILE (once), or drop it (-d).
+_crec() {
+  if test "$1" = -d; then
+    _cl="$(grep -vxF "$3" "$2" || true)"
+    if test -n "$_cl"; then _put "$2" "$_cl"; else rm -f "$2"; fi
+  else
+    grep -qxF "$2" "$1" 2>/dev/null \
+      || _put "$1" "$(cat "$1" 2>/dev/null || true)
+$2"
+  fi
+}
+
+# Remove OWNER's containers (labelled or its compose projects) with
+# their anonymous volumes. Docker down: the reaper does it later.
+_remove_owned() {
+  if _up; then
+    _ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
+      test "$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w" "$1")" = "$1" \
+        || continue
+      if _d rm -f -v "$_i" >/dev/null 2>&1; then
+        _log rm "owner=$1 container=$_n"
+      fi
+    done
+  fi
+  # Even with Docker down: a stale entry would claim the dir later.
+  for _f in "$_dir"/compose/*; do
+    test ! -f "$_f" || _crec -d "$_f" "$1"
+  done
+}
+
+# _out OWNER WHY: end the check-in and remove OWNER's containers.
+_out() {
+  if test -f "$_dir/in/$1"; then
+    rm -f "$_dir/in/$1"
+    _log out "owner=$1 why=$2"
+  fi
+  rm -f "$_dir/agent/$1" "$_dir/tmux/$1"
+  _remove_owned "$1"
+}
+
+# _expire OWNER: the check-in ran out. An agent's containers stay
+# while its session lives (the reap keeps them, and Docker, up);
+# anyone else's go now.
+_expire() {
+  if test -f "$_dir/agent/$1"; then
+    rm -f "$_dir/in/$1"
+    _log out "owner=$1 why=expired"
+  else
+    _out "$1" expired
+  fi
+}
+
+_cmd_out() {
+  _o="${1:-$(_owner)}"
+  _lock
+  _out "$_o" "${2:-out}"
+  _unlock
+}
+
+# Only an agent's own check-in: a human's 8h one (or `user`'s, shared
+# with any agent outside tmux and a worktree) isn't the agent's to cut.
+_cmd_linger() {
+  _o="${1:-$(_owner)}"
+  test -f "$_dir/in/$_o" && test -f "$_dir/agent/$_o" || return 0
+  _lock
+  test ! -f "$_dir/in/$_o" || _put "$_dir/in/$_o" "$(($(_now) + _linger))"
+  _unlock
+}
+
+# `docker compose [OPTS] SUB ...` → "SUB DIR": its subcommand and
+# project dir as compose picks it: --project-directory, else the
+# first -f file's dir, else the nearest dir up from $PWD with a
+# compose file.
+_compose_sub() {
+  _pd='' _ff=''
+  while test $# -gt 0; do
+    case "$1" in
+      --project-directory) _pd="${2:-}"; shift; shift ;;
+      --project-directory=*) _pd="${1#*=}"; shift ;;
+      -f|--file) test -n "$_ff" || _ff="${2:-}"; shift; shift ;;
+      --file=*) test -n "$_ff" || _ff="${1#*=}"; shift ;;
+      -p|--project-name|--env-file|--profile|--ansi|--progress) shift; shift ;;
+      --parallel) shift; shift ;;
+      -*) shift ;;
+      *) break ;;
+    esac
+  done
+  if test -n "$_pd"; then
+    _cd="$(cd "$_pd" 2>/dev/null && pwd -P || true)"
+  elif test -n "$_ff"; then
+    _cd="$(cd "$(dirname "$_ff")" 2>/dev/null && pwd -P || true)"
+  else
+    _cd="$(pwd -P)"
+    while test "$_cd" != /; do
+      for _y in compose.yaml compose.yml docker-compose.yml \
+        docker-compose.yaml; do
+        test ! -f "$_cd/$_y" || break 2
+      done
+      _cd="$(dirname "$_cd")"
+    done
+    test "$_cd" != / || _cd="$(pwd -P)"
+  fi
+  echo "${1:-} ${_cd:-$(pwd -P)}"
+}
+
+# Verbs that only stop what runs: with Docker down nothing runs, so
+# they don't start it. rm and compose down do start it: stopped
+# containers and volumes outlive a quit.
+_teardown() {
+  case "$1" in
+    stop|kill) return 0 ;;
+    container) case "${2:-}" in stop|kill) return 0 ;; esac ;;
+    compose) case "$_csub" in stop|kill) return 0 ;; esac ;;
+  esac
+  return 1
+}
+
+# The shim: check in, label new containers, record compose projects.
+_cmd_docker() {
+  case "${1:-}" in
+    ''|desktop|context|help|version|login|logout|-v|--version|-h|--help)
+      exec "$_docker" "$@" ;;
+  esac
+  _o="$(_owner)"
+  _csub='' _cdir=''
+  if test "$1" = compose; then
+    _x="$(shift; _compose_sub "$@")"
+    _csub="${_x%% *}" _cdir="${_x#* }"
+  fi
+  _t="$(_ttl)"
+  _u=''
+  test ! -f "$_dir/in/$_o" || read -r _u < "$_dir/in/$_o" || true
+  _mark "$_o"
+  # Fast path: checked in for over half a TTL still and the socket
+  # answers: no lock, no `docker info`.
+  if test -z "$_u" || test "$_u" -lt $(($(_now) + _t / 2)) || ! _ping
+  then
+    if _teardown "$@" && ! _up; then
+      echo "docker-slot: Docker is down, nothing runs to stop" >&2
+      exit 0
+    fi
+    _lock
+    _in "$_o" "$(($(_now) + _t))"
+    if ! _start; then
+      # Undo only this call's check-in.
+      if test -z "$_u"; then rm -f "$_dir/in/$_o"
+      else _put "$_dir/in/$_o" "$_u"; fi
+      _unlock
+      exit 1
+    fi
+    _unlock
+  fi
+  case "$1" in
+    run|create) _v="$1"; shift; set -- "$_v" --label "$_label=$_o" "$@" ;;
+    container)
+      case "${2:-}" in
+        run|create) _v="$2"; shift 2
+          set -- container "$_v" --label "$_label=$_o" "$@" ;;
+      esac ;;
+    compose)
+      # Recorded before it starts, so a reap mid-`up` already knows
+      # the owner.
+      case "$_csub" in
+        up|run|create|start)
+          _lock
+          _crec "$_dir/compose/$(_dirkey "$_cdir")" "$_o"
+          _unlock ;;
+      esac ;;
+  esac
+  case "$1 ${2:-}" in
+    run*|create*|pull*|build*|compose*|'container run'|'container create'\
+      |'image pull'|'image build')
+      printf '%s\t%s\t%s\n' "$(date +%F)" "$_o" "$*" >> "$_dir/uses" ;;
+  esac
+  exec "$_docker" "$@"
+}
+
+# Claude Code PreToolUse (Bash): a checked-in agent is still working,
+# so renew it. A command that calls docker checks in and starts Docker
+# here, so it works in sessions started before the shim was on PATH
+# (no rewrite: another hook's updatedInput would race it).
+_cmd_hook() {
+  _o="$(_owner)"
+  _f="$_dir/in/$_o"
+  _u=''
+  test ! -f "$_f" || read -r _u < "$_f" || true
+  _n=$(($(_now) + _ttl_agent))
+  # docker at a command start: after ; & | ( { ` newline or $(, past
+  # VAR=x, sudo, exec, time and a path.
+  _re='(^|[;&|({`]|\n|\$\()\s*([A-Za-z_]+=\S*\s+)*'
+  _re="$_re"'(sudo\s+|exec\s+|time\s+)*(\S*/)?docker(-compose)?(\s|$)'
+  if jq -e --arg re "$_re" '(.tool_input.command // "") | test($re)' \
+    >/dev/null 2>&1; then
+    test "$_o" = user || _mark "$_o" 1
+    # Checked in for over half a TTL still and Docker answers.
+    test -n "$_u" && test "$_u" -ge $((_n - _ttl_agent / 2)) && _ping \
+      && return 0
+    _lock
+    _in "$_o" "$_n"
+    _start >/dev/null 2>&1 || true
+    _unlock
+  else
+    # Renew the heartbeat on every call; an agent checked in before
+    # marks existed gets one here.
+    if test -n "$_u" || test -f "$_dir/agent/$_o"; then
+      test "$_o" = user || _mark "$_o" 1
+    fi
+    test -z "$_u" || test "$_n" -le "$_u" || _put "$_f" "$_n"
+  fi
+}
+
+_avail_mb() {
+  vm_stat | awk '/page size of/ { ps = $8 }
+    /Pages (free|inactive|speculative|purgeable)/ {
+      gsub(/\./, "", $NF); n += $NF }
+    END { printf "%d", n * ps / 1048576 }'
+}
+
+_vm_pids() {
+  pgrep -f 'com.apple.Virtualization.VirtualMachine' 2>/dev/null || true
+}
+
+_fp_mb() {
+  footprint -p "$1" 2>/dev/null | awk '/Footprint:/ {
+    v = $(NF - 4) + 0; if ($(NF - 3) == "GB") v *= 1024; printf "%d", v; exit }'
+}
+
+# Quit Docker Desktop and log what it gave back: the footprint of the
+# Virtualization VMs that went away (process RSS undercounts a VM),
+# and available memory before and 15s after.
+_quit() {
+  _fps=''
+  for _p in $(_vm_pids); do _fps="$_fps $_p:$(_fp_mb "$_p")"; done
+  _avail0="$(_avail_mb)"
+  _t0="$(_now)"
+  _d desktop stop --timeout 120 >/dev/null 2>&1 \
+    || osascript -e 'quit app "Docker Desktop"' >/dev/null 2>&1 || true
+  _secs=$(($(_now) - _t0))
+  sleep 15
+  _vm=0
+  for _x in $_fps; do
+    kill -0 "${_x%%:*}" 2>/dev/null || _vm=$((_vm + ${_x#*:}))
+  done
+  _log quit "secs=$_secs vm_mb=$_vm" \
+    "avail_mb_before=$_avail0 avail_mb_after=$(_avail_mb)"
+}
+
+# What a prune may remove. Image refs used in the last KEEP days are
+# kept: from agents' transcripts (Claude Code keeps every Bash call),
+# the shim log and the images the reap saw running. So are images
+# created in that window, images of any container, and the patterns
+# in $_dir/keep.
+_used_refs() {
+  {
+    find "$HOME/.claude/projects" -name '*.jsonl' -mtime -"$_keep_days" \
+      -print0 2>/dev/null | xargs -0 rg -o --no-filename \
+      'docker[^"]{0,40} (run|create|pull|build|compose|tag|push)[^"]{0,400}' \
+      2>/dev/null || true
+    awk -v c="$(date -v-"$_keep_days"d '+%F')" '$1 >= c' "$_dir/uses" \
+      2>/dev/null || true
+    # Images of containers the reap saw running (compose-only ones too).
+    find "$_dir/seen" -type f -mtime -"$_keep_days" 2>/dev/null \
+      | sed 's|.*/||' | tr '%' '/'
+  } | tr -s ' "\\=\t' '\n' | grep -E '^[a-z0-9]' | sort -u
+}
+
+_image_kept() {
+  # $1 repo, $2 tag
+  _ref="$1:$2"
+  _base="${1##*/}:$2"
+  _short="${1#*/}:$2"
+  if test -f "$_dir/keep"; then
+    while read -r _k; do
+      test -n "$_k" || continue
+      case "$_ref" in $_k) return 0 ;; esac
+    done < "$_dir/keep"
+  fi
+  printf '%s\n' "$_used" | grep -qxF -e "$_ref" -e "$_base" -e "$_short" \
+    && return 0
+  test "$2" = latest && printf '%s\n' "$_used" | grep -qxF -e "$1" -e "${1##*/}"
+}
+
+_df() {
+  _d system df --format '{{.Type}}={{.Reclaimable}}' 2>/dev/null \
+    | sed 's/ (.*//; s/Local Volumes/volumes/; s/Build Cache/cache/' \
+    | tr 'A-Z' 'a-z' | tr '\n' ' '
+}
+
+_raw_mb() {
+  du -sk "$_raw" 2>/dev/null | awk '{ printf "%d", $1 / 1024 }'
+}
+
+_cmd_prune() {
+  _dry=''
+  test "${1:-}" != -n || _dry=1
+  _up || { echo "docker-slot: Docker is down, nothing to prune" >&2; return 0; }
+  _sess="$(_sessions)" || _sess=''
+  _used="$(_used_refs)"
+  _cut="$(date -v-"$_keep_days"d +%s)"
+  _df0="$(_df)"
+  _raw0="$(_raw_mb)"
+  _n_c=0 _n_i=0
+  # Stopped containers whose owner is gone and that stopped over KEEP
+  # days ago (a seeded test DB of a live session stays).
+  _ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
+    test "$_s" != running || continue
+    _ow="$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")"
+    if test -n "$_ow"; then
+      _alive "$_ow" && continue
+    else
+      _r=0
+      _name_alive "$_n" || _r=$?
+      test "$_r" = 1 || continue
+    fi
+    _fin="$(_d inspect -f '{{.State.FinishedAt}}' "$_i" | cut -c1-19)"
+    _fs="$(date -j -u -f '%Y-%m-%dT%H:%M:%S' "$_fin" +%s 2>/dev/null || echo 0)"
+    test "$_fs" -lt "$_cut" || continue
+    echo "container $_n (owner ${_ow:-gone}, stopped ${_fin%T*})"
+    test -n "$_dry" || _d rm -v "$_i" >/dev/null 2>&1 || true
+  done
+  # Tagged images nobody used in KEEP days; dangling ones always.
+  _inuse="$(_d ps -a --format '{{.Image}}' | sort -u)"
+  _f="{{.Repository}}$_sep{{.Tag}}$_sep{{.ID}}$_sep{{.CreatedAt}}"
+  _d images --format "$_f$_sep{{.Size}}" \
+    | while IFS="$_sep" read -r _r _t _id _c _sz; do
+      test "$_r" != '<none>' && test "$_t" != '<none>' || continue
+      printf '%s\n' "$_inuse" | grep -qxF -e "$_r:$_t" -e "$_id" && continue
+      test "$_t" != latest || ! printf '%s\n' "$_inuse" | grep -qxF "$_r" \
+        || continue
+      _cs="$(date -j -f '%Y-%m-%d %H:%M:%S' "$(echo "$_c" | cut -c1-19)" \
+        +%s 2>/dev/null || echo 0)"
+      test "$_cs" -lt "$_cut" || continue
+      _image_kept "$_r" "$_t" && continue
+      echo "image $_r:$_t ($_sz)"
+      test -n "$_dry" || _d rmi "$_r:$_t" >/dev/null 2>&1 || true
+    done
+  if test -n "$_dry"; then
+    _d images -f dangling=true --format 'image <none> {{.ID}} ({{.Size}})'
+    _nv="$(_d volume ls -q -f dangling=true \
+      | grep -cE '^[0-9a-f]{64}$' || true)"
+    echo "volumes: $_nv anonymous unused"
+    return 0
+  fi
+  _d image prune -f >/dev/null 2>&1 || true
+  # Anonymous unused volumes only; named ones (someone chose to keep
+  # them) stay.
+  _d volume prune -f >/dev/null 2>&1 || true
+  _d builder prune -f --filter "until=$((_cache_days * 24))h" \
+    >/dev/null 2>&1 || true
+  _d network prune -f >/dev/null 2>&1 || true
+  find "$_dir/seen" -type f -mtime +"$_keep_days" -delete 2>/dev/null \
+    || true
+  _now > "$_dir/last-prune"
+  _log prune "before: ${_df0}raw_mb=$_raw0 after: $(_df)raw_mb=$(_raw_mb)"
+}
+
+# Container rows (-a) → "busy NAME" or "stop NAME [OWNER]" (with an
+# OWNER: remove with its volumes). Running: keep an owner's while it
+# is checked in, or while an agent's session lives; stop the rest.
+# Stopped: remove a gone owner's.
+_classify() {
+  while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
+    test -n "$_i" || continue
+    _ow="$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")"
+    if test "$_s" != running; then
+      test -z "$_ow" || _alive "$_ow" || echo "stop $_n $_ow"
+      continue
+    fi
+    if test -n "$_ow"; then
+      if test -f "$_dir/in/$_ow"; then echo "busy $_n"
+      elif ! _alive "$_ow"; then echo "stop $_n $_ow"
+      elif test -f "$_dir/agent/$_ow"; then echo "busy $_n"
+      # Pre-label compose in a live worktree: whose, unknown.
+      elif test -z "$_l" && ! test -f "$_dir/compose/$(_dirkey "$_w")"
+      then echo "busy $_n"
+      else echo "stop $_n $_ow"
+      fi
+      continue
+    fi
+    _r=0
+    _name_alive "$_n" || _r=$?
+    case "$_r" in
+      0) echo "busy $_n" ;;
+      1) echo "stop $_n" ;;
+      *) _unknown "$_i" "$_n" ;;
+    esac
+  done
+}
+
+# No owner known (Docker Desktop UI, a devcontainer, an agent that
+# started before the shim): busy while younger than a user check-in,
+# then stopped.
+_unknown() {
+  _sa="$(_d inspect -f '{{.State.StartedAt}}' "$1" 2>/dev/null | cut -c1-19)"
+  _ss="$(date -j -u -f '%Y-%m-%dT%H:%M:%S' "$_sa" +%s 2>/dev/null || echo 0)"
+  if test $((_now - _ss)) -lt "$_ttl_user"; then echo "busy $2"
+  else echo "stop $2"; fi
+}
+
+# One pass, every minute from launchd.
+_cmd_reap() {
+  _lock
+  _now="$(_now)"
+  _sess="$(_sessions)" || _sess=''
+  for _f in "$_dir"/in/*; do
+    test -f "$_f" || continue
+    _o="${_f##*/}"
+    read -r _u < "$_f" || _u=0
+    if ! _alive "$_o"; then _out "$_o" gone
+    elif test "$_now" -ge "${_u:-0}"; then _expire "$_o"
+    fi
+  done
+  if ! _up; then
+    rm -f "$_dir/idle"
+    _unlock
+    return 0
+  fi
+  echo x >> "$_dir/up/$(date +%F)"
+  _all="$(_ps -a)"
+  # Running containers' images count as used; marked once a day.
+  if test "$(cat "$_dir/seen/.day" 2>/dev/null)" != "$(date +%F)"; then
+    printf '%s\n' "$_all" | while IFS="$_sep" read -r _i _l _n _p _w _s _im
+    do
+      test "$_s" != running || test -z "$_im" \
+        || : > "$_dir/seen/$(_dirkey "$_im")"
+    done
+    date +%F > "$_dir/seen/.day"
+  fi
+  _busy=''
+  _rows="$(printf '%s\n' "$_all" | _classify)"
+  # Ours (labelled or compose we saw) go with their volumes; one
+  # matched by name only is stopped, its data kept for the prune.
+  printf '%s\n' "$_rows" | while read -r _a _n _ow; do
+    test "$_a" = stop || continue
+    if test -n "$_ow"; then
+      if _d rm -f -v "$_n" >/dev/null 2>&1; then
+        _log rm "owner=$_ow container=$_n why=owner-out"
+      fi
+    elif _d stop "$_n" >/dev/null 2>&1; then
+      _log stop "container=$_n why=no-live-owner"
+    fi
+  done
+  # Records of gone owners.
+  if test -n "$_sess"; then
+    for _f in "$_dir"/agent/* "$_dir"/tmux/*; do
+      test ! -f "$_f" || _alive "${_f##*/}" || rm -f "$_f"
+    done
+    for _f in "$_dir"/compose/*; do
+      test -f "$_f" || continue
+      for _ow in $(cat "$_f"); do
+        _alive "$_ow" || _crec -d "$_f" "$_ow"
+      done
+    done
+  fi
+  printf '%s\n' "$_rows" | grep -q '^busy ' && _busy=1
+  ls "$_dir"/in/* >/dev/null 2>&1 && _busy=1
+  # No tmux answer (or no server left): can't tell whose test DBs
+  # these are, so keep them, and Docker, while any runs.
+  test -n "$_sess" \
+    || ! printf '%s\n' "$_all" | grep -q "${_sep}running${_sep}" \
+    || _busy=1
+  _lp="$(cat "$_dir/last-prune" 2>/dev/null || echo 0)"
+  if test -n "$_busy"; then
+    rm -f "$_dir/idle"
+    _unlock
+    test $((_now - _lp)) -lt 86400 || _cmd_prune
+    return 0
+  fi
+  test -f "$_dir/idle" || echo "$_now" > "$_dir/idle"
+  if test $((_now - $(cat "$_dir/idle"))) -lt "$_grace"; then
+    _unlock
+    return 0
+  fi
+  # Prune unlocked (it can take minutes); quit on the next pass.
+  if test $((_now - _lp)) -ge 86400; then
+    _unlock
+    _cmd_prune
+    return 0
+  fi
+  _quit
+  rm -f "$_dir/idle"
+  _unlock
+}
+
+_until() {
+  _u="$(cat "$1" 2>/dev/null || echo 0)"
+  date -r "$_u" +%H:%M
+}
+
+_cmd_ls() {
+  _sess="$(_sessions)" || _sess=''
+  echo "checked in:"
+  _any=''
+  for _f in "$_dir"/in/*; do
+    test -f "$_f" || continue
+    _any=1
+    printf '  %s until %s\n' "${_f##*/}" "$(_until "$_f")"
+  done
+  test -n "$_any" || echo "  nobody"
+  if _up; then
+    _st="up"
+    if test -f "$_dir/idle"; then
+      _st="up, idle since $(date -r "$(cat "$_dir/idle")" +%H:%M)"
+      _st="$_st, quits after ${_grace}s"
+    fi
+    echo "docker: $_st"
+    echo "containers:"
+    _ps | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
+      test -n "$_i" || continue
+      _ow="$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")"
+      if test -z "$_ow"; then
+        _r=0
+        _name_alive "$_n" || _r=$?
+        case "$_r" in
+          0) _ow='(by name, live session)' ;;
+          1) _ow='(by name, session gone)' ;;
+          *) _ow='(unknown owner, kept 8h from start)' ;;
+        esac
+      fi
+      printf '  %-28s %s\n' "$_n" "$_ow"
+    done
+  else
+    echo "docker: down"
+  fi
+  _lp="$(grep "${_tab}prune${_tab}" "$_dir/log" 2>/dev/null | tail -1)"
+  echo "last prune: ${_lp:-never}"
+  _sq="$(grep -E "${_tab}(start|quit)${_tab}" "$_dir/log" 2>/dev/null \
+    | tail -2 | tr '\n' ' ')"
+  echo "last start/quit: ${_sq:-none}"
+}
+
+# Docker hours per day from our minute ticks and the memlog (one
+# snapshot a minute; the Docker VM shows as a Virtualization process).
+_cmd_stats() {
+  _days="${1:-7}"
+  _ml="${LOCAL_CONFIG:-$HOME/.config}/memlog"
+  printf 'day         docker_h  source   starts quits ram_freed_mb disk_freed\n'
+  _i="$_days"
+  while test "$_i" -ge 0; do
+    _day="$(date -v-"$_i"d +%F)"
+    _i=$((_i - 1))
+    # The larger: ticks start mid-day on install, memlog may lapse.
+    _t=0 _m=0
+    test ! -f "$_dir/up/$_day" || _t="$(wc -l < "$_dir/up/$_day")"
+    test ! -f "$_ml/$_day.log" || _m="$(awk '/^===/ { d = 0 }
+      /Virtualization.VirtualMachine/ { if (!d) { c++; d = 1 } }
+      END { print c + 0 }' "$_ml/$_day.log")"
+    test "$_t" -gt 0 || test "$_m" -gt 0 || continue
+    _src=ticks
+    test "$_m" -le "$_t" || { _src=memlog; _t="$_m"; }
+    _h="$(echo "$_t" | awk '{ printf "%.1f", $1 / 60 }')"
+    _ev="$(grep "^$_day" "$_dir/log" 2>/dev/null || true)"
+    _st="$(printf '%s\n' "$_ev" | grep -c "${_tab}start${_tab}" || true)"
+    _qu="$(printf '%s\n' "$_ev" | grep -c "${_tab}quit${_tab}" || true)"
+    _ram="$(printf '%s\n' "$_ev" | grep "${_tab}quit${_tab}" \
+      | sed -n 's/.*avail_mb_before=\([0-9]*\) avail_mb_after=/\1 /p' \
+      | sed 's/^\([0-9]* [0-9]*\).*/\1/' \
+      | awk '{ s += $2 - $1 } END { printf "%d", s }')"
+    _disk="$(printf '%s\n' "$_ev" | grep "${_tab}prune${_tab}" \
+      | sed -n 's/.*before: .*raw_mb=\([0-9]*\) after: .*raw_mb=/\1 /p' \
+      | sed 's/^\([0-9]* [0-9]*\).*/\1/' \
+      | awk '{ s += $1 - $2 } END { printf "%dMB", s }')"
+    printf '%s  %8s  %-7s  %6s %5s %12s %s\n' "$_day" "$_h" "$_src" \
+      "$_st" "$_qu" "$_ram" "$_disk"
+  done
+}
+
+case "${1:-}" in
+  '') _cmd_ls ;;
+  in) shift; _cmd_in "$@" ;;
+  out) shift; _cmd_out "$@" ;;
+  linger) shift; _cmd_linger "$@" ;;
+  docker) shift; _cmd_docker "$@" ;;
+  hook) _cmd_hook ;;
+  reap) _cmd_reap ;;
+  prune) shift; _cmd_prune "$@" ;;
+  stats) shift; _cmd_stats "$@" ;;
+  log) tail -"${2:-20}" "$_dir/log" 2>/dev/null ;;
+  *) sed -n '2,/^$/s/^# \{0,1\}//p' "$0" >&2; exit 1 ;;
+esac

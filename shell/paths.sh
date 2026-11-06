@@ -83,4 +83,8 @@ fi
 # ones (equivalent to `pyenv init --path`). Harmless if pyenv absent.
 PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
 
+# docker goes through bin/docker-slot, so Docker Desktop runs only
+# while someone is checked in.
+PATH="$DOTFILES/shims:$PATH"
+
 export PATH=$PATH
