@@ -34,11 +34,14 @@
 # A check-in also ends when its tmux session is gone.
 #
 # Containers `run`/`create` started are labelled docker-slot.owner;
-# `compose up` records its project. Check-out removes them with their
-# volumes. A running container whose owner is gone is stopped; one
-# with no known owner (Docker Desktop UI, devcontainers) keeps Docker
-# up for DOCKER_SLOT_TTL_USER after it started, then is stopped. Containers from before labels are matched
-# to a session by name (exp721-test-db → exp-721*).
+# `compose up` records its project. They stay while their owner's
+# tmux session lives, check-in or not (an idle agent's seeded test DB
+# survives its TTL), and keep Docker up meanwhile. `out`, `wt rm` and
+# the session ending remove them with their volumes. One with no
+# known owner (Docker Desktop UI, devcontainers) keeps Docker up for
+# DOCKER_SLOT_TTL_USER after it started, then is stopped. Containers
+# from before labels are matched to a session by name (exp721-test-db
+# → exp-721*).
 
 set -e
 
@@ -53,7 +56,7 @@ _raw="$HOME/Library/Containers/com.docker.docker/Data/vms/0/data/Docker.raw"
 _label='docker-slot.owner'
 _tab="$(printf '\t')"
 _sep='|' # not whitespace: IFS keeps its empty fields
-mkdir -p "$_dir/in" "$_dir/compose" "$_dir/up"
+mkdir -p "$_dir/in" "$_dir/compose" "$_dir/up" "$_dir/seen"
 
 _now() { date +%s; }
 
@@ -87,9 +90,15 @@ _owner() {
     _o="$(tmux display-message -p -t "$TMUX_PANE" '#S' 2>/dev/null || true)"
     test -z "$_o" || { echo "$_o"; return; }
   fi
-  case "$PWD" in
-    */.worktrees/*) _w="${PWD#*/.worktrees/}"; echo "${_w%%/*}" ;;
-    *) echo user ;;
+  _wt_sess "$PWD" || echo user
+}
+
+# The tmux session of a worktree path: its slug, with the `.` and `:`
+# tmux won't take in a session name as `_`.
+_wt_sess() {
+  case "$1" in
+    */.worktrees/*) _w="${1#*/.worktrees/}"; echo "${_w%%/*}" | tr '.:' '__' ;;
+    *) return 1 ;;
   esac
 }
 
@@ -211,9 +220,7 @@ _row_owner() {
     cat "$_dir/compose/$(_dirkey "$5")"
     return
   fi
-  case "$5" in
-    */.worktrees/*) _w="${5#*/.worktrees/}"; echo "${_w%%/*}" ;;
-  esac
+  _wt_sess "$5" || true
 }
 
 # Remove OWNER's containers (labelled or its compose projects) with
@@ -231,11 +238,20 @@ _remove_owned() {
   grep -lxF "$1" "$_dir"/compose/* 2>/dev/null | xargs rm -f
 }
 
+# _out OWNER WHY: end the check-in and remove OWNER's containers.
 _out() {
-  test -f "$_dir/in/$1" || return 0
-  rm -f "$_dir/in/$1"
-  _log out "owner=$1 why=$2"
+  if test -f "$_dir/in/$1"; then
+    rm -f "$_dir/in/$1"
+    _log out "owner=$1 why=$2"
+  fi
   _remove_owned "$1"
+}
+
+# _expire OWNER: the check-in ran out; its containers stay while the
+# owner's session lives (the reap keeps them, and Docker, up).
+_expire() {
+  rm -f "$_dir/in/$1"
+  _log out "owner=$1 why=expired"
 }
 
 _cmd_out() {
@@ -253,6 +269,34 @@ _cmd_linger() {
   _unlock
 }
 
+# `docker compose [OPTS] SUB ...` → "SUB DIR": its subcommand and
+# project dir (--project-directory, else $PWD).
+_compose_sub() {
+  _cd="$(pwd -P)"
+  while test $# -gt 0; do
+    case "$1" in
+      --project-directory) _cd="$2"; shift 2 ;;
+      --project-directory=*) _cd="${1#*=}"; shift ;;
+      -f|--file|-p|--project-name|--env-file|--profile|--ansi|--progress|--parallel)
+        shift 2 ;;
+      -*) shift ;;
+      *) echo "$1 $_cd"; return ;;
+    esac
+  done
+  echo " $_cd"
+}
+
+# Verbs that only tear down: with Docker down there is nothing to do,
+# so they don't start it.
+_teardown() {
+  case "$1" in
+    stop|rm|kill) return 0 ;;
+    container) case "${2:-}" in stop|rm|kill) return 0 ;; esac ;;
+    compose) case "$_csub" in down|stop|rm|kill) return 0 ;; esac ;;
+  esac
+  return 1
+}
+
 # The shim: check in, label new containers, record compose projects.
 _cmd_docker() {
   case "${1:-}" in
@@ -260,10 +304,26 @@ _cmd_docker() {
       exec "$_docker" "$@" ;;
   esac
   _o="$(_owner)"
-  _lock
-  _in "$_o" "$(($(_now) + $(_ttl)))"
-  _start || { _unlock; exit 1; }
-  _unlock
+  _csub='' _cdir=''
+  if test "$1" = compose; then
+    _x="$(shift; _compose_sub "$@")"
+    _csub="${_x%% *}" _cdir="${_x#* }"
+  fi
+  _t="$(_ttl)"
+  _u=''
+  test ! -f "$_dir/in/$_o" || read -r _u < "$_dir/in/$_o" || true
+  # Fast path: checked in for over half a TTL still, so Docker is up
+  # (the reap never quits it under a check-in).
+  if test -z "$_u" || test "$_u" -lt $(($(_now) + _t / 2)); then
+    if _teardown "$@" && ! _up; then
+      echo "docker-slot: Docker is down, nothing to tear down" >&2
+      exit 0
+    fi
+    _lock
+    _in "$_o" "$(($(_now) + _t))"
+    _start || { rm -f "$_dir/in/$_o"; _unlock; exit 1; }
+    _unlock
+  fi
   case "$1" in
     run|create) _v="$1"; shift; set -- "$_v" --label "$_label=$_o" "$@" ;;
     container)
@@ -272,12 +332,11 @@ _cmd_docker() {
           set -- container "$_v" --label "$_label=$_o" "$@" ;;
       esac ;;
     compose)
-      # Its project dir is $PWD unless -f/--project-directory says
-      # otherwise; recorded before it starts, so a reap mid-`up`
-      # already knows the owner.
-      case " $* " in
-        *' up '*|*' run '*|*' create '*|*' start '*)
-          echo "$_o" > "$_dir/compose/$(_dirkey "$(pwd -P)")" ;;
+      # Recorded before it starts, so a reap mid-`up` already knows
+      # the owner.
+      case "$_csub" in
+        up|run|create|start)
+          echo "$_o" > "$_dir/compose/$(_dirkey "$_cdir")" ;;
       esac ;;
   esac
   case "$1 ${2:-}" in
@@ -288,24 +347,26 @@ _cmd_docker() {
 }
 
 # Claude Code PreToolUse (Bash): a checked-in agent is still working,
-# so renew it. A command that calls docker gets `docker-slot in`
-# first, so it works in sessions started before the shim was on PATH.
+# so renew it. A command that calls docker checks in and starts Docker
+# here, so it works in sessions started before the shim was on PATH
+# (no rewrite: another hook's updatedInput would race it).
 _cmd_hook() {
-  _in_json="$(cat)"
   _o="$(_owner)"
   _f="$_dir/in/$_o"
   _u=''
   test ! -f "$_f" || read -r _u < "$_f" || true
   _n=$(($(_now) + _ttl_agent))
-  test -z "$_u" || test "$_n" -le "$_u" || echo "$_n" > "$_f"
-  printf '%s' "$_in_json" | jq -c '
-    .tool_input as $in
-    | ($in.command // "") as $c
-    | if ($c | test("^docker-slot in")) then empty
-      elif ($c | test("(^|[;&|({`]|\\n|\\$\\()\\s*([A-Za-z_]+=\\S*\\s+)*(sudo\\s+|exec\\s+|time\\s+)*(\\S*/)?docker(-compose)?(\\s|$)"))
-      then {hookSpecificOutput: {hookEventName: "PreToolUse",
-        updatedInput: ($in + {command: ("docker-slot in >/dev/null\n" + $c)})}}
-      else empty end' 2>/dev/null || true
+  if jq -e '(.tool_input.command // "") | test("(^|[;&|({`]|\\n|\\$\\()\\s*([A-Za-z_]+=\\S*\\s+)*(sudo\\s+|exec\\s+|time\\s+)*(\\S*/)?docker(-compose)?(\\s|$)")' \
+    >/dev/null 2>&1; then
+    # Checked in for over half a TTL still: Docker is up already.
+    test -n "$_u" && test "$_u" -ge $((_n - _ttl_agent / 2)) && return 0
+    _lock
+    _in "$_o" "$_n"
+    _start >/dev/null 2>&1 || true
+    _unlock
+  elif test -n "$_u" && test "$_n" -gt "$_u"; then
+    echo "$_n" > "$_f"
+  fi
 }
 
 _avail_mb() {
@@ -344,8 +405,8 @@ _quit() {
 }
 
 # What a prune may remove. Image refs used in the last KEEP days are
-# kept: from agents' transcripts (Claude Code keeps every Bash call)
-# and the shim log. So are images created in that window, images of
+# kept: from agents' transcripts (Claude Code keeps every Bash call),
+# the shim log and the images the reap saw running. So are images created in that window, images of
 # any container, and the patterns in $_dir/keep.
 _used_refs() {
   {
@@ -355,6 +416,9 @@ _used_refs() {
       2>/dev/null || true
     awk -v c="$(date -v-"$_keep_days"d '+%F')" '$1 >= c' "$_dir/uses" \
       2>/dev/null || true
+    # Images of containers the reap saw running (compose-only ones too).
+    find "$_dir/seen" -type f -mtime -"$_keep_days" 2>/dev/null \
+      | sed 's|.*/||' | tr '%' '/'
   } | tr -s ' "\\=\t' '\n' | grep -E '^[a-z0-9]' | sort -u
 }
 
@@ -448,10 +512,8 @@ _classify() {
     test -n "$_i" || continue
     _ow="$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w")"
     if test -n "$_ow"; then
-      if test -f "$_dir/in/$_ow"; then echo "busy $_n"
-      elif test -n "$_l" || ! _alive "$_ow"; then echo "stop $_n $_ow"
-      else echo "busy $_n" # pre-label compose of a live worktree
-      fi
+      if _alive "$_ow"; then echo "busy $_n"
+      else echo "stop $_n $_ow"; fi
       continue
     fi
     _r=0
@@ -484,7 +546,7 @@ _cmd_reap() {
     _o="${_f##*/}"
     read -r _u < "$_f" || _u=0
     if ! _alive "$_o"; then _out "$_o" gone
-    elif test "$_now" -ge "${_u:-0}"; then _out "$_o" expired
+    elif test "$_now" -ge "${_u:-0}"; then _expire "$_o"
     fi
   done
   if ! _up; then
@@ -493,6 +555,9 @@ _cmd_reap() {
     return 0
   fi
   echo x >> "$_dir/up/$(date +%F)"
+  _d ps --format '{{.Image}}' 2>/dev/null | sort -u | while read -r _im; do
+    touch "$_dir/seen/$(_dirkey "$_im")"
+  done
   _busy=''
   _rows="$(_ps | _classify)"
   # Ours (labelled or compose we saw) go with their volumes; one
@@ -523,7 +588,12 @@ _cmd_reap() {
     _unlock
     return 0
   fi
-  test $((_now - _lp)) -lt 86400 || _cmd_prune
+  # Prune unlocked (it can take minutes); quit on the next pass.
+  if test $((_now - _lp)) -ge 86400; then
+    _unlock
+    _cmd_prune
+    return 0
+  fi
   _quit
   rm -f "$_dir/idle"
   _unlock

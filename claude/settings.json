@@ -96,7 +96,7 @@
           {
             "type": "command",
             "command": "~/.bin/docker-slot hook",
-            "timeout": 5
+            "timeout": 310
           }
         ]
       },
