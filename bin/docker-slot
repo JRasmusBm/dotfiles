@@ -287,15 +287,25 @@ _cmd_docker() {
   exec "$_docker" "$@"
 }
 
-# Claude Code PreToolUse (Bash): a checked-in agent is still working.
+# Claude Code PreToolUse (Bash): a checked-in agent is still working,
+# so renew it. A command that calls docker gets `docker-slot in`
+# first, so it works in sessions started before the shim was on PATH.
 _cmd_hook() {
-  cat >/dev/null
+  _in_json="$(cat)"
   _o="$(_owner)"
   _f="$_dir/in/$_o"
-  test -f "$_f" || exit 0
-  read -r _u < "$_f" || exit 0
+  _u=''
+  test ! -f "$_f" || read -r _u < "$_f" || true
   _n=$(($(_now) + _ttl_agent))
-  test "$_n" -le "${_u:-0}" || echo "$_n" > "$_f"
+  test -z "$_u" || test "$_n" -le "$_u" || echo "$_n" > "$_f"
+  printf '%s' "$_in_json" | jq -c '
+    .tool_input as $in
+    | ($in.command // "") as $c
+    | if ($c | test("^docker-slot in")) then empty
+      elif ($c | test("(^|[;&|({`]|\\n|\\$\\()\\s*([A-Za-z_]+=\\S*\\s+)*(sudo\\s+|exec\\s+|time\\s+)*(\\S*/)?docker(-compose)?(\\s|$)"))
+      then {hookSpecificOutput: {hookEventName: "PreToolUse",
+        updatedInput: ($in + {command: ("docker-slot in >/dev/null\n" + $c)})}}
+      else empty end' 2>/dev/null || true
 }
 
 _avail_mb() {
