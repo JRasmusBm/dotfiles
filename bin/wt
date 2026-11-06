@@ -855,9 +855,10 @@ _wt_evict_current() {
   _root="$(_main_root)"
   _branch="$(git branch --show-current)"
   _wt_path="$(git rev-parse --show-toplevel)"
-  _cur_session="$(tmux display-message -p '#{session_name}' \
-    2>/dev/null || true)"
-  test -n "$_cur_session" || _cur_session="${TMUX_SESSION_NAME:-}"
+  # By path, not the caller's session: `cd <wt> && wt done` from
+  # a pane in another session (the main checkout's) must not
+  # take that session down.
+  _cur_session="$(tmux-session-name-from-path "$_wt_path")"
   if test -n "${_WT_STATE:-}"; then
     if ! _linear "$_WT_STATE" "$_branch"; then
       echo "wt: not removing $(basename "$_wt_path")" >&2
@@ -909,6 +910,8 @@ _wt_evict_leftover() {
   # By name, not the current session: a pane cd'd here from
   # another session must not take that one down.
   _lo_session="$(tmux-session-name-from-path "$_lo_dir")"
+  test "$_lo_session" != "$(tmux-session-name-from-path "$_lo_root")" \
+    || _lo_session=''
   echo "wt: clearing its leftover dir and session" >&2
   _notif_clear "$_lo_dir"
   cd "$_lo_root"
@@ -1001,6 +1004,9 @@ _wt_evict() {
   if test -z "$_session" && test -d "$_wt_path"; then
     _session="$(tmux-session-name-from-path "$_wt_path")"
   fi
+  # Never the main checkout's session: it holds the main work.
+  test "$_session" != "$(tmux-session-name-from-path "$_root")" \
+    || _session=''
 
   _of_drop_line "$_ln" "$_of"
   _unblock_dependents "$_slug"
