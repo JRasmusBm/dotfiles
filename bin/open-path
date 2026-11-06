@@ -4,6 +4,7 @@ import os
 from sys import argv
 import platform
 from pathlib import Path
+from urllib.parse import unquote
 
 
 from subprocess import run
@@ -22,6 +23,18 @@ def main():
             run(["browse", path])
         else:
             run(["xdg-open", path])
+        return
+
+    if path.startswith("file://"):
+        # A local page (an artifact opened off-line): the browser, not nvim.
+        local = unquote(path[len("file://"):].split("#")[0].split("?")[0])
+        if reveal:
+            run(["open", "-R", os.path.realpath(local)])
+        elif not Path(local).exists():
+            print(f"Cannot find file {local}")
+            exit(1)
+        else:
+            run(["open", path])
         return
 
     if path.startswith("git@github.com"):
