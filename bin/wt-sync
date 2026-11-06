@@ -24,6 +24,10 @@ _metered() {
 }
 
 tmux-revive >/dev/null 2>&1
+# Browser tabs are inventory too: close the ones left unfocused, count
+# them every 5th minute. Local, so before anything that can hang.
+btabs expire >/dev/null 2>&1
+test "$(( $(date +%-M) % 5 ))" != 0 || btabs log >/dev/null 2>&1
 
 if _metered && test "$(( $(date +%-M) % 5 ))" != 0; then
   exit 0
@@ -49,15 +53,13 @@ for _repo in ${WT_SYNC_REPOS:-$(cat "$HOME/.config/wt-sync-repos" \
   cd "$_repo" || continue
   # Every 5th minute: CI failures and reviews on my open PRs.
   test "$(( $(date +%-M) % 5 ))" != 0 || wt-pr-watch "$_repo"
-  jrb-hook "$_repo" sync
+  # A hung network call must not stall the next minute's run: launchd
+  # starts none while this one lives, so revive and tabs would stop.
+  gtimeout -k 10 120 jrb-hook "$_repo" sync
 done
 
 # Foreground: launchd kills what a job leaves behind when it exits.
 # Not due costs a stamp check; due runs ~25 s.
-wt-cold --sync >/dev/null 2>&1
-# Browser tabs are inventory too: count them every 5th minute, and
-# close duplicates and finished PRs once a weekday from 08:00, and
-# shell-opened tabs 5 minutes after they last had focus.
+gtimeout -k 10 300 wt-cold --sync >/dev/null 2>&1
+# Tabs of finished PRs: once a weekday from 08:00 (one gh call each).
 btabs tidy --daily >/dev/null 2>&1
-btabs expire >/dev/null 2>&1
-test "$(( $(date +%-M) % 5 ))" != 0 || btabs log >/dev/null 2>&1

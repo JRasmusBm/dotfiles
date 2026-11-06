@@ -8,11 +8,13 @@
                     before I start, so no tab vanishes while I read it
   btabs open URL...  open in the browser and remember it as shell-opened
                     (`browse` and $BROWSER point here)
-  btabs expire      close shell-opened tabs older than 5 minutes that
-                    haven't been the active tab for 5 minutes and still
-                    show the URL they opened with (wt-sync, every minute);
-                    also closes "This artifact is private" tabs (an
-                    artifact of my other Claude login) unless active
+  btabs expire      close tabs left unfocused for BTABS_IDLE_MIN (240)
+                    awake minutes; shell-opened and sign-in leftover
+                    tabs after 5, extra copies of a page at once (the
+                    focused copy stays); also "This artifact is
+                    private" tabs (my other Claude login). Never a
+                    window's active tab (wt-sync, every minute); -n
+                    lists only
   btabs reopen      reopen the last batch closed by tidy or expire
 
 Call tabs (Meet, Zoom, Teams, Slack huddles, Whereby, Jitsi, Webex,
@@ -38,8 +40,12 @@ CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
 CLOSED = os.path.join(CONF, 'tabs-closed.log')
 COUNT_LOG = os.path.join(CONF, 'tabs.log')
 OPENED = os.path.join(CONF, 'tabs-opened')     # epoch, url
-ACTIVE = os.path.join(CONF, 'tabs-active')     # url, last epoch active
+ACTIVE = os.path.join(CONF, 'tabs-active')     # run epoch; url, idle s
 EXPIRE_S = int(os.environ.get('BTABS_EXPIRE_S', '300'))
+IDLE_S = int(os.environ.get('BTABS_IDLE_MIN', '240')) * 60
+# Pages nobody returns to: a sign-in that finished, an empty new chat.
+JUNK = re.compile(r'^https://claude\.ai/(settings/mcp/auth_done|new/?$)'
+                  r'|/oauth2?/(callback|authorize)|[?&]code=')
 PR = re.compile(r'https://github\.com/([^/]+/[^/]+)/pull/(\d+)')
 # Never closed by tidy or expire: a call keeps its URL the whole time,
 # so "navigated away" can't protect it, and closing it hangs up.
@@ -156,20 +162,7 @@ def tidy(dry):
         for (w, i, u), r in close[:40]:
             print(f'  {r:10} {u[:100]}')
         return
-    batch = str(int(time.time()))
-    with open(CLOSED, 'a') as f:
-        for (w, i, u), r in close:
-            f.write(f'{batch}\t{r}\t{u}\n')
-    # Close from the highest index down so indexes stay valid.
-    by_win = collections.defaultdict(list)
-    for (w, i, u), _ in close:
-        by_win[w].append(i)
-    lines = [f'tell application "{APP}"']
-    for w, idx in by_win.items():
-        for i in sorted(idx, reverse=True):
-            lines.append(f'  close tab {i} of (first window whose id is {w})')
-    lines.append('end tell')
-    osa('\n'.join(lines))
+    close_rows([r for r, _ in close], [w for _, w in close])
     print(f'{len(tabs())} tabs left; `btabs reopen` undoes it.')
 
 
@@ -181,17 +174,38 @@ def open_urls(urls):
     subprocess.run(['open', '-a', APP, *urls])
 
 
-def active_urls():
-    """URL of each window's active tab, plus the front one if the
-    browser is the frontmost app."""
+def active_tabs():
+    """{(window id, tab index)} of each window's active tab."""
     out = osa(f'''set s to ""
 tell application "{APP}"
   repeat with w in windows
-    set s to s & (URL of active tab of w) & (character id 10)
+    set s to s & (id of w) & (character id 9) & (active tab index of w) ¬
+      & (character id 10)
   end repeat
 end tell
 return s''')
-    return {norm(u) for u in out.splitlines() if u}
+    act = set()
+    for ln in out.splitlines():
+        p = ln.split('\t')
+        if len(p) == 2 and p[1].isdigit():
+            act.add((p[0], int(p[1])))
+    return act
+
+
+def close_rows(rows, reasons):
+    batch = str(int(time.time()))
+    with open(CLOSED, 'a') as f:
+        for (w, i, u), r in zip(rows, reasons):
+            f.write(f'{batch}\t{r}\t{u}\n')
+    by_win = collections.defaultdict(list)
+    for w, i, u in rows:
+        by_win[w].append(i)
+    lines = [f'tell application "{APP}"']
+    for w, idx in by_win.items():
+        for i in sorted(idx, reverse=True):
+            lines.append(f'  close tab {i} of (first window whose id is {w})')
+    lines.append('end tell')
+    osa('\n'.join(lines))
 
 
 def close_denied():
@@ -210,51 +224,71 @@ def close_denied():
 end tell''')
 
 
-def expire():
+def expire(dry=False):
+    """Close every tab left unfocused too long, timed in awake minutes
+    (gaps over 2 minutes, i.e. sleep or a stalled run, count as 2):
+    IDLE_S for any tab, EXPIRE_S for shell-opened ones, sign-in
+    leftovers (JUNK) and extra copies of a page. A window's active tab
+    and calls (KEEP) are never closed."""
     if not running():
         return
     close_denied()
     now = int(time.time())
     try:
         opened = [ln.rstrip('\n').split('\t', 1) for ln in open(OPENED)]
-    except OSError:
-        return
-    opened = [(int(t), u) for t, u in opened if now - int(t) < 86400]
-    seen = {}
+        opened = [(int(t), u) for t, u in opened if now - int(t) < 86400]
+    except (OSError, ValueError):
+        opened = []
+    shell = {norm(u) for _, u in opened}
+    idle, last = {}, now
     try:
-        for ln in open(ACTIVE):
-            u, t = ln.rstrip('\n').rsplit('\t', 1)
-            seen[u] = int(t)
+        with open(ACTIVE) as f:
+            last = int(f.readline().strip() or now)
+            for ln in f:
+                u, t = ln.rstrip('\n').rsplit('\t', 1)
+                idle[u] = int(t)
     except (OSError, ValueError):
         pass
-    for u in active_urls():
-        seen[u] = now
-    due = {norm(u) for t, u in opened if now - t >= EXPIRE_S
-           and now - seen.get(norm(u), 0) >= EXPIRE_S}
-    rows = [r for r in tabs() if norm(r[2]) in due
-            and not KEEP.search(r[2])]
-    if rows:
-        batch = str(now)
-        with open(CLOSED, 'a') as f:
-            for w, i, u in rows:
-                f.write(f'{batch}\texpired\t{u}\n')
-        by_win = collections.defaultdict(list)
-        for w, i, u in rows:
-            by_win[w].append(i)
-        lines = [f'tell application "{APP}"']
-        for w, idx in by_win.items():
-            for i in sorted(idx, reverse=True):
-                lines.append(
-                    f'  close tab {i} of (first window whose id is {w})')
-        lines.append('end tell')
-        osa('\n'.join(lines))
-    # Forget what is closed or older than a day; keep the rest.
-    keep = [(t, u) for t, u in opened if norm(u) not in due]
+    step = max(0, min(now - last, 120))
+    rows = tabs()
+    act = active_tabs()
+    active = {norm(u) for w, i, u in rows if (w, i) in act}
+    for u in {norm(r[2]) for r in rows}:
+        idle[u] = 0 if u in active else idle.get(u, 0) + step
+    keep_row = {}
+    for r in rows:
+        u = norm(r[2])
+        if (r[0], r[1]) in act or u not in keep_row:
+            keep_row[u] = r
+    close, why = [], []
+    for r in rows:
+        u = norm(r[2])
+        if (r[0], r[1]) in act or KEEP.search(r[2]):
+            continue
+        if keep_row[u] is not r:
+            reason = 'duplicate'
+        elif idle[u] >= IDLE_S:
+            reason = 'idle'
+        elif idle[u] >= EXPIRE_S and (u in shell or JUNK.search(r[2])):
+            reason = 'expired'
+        else:
+            continue
+        close.append(r)
+        why.append(reason)
+    if dry:
+        for (w, i, u), r in zip(close, why):
+            print(f'  {r:9} {idle[norm(u)] // 60:4}m  {u[:90]}')
+        print(f'{len(rows)} tabs; would close {len(close)}')
+        return
+    if close:
+        close_rows(close, why)
+    gone = {norm(r[2]) for r, w in zip(close, why) if w != 'duplicate'}
+    live = {norm(r[2]) for r in rows} - gone
     with open(OPENED, 'w') as f:
-        f.writelines(f'{t}\t{u}\n' for t, u in keep)
-    live = {norm(u) for _, u in keep}
+        f.writelines(f'{t}\t{u}\n' for t, u in opened if norm(u) in live)
     with open(ACTIVE, 'w') as f:
-        f.writelines(f'{u}\t{t}\n' for u, t in seen.items() if u in live)
+        f.write(f'{now}\n')
+        f.writelines(f'{u}\t{t}\n' for u, t in idle.items() if u in live)
 
 
 def reopen():
@@ -305,7 +339,7 @@ def main():
     elif cmd == 'open' and len(a) > 1:
         open_urls(a[1:])
     elif cmd == 'expire':
-        expire()
+        expire('-n' in a)
     elif cmd == 'reopen':
         reopen()
     elif cmd == 'log':
