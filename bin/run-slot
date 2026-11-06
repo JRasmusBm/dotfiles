@@ -29,7 +29,10 @@
   run-slot ls          room, working agents, queue, closed sessions
 
 Room: fewer than RUN_SLOTS (cores) agents working, at least
-RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. An
+RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal, or
+at pressure warn (2) while fewer than RUN_SLOT_FLOOR (4) work: the
+memory is then held by what isn't working, which waiting won't free,
+so a pressure gate alone would stall everything with room left. An
 agent works while Claude marks its session `busy` (a turn or its
 background agents running), unless every tool call it runs only
 waits (a queued heavy slot, `gh … --watch`, a poll loop's sleep):
@@ -82,6 +85,7 @@ CLOSED = os.path.join(DIR, 'closed')
 LOG = os.path.join(DIR, 'run-slot.log')
 OUT = os.path.join(DIR, 'run-slot.out')
 CAP = int(os.environ.get('RUN_SLOTS') or os.cpu_count() or 12)
+FLOOR = int(os.environ.get('RUN_SLOT_FLOOR') or 4)
 MIN_GB = float(os.environ.get('RUN_SLOT_MIN_GB')
                or os.environ.get('WT_NIGHT_MIN_GB') or 8)
 START_GB = float(os.environ.get('RUN_SLOT_START_GB') or 0.5)
@@ -240,17 +244,22 @@ class Room:
         return sum(not r[1].startswith('tell:') for r in self.res)
 
     def ok(self, id_):
-        return (self.working < CAP and self.pressure <= 1
+        return (self.working < CAP and self.calm()
                 and self.free_after >= MIN_GB
                 and (id_.startswith('tell:') or self.starting < BURST))
+
+    def calm(self):
+        return self.pressure <= 1 or (
+            self.pressure == 2 and self.working < FLOOR)
 
     def why(self, id_=''):
         if self.working >= CAP:
             return f'{self.working} working (cap {CAP})'
         if not id_.startswith('tell:') and self.starting >= BURST:
             return f'{self.starting} starting (burst {BURST})'
-        if self.pressure > 1:
-            return f'pressure {self.pressure}'
+        if not self.calm():
+            return f'pressure {self.pressure}' + (
+                f', {self.working} working' if self.pressure == 2 else '')
         if self.free_after < MIN_GB:
             return f'{self.free_after:.1f} GB free (min {MIN_GB:g})'
         return 'room'
