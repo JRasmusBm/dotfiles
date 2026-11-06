@@ -191,8 +191,15 @@ _in() {
   elif test "$2" -gt "$_u"; then
     echo "$2" > "$_f"
   fi
-  test "${CLAUDECODE:-}" != 1 || : > "$_dir/agent/$1"
+  _mark "$1"
   rm -f "$_dir/idle"
+}
+
+# An agent's containers outlive its check-in; `user` is never alive-
+# checked, so it never gets the mark.
+_mark() {
+  test "${CLAUDECODE:-}" != 1 || test "$1" = user \
+    || : > "$_dir/agent/$1"
 }
 
 _cmd_in() {
@@ -308,9 +315,10 @@ _compose_sub() {
       *) break ;;
     esac
   done
-  if test -n "$_pd"; then _cd="$(cd "$_pd" 2>/dev/null && pwd -P)"
+  if test -n "$_pd"; then
+    _cd="$(cd "$_pd" 2>/dev/null && pwd -P || true)"
   elif test -n "$_ff"; then
-    _cd="$(cd "$(dirname "$_ff")" 2>/dev/null && pwd -P)"
+    _cd="$(cd "$(dirname "$_ff")" 2>/dev/null && pwd -P || true)"
   else
     _cd="$(pwd -P)"
     while test "$_cd" != /; do
@@ -352,6 +360,7 @@ _cmd_docker() {
   _t="$(_ttl)"
   _u=''
   test ! -f "$_dir/in/$_o" || read -r _u < "$_dir/in/$_o" || true
+  _mark "$_o"
   # Fast path: checked in for over half a TTL still and the socket
   # answers: no lock, no `docker info`.
   if test -z "$_u" || test "$_u" -lt $(($(_now) + _t / 2)) || ! _ping
@@ -410,7 +419,7 @@ _cmd_hook() {
   _re="$_re"'(sudo\s+|exec\s+|time\s+)*(\S*/)?docker(-compose)?(\s|$)'
   if jq -e --arg re "$_re" '(.tool_input.command // "") | test($re)' \
     >/dev/null 2>&1; then
-    : > "$_dir/agent/$_o"
+    test "$_o" = user || : > "$_dir/agent/$_o"
     # Checked in for over half a TTL still and Docker answers.
     test -n "$_u" && test "$_u" -ge $((_n - _ttl_agent / 2)) && _ping \
       && return 0
@@ -418,8 +427,10 @@ _cmd_hook() {
     _in "$_o" "$_n"
     _start >/dev/null 2>&1 || true
     _unlock
-  elif test -n "$_u" && test "$_n" -gt "$_u"; then
-    echo "$_n" > "$_f"
+  elif test -n "$_u"; then
+    # An agent checked in before its marks existed gets one here.
+    test "$_o" = user || : > "$_dir/agent/$_o"
+    test "$_n" -le "$_u" || echo "$_n" > "$_f"
   fi
 }
 
@@ -550,7 +561,8 @@ _cmd_prune() {
     done
   if test -n "$_dry"; then
     _d images -f dangling=true --format 'image <none> {{.ID}} ({{.Size}})'
-    _nv="$(_d volume ls -q -f dangling=true | grep -cE '^[0-9a-f]{64}$')"
+    _nv="$(_d volume ls -q -f dangling=true \
+      | grep -cE '^[0-9a-f]{64}$' || true)"
     echo "volumes: $_nv anonymous unused"
     return 0
   fi
