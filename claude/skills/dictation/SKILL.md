@@ -35,6 +35,8 @@ To adjust how many dictation entries to keep, change `MAX_DICTATION_ITEMS` in th
 - **"CopyQ not responding" alert / CopyQ seems crashed:** usually a hung
   server, not a crash (no `.ips` report; `open -a CopyQ` fails with
   -1712). `pgrep -lx CopyQ` shows it alive with stuck `eval` children.
-  Fix: `pkill -x CopyQ; open -a CopyQ`. App Nap is disabled via
+  Fix: `pkill -9 -x CopyQ; open -a CopyQ` (a hung server ignores
+  SIGTERM); `CopyQ eval 'size()'` answering confirms. App Nap is
+  disabled via
   `defaults write io.github.hluk.CopyQ NSAppSleepDisabled -bool YES`.
 - **Changes not taking effect:** Reload Hammerspoon after editing the spoon.
