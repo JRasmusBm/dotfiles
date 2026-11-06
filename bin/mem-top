@@ -71,7 +71,7 @@ if args[:1] == ["day"]:
     print(f"\npressure > normal: {len(events)} snapshots")
     for s in events[:20]:
         print(f"  {s['time']} level={s['pressure']}  {top_sessions(s)}")
-    print("\nlsp-reclaim:")
+    print("\nreclaim actions:")
     print("\n".join(l for l in text.splitlines() if l.startswith("### "))
           or "  none")
     sys.exit()
