@@ -4,38 +4,77 @@ from subprocess import run
 import re
 import sys
 
+PATH = re.compile(r"[-_/.@a-z:0-9~#?=&%+]+", re.IGNORECASE)
+# Lines a TUI hard-wrapped (Claude Code does, with a newline and an
+# indent) still hold one path: follow it onto neighbours this far.
+REACH = 6
+
 
 def get(command):
     return run(command, capture_output=True).stdout.decode("utf-8")
 
 
-def main():
-    column = int(get(["tmux", "display", "-pF", "#{copy_cursor_x}"]).strip())
-    line = get(["tmux", "display", "-pF", "#{copy_cursor_line}"])
+def fmt(spec):
+    return get(["tmux", "display", "-pF", spec]).strip()
 
-    file_regex = re.compile("([-_/.@a-z:0-9~#?=&%+]+)", re.IGNORECASE)
 
-    total_matches = []
-    while True:
-        match = file_regex.search(line)
+def neighbours():
+    """The cursor line, the lines around it, and the cursor's index."""
+    y = int(fmt("#{e|-|:#{copy_cursor_y},#{scroll_position}}"))
+    out = get(["tmux", "capture-pane", "-pJ",
+               "-S", str(y - REACH), "-E", str(y + REACH)])
+    lines = out.split("\n")
+    history = int(fmt("#{history_size}"))
+    return lines, min(REACH, y + history)
 
-        if match is None:
-            e = Exception("Error: No path under cursor!")
-            print(e)
-            print([match.group(1) for match in total_matches])
-            raise e
 
+def token_at(line, column):
+    for match in PATH.finditer(line):
         if match.start() <= column <= match.end():
-            path = match.group(1).rstrip(".,:")
+            return match
+    return None
+
+
+def wraps(line, width):
+    return len(line.rstrip()) >= width - 1
+
+
+def main():
+    column = int(fmt("#{copy_cursor_x}"))
+    width = int(fmt("#{pane_width}"))
+    lines, i = neighbours()
+    if not (0 <= i < len(lines)) or token_at(lines[i], column) is None:
+        lines, i = [fmt("#{copy_cursor_line}")], 0
+    match = token_at(lines[i], column)
+    if match is None:
+        print("Error: No path under cursor!")
+        exit(1)
+
+    path = match.group(0)
+    # Backward: our token opens the line and the line above ran full.
+    j, start = i, match.start()
+    while j > 0 and not lines[j][:start].strip() and wraps(
+            lines[j - 1], width):
+        prev = PATH.search(lines[j - 1].rstrip()[::-1])
+        if prev is None or prev.start() != 0:
             break
-
-        total_matches.append(match)
-
-        line = line[match.end() :]
-        column = column - match.end()
+        path = prev.group(0)[::-1] + path
+        j -= 1
+        start = len(lines[j].rstrip()) - prev.end()
+    # Forward: our token ends a full line, the next line opens with more.
+    j, end = i, match.end()
+    while j + 1 < len(lines) and end >= len(lines[j].rstrip()) and wraps(
+            lines[j], width):
+        nxt = PATH.match(lines[j + 1].lstrip())
+        if nxt is None:
+            break
+        path += nxt.group(0)
+        j += 1
+        end = len(lines[j]) - len(lines[j].lstrip()) + nxt.end()
+    path = path.rstrip(".,:")
 
     binary_path = get(["which", "open-path"]).strip()
-    try: 
+    try:
         result = run(["python3", binary_path, *sys.argv[1:], path])
     except BaseException as e:
         print(e)
@@ -47,7 +86,6 @@ def main():
         print(result.stdout)
         print("STDERR")
         print(result.stderr)
-
 
 
 if __name__ == "__main__":
