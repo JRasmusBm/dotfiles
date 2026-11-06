@@ -127,6 +127,10 @@ _alive() {
   esac
   test -n "${_sess:-}" || return 0
   printf '%s\n' "$_sess" | grep -qxF "$1" && return 0
+  # Checked in for a while yet.
+  _ua=''
+  test ! -f "$_dir/in/$1" || read -r _ua < "$_dir/in/$1" || true
+  test "${_ua:-0}" -le "$(_now)" || return 0
   # An agent outside tmux (no session of its own): its mark, renewed
   # by every Bash call, is its heartbeat.
   ! grep -qx tmux "$_dir/agent/$1" 2>/dev/null \
@@ -258,14 +262,20 @@ _row_owner() {
 # its containers are the first live one's, other than SKIP. None: SKIP
 # if listed (so SKIP's removal takes them), else the first.
 _cowner() {
-  _c1='' _cs=''
+  _c1='' _cs='' _cl=''
   while read -r _co; do
     test -n "$_co" || continue
     test -n "$_c1" || _c1="$_co"
     if test "$_co" = "${2:-}"; then _cs="$_co"; continue; fi
-    if _alive "$_co"; then echo "$_co"; return; fi
+    _alive "$_co" || continue
+    # One that holds them (checked in, or an agent) beats a live one
+    # that doesn't, so the reap never stops them for the latter.
+    if test -f "$_dir/in/$_co" || test -f "$_dir/agent/$_co"; then
+      echo "$_co"; return
+    fi
+    test -n "$_cl" || _cl="$_co"
   done < "$1"
-  echo "${_cs:-$_c1}"
+  echo "${_cl:-${_cs:-$_c1}}"
 }
 
 # Add OWNER to compose record FILE (once), or drop it (-d).
@@ -283,20 +293,18 @@ $2"
 # Remove OWNER's containers (labelled or its compose projects) with
 # their anonymous volumes. Docker down: the reaper does it later.
 _remove_owned() {
-  _up || return 0
-  _ids="$(_ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
-    test "$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w" "$1")" = "$1" \
-      || continue
-    echo "$_i $_n"
-  done)"
+  if _up; then
+    _ps -a | while IFS="$_sep" read -r _i _l _n _p _w _s _im; do
+      test "$(_row_owner "$_i" "$_l" "$_n" "$_p" "$_w" "$1")" = "$1" \
+        || continue
+      if _d rm -f -v "$_i" >/dev/null 2>&1; then
+        _log rm "owner=$1 container=$_n"
+      fi
+    done
+  fi
+  # Even with Docker down: a stale entry would claim the dir later.
   for _f in "$_dir"/compose/*; do
     test ! -f "$_f" || _crec -d "$_f" "$1"
-  done
-  test -n "$_ids" || return 0
-  echo "$_ids" | while read -r _i _n; do
-    if _d rm -f -v "$_i" >/dev/null 2>&1; then
-      _log rm "owner=$1 container=$_n"
-    fi
   done
 }
 
@@ -469,10 +477,13 @@ _cmd_hook() {
     _in "$_o" "$_n"
     _start >/dev/null 2>&1 || true
     _unlock
-  elif test -n "$_u"; then
-    # An agent checked in before its marks existed gets one here.
-    test "$_o" = user || _mark "$_o" 1
-    test "$_n" -le "$_u" || _put "$_f" "$_n"
+  else
+    # Renew the heartbeat on every call; an agent checked in before
+    # marks existed gets one here.
+    if test -n "$_u" || test -f "$_dir/agent/$_o"; then
+      test "$_o" = user || _mark "$_o" 1
+    fi
+    test -z "$_u" || test "$_n" -le "$_u" || _put "$_f" "$_n"
   fi
 }
 
