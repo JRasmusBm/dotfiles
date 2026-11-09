@@ -33,7 +33,8 @@ end
 
 local function blocked()
   for _, b in ipairs(vim.fn.getbufinfo { bufloaded = 1 }) do
-    if b.changed == 1 then
+    -- Prompt and scratch buffers (Telescope's) are always "changed".
+    if b.changed == 1 and vim.bo[b.bufnr].buftype == "" then
       return "unsaved " .. (b.name ~= "" and b.name or "buffer")
     end
     local bt = vim.bo[b.bufnr].buftype

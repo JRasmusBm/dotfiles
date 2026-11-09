@@ -30,7 +30,7 @@
 
 Room: fewer than RUN_SLOTS (cores) agents working, at least
 RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. Below
-RUN_SLOT_FLOOR (4) working, pressure warn (2) is fine too and
+RUN_SLOT_FLOOR (6) working, pressure warn (2) is fine too and
 RUN_SLOT_FLOOR_GB (4) free is enough: the memory is then held by
 what isn't working, which waiting won't free, so those gates alone
 would stall everything with room left. An
@@ -86,7 +86,7 @@ CLOSED = os.path.join(DIR, 'closed')
 LOG = os.path.join(DIR, 'run-slot.log')
 OUT = os.path.join(DIR, 'run-slot.out')
 CAP = int(os.environ.get('RUN_SLOTS') or os.cpu_count() or 12)
-FLOOR = int(os.environ.get('RUN_SLOT_FLOOR') or 4)
+FLOOR = int(os.environ.get('RUN_SLOT_FLOOR') or 6)
 MIN_GB = float(os.environ.get('RUN_SLOT_MIN_GB')
                or os.environ.get('WT_NIGHT_MIN_GB') or 8)
 FLOOR_GB = float(os.environ.get('RUN_SLOT_FLOOR_GB') or 4)
