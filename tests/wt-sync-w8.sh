@@ -37,7 +37,11 @@ _fail=0
 ok() { echo "ok   $1"; }
 no() { echo "FAIL $1"; _fail=1; }
 check() { if eval "$2"; then ok "$1"; else no "$1"; fi; }
-sync() { : > "$FAKE/calls"; PATH="$_path" wt-sync >/dev/null 2>&1; }
+# _t0: the minute the run started (it may end in the next one).
+sync() {
+  : > "$FAKE/calls"; _t0="$(date +%FT%H:%M)"
+  PATH="$_path" wt-sync >/dev/null 2>&1
+}
 queued() { grep -c "	w8:$1:" "$_ub" 2>/dev/null || true; }
 cold() { grep -q '^wt-cold --overdue' "$FAKE/calls"; }
 
@@ -68,7 +72,8 @@ check 'retried each run (wt-tell called)' \
   'grep -q "^wt-tell .*w8:old:100" "$FAKE/calls"'
 check 'fresh one pings wt-cold --overdue' cold
 check 'stamp moved to now' \
-  'test "$(cat "$LOCAL_CONFIG/wt-w8-stamp")" = "$(date +%FT%H:%M)"'
+  '_s="$(cat "$LOCAL_CONFIG/wt-w8-stamp")"
+   test "$_s" = "$_t0" || test "$_s" = "$(date +%FT%H:%M)"'
 
 echo '# next run: same rows still overdue, none fresh'
 sync
