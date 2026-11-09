@@ -264,7 +264,8 @@ _bad="$(grep -vE '^(ok|told|untold|parked)' "$_q" | cut -f2 | sort -u \
 _msg="revived $_ok Claude chat(s), told $_told to carry on"
 test "$_park" = 0 || _msg="$_msg, $_park idle ones closed (focus resumes)"
 test -z "$_bad" || _msg="$_msg; failed: $_bad(tmux-revive.log)"
-_why="$(cat "$_dir/tmux-watch.last" 2>/dev/null)"
+_why="$(paste -sd ';' "$_dir/tmux-watch.last" 2>/dev/null \
+  | sed 's/;/; /g')"
 test -z "$_why" || _msg="$_msg; cause $_why"
 rm -f "$_q"
 TMUX_PANE='' NOTIFY_CLASS=env notify "tmux revive" "$_msg"
