@@ -16,7 +16,7 @@ tmux_kill_all() {
 
   tks "$current_session"
 
-  tmux kill-server
+  TMUX_KILL_SERVER=1 tmux kill-server
 }
 
 tmux_kill_all
