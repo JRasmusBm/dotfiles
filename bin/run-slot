@@ -214,6 +214,10 @@ def sessions():
 # A tool call that only waits: queued in `pool`, watching CI, or a
 # poll loop's sleep.
 WAITS = re.compile(r'gh .*(--watch|run watch)|sleep ([5-9]|\d\d)')
+# A pipe filter (`dev up --wait | tail -30`) only passes a waiter's
+# output on: it doesn't stop parking, nor does it park on its own.
+FILTERS = re.compile(r'(\S*/)?(tail|head|grep|tee|cat|sed|gsed|awk|gawk'
+                     r'|cut|sort|uniq|wc)(\s|$)')
 POOL_STATE = os.path.join(
     os.environ.get('LOCAL_CONFIG') or os.path.expanduser('~/.config'),
     'pool', 'state.json')
@@ -231,8 +235,9 @@ def procs():
 
 def parker(ps):
     """parked(pid): pid's tool calls (Bash shells it started) all only
-    wait: every process under them is a waiter or a shell around one,
-    so `yarn build & sleep 30` still works."""
+    wait: every process under them, pipe filters aside, is a waiter or
+    a shell around one, so `yarn build & sleep 30` still works and a
+    shell running only `tail -f log` too."""
     kids = {}
     for p, (pp, _) in ps.items():
         kids.setdefault(pp, []).append(p)
@@ -249,7 +254,7 @@ def parker(ps):
     def waits(p):
         if p in queued or WAITS.match(ps[p][1]):
             return True
-        ks = kids.get(p, [])
+        ks = [k for k in kids.get(p, []) if not FILTERS.match(ps[k][1])]
         return bool(ks) and all(waits(k) for k in ks)
 
     def parked(pid):
