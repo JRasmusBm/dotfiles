@@ -99,6 +99,7 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -386,20 +387,31 @@ def place(id_):
 
 
 def wait(kind, id_):
+    """Gate KIND ID until admitted, showing its place; interrupted
+    (Ctrl-C, the pane closed), it leaves the queue and frees a hold."""
     global NOW
     last = None
-    while True:
-        NOW = time.time()
-        if gate(kind, id_, []) == 0:
-            if last:
-                print('run-slot: your turn', flush=True)
-            return 0
-        now = place(id_)
-        if now != last:
-            print(f'run-slot: queued, place {now[0]} of {now[1]} '
-                  f'({now[2]}; run-slot ls)', flush=True)
-            last = now
-        time.sleep(5)
+    signal.signal(signal.SIGHUP, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
+    try:
+        while True:
+            NOW = time.time()
+            if gate(kind, id_, []) == 0:
+                if last:
+                    print('run-slot: your turn', flush=True)
+                return 0
+            now = place(id_)
+            if now != last:
+                print(f'run-slot: queued, place {now[0]} of {now[1]} '
+                      f'({now[2]}; run-slot ls)', flush=True)
+                last = now
+            time.sleep(5)
+    except KeyboardInterrupt:
+        with Lock():
+            write(QUEUE, [r for r in queue() if r[2] != id_])
+            write(RESERVED, [r for r in rows(RESERVED) if r[1] != id_])
+        log('left', id_, None, kind)
+        return 130
 
 
 def pend(id_, cmd):

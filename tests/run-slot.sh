@@ -239,6 +239,14 @@ _wait '! kill -0 $_wp 2>/dev/null'
 wait "$_wp"; _rc=$?
 _check "wait: admitted once room frees, exit 0" \
   'test "$_rc" = 0 && grep -qx "run-slot: your turn" "$_t/wait.out"'
+printf '%s\tx\t1\n' "$(($(date +%s) + 600))" > "$_rs/reserved"
+RUN_SLOTS=1 run-slot wait start h > "$_t/wait.out" 2>&1 &
+_wp=$!
+_wait 'grep -q queued "$_t/wait.out"'
+kill -HUP "$_wp"
+wait "$_wp"
+_check "wait: its pane closed, it leaves the queue" \
+  '! grep -q "	h	" "$_rs/queue" && grep -q "	left	h	" "$_rs/run-slot.log"'
 
 # --- needs-open: which chats a dead server's revive brings back now
 _given

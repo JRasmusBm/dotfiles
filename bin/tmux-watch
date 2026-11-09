@@ -17,8 +17,9 @@ the last minute (tmux-guard.log, naming the caller) and any new tmux
 crash report. The cause line also goes to tmux-watch.last for
 tmux-revive's ping (deaths within a minute of each other share it).
 The server is started again at once (backing off when it dies
-again within a minute), then tmux-revive runs right away and every 5 s while its queue has work, so the chats it held come back
-without waiting for wt-sync's minute. Otherwise it runs every 20 s, so
+again within a minute), then tmux-revive runs right away and every
+5 s while its queue has work, so the chats it held come back without
+waiting for wt-sync's minute. Otherwise it runs every 20 s, so
 its snapshot knows which chats were mid-turn when a server dies.
 """
 
