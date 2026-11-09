@@ -114,6 +114,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   unblocks first: unlike `rd` it keeps the inbox, and `M-i` ranks
   its pings after every other class (an `M-k` focus still wins).
   `ip`/`rt`/`rd`/`rp` move it out.
+- Coming back later: waiting on something (CI, a deploy, a
+  review, a reply) → `wt w8`; knowing when you want to wake up →
+  `wt sz`. Nothing else schedules a wake-up: the `timer-gate` hook
+  denies sleep loops, background timers, `at`, cron and launchd.
 - `wt sz <when>` (`snooze`) — park the current worktree under
   `# SNOOZED` until a date or time: `monday`, `tomorrow`,
   `+3 days`, `2026-10-19`, `+3 hours`, `15:00` (parsed by

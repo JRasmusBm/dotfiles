@@ -43,9 +43,11 @@ to talk. A stop while your own background work runs doesn't
 ping me, so tell me when you need me, even mid-wait: a decision
 only I can make, something to look at, a blocker. End on the
 question (last line ends in `?`) or run `ping-me "<what>"` that
-turn; `wt ra`/`wt fx` ping on their own. A wait is one blocking command (`gh pr checks --watch`),
-never a sleep loop, and a bot review is requested at most once per
-pushed commit. A finished subagent gets follow-ups only on its own
+turn; `wt ra`/`wt fx` ping on their own. A wait is one blocking
+command (`gh pr checks --watch`), never a sleep loop or a timer; to
+come back later, `wt w8 <deadline> "<what>"` when waiting on
+something, `wt sz <when>` when you know when. A bot review is
+requested at most once per pushed commit. A finished subagent gets follow-ups only on its own
 result; a new task (review round, rebase, re-test, browser pass) goes
 to a fresh agent with a short brief: a resumed one re-reads ~120k
 context a turn, a fresh one ~57k. A branch I cite as prior work is the starting point: `git
