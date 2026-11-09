@@ -166,7 +166,8 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   Within a minute of the deadline, at any hour and after a reboot,
   `wt-sync` tells its agent what it waited on, when it expected
   it, and to check now (`wt-tell`, retried via `wt-unblocked`), in
-  any repo: the row carries its main checkout. Until that tell
+  any repo: the row carries its main checkout. Any overdue w8 not
+  yet told is told, however old; once each. Until that tell
   lands I get "overdue: <what>: investigate" (`wt-cold --overdue`,
   that row only, its own row even over an unread one; repos in
   `wt-sync`'s list); a landed tell drops it, since the agent pings

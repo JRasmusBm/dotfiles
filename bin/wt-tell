@@ -36,7 +36,18 @@ _w8_done() {
   test -f "$_wf" || return 0
   awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
 }
-grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
+# Told already. That same w8 row still there (wt-sync offers every
+# overdue one each minute) ends now, so it stops coming back.
+if grep -qxF "$_root	$_key" "$_told" 2>/dev/null; then
+  case "$_key" in
+    w8:*)
+      _wf="$(basename "${_root%%/.worktrees/*}")"
+      _wf="$LOCAL_CONFIG/worktrees/$_wf.waiting"
+      test ! -f "$_wf" || awk -F '\t' -v s="$(basename "$_root")" \
+        -v t="${_key##*:}" '!($1 == s && $5 == t)' "$_wf" | sponge "$_wf" ;;
+  esac
+  exit 0
+fi
 # A w8:<slug>:<start> tell is moot once that w8 ended (`wt ip`, `rm`,
 # a delivered tell) or a new `wt w8` replaced it: done, nothing to say.
 case "$_key" in
