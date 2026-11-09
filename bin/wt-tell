@@ -27,6 +27,9 @@ _told="${LOCAL_CONFIG:?}/wt-told"
 # Ours alone: a tmux server `wt open` starts must not hand it on.
 _pending="${RUN_SLOT_PENDING:-}"
 unset RUN_SLOT_PENDING
+# Ends the worktree's w8; for a w8:<slug>:<start> tell only that one.
+_start=""
+case "$_key" in w8:*) _start="${_key##*:}" ;; esac
 _w8_done() {
   _wf="$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting"
   case "$_key" in
@@ -34,17 +37,31 @@ _w8_done() {
       "$_root")" >/dev/null 2>&1 || true ;;
   esac
   test -f "$_wf" || return 0
-  awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
+  awk -F '\t' -v s="$(basename "$_root")" -v t="$_start" \
+    '!($1 == s && (t == "" || $5 == t))' "$_wf" | sponge "$_wf"
 }
-grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
-# A w8:<slug>:<start> tell is moot once that w8 ended (`wt ip`, `rm`,
-# a delivered tell) or a new `wt w8` replaced it: done, nothing to say.
+_told_k() { grep -qxF "$_root	$1" "$_told" 2>/dev/null; }
 case "$_key" in
   w8:*)
-    awk -F '\t' -v s="$(basename "$_root")" -v t="${_key##*:}" \
+    # Moot once that w8 ended (`wt ip`, `rm`, a delivered tell) or a
+    # new `wt w8` replaced it: done, nothing to say.
+    awk -F '\t' -v s="$(basename "$_root")" -v t="$_start" \
       '$1 == s && $5 == t { f = 1 } END { exit !f }' \
       "$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting" \
-      2>/dev/null || exit 0 ;;
+      2>/dev/null || exit 0
+    # Told or pinged already, its row still there (wt-sync offers every
+    # overdue one each minute): it ends now, so it stops coming back.
+    if _told_k "$_key" || _told_k "ping:$_key"; then
+      _w8_done
+      exit 0
+    fi
+    # Its revived chat has it pending (run-slot deliver, until the TTL):
+    # leave it there, or both could tell it.
+    test -n "$_pending" || ! awk -F '\t' -v now="$(date +%s)" \
+      -v id="tell:$(basename "$_root"):$_key" \
+      '$2 == id && now - $1 < 259200 { f = 1 } END { exit !f }' \
+      "$LOCAL_CONFIG/run-slots/pending" 2>/dev/null || exit 0 ;;
+  *) ! _told_k "$_key" || exit 0 ;;
 esac
 # $1: a run-slot id, revive per worktree (two tells, one revive) or
 # tell per key. A pumped rerun keeps WT_TELL_NO_REVIVE.
