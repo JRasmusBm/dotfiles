@@ -99,7 +99,7 @@ REAP = int(os.environ.get('POOL_REAP', '5'))
 AGENT = os.environ.get('CLAUDECODE') == '1'
 
 CMD = r'(^|[;&|({`]|\n)\s*([A-Za-z_]+=\S*\s+)*'
-END = r'(\s|[)`]|$)'
+END = r'(\s|[;&|)`]|$)'
 BUILD_RE = re.compile(
     CMD + r'((npx|yarn|pnpm|exec|time)\s+)*(\S*/)?(eslint|tsc)' + END
     + '|' + CMD + r'(yarn|pnpm|npm run)\s+([^;&|)`]*\s)?'
@@ -939,11 +939,17 @@ def cmd_test():
                 "/bin/sh -ec 'yarn tsc'", 'yarn test:mocha a.test.ts',
                 'yarn mocha x', 'npx mocha x', 'node_modules/.bin/mocha x',
                 'mocha x', 'yarn test', 'npm test', 'npm run test',
-                'node scripts/run-tests', 'cd x && NODE_ENV=t yarn test'):
+                'node scripts/run-tests', 'cd x && NODE_ENV=t yarn test',
+                'yarn tsc;', 'npx mocha x&& y'):
         r = run(b, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: still gated ({cmd[:12]!r})',
               'pool take heavy' in r.stdout)
+    for cmd, u in (('yarn test:mocha a.test.ts', 2), ('npx mocha x', 2),
+                   ('node_modules/.bin/mocha x', 2), ('yarn test', 4),
+                   ('npm test', 4), ('node scripts/run-tests', 4),
+                   ('yarn tsc; yarn test:mocha x', 4), ('yarn tsc', 4)):
+        check(f'weights: {cmd!r} takes {u} units', heavy_units('/x', cmd) == u)
 
     # a: heavy 4 of 8. b takes a stack (4): full.
     w = run(b, 'wait', 'stack', bg=True)
@@ -1023,11 +1029,6 @@ def cmd_test():
     with open(os.path.join(t3['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
         check('weights: the first matching POOL_HEAVY_WEIGHTS line sets units',
               [h['units'] for h in json.load(f)['holders']] == [2])
-    for cmd, u in (('yarn test:mocha a.test.ts', 2), ('npx mocha x', 2),
-                   ('node_modules/.bin/mocha x', 2), ('yarn test', 4),
-                   ('npm test', 4), ('node scripts/run-tests', 4),
-                   ('yarn tsc; yarn test:mocha x', 4), ('yarn tsc', 4)):
-        check(f'weights: {cmd!r} takes {u} units', heavy_units('/x', cmd) == u)
     t4 = dict(LOCAL_CONFIG=tempfile.mkdtemp(prefix='pool-test.'),
               POOL_TEST='3')
     run(b, 'take', 'heavy', str(life('true || npx mocha x').pid), **t4)
