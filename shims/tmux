@@ -263,5 +263,8 @@ if test "$_list$_all" = 11 && test "$_cmds" = 1 \
   exit "$_rc"
 fi
 
+# A server started from launchd (no LANG) gives its panes the C locale:
+# vim then reads UTF-8 as latin1.
+export LANG="${LANG:-en_US.UTF-8}"
 test -z "$_srv" || set -- -L "$_srv" "$@"
 exec "$_real" "$@"
