@@ -199,8 +199,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   with no session gets me a `check` ping.
 - `run-slot` — every agent start (tells, revives, detached
   `wt feat|fix`, swarm `launch`) waits there until the Mac has
-  room (under 12 working, 8 GB free, pressure normal; tells
-  first). `wt-sync` closes a Claude whose turn ended an hour
+  room (under the cap of working chats, free memory above the
+  floor after the start, pressure normal; revives, then tells,
+  then starts). A revive of a chat that was mid-turn goes past
+  the cap while memory is calm. A detached `wt feat|fix` waits
+  in its own `cli` pane (`run-slot wait`), which shows its
+  place in the queue and why. `wt-sync` closes a Claude whose turn ended an hour
   ago and whose process started over an hour ago (a revive
   counts from its restart), not asking me, unfocused, nothing
   running, no tell on its way, no open `wt w8`, not named in
@@ -271,18 +275,30 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 Sessions are always named by worktree slug (the main
 checkout by repo name).
 
-The tmux server dying or restarting (crash, `kill-server`,
-upgrade) doesn't strand the Claude chats: each `wt-sync` run
-snapshots every Claude pane (session, window, cwd, sid) and,
-once it sees another server (or none), `tmux-revive` rebuilds
-the sessions under their old names and runs `claude --resume
-<sid>` (`--continue` without a sid) in `cli` as `run-slot` makes
-room, once per dead server. A chat that was mid-turn (spinner or
-background wait in the last snapshot) is then told, at its empty
-prompt, that tmux restarted while it worked and to check git status
-and carry on. One ping sums up revived, told and failed
-(`tmux-revive.log`). Panes
-it didn't build are never touched. To keep a deliberate
+tmux runs as several servers: `default` holds my own sessions,
+`agents-1..N` the worktree sessions (placed by name, in
+`$LOCAL_CONFIG/tmux-home`), so one death takes a slice of the
+chats and never my panes. The `tmux` shim routes every call to
+the right server: pane keys read `%N@<server>`, `ls` and `-a`
+scans span all servers, and a switch to another server's session
+detaches into it. It refuses `kill-server` on a live server
+(`TMUX_KILL_SERVER=1` to mean it) and an empty or missing
+`TMUX_TMPDIR`, the test cleanup that killed every agent.
+
+`tmux-watch` (launchd) keeps each server up: on a death it logs
+the cause (`tmux-watch.log`: signal, exit status, the shim's
+kill-server row naming its caller, crash report), starts the
+server again and runs `tmux-revive` at once. tmux-revive
+snapshots every Claude pane per server every 20 s (session,
+window, cwd, sid, mid-turn or not) and rebuilds a dead server's
+sessions under their old names: mid-turn chats first, each
+resumed (`claude --resume <sid>`) past the cap and told at its
+empty prompt to check git status and carry on; then idle ones
+it still needs (a recent turn, asking me, a tell, `wt w8` or
+timer due) resumed as room allows, the rest parked as closed
+rows that a focus or tell resumes. One ping sums up revived,
+told, parked and failed, with the cause (`tmux-revive.log`).
+Panes it didn't build are never touched. To keep a deliberate
 `kill-server` dead, run `tmux-revive forget` right after it.
 
 Order files at `$LOCAL_CONFIG/worktrees/<repo>` are the

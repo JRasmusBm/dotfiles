@@ -18,7 +18,8 @@
   run-slot wait KIND ID
         gate with no CMD, asked every 5 s until admitted, printing
         `queued, place N of M (why)` as it changes: a start typed
-        into a pane before `claude` (wt) shows why it waits
+        into a pane before `claude` (wt) shows why it waits;
+        interrupted or its pane gone, it leaves the queue
   run-slot needs-open SID SESSION
         print why a chat whose Claude died (tmux-revive) must come
         back now rather than as a closed session: its turn ended
