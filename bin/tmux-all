@@ -1,0 +1,72 @@
+#!/bin/sh
+# tmux-all servers        every tmux server name: default, agents-1..N
+#                         (TMUX_AGENT_SHARDS, default 2)
+# tmux-all live           the ones whose socket answers
+# tmux-all <tmux args>    run on each live server and join the output;
+#                         #{pane_id} in an arg becomes the pane key
+#                         #{pane_id}@<server>, which every tmux call
+#                         routes back (shims/tmux)
+#
+# A worktree's session lives on an agents server (shims/tmux), so a
+# scan of "every pane" or "every session" asks each server.
+
+_servers() {
+  echo default
+  _i=1
+  while test "$_i" -le "${TMUX_AGENT_SHARDS:-2}"; do
+    echo "agents-$_i"
+    _i=$((_i + 1))
+  done
+}
+
+_dir="${TMUX_TMPDIR:-/tmp}/tmux-$(id -u)"
+_live() {
+  _servers | while read -r _s; do
+    test -S "$_dir/$_s" && echo "$_s"
+  done
+}
+
+case "${1:-}" in
+  "") sed -n '2,8s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
+  servers) _servers; exit 0 ;;
+  live) _live; exit 0 ;;
+esac
+
+_rc=1
+for _s in $(_live); do
+  _n=$#
+  while test "$_n" -gt 0; do
+    _a="$1" _o=""
+    shift
+    while :; do
+      case "$_a" in
+        *'#{pane_id}'*)
+          _o="$_o${_a%%'#{pane_id}'*}#{pane_id}@$_s"
+          _a="${_a#*'#{pane_id}'}"
+          ;;
+        *) _o="$_o$_a"; break ;;
+      esac
+    done
+    set -- "$@" "$_o"
+    _n=$((_n - 1))
+  done
+  tmux -L "$_s" "$@" 2>/dev/null && _rc=0
+  _n=$#
+  while test "$_n" -gt 0; do
+    _a="$1"
+    shift
+    _o=""
+    while :; do
+      case "$_a" in
+        *"#{pane_id}@$_s"*)
+          _o="$_o${_a%%"#{pane_id}@$_s"*}#{pane_id}"
+          _a="${_a#*"#{pane_id}@$_s"}"
+          ;;
+        *) _o="$_o$_a"; break ;;
+      esac
+    done
+    set -- "$@" "$_o"
+    _n=$((_n - 1))
+  done
+done
+exit "$_rc"

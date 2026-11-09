@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.jrasmusbm.tmux-watch</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/jrasmusbm/projects/dotfiles/bin/tmux-watch</string>
+  </array>
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>LOCAL_CONFIG</key>
+    <string>/Users/jrasmusbm/.config/jrasmusbm</string>
+    <key>PATH</key>
+    <string>/Users/jrasmusbm/projects/dotfiles/shims:/Users/jrasmusbm/.local/bin:/Users/jrasmusbm/projects/dotfiles/bin:/Users/jrasmusbm/.private/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+  </dict>
+  <key>KeepAlive</key>
+  <true/>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>AbandonProcessGroup</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Interactive</string>
+  <key>StandardOutPath</key>
+  <string>/Users/jrasmusbm/.config/jrasmusbm/tmux-watch.out</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/jrasmusbm/.config/jrasmusbm/tmux-watch.out</string>
+</dict>
+</plist>

@@ -1,0 +1,303 @@
+#!/usr/bin/env python3
+"""tmux-watch — keep every tmux server up and say why one died.
+
+  tmux-watch          watch (launchd KeepAlive, com.jrasmusbm.tmux-watch)
+  tmux-watch status   each server: pid, owned or adopted, uptime
+
+Servers are `default` and `agents-1..N` (`tmux-all servers`). Each one
+missing is started as a child (`tmux -L <name> -D`, in its own process
+group so a launchd unload leaves it up) with the login shell's
+environment, so its death comes back as an exit status or signal. A
+server already running when the watch starts is adopted and polled
+each second; its cause is then whatever the logs show.
+
+On a death, one row in $LOCAL_CONFIG/tmux-watch.log: the server, its
+pid and uptime, how it ended, the shim's kill-server rows for it from
+the last minute (tmux-guard.log, naming the caller) and any new tmux
+crash report. The cause line also goes to tmux-watch.last for
+tmux-revive's ping. The server is started again at once (backing off
+when it dies again within a minute), then tmux-revive runs right away
+and every 5 s while its queue has work, so the chats it held come back
+without waiting for wt-sync's minute.
+"""
+
+import calendar
+import json
+import os
+import resource
+import signal
+import subprocess
+import sys
+import time
+
+HOME = os.path.expanduser("~")
+CFG = os.environ.get("LOCAL_CONFIG", os.path.join(HOME, ".config/jrasmusbm"))
+LOG = os.path.join(CFG, "tmux-watch.log")
+LAST = os.path.join(CFG, "tmux-watch.last")
+STATE = os.path.join(CFG, "tmux-watch.state")
+GUARD = os.path.join(CFG, "tmux-guard.log")
+QUEUE = os.path.join(CFG, "tmux-revive.queue")
+REPORTS = os.path.join(HOME, "Library/Logs/DiagnosticReports")
+TMUX = os.environ.get("TMUX_REAL", "/opt/homebrew/bin/tmux")
+TICK = float(os.environ.get("TMUX_WATCH_TICK", "1"))
+REVIVE_EVERY = float(os.environ.get("TMUX_WATCH_REVIVE_EVERY", "5"))
+REVIVE = os.environ.get("TMUX_WATCH_REVIVE", "tmux-revive")
+
+
+def servers():
+    n = int(os.environ.get("TMUX_AGENT_SHARDS", "2"))
+    return ["default"] + [f"agents-{i}" for i in range(1, n + 1)]
+
+
+def now():
+    return time.strftime("%Y-%m-%dT%H:%M:%S%z")
+
+
+def log(line):
+    with open(LOG, "a") as f:
+        f.write(f"{now()}\t{line}\n")
+
+
+def login_env():
+    if os.environ.get("TMUX_WATCH_ENV") == "inherit":
+        return dict(os.environ)
+    try:
+        out = subprocess.run(
+            ["/bin/zsh", "-l", "-c", "env -0"],
+            capture_output=True, timeout=20, check=True,
+        ).stdout
+        env = dict(
+            kv.split("=", 1) for kv in out.decode().split("\0") if "=" in kv
+        )
+    except Exception as e:
+        log(f"login env failed ({e}), using launchd's")
+        env = dict(os.environ)
+    for k in ("TMUX", "TMUX_PANE", "TMUX_SERVER", "TMUX_KILL_SERVER"):
+        env.pop(k, None)
+    env.setdefault("LANG", "en_US.UTF-8")
+    env["LOCAL_CONFIG"] = CFG
+    if "TMUX_TMPDIR" in os.environ:
+        env["TMUX_TMPDIR"] = os.environ["TMUX_TMPDIR"]
+    return env
+
+
+def raise_nofile():
+    soft, hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    want = 10240 if hard == resource.RLIM_INFINITY else min(10240, hard)
+    if soft < want:
+        resource.setrlimit(resource.RLIMIT_NOFILE, (want, hard))
+
+
+def live_pid(name):
+    try:
+        out = subprocess.run(
+            [TMUX, "-L", name, "display-message", "-p", "#{pid}"],
+            capture_output=True, text=True, timeout=5,
+        )
+    except subprocess.TimeoutExpired:
+        return None
+    pid = out.stdout.strip()
+    return int(pid) if out.returncode == 0 and pid.isdigit() else None
+
+
+def alive(pid):
+    try:
+        os.kill(pid, 0)
+        return True
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+
+def guard_rows(name, since):
+    rows = []
+    try:
+        with open(GUARD) as f:
+            for line in f:
+                parts = line.rstrip("\n").split("\t")
+                if len(parts) < 2 or "kill-server" not in parts[1]:
+                    continue
+                if not parts[1].endswith("/" + name):
+                    continue
+                if not parts[1].startswith("allowed"):
+                    continue
+                t = calendar.timegm(
+                    time.strptime(parts[0], "%Y-%m-%dT%H:%M:%SZ"))
+                if t >= since - 60:
+                    rows.append(line.rstrip("\n"))
+    except FileNotFoundError:
+        pass
+    return rows[-3:]
+
+
+def crash_reports(since):
+    try:
+        names = os.listdir(REPORTS)
+    except OSError:
+        return []
+    return [
+        n for n in names
+        if n.startswith("tmux")
+        and os.path.getmtime(os.path.join(REPORTS, n)) >= since
+    ]
+
+
+def describe(rc, owned):
+    if not owned:
+        return "ended (adopted: no exit status, see guard rows and reports)"
+    if rc < 0:
+        try:
+            return f"killed by {signal.Signals(-rc).name}"
+        except ValueError:
+            return f"killed by signal {-rc}"
+    return f"exited with status {rc}"
+
+
+class Server:
+    def __init__(self, name, env):
+        self.name = name
+        self.env = env
+        self.proc = None
+        self.pid = None
+        self.since = None
+        self.deaths = []
+
+    def start(self):
+        pid = live_pid(self.name)
+        if pid:
+            self.proc, self.pid, self.since = None, pid, time.time()
+            log(f"{self.name}\tadopted pid {pid}")
+            return
+        recent = [t for t in self.deaths if time.time() - t < 60]
+        if len(recent) >= 2:
+            wait = min(60, 2 ** len(recent))
+            log(f"{self.name}\tdied {len(recent)}x in a minute, "
+                f"waiting {wait}s")
+            time.sleep(wait)
+        self.proc = subprocess.Popen(
+            [TMUX, "-L", self.name, "-D"],
+            env=self.env, cwd=HOME, start_new_session=True,
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL, preexec_fn=raise_nofile,
+        )
+        self.pid, self.since = self.proc.pid, time.time()
+        for _ in range(50):
+            if live_pid(self.name):
+                break
+            time.sleep(0.1)
+        log(f"{self.name}\tstarted pid {self.pid}")
+
+    def check(self):
+        if self.proc is not None:
+            rc = self.proc.poll()
+            if rc is None:
+                return None
+            return describe(rc, True)
+        if self.pid and alive(self.pid):
+            return None
+        return describe(None, False)
+
+    def died(self, how):
+        t = time.time()
+        self.deaths.append(t)
+        up = int(t - self.since) if self.since else 0
+        rows = guard_rows(self.name, t)
+        reports = crash_reports(self.since or t - 60)
+        if rows:
+            cause = "kill-server: " + rows[-1].split("\t", 2)[-1][:300]
+        elif reports:
+            cause = f"crash: {how}, report {reports[-1]}"
+        else:
+            cause = how + (
+                "; no kill-server through the shim, so a signal (SIGTERM, "
+                "SIGHUP) or a tmux that bypassed it" if "status 0" in how
+                or "adopted" in how else ""
+            )
+        log(f"{self.name}\tDIED pid {self.pid} up {up}s\t{cause}"
+            + "".join(f"\n\tguard: {r}" for r in rows)
+            + "".join(f"\n\treport: {r}" for r in reports))
+        with open(LAST, "w") as f:
+            f.write(f"{time.strftime('%H:%M:%S')} {self.name}: {cause}\n")
+        self.proc = self.pid = self.since = None
+
+
+def queue_busy():
+    try:
+        with open(QUEUE) as f:
+            return any(
+                line.split("\t", 1)[0] in ("todo", "started", "ok")
+                for line in f
+            )
+    except FileNotFoundError:
+        return False
+
+
+def save(watch):
+    data = {
+        s.name: {
+            "pid": s.pid, "owned": s.proc is not None, "since": s.since,
+        } for s in watch
+    }
+    tmp = STATE + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(data, f)
+    os.replace(tmp, STATE)
+
+
+def status():
+    try:
+        with open(STATE) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        print("tmux-watch: not running")
+        return 1
+    for name, s in data.items():
+        up = int(time.time() - s["since"]) if s.get("since") else 0
+        how = "owned" if s.get("owned") else "adopted"
+        print(f"{name}\tpid {s.get('pid')}\t{how}\tup {up // 3600}h"
+              f"{up % 3600 // 60:02d}m")
+    return 0
+
+
+def main():
+    if sys.argv[1:] == ["status"]:
+        return status()
+    if sys.argv[1:]:
+        print(__doc__.split("\n\n")[1], file=sys.stderr)
+        return 2
+    os.makedirs(CFG, exist_ok=True)
+    signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
+    env = login_env()
+    watch = [Server(n, env) for n in servers()]
+    for s in watch:
+        s.start()
+    save(watch)
+    log("watching " + " ".join(s.name for s in watch))
+    revive, last_revive, kick = None, 0.0, False
+    while True:
+        for s in watch:
+            how = s.check()
+            if how is None:
+                continue
+            s.died(how)
+            s.start()
+            save(watch)
+            kick = True
+        if revive is not None and revive.poll() is not None:
+            revive = None
+        due = kick or (
+            queue_busy() and time.time() - last_revive >= REVIVE_EVERY
+        )
+        if due and revive is None:
+            revive = subprocess.Popen(
+                [REVIVE], env=env, cwd=HOME, stdin=subprocess.DEVNULL,
+                stdout=open(os.path.join(CFG, "tmux-revive.out"), "a"),
+                stderr=subprocess.STDOUT,
+            )
+            last_revive, kick = time.time(), False
+        time.sleep(TICK)
+
+
+if __name__ == "__main__":
+    sys.exit(main())
