@@ -87,7 +87,9 @@ _nf_drop() {
 }
 
 # When each snoozed worktree comes back, and to which board section:
-# slug<TAB>branch<TAB>date (YYYY-MM-DD)<TAB>section, one row each.
+# slug<TAB>branch<TAB>date (YYYY-MM-DD[THH:MM])<TAB>section<TAB>start
+# <TAB>main checkout, one row each. wt-sync reads the checkout to run
+# `wt wake` there, so a repo outside its list wakes too.
 _snoozed_file() {
   echo "$LOCAL_CONFIG/worktrees/$(_repo_name).snoozed"
 }
@@ -217,19 +219,24 @@ commits on the base), and how that affects what you planned."
 }
 
 # A snoozed worktree whose date or time has arrived goes back to the
-# section it was snoozed from (else # IN PROGRESS) and gets a ping in its notification inbox. Runs on
-# every wt invocation, so the board corrects itself the next time
-# wt is used on or after the date.
+# section it was snoozed from (else # IN PROGRESS) and gets a ping in
+# its notification inbox. Runs on every wt invocation, and wt-sync
+# (launchd, every minute, back after a reboot) runs `wt wake` in each
+# repo, so a timed snooze fires within a minute of its time.
 _wt_wake() {
   git rev-parse --git-dir >/dev/null 2>&1 || return 0
   _sf="$(_snoozed_file)"
   test -f "$_sf" || return 0
   _now="$(date +%FT%H:%M)"
-  _due="$(awk -F '\t' -v t="$_now" '$3 <= t' "$_sf")"
+  # A date without a time wakes at 08:00, not at midnight (wt-sync
+  # wakes every minute).
+  _due_aw='{ d = $3; if (d !~ /T/) d = d "T08:00" }'
+  _due="$(awk -F '\t' -v t="$_now" "$_due_aw d <= t" "$_sf")"
   test -n "$_due" || return 0
-  awk -F '\t' -v t="$_now" '$3 > t' "$_sf" | sponge "$_sf"
+  awk -F '\t' -v t="$_now" "$_due_aw d > t" "$_sf" | sponge "$_sf"
   echo "$_due" \
-    | while IFS="$(printf '\t')" read -r _wk_slug _wk_branch _wk_date _wk_sec _wk_from; do
+    | while IFS="$(printf '\t')" read -r \
+      _wk_slug _wk_branch _wk_date _wk_sec _wk_from _; do
       test -n "$_wk_slug" || continue
       _wk_date="$(echo "$_wk_date" | tr T ' ')"
       echo "wt: $_wk_slug was snoozed until $_wk_date — waking it" >&2
@@ -1143,9 +1150,11 @@ _wt_block() {
 # Park the current worktree under # SNOOZED until <when>
 # ("monday", "tomorrow", "+3 days", "2026-10-19", "+3 hours",
 # "15:00"). The next wt run on or after that date sends it back to
-# the section it came from and pings its cli pane; a time also
-# starts a detached timer that runs `wt wake` then; a block stays, and unblocking wakes it. Linear is left alone: snoozing is when I plan to
-# look at it again, not a state the team shares.
+# the section it came from and pings its cli pane; wt-sync runs `wt
+# wake` every minute, so it wakes within a minute of its time (08:00 for
+# a date alone). A block stays, and unblocking wakes it. Linear is left
+# alone: snoozing is when I plan to look at it again, not a state the
+# team shares.
 _wt_snooze() {
   _require_worktree
   _self="$(basename "$(git rev-parse --show-toplevel)")"
@@ -1176,35 +1185,21 @@ _wt_snooze() {
   esac
   _snooze_drop "$_self"
   _w8_drop "$_self"
-  printf '%s\t%s\t%s\t%s\t%s\n' "$_self" "$_branch" "$_until" "${_from:--}" \
-    "$(date +%s)" >> "$(_snoozed_file)"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$_self" "$_branch" "$_until" \
+    "${_from:--}" "$(date +%s)" "$(_main_root)" >> "$(_snoozed_file)"
   _board_move "$_branch" "$_self" 'SNOOZED'
   _nf_drop "$_self"
   _notif_clear "$(git rev-parse --show-toplevel)"
-  case "$_until" in
-    *T*) _snooze_timer "$_until" "$(git rev-parse --show-toplevel)" ;;
-  esac
   echo "wt: snoozed until $(echo "$_until" | tr T ' ')" >&2
-}
-
-# Detached timer: at <when> run `wt wake` from <dir>, so a timed
-# snooze wakes even when nobody runs wt. Polls the wall clock: a
-# plain `sleep N` stops counting while the Mac sleeps, so it fires
-# hours late after a night with the lid closed.
-_snooze_timer() {
-  _st_at=$(gdate -d "$1" +%s)
-  _st_wt="$(command -v wt || echo "$0")"
-  nohup sh -c 'while [ "$(date +%s)" -lt "$1" ]; do sleep 30; done
-    cd "$2" && exec "$3" wake' \
-    sh "$_st_at" "$2" "$_st_wt" >/dev/null 2>&1 &
 }
 
 # The current worktree waits on <what> (a deploy, CI, a review, a
 # colleague's answer) until <when>: a duration (`1h`, `30m`, `+2
 # hours`) or a time (`15:30`, `tomorrow 9am`). Until then `wt-cold`
 # counts it WAITING and sends no stalled ping; after it, the row is
-# STALLED with "overdue: <what>", and a detached timer runs
-# `wt-cold --ping` at the deadline so that lands on time. `ip`, `rt`,
+# STALLED with "overdue: <what>", and wt-sync runs `wt-cold --ping`
+# within a minute of the deadline, at any hour, so that lands on time
+# (after a reboot too). `ip`, `rt`,
 # `rd`, `rp`, `ra`, `sz`, `done`, `rm` and any `wt-tell` delivered to
 # the worktree (the event arrived) end the wait.
 _wt_w8() {
@@ -1229,9 +1224,6 @@ _wt_w8() {
   printf '%s\t%s\t%s\t%s\t%s\n' "$_self" "$(git branch --show-current)" \
     "$_until" "$(printf '%s' "$2" | tr '\t\n' '  ')" "$(date +%s)" \
     >> "$(_waiting_file)"
-  _w8_at=$(gdate -d "$_until" +%s)
-  nohup sh -c 'while [ "$(date +%s)" -lt "$1" ]; do sleep 30; done
-    exec wt-cold --ping' sh "$_w8_at" >/dev/null 2>&1 &
   echo "wt: waiting on $2 until $(echo "$_until" | tr T ' ')" >&2
 }
 
