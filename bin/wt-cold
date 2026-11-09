@@ -5,6 +5,8 @@
   wt-cold --ping     sync the inbox: a `stalled` row per STALLED item
   wt-cold --sync     --ping on weekdays 08:00-19:00, every 10 minutes
                      (wt-sync, every minute)
+  wt-cold --overdue  only the overdue `wt w8` rows, at any hour (wt-sync,
+                     once a deadline passed); leaves every other row
   wt-cold --brief    counts per state and the STALLED list (notif depth);
                      reuses the last run's result when under 10 min old
 
@@ -35,17 +37,17 @@ Weekends don't count toward any elapsed time.
 
 Pinging: one `stalled` row (`notify`, ranked after merge and blocked)
 per STALLED item with no pending row on it, once it has stalled for
-WT_STALL_MIN (30) minutes; an overdue w8 at once, even when the
-worktree has a pending row of its own (wt-sync runs --ping within a
-minute of the deadline, at any hour). An item blocked on a
-stalled worktree gets none: the blocker's row says "+N blocked on
-this". A cleared row comes back after WT_STALL_MIN while the item is
-still STALLED. A row clears itself on the next run once its item is no
-longer STALLED, or is replaced when the touch it needs changed; rows
-carry a ref (NOTIFY_REF) so this holds after a jump re-keyed them onto
-a pane. Rows whose PR merged or closed while the board row is still
-live, rows with no worktree in a live section, unboarded PRs and
-orphan worktrees each go in one batched row per repo.
+WT_STALL_MIN (30) minutes; an overdue w8 at once, even when the worktree
+has a pending row of its own or its row was cleared before the deadline
+(wt-sync runs --overdue within a minute of it, at any hour). An item
+blocked on a stalled worktree gets none: the blocker's row says "+N
+blocked on this". A cleared row comes back after WT_STALL_MIN while the
+item is still STALLED. A row clears itself on the next run once its item
+is no longer STALLED, or is replaced when the touch it needs changed;
+rows carry a ref (NOTIFY_REF) so this holds after a jump re-keyed them
+onto a pane. Rows whose PR merged or closed while the board row is still
+live, rows with no worktree in a live section, unboarded PRs and orphan
+worktrees each go in one batched row per repo.
 
 State between runs: $LOCAL_CONFIG/wt-cold-state (JSON). Each --ping /
 --sync run appends its counts to $LOCAL_CONFIG/stalled.log: epoch,
@@ -387,7 +389,9 @@ def judge(b, it, st, seen=()):
     slug, sec = it['slug'], it['sec'].upper()
 
     sz = b.snoozed.get(slug)
-    until = parse_when(sz[2]) if sz and len(sz) > 2 else None
+    # A date alone wakes at 08:00 (`wt wake`).
+    until = parse_when(sz[2] if 'T' in sz[2] else sz[2] + 'T08:00') \
+        if sz and len(sz) > 2 else None
     if until and until > NOW:
         it.update(state='SNOOZED', why=f'until {sz[2].replace("T", " ")}')
         return
@@ -402,7 +406,7 @@ def judge(b, it, st, seen=()):
             it.update(state='WAITING', why=f'on {w8[3]} until {hm(dl)}')
             s['moved'] = NOW
             return
-        it.update(state='STALLED', since=dl, now=True,
+        it.update(state='STALLED', since=dl, now=True, w8=True,
                   why=f'overdue: {w8[3]} (expected {hm(dl)}): investigate')
         return
 
@@ -712,23 +716,31 @@ def drop(*args):
     subprocess.run(['notif', *args], capture_output=True, timeout=30)
 
 
-def ping(nd, inbox, boards, batches):
+def ping(nd, inbox, boards, batches, overdue=False):
     """Sync the inbox's stalled rows with what is stalled now. Rows are
     found by their ref (NOTIFY_REF), never by ctx or pane: a jump to a
-    row re-keys it onto the pane it lands on."""
+    row re-keys it onto the pane it lands on. overdue: only overdue w8
+    rows; every other row and item is left alone."""
     clears = last_clears(nd)
-    want = {}
+    want, fresh = {}, set()
     for b in boards:
         for it in b.items.values():
             if it['state'] != 'STALLED' or it.get('batch') \
                     or it.get('pin') or it.get('dep'):
                 continue
+            if overdue and not it.get('w8'):
+                continue
             since = it.get('since') or 0
             if not it.get('now') and wk(since) < STALL:
                 continue
-            want[f"{b.repo}/{it['slug']}"] = (
+            ref = f"{b.repo}/{it['slug']}"
+            want[ref] = (
                 it['path'] or b.root, it['slug'], it['slug'], it['why'])
-    for x in batches:
+            # A row cleared before this deadline was about something
+            # else: the overdue ping goes out now.
+            if it.get('w8') and clears.get(ref, 0) < since:
+                fresh.add(ref)
+    for x in [] if overdue else batches:
         want[x['ctx']] = (x['root'], x['ctx'], x['title'], x['why'])
     pend, legacy = {}, set()
     for r in inbox:
@@ -738,11 +750,13 @@ def ping(nd, inbox, boards, batches):
             else:
                 legacy.add(r[5] or r[1])
     dropped = sent = 0
-    for key in legacy:
+    for key in [] if overdue else legacy:
         drop('seen', key, 'stalled')
         dropped += 1
     for ref, msgs in pend.items():
         w = want.get(ref)
+        if overdue and not w:
+            continue
         if not w or msgs[-1] != w[3]:
             drop('seen-ref', ref)
             dropped += 1
@@ -751,7 +765,8 @@ def ping(nd, inbox, boards, batches):
     for ref, (cwd, ctx, title, msg) in want.items():
         if ref in pend and pend[ref][-1] == msg:
             continue
-        if ref not in pend and wk(clears.get(ref, 0)) < STALL:
+        if ref not in pend and ref not in fresh \
+                and wk(clears.get(ref, 0)) < STALL:
             continue
         notify(cwd, ctx, ref, title, msg)
         sent += 1
@@ -829,6 +844,7 @@ def main():
     g = ap.add_mutually_exclusive_group()
     g.add_argument('--ping', action='store_true')
     g.add_argument('--sync', action='store_true')
+    g.add_argument('--overdue', action='store_true')
     g.add_argument('--brief', action='store_true')
     o = ap.parse_args()
     if o.brief:
@@ -840,14 +856,16 @@ def main():
     nd, inbox, boards, batches = collect()
     items = flat(boards)
     save_last(items, batches)
-    if o.ping or o.sync:
-        if any(b.prs is None for b in boards):
+    if o.ping or o.sync or o.overdue:
+        # An overdue w8 is judged from local files alone.
+        if not o.overdue and any(b.prs is None for b in boards):
             # gh failed (a 504): PR-based judgements are blind, so
             # syncing now would clear rows and re-ping them next run.
             print('wt-cold: gh failed, inbox left as is')
             return 1
-        sent, dropped = ping(nd, inbox, boards, batches)
-        log_counts(nd, items)
+        sent, dropped = ping(nd, inbox, boards, batches, o.overdue)
+        if not o.overdue:
+            log_counts(nd, items)
         print(f'{summary(items, batches)}: {sent} rows sent, '
               f'{dropped} cleared')
         return

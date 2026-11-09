@@ -228,11 +228,15 @@ _wt_wake() {
   _sf="$(_snoozed_file)"
   test -f "$_sf" || return 0
   _now="$(date +%FT%H:%M)"
-  _due="$(awk -F '\t' -v t="$_now" '$3 <= t' "$_sf")"
+  # A date without a time wakes at 08:00, not at midnight (wt-sync
+  # wakes every minute).
+  _due_aw='{ d = $3; if (d !~ /T/) d = d "T08:00" }'
+  _due="$(awk -F '\t' -v t="$_now" "$_due_aw d <= t" "$_sf")"
   test -n "$_due" || return 0
-  awk -F '\t' -v t="$_now" '$3 > t' "$_sf" | sponge "$_sf"
+  awk -F '\t' -v t="$_now" "$_due_aw d > t" "$_sf" | sponge "$_sf"
   echo "$_due" \
-    | while IFS="$(printf '\t')" read -r _wk_slug _wk_branch _wk_date _wk_sec _wk_from _; do
+    | while IFS="$(printf '\t')" read -r \
+      _wk_slug _wk_branch _wk_date _wk_sec _wk_from _; do
       test -n "$_wk_slug" || continue
       _wk_date="$(echo "$_wk_date" | tr T ' ')"
       echo "wt: $_wk_slug was snoozed until $_wk_date — waking it" >&2
@@ -1146,9 +1150,11 @@ _wt_block() {
 # Park the current worktree under # SNOOZED until <when>
 # ("monday", "tomorrow", "+3 days", "2026-10-19", "+3 hours",
 # "15:00"). The next wt run on or after that date sends it back to
-# the section it came from and pings its cli pane; a time also
-# starts a detached timer that runs `wt wake` then; a block stays, and unblocking wakes it. Linear is left alone: snoozing is when I plan to
-# look at it again, not a state the team shares.
+# the section it came from and pings its cli pane; wt-sync runs `wt
+# wake` every minute, so it wakes within a minute of its time (08:00 for
+# a date alone). A block stays, and unblocking wakes it. Linear is left
+# alone: snoozing is when I plan to look at it again, not a state the
+# team shares.
 _wt_snooze() {
   _require_worktree
   _self="$(basename "$(git rev-parse --show-toplevel)")"

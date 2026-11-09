@@ -125,7 +125,8 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `<repo>.snoozed` as slug/branch/date[Ttime]/section/start/main
   checkout. `wt-sync` runs `wt wake` every minute in each repo of
   its list and each repo with a snooze (so a reboot doesn't lose
-  one), and so does every `wt` run: what's due goes back to the
+  one; a date alone is due at 08:00), and so does every `wt` run:
+  what's due goes back to the
   section it was snoozed from (else `# IN PROGRESS`), and its agent
   is told when it was snoozed and woke, and to double-check, same
   path as unblocking. Unlike `rb`, Linear is left
@@ -157,9 +158,11 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   (deploy, CI, review, a colleague's answer, logs), run `wt w8
   <your estimate> "<what>"`. When the event arrives, `wt ip`.
   Past the deadline it pings "overdue: <what>: investigate":
-  `wt-sync` runs `wt-cold --ping` within a minute of it, at any
-  hour and after a reboot, and the ping gets its own row even when
-  the worktree has an unread one. Only repos in `wt-sync`'s list.
+  `wt-sync` runs `wt-cold --overdue` (that row only, no sweep)
+  within a minute of it, at any hour and after a reboot, and the
+  ping gets its own row even when the worktree has an unread one
+  or its last row was cleared before the deadline. Only repos in
+  `wt-sync`'s list.
   Cleared by `ip`/`rt`/`rd`/`rp`/`ra`/`sz`/`done`/`rm` and by
   any delivered `wt-tell`.
 - `wt merged` — its PR merged: parks the worktree in `# PROD
