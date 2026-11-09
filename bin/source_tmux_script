@@ -27,7 +27,9 @@ source_tmux_script() {
     return
   fi
 
-  if confirm 'Trust (and run) this .tmux file?' ; then
+  # Ask only where the question shows: a caller that hides
+  # output (wt, tmux-revive) would wait on /dev/tty forever.
+  if test -t 1 && confirm 'Trust (and run) this .tmux file?' ; then
     echo "$DIGEST" >>~/..tmux.digests
     INITIATED_EXTERNALLY=$INITIATED_EXTERNALLY source_tmux_script "$@"
     return
