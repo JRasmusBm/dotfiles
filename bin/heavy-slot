@@ -7,7 +7,7 @@ case "${1:-}" in
   hook) exec "$p" hook bash ;;
   take) exec "$p" take heavy "${2:?usage: heavy-slot take PID}" ;;
   run) shift; "$p" take heavy $$ || exit $?; exec "$@" ;;
-  ls) "$p" ls >&2; exec "$p" legacy-ls ;;
+  ls) exec "$p" legacy-ls ;;
   # Old `dev` mid-run: the pool tracks stacks itself now.
   hold|free|rush|unrush) exit 0 ;;
   *) echo "heavy-slot: replaced by pool (pool ls)" >&2; exit 1 ;;
