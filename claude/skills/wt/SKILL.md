@@ -157,7 +157,8 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   PROGRESS`, ticket → In Progress (clears a block;
   `rt`/`rd`/`rp` clear it too).
 - `wt w8 <duration|time> "<what>"` (`wait`) — the worktree
-  waits on an event until a deadline (`45m`, `2h`, `15:00`),
+  waits on an event (never on me: it hides my question
+  from `wt-cold`, so `wt w8` refuses one) until a deadline (`45m`, `2h`, `15:00`),
   in `<repo>.waiting`. Agents: before starting any wait or poll
   (deploy, CI, review, a colleague's answer, logs, a live effect
   to check such as the next scheduled run), run `wt w8 <your

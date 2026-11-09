@@ -22,7 +22,7 @@ text=$(tail -60 "$transcript" | jq -rs '
     | .message.content[]? | select(.type == "text") | .text ] | last // ""')
 [ -n "$text" ] || exit 0
 
-phrase=$(grep -Eio "still needs doing|what'?s left|remaining work|next steps?|not done yet|I'?d now|I haven'?t (verified|tested|checked|confirmed)|not (checked|verified|tested) yet|say go|your go\b|waiting for you to say|when you say" \
+phrase=$(grep -Eio "still needs doing|what'?s left|remaining work|next steps?|not done yet|I'?d now|I haven'?t (verified|tested|checked|confirmed)|not (checked|verified|tested) yet|say go|your go\b|waiting for you to say|when you say|say the word|I recommend yes" \
   <<<"$text" | head -1)
 [ -n "$phrase" ] || exit 0
 

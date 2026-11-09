@@ -8,6 +8,6 @@ case "${1:-}" in
   acquire|wait) exec "$p" wait browser ;;
   touch) exec "$p" touch ;;
   ls|'') exec "$p" ls ;;
-  rush|unrush) exit 0 ;;
+  rush|unrush) echo "no rush: the pool is first in, first out; never expedite one item" >&2; exit 1 ;;
   *) echo "test-slot: replaced by pool (pool ls)" >&2; exit 1 ;;
 esac

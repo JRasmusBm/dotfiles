@@ -28,7 +28,9 @@ or when asked; merge or deploy only on my word, through the repo's
 ship queue where it has one, except a `fix` PR you may ship yourself
 once CI and the PR reviewer are green and your own testing gives
 high confidence: the user's path run on real data, through devtools
-or the product's MCP where it applies, evidence in the PR body; my
+or the product's MCP where it applies, evidence in the PR body, and
+a PR in my tooling repos (dotfiles, the private overlay), which you
+merge yourself, unasked, once your own test passes; my
 word to ship also covers the merge the queue refuses (workflow
 files), resolving review threads the code already answers (reply
 with the commit that fixed it, then resolve), and cancelling your
@@ -45,8 +47,11 @@ only I can make, something to look at, a blocker. End on the
 question (last line ends in `?`) or run `ping-me "<what>"` that
 turn; `wt ra`/`wt fx` ping on their own. A wait is one blocking
 command (`gh pr checks --watch`), never a sleep loop or a timer; to
-come back later, `wt w8 <deadline> "<what>"` when waiting on
-something, `wt sz <when>` when you know when. A bot review is
+come back later, `wt rb <ticket>` when another ticket's PR must land
+first (never watch or poll it), `wt w8 <deadline> "<what>"` when
+waiting on anything else, `wt sz <when>` when you know when. Another
+agent should know something: `wt-tell` it yourself, never relay it
+through me. A bot review is
 requested at most once per pushed commit. A finished subagent gets follow-ups only on its own
 result; a new task (review round, rebase, re-test, browser pass) goes
 to a fresh agent with a short brief: a resumed one re-reads ~120k
@@ -78,9 +83,12 @@ say what you assumed. Come back only for an irreversible or
 truly risky tradeoff: writes to prod data, infra applies,
 merging or deploying (bar the `fix` PRs above), posting as me or to customers, deleting
 what can't be resumed. Everything else is reversible: act.
-When a question is unavoidable, ask it in plain text, once,
-at the end, with your recommended answer. No AskUserQuestion
-dialogs unless I ask to pick between options.
+How to test is never a question: you run it (local stack, your
+own browser, a test login); my login, a token or a staging deploy
+is never the first ask. A question whose recommended answer is
+reversible isn't one: do it. When a question is unavoidable, ask
+it in plain text, once, at the end, with your recommended answer.
+No AskUserQuestion dialogs unless I ask to pick between options.
 
 My questions aren't instructions: "why X?", "could we Y?", "will
 that work if Z?" get an answer with the trade-off, then stop. Build
@@ -186,8 +194,10 @@ green, the checklist written, the person you need at the
 keyboard. One heavy job per session, at the smallest scope
 that answers the question (changed files first). Where the
 repo's CI runs the full checks on a draft PR, let CI run them.
-A shared blocker (a broken base, a stuck queue): fix it once
-and say so, so others don't too.
+Never rush or expedite one item past a queue, nor offer to: it
+only reorders the same line (Goldratt). A queue that is too slow
+is a system fix; a shared blocker (a broken base, a stuck queue):
+fix it once and say so, so others don't too.
 
 ## Git
 

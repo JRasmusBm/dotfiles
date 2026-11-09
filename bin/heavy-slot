@@ -9,6 +9,7 @@ case "${1:-}" in
   run) shift; "$p" take heavy $$ || exit $?; exec "$@" ;;
   ls) exec "$p" legacy-ls ;;
   # Old `dev` mid-run: the pool tracks stacks itself now.
-  hold|free|rush|unrush) exit 0 ;;
+  hold|free) exit 0 ;;
+  rush|unrush) echo "no rush: the pool is first in, first out; never expedite one item" >&2; exit 1 ;;
   *) echo "heavy-slot: replaced by pool (pool ls)" >&2; exit 1 ;;
 esac

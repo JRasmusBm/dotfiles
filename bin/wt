@@ -670,7 +670,7 @@ _wt_typed() {
 
   # Only Linear URLs get a Claude kickoff prompt; free text
   # just opens the worktree session.
-  _done="Before you hand back to me: test the change on every surface it touches (unit, API, MCP, the app in the browser, Cypress - whichever apply). Then take objects that already exist one step past your change: for each stored shape your diff reads or writes, open a saved object of that shape in a test environment, do the next thing a user does with it, and state Real data: shape x count, result in the hand-back. Publish an artifact showing how it was tested and what you saw, then run /iterate-review until the PR is green. Hand back only when CI is green and the PR body is current, with the PR link, the artifact link and what could bite us."
+  _done="Testing is yours: a local stack and your own browser, never my login, a token or a staging deploy as the first ask. Work that needs another ticket's PR first: wt rb that ticket, never poll it. Before you hand back to me: test the change on every surface it touches (unit, API, MCP, the app in the browser, Cypress - whichever apply). Then take objects that already exist one step past your change: for each stored shape your diff reads or writes, open a saved object of that shape in a test environment, do the next thing a user does with it, and state Real data: shape x count, result in the hand-back. Publish an artifact showing how it was tested and what you saw, then run /iterate-review until the PR is green. Hand back only when CI is green and the PR body is current, with the PR link, the artifact link and what could bite us."
   _prompt=""
   case "$_arg" in
     *linear.app/*issue/*)
@@ -1260,6 +1260,14 @@ _wt_w8() {
   _self="$(basename "$(git rev-parse --show-toplevel)")"
   if test -z "${1:-}" || test -z "${2:-}"; then
     echo "wt: usage: wt w8 <1h|30m|15:30|...> \"<what>\"" >&2
+    exit 1
+  fi
+  # A wait on me hides my question as WAITING, so wt-cold never
+  # pings it: end the turn on the question instead.
+  if printf '%s' "$2" | grep -qiE \
+    '(^|[^[:alnum:]])(rasmus|me|my|user)([^[:alnum:]]|$)'; then
+    echo "wt: no w8 on me: end the turn on the question (it pings)," \
+      "or take your recommended answer if it's reversible" >&2
     exit 1
   fi
   _w8_in="$(echo "$1" | sed -E 's/^\+?([0-9]+) ?h$/+\1 hours/;
