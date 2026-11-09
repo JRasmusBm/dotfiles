@@ -3,14 +3,13 @@
 # dev — run a repo's dev processes in the current tmux session's `run`
 # window.
 #
-#   dev up [--wait] [--for MIN]
-#                    rebuild `run` as fresh shells (index kept), then
-#                    source $(repo_root)/.jrb/dev; --wait polls each
-#                    URL in DEV_WAIT_URLS; --for keeps it MIN minutes
-#   dev down         rebuild `run` as a single fresh shell
-#   dev keep [MIN]   keep the stack up MIN (10) more minutes
-#   dev touch <sess> renew the session's heavy slot while its stack
-#                    runs (tmux focus hooks call it)
+#   dev up [--wait]  take a stack lease from `pool` (queued, holding
+#                    nothing, while the pool is full), rebuild `run`
+#                    as fresh shells (index kept), then source
+#                    $(repo_root)/.jrb/dev; --wait polls each URL in
+#                    DEV_WAIT_URLS
+#   dev down         rebuild `run` as a single fresh shell, release
+#                    the lease
 #   dev trust [file] show .jrb/dev (or file) and trust its digest
 #   dev ls           list tagged dev panes across all sessions
 #   dev :            fzf a session with dev panes, switch to its `run`
@@ -25,13 +24,12 @@
 #                          300s), nonzero on timeout
 #   DEV_WAIT_URLS          set it for `dev up --wait`
 #
-# A running stack holds a heavy-slot (`dev:<session>`) for 10 minutes
-# (DEV_SLOT_TTL seconds, 600), or longer with `up --for`/`keep`,
-# renewed by every focus on the session; a renewal never shortens a
-# longer hold. When the slot runs out the stack goes down (`dev
-# _expire`), so a stack left alone hands back its slot and its RAM. On
-# 10-26 two idle agents' stacks held both slots for an hour while 7
-# tsc runs waited.
+# A running stack holds a `pool` stack lease. An agent's lapses after
+# POOL_IDLE (10 min) without a devtools or localhost call from its
+# session, and nothing extends it but use; jrb's (started outside
+# Claude) lasts until `dev down` or the session ends. When it is gone
+# the stack goes down (`dev _expire`), so an agent's stack left alone
+# hands back its units and its RAM.
 
 set -e
 
@@ -234,25 +232,24 @@ _dev_up() {
     exit 1
   fi
 
-  _wait='' _ttl="${DEV_SLOT_TTL:-600}"
+  _wait=''
   _args="$*"
   while test $# -gt 0; do
     case "$1" in
       --wait) _wait=1 ;;
-      --for) _ttl=$(( ${2:?usage: dev up --for MIN} * 60 )); shift ;;
     esac
     shift
   done
   _s="$(_session)"
-  if test "${CLAUDECODE:-}" = 1; then
-    test-slot acquire || exit $?
-  fi
+  POOL_OWNER="$_s" pool wait stack
   _detach_if_inside_run up $_args
-  heavy-slot hold "$_ttl" "dev:$_s"
   _start_expire "$_s"
   mkdir -p "$(_log_dir)"
   echo "$$" > "$(_up_pidfile)"
-  trap 'rm -f "$(_up_pidfile)"' EXIT
+  # A failed start hands the lease straight back, not after GRACE.
+  trap '_rc=$?; rm -f "$(_up_pidfile)"
+    test "$_rc" = 0 || _has_stack "$_s" ||
+      POOL_OWNER="$_s" pool release --quiet || true' EXIT
   _tags=''
   _rebuild
   _source_dev_file "$_df"
@@ -359,33 +356,16 @@ _dev_down() {
   _reap $_old
   echo "session: $_s run window reset, $(echo $_old | wc -w | tr -d ' ') \
 processes stopped"
-  heavy-slot free "dev:$_s" || true
   _stop_chrome_mcp "$_s"
-  if test "${CLAUDECODE:-}" = 1; then
-    test-slot release
-  fi
+  POOL_OWNER="$_s" pool release --quiet || true
 }
 
-_dev_touch() {
-  _s="${1:?usage: dev touch <session>}"
-  tmux list-panes -s -t "=$_s" -F '#{@dev}' 2>/dev/null \
-    | $_grep -q . || return 0
-  heavy-slot hold --try "${DEV_SLOT_TTL:-600}" "dev:$_s" || true
+_has_stack() {
+  tmux list-panes -s -t "=$1" -F '#{@dev}' 2>/dev/null | $_grep -q .
 }
 
-_dev_keep() {
-  _s="$(_session)"
-  tmux list-panes -s -t "=$_s" -F '#{@dev}' 2>/dev/null \
-    | $_grep -q . || { echo "dev keep: no stack in $_s" >&2; exit 1; }
-  heavy-slot hold "$(( ${1:-10} * 60 ))" "dev:$_s"
-  _start_expire "$_s"
-  echo "dev keep: $_s stays up $(heavy-slot ls \
-    | awk -F'\t' -v t="dev:$_s" 'index($3, t " until ") == 1 {
-      sub(/.* until /, "until ", $3); print $3 }')"
-}
-
-# One watcher per session: when its dev slot is gone (expired or
-# freed), take the stack down if it is still up.
+# One watcher per session: when its stack lease is gone (expired or
+# released), take the stack down if it is still up.
 _start_expire() {
   _pf="$(_log_dir)/expire.pid"
   mkdir -p "$(_log_dir)"
@@ -401,9 +381,8 @@ _dev_expire() {
   while sleep "${DEV_EXPIRE_POLL:-60}"; do
     tmux list-panes -s -t "=$_s" -F '#{@dev}' 2>/dev/null \
       | $_grep -q . || exit 0
-    heavy-slot ls | awk -F'\t' -v t="dev:$_s" \
-      'index($3, t " until ") == 1 { f = 1 } END { exit !f }' && continue
-    echo "$(date +%T) dev:$_s slot gone, taking the stack down"
+    pool held "$_s" stack && continue
+    echo "$(date +%T) $_s stack lease gone, taking the stack down"
     DEV_SESSION="$_s" "$(_self)" down
     exit 0
   done
@@ -461,15 +440,14 @@ _dev_logs() {
 }
 
 _usage() {
-  echo "Usage: dev [up [--wait]|down|touch <sess>|trust|ls|:|logs <tag>]" >&2
+  echo "Usage: dev [up [--wait]|down|trust|ls|:|logs <tag>]" >&2
   exit 1
 }
 
 case "${1:-}" in
   up) shift; _dev_up "$@" ;;
   down) _dev_down ;;
-  touch) _dev_touch "${2:-}" ;;
-  keep) _dev_keep "${2:-}" ;;
+  touch) exit 0 ;; # focus hooks of tmux servers started before the pool
   _expire) _dev_expire "${2:-}" ;;
   trust) shift; _dev_trust "$@" ;;
   ls) _dev_ls ;;

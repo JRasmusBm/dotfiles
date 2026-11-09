@@ -23,10 +23,11 @@ stopped until morning.
   otherwise it starts `claude [-c]`. It records the session in
   `~/.cache/swarm/sessions.tsv`.
 - `peek` prints one line per session: dead, question, permission,
-  busy or idle, plus PR number, free memory and busy `heavy` slots.
-- `heavy <cmd>` (dotfiles `bin/`) runs a command in one of
-  `HEAVY_SLOTS` (default 3) slots shared by the whole machine. The
-  brief tells every agent to wrap tsc, jest, eslint and builds in it.
+  busy or idle, plus PR number, free memory and the `pool` line.
+- `heavy <cmd>` (dotfiles `bin/`) runs a command once the shared
+  `pool` has room (tsc/eslint inside agents are queued by the Bash
+  hook anyway). The brief tells every agent to wrap tsc, jest,
+  eslint and builds in it.
 
 ## Steps
 

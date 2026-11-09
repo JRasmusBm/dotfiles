@@ -15,9 +15,9 @@ every Claude session. Speaks newline-delimited JSON-RPC on stdio.
   outlives the server); the proxy keeps running and the next request
   restarts the server. Never while a request is in flight. Triggers:
   SIGUSR1 (`dev down` sends it to every pid under
-  $LOCAL_CONFIG/chrome-mcp/<tmux session>/); the session's
-  `dev:<session>` heavy-slot going away (polled every 60 s); with no
-  such slot, CHROME_MCP_IDLE seconds (600) without a request.
+  $LOCAL_CONFIG/chrome-mcp/<tmux session>/); the session's `pool`
+  lease (stack or browser) going away (polled every 60 s); with no
+  lease, CHROME_MCP_IDLE seconds (600) without a request.
 
 Bump the pinned version:
   npm view chrome-devtools-mcp version
@@ -153,19 +153,14 @@ class Proxy:
                 pass
 
     def slot_present(self):
-        hs = shutil.which("heavy-slot") or os.path.join(HOME, ".bin", "heavy-slot")
+        pool = shutil.which("pool") or os.path.join(HOME, ".bin", "pool")
         try:
-            out = subprocess.run(
-                [hs, "ls"], capture_output=True, text=True, timeout=30
-            ).stdout
+            r = subprocess.run(
+                [pool, "held", self.session], capture_output=True, timeout=30
+            )
         except (OSError, subprocess.SubprocessError):
             return None
-        tag = f"dev:{self.session} "
-        for line in out.splitlines():
-            f = line.split("\t")
-            if len(f) >= 3 and f[1] == "hold" and f[2].startswith(tag):
-                return True
-        return False
+        return r.returncode == 0
 
     # --- server lifecycle ---
 
@@ -426,13 +421,13 @@ class Proxy:
                     busy = bool(self.inflight)
                 if slot_gone:
                     self.stop_requested = True
-                    self.stop_reason = f"dev:{self.session} slot gone"
+                    self.stop_reason = f"{self.session} pool lease gone"
                 if busy:
                     continue
                 if self.stop_requested:
                     self.stop(self.stop_reason)
                 elif not self.slot_held and now - self.last_activity >= IDLE:
-                    self.stop(f"idle {IDLE}s, no dev slot")
+                    self.stop(f"idle {IDLE}s, no pool lease")
 
     def on_usr1(self, *_):
         self.stop_requested = True
