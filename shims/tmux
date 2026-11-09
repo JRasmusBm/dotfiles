@@ -18,11 +18,12 @@
 # detach-client -E that attaches there.
 #
 # Pane keys: `#{pane_id}` in an arg prints `%N@<server>` (on default
-# and agents-*), and $TMUX_PANE (zshrc qualifies it the same way) is
-# passed to tmux bare, so a pane id stored anywhere routes back to its
-# own server, wherever it is used from. With no server named,
-# list-sessions, list-clients and `-a` scans (list-panes, list-windows)
-# ask every live server and join the output.
+# and agents-*; nothing when there is no pane), and $TMUX_PANE (zshrc
+# qualifies it the same way) is passed to tmux bare, so a pane id
+# stored anywhere routes back to its own server, wherever it is used
+# from. With no server named, list-sessions, list-clients and `-a`
+# scans (list-panes, list-windows) ask every live server and join the
+# output.
 #
 # Guard, refused with exit 1 and a row in $LOCAL_CONFIG/tmux-guard.log:
 # - TMUX_TMPDIR set but empty or not a directory: tmux would fall back
@@ -232,7 +233,7 @@ if test -z "$_S"; then
       while :; do
         case "$_a" in
           *'#{pane_id}'*)
-            _o="$_o${_a%%'#{pane_id}'*}#{pane_id}@#{b:socket_path}"
+            _o="$_o${_a%%'#{pane_id}'*}#{?pane_id,#{pane_id}@#{b:socket_path},}"
             _a="${_a#*'#{pane_id}'}"
             ;;
           *) _o="$_o$_a"; break ;;
