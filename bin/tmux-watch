@@ -18,7 +18,8 @@ crash report. The cause line also goes to tmux-watch.last for
 tmux-revive's ping. The server is started again at once (backing off
 when it dies again within a minute), then tmux-revive runs right away
 and every 5 s while its queue has work, so the chats it held come back
-without waiting for wt-sync's minute.
+without waiting for wt-sync's minute. Otherwise it runs every 20 s, so
+its snapshot knows which chats were mid-turn when a server dies.
 """
 
 import calendar
@@ -41,6 +42,7 @@ REPORTS = os.path.join(HOME, "Library/Logs/DiagnosticReports")
 TMUX = os.environ.get("TMUX_REAL", "/opt/homebrew/bin/tmux")
 TICK = float(os.environ.get("TMUX_WATCH_TICK", "1"))
 REVIVE_EVERY = float(os.environ.get("TMUX_WATCH_REVIVE_EVERY", "5"))
+SNAPSHOT_EVERY = float(os.environ.get("TMUX_WATCH_SNAPSHOT_EVERY", "20"))
 REVIVE = os.environ.get("TMUX_WATCH_REVIVE", "tmux-revive")
 
 
@@ -286,8 +288,9 @@ def main():
             kick = True
         if revive is not None and revive.poll() is not None:
             revive = None
-        due = kick or (
-            queue_busy() and time.time() - last_revive >= REVIVE_EVERY
+        since = time.time() - last_revive
+        due = kick or since >= SNAPSHOT_EVERY or (
+            since >= REVIVE_EVERY and queue_busy()
         )
         if due and revive is None:
             revive = subprocess.Popen(

@@ -25,6 +25,9 @@
         within the close rule, it asked me, a tell is on its way, an
         open `wt w8`, a wakeup or cron it set, the keep list; exit 1
         when none
+  run-slot park SID PANE SESSION CWD
+        record a chat whose Claude died as closed in PANE (a shell),
+        as `close` does, so a focus, a tell or `revive` resumes it
   run-slot pend ID -- CMD
         hand run-slot a tell it must deliver to a Claude that is
         starting (wt-tell, after a revive): `pump` runs CMD with
@@ -739,6 +742,18 @@ def needs_open(sid, name):
     return (waiting(name) or timers(sid) or kept({'tmux': name}))
 
 
+def park(sid, pane, name, cwd):
+    ctx, _, end = last_turn(sid)
+    with Lock():
+        rs = [r for r in rows(CLOSED) if r[1] != sid
+              and NOW - float(r[0]) < 7 * 86400]
+        rs.append([int(NOW), sid, pane_key(pane, name), name, cwd, ctx,
+                   int(end), 'closed'])
+        write(CLOSED, rs)
+    log('park', sid, None, f'{name} {pane}')
+    return 0
+
+
 def close(dry, verbose):
     room = Room()
     focus = focused_panes()
@@ -863,6 +878,8 @@ def main(a):
         return gate(a[1], a[2], a[4:])
     if cmd == 'wait' and len(a) == 3:
         return wait(a[1], a[2])
+    if cmd == 'park' and len(a) == 5:
+        return park(*a[1:])
     if cmd == 'needs-open' and len(a) == 3:
         why = needs_open(a[1], a[2])
         if why:

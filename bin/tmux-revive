@@ -1,34 +1,46 @@
 #!/bin/sh
 #
-# tmux-revive — run by wt-sync every minute: brings the Claude chats
-# back after the tmux server dies (a crash) or restarts (kill-server).
-#   - Snapshots the live server to $LOCAL_CONFIG/tmux-revive.snapshot:
-#     `server <pid> <start_time>`, then per pane running Claude
-#     session<TAB>window<TAB>cwd<TAB>sid<TAB>work (`claude-pane map`;
-#     sid `-` when Claude wrote no session file; work `1` when the
-#     pane shows Claude's spinner or a background wait, else `-`).
-#   - A run that finds no server, or one with another start_time than
-#     the snapshot's, queues each chat of the snapshot that isn't live
-#     again (tmux-revive.queue), once per dead server (tmux-revive.done),
-#     with the time the new server started (else now) for a working one.
+# tmux-revive — run by tmux-watch the moment a tmux server dies (and
+# every 5 s while its queue has work, every 20 s otherwise) and by
+# wt-sync every minute: brings the Claude chats back after a server
+# dies (a crash) or restarts (kill-server). One run at a time (a lock).
+#   - Snapshots each live server (`tmux-all servers`: default,
+#     agents-1..N) to $LOCAL_CONFIG/tmux-revive.snapshot (default) or
+#     tmux-revive.snapshot.<server>: `server <pid> <start_time>`, then
+#     per pane running Claude session<TAB>window<TAB>cwd<TAB>sid<TAB>work
+#     (`claude-pane map`; sid `-` when Claude wrote no session file;
+#     work `1` when the pane shows Claude's spinner or a background
+#     wait, else `-`).
+#   - A server gone, or with another start_time than its snapshot's,
+#     queues each chat of that snapshot that isn't live on any server
+#     (tmux-revive.queue), once per dead server (tmux-revive.done),
+#     with the time the new server started (else now) for a working
+#     one. Mid-turn chats go first.
 #   - Each run starts the queued chats `run-slot` has room for (the
-#     rest wait their turn there, for a later run):
-#     a missing session is rebuilt like `wt open` does (its .tmux, else
-#     the run/vim/cli layout) under its old name, and
-#     `claude --resume <sid>` (no sid: `claude --continue || claude`)
-#     is typed into a window it just built with the old window's name
-#     (`cli`), else into a new window of that name. Panes it didn't
-#     build are never touched.
+#     rest keep their place there, for a later run): a mid-turn chat as
+#     `revive` (past the cap, memory alone holds it); an idle one only
+#     once no mid-turn one waits, and only when `run-slot needs-open`
+#     gives a reason (`start`; a wakeup or cron it had set is lost with
+#     its process, so it is told too). Any other idle chat is parked:
+#     its session gets a shell where it was and `run-slot park` records
+#     it closed, so a focus on that pane or a tell resumes it.
+#     A missing session is rebuilt like `wt open` does (its .tmux, else
+#     the run/vim/cli layout) under its old name, on its own server
+#     (tmux-home, shims/tmux), and `claude --resume <sid>` (no sid:
+#     `claude --continue || claude`) is typed into a window it just
+#     built with the old window's name (`cli`), else into a new window
+#     of that name. Panes it didn't build are never touched.
 #   - A later run checks each started pane runs Claude, and once a
 #     chat that was working shows an empty prompt, tells it: `tmux
 #     restarted at <time> while you were working. Check git status and
 #     your last step, then carry on.` (state `told`; no prompt within
 #     10 min: `untold`). Once none is pending, one notify ping sums up
-#     revived, told and failed chats (rows in tmux-revive.log).
-# tmux-revive forget — drop the snapshot and queue, so a deliberate
+#     revived, told, parked and failed chats and the cause tmux-watch
+#     logged (rows in tmux-revive.log).
+# tmux-revive forget — drop the snapshots and queue, so a deliberate
 # kill-server stays dead.
 # Tests: TMUX_TMPDIR (TMUX unset) points every tmux call, children's
-# too, at another server; CLAUDE_CONFIG_DIR at other session files;
+# too, at other servers; CLAUDE_CONFIG_DIR at other session files;
 # TMUX_REVIVE_CLAUDE replaces the `claude` typed.
 
 _dir="${LOCAL_CONFIG:?}"
@@ -36,13 +48,23 @@ _snap="$_dir/tmux-revive.snapshot"
 _q="$_dir/tmux-revive.queue"
 _done="$_dir/tmux-revive.done"
 _log="$_dir/tmux-revive.log"
+_lock="$_dir/tmux-revive.lock"
 _claude="${TMUX_REVIVE_CLAUDE:-claude}"
 _t="$(printf '\t')"
 
 if test "${1:-}" = forget; then
-  rm -f "$_snap" "$_q"
+  rm -f "$_snap" "$_snap".* "$_q"
   exit 0
 fi
+
+if ! mkdir "$_lock" 2>/dev/null; then
+  kill -0 "$(cat "$_lock/pid" 2>/dev/null)" 2>/dev/null && exit 0
+  rm -f "$_lock/pid"
+  rmdir "$_lock" 2>/dev/null
+  mkdir "$_lock" 2>/dev/null || exit 0
+fi
+echo $$ > "$_lock/pid"
+trap 'rm -f "$_lock/pid"; rmdir "$_lock" 2>/dev/null' EXIT
 
 _is_claude() {
   case "$1" in claude|[0-9]*.[0-9]*.[0-9]*) return 0 ;; esac
@@ -57,7 +79,7 @@ _working() {
 }
 
 # pane<TAB>session<TAB>window<TAB>cwd<TAB>sid<TAB>work of every Claude
-# pane.
+# pane on every server (pane keys name their server).
 _claude_panes() {
   _m="$(claude-pane map)"
   tmux -u list-panes -a -F \
@@ -77,35 +99,40 @@ _claude_panes() {
     done
 }
 
-_server="$(tmux display-message -p '#{pid} #{start_time}' 2>/dev/null)"
-_live="$(test -z "$_server" || _claude_panes)"
+_live="$(_claude_panes)"
 
-# The server the snapshot saw is gone: queue its chats, once.
-_prev="$(sed -n '1s/^server //p' "$_snap" 2>/dev/null)"
-if test -n "$_prev" && test "$_prev" != "$_server" \
-  && ! grep -qxF "$_prev" "$_done" 2>/dev/null; then
-  echo "$_prev" >> "$_done"
-  _rt="$(date +%H:%M)"
-  test -z "$_server" || _rt="$(date -r "${_server#* }" +%H:%M)"
-  sed 1d "$_snap" | while IFS="$_t" read -r _s _w _cwd _sid _work; do
-    test -n "$_s" || continue
-    if test "$_sid" != -; then
-      printf '%s\n' "$_live" | cut -f5 | grep -qxF "$_sid" && continue
-    else
-      printf '%s\n' "$_live" | cut -f4 | grep -qxF "$_cwd" && continue
-    fi
-    _tell=-
-    test "$_work" != 1 || _tell="$_rt"
-    printf 'todo\t%s\t%s\t%s\t%s\t-\t%s\t%s\n' "$_s" "$_w" "$_cwd" \
-      "$_sid" "$(date +%s)" "$_tell"
-  done >> "$_q"
-fi
-
-if test -n "$_server"; then
-  _tmp="$(mktemp)"
-  { echo "server $_server"; printf '%s\n' "$_live" | cut -f2-; } \
-    | grep . > "$_tmp" && mv "$_tmp" "$_snap"
-fi
+for _srv in $(tmux-all servers); do
+  _f="$_snap"
+  test "$_srv" = default || _f="$_snap.$_srv"
+  _server="$(tmux -L "$_srv" display-message -p '#{pid} #{start_time}' \
+    2>/dev/null)"
+  # The server the snapshot saw is gone: queue its chats, once.
+  _prev="$(sed -n '1s/^server //p' "$_f" 2>/dev/null)"
+  if test -n "$_prev" && test "$_prev" != "$_server" \
+    && ! grep -qxF "$_prev" "$_done" 2>/dev/null; then
+    echo "$_prev" >> "$_done"
+    _rt="$(date +%H:%M)"
+    test -z "$_server" || _rt="$(date -r "${_server#* }" +%H:%M)"
+    sed 1d "$_f" | while IFS="$_t" read -r _s _w _cwd _sid _work; do
+      test -n "$_s" || continue
+      if test "$_sid" != -; then
+        printf '%s\n' "$_live" | cut -f5 | grep -qxF "$_sid" && continue
+      else
+        printf '%s\n' "$_live" | cut -f4 | grep -qxF "$_cwd" && continue
+      fi
+      _tell=-
+      test "$_work" != 1 || _tell="$_rt"
+      printf 'todo\t%s\t%s\t%s\t%s\t-\t%s\t%s\n' "$_s" "$_w" "$_cwd" \
+        "$_sid" "$(date +%s)" "$_tell"
+    done >> "$_q"
+  fi
+  if test -n "$_server"; then
+    _tmp="$(mktemp)"
+    { echo "server $_server"
+      printf '%s\n' "$_live" | grep "^%[0-9]*@$_srv$_t" | cut -f2-
+    } > "$_tmp" && mv "$_tmp" "$_f"
+  fi
+done
 
 test -s "$_q" || exit 0
 
@@ -114,7 +141,8 @@ test -s "$_q" || exit 0
 _built=""
 _used=""
 
-# Sets _st (started, failed:<why>) and _pane.
+# Sets _st (started, failed:<why>) and _pane. PARK (5th arg): only
+# make the shell pane, type nothing.
 _start() {
   _s="$1" _w="$2" _cwd="$3" _sid="$4" _st="" _pane=""
   test -d "$_cwd" || { _st="failed:no dir"; return; }
@@ -152,6 +180,11 @@ _start() {
     _pane="$(tmux new-window -d -P -F '#{pane_id}' -t "=$_s:" \
       -c "$_cwd" -n "$_w")" || { _st="failed:no window"; return; }
   fi
+  if test -n "${5:-}"; then
+    run-slot park "$_sid" "$_pane" "$_s" "$_cwd" >/dev/null \
+      && _st=parked || _st="failed:park"
+    return
+  fi
   if test "$_sid" != -; then
     tmux send-keys -t "$_pane" "$_claude --resume $_sid" Enter
   else
@@ -162,12 +195,35 @@ _start() {
 
 _now="$(date +%s)"
 _tmp="$(mktemp)"
-while IFS="$_t" read -r _st _s _w _cwd _sid _pane _at _tell; do
+# Mid-turn chats first; an idle one waits while one of them does.
+_hot=""
+{ awk -F "$_t" '$1 == "todo" && $8 != "-"' "$_q"
+  awk -F "$_t" '!($1 == "todo" && $8 != "-")' "$_q"
+} | while IFS="$_t" read -r _st _s _w _cwd _sid _pane _at _tell; do
+  _id="revive:$_s:$_w:$_sid"
   case "$_st" in
     todo)
-      if run-slot gate start "revive:$_s:$_w:$_sid" -- >/dev/null; then
-        _start "$_s" "$_w" "$_cwd" "$_sid"
-        _at="$_now"
+      if test "${_tell:--}" != -; then
+        if run-slot gate revive "$_id" -- >/dev/null; then
+          _start "$_s" "$_w" "$_cwd" "$_sid"
+          _at="$_now"
+        else
+          _hot=1
+        fi
+      elif test -z "$_hot"; then
+        if test "$_sid" = - \
+          || _why="$(run-slot needs-open "$_sid" "$_s")"; then
+          if run-slot gate start "$_id" -- >/dev/null; then
+            case "${_why:-}" in wakeup*|cron*)
+              _tell="$(date -r "$_at" +%H:%M)" ;;
+            esac
+            _start "$_s" "$_w" "$_cwd" "$_sid"
+            _at="$_now"
+          fi
+        else
+          _start "$_s" "$_w" "$_cwd" "$_sid" park
+        fi
+        _why=""
       fi ;;
     started)
       _c="$(tmux display-message -p -t "$_pane" \
@@ -191,7 +247,7 @@ were working. Check git status and your last step, then carry on."
   fi
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
     "$_st" "$_s" "$_w" "$_cwd" "$_sid" "${_pane:--}" "$_at" "${_tell:--}"
-done < "$_q" > "$_tmp"
+done > "$_tmp"
 mv "$_tmp" "$_q"
 
 cut -f1 "$_q" | grep -qxE 'todo|started' && exit 0
@@ -202,9 +258,13 @@ while IFS="$_t" read -r _st _s _w _cwd _sid _pane _at _tell; do
 done < "$_q" >> "$_log"
 _ok="$(grep -cE '^(ok|told|untold)' "$_q")"
 _told="$(grep -c '^told' "$_q")"
-_bad="$(grep -vE '^(ok|told|untold)' "$_q" | cut -f2 | sort -u \
+_park="$(grep -c '^parked' "$_q")"
+_bad="$(grep -vE '^(ok|told|untold|parked)' "$_q" | cut -f2 | sort -u \
   | tr '\n' ' ')"
 _msg="revived $_ok Claude chat(s), told $_told to carry on"
+test "$_park" = 0 || _msg="$_msg, $_park idle ones closed (focus resumes)"
 test -z "$_bad" || _msg="$_msg; failed: $_bad(tmux-revive.log)"
+_why="$(cat "$_dir/tmux-watch.last" 2>/dev/null)"
+test -z "$_why" || _msg="$_msg; cause $_why"
 rm -f "$_q"
 TMUX_PANE='' NOTIFY_CLASS=env notify "tmux revive" "$_msg"
