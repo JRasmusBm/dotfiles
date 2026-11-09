@@ -264,5 +264,29 @@ printf 'old\tfeat/x\t2026-11-06T17:43\tCI\t1793979805\n' \
 _check "needs-open: an open wt w8 comes back" \
   'run-slot needs-open sold old | grep -q "^wt w8 until"'
 
+# --- parked: an agent whose Bash only waits in the pool (RAS-31)
+# parker(): Claude 1 runs a shell (2); its children are the cases.
+_parked() {
+  python3 - "$_bin/run-slot" "$@" <<'X'
+import importlib.machinery, importlib.util, json, sys
+l = importlib.machinery.SourceFileLoader('rs', sys.argv[1])
+rs = importlib.util.module_from_spec(importlib.util.spec_from_loader('rs', l))
+l.exec_module(rs)
+ps = {1: (0, 'claude'), 2: (1, '/bin/zsh -c source shell-snapshots/s.sh')}
+for i, c in enumerate(sys.argv[2:]):
+    ps[10 + i] = (2, c)
+with open(rs.POOL_STATE, 'w') as f:
+    json.dump({'queue': [{'waiter': p} for p in ps if 'pool' in ps[p][1]]}, f)
+sys.exit(0 if rs.parker(ps)(1) else 1)
+X
+}
+mkdir -p "$LOCAL_CONFIG/pool"
+_check "parked: queued in the pool behind | tail -30" \
+  '_parked "pool take heavy 2" "tail -30"'
+_check "parked: a CI watch behind | tee and grep" \
+  '_parked "gh pr checks 1 --watch" "tee x.log" "/usr/bin/grep -v ok"'
+_check "working: a shell running only tail -f" '! _parked "tail -f log"'
+_check "working: a build behind | tail" '! _parked "yarn build" "tail -5"'
+
 echo "$_pass passed, $_fail failed"
 test "$_fail" = 0
