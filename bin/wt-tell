@@ -30,6 +30,15 @@ _w8_done() {
   awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
 }
 grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
+# A w8:<slug>:<start> tell is moot once that w8 ended (`wt ip`, `rm`,
+# a delivered tell) or a new `wt w8` replaced it: done, nothing to say.
+case "$_key" in
+  w8:*)
+    awk -F '\t' -v s="$(basename "$_root")" -v t="${_key##*:}" \
+      '$1 == s && $5 == t { f = 1 } END { exit !f }' \
+      "$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting" \
+      2>/dev/null || exit 0 ;;
+esac
 # $1: a run-slot id, revive per worktree (two tells, one revive) or
 # tell per key. A pumped rerun keeps WT_TELL_NO_REVIVE.
 _gate() {

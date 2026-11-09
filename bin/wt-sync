@@ -95,25 +95,33 @@ fi
 # when sent (busy, or the session had just started), and the overdue w8
 # tells above: retried until told, dropped after 3 days.
 _ub="$LOCAL_CONFIG/wt-unblocked"
+# Lines `wt` appends while the loop runs are kept, not overwritten.
 if test -s "$_ub"; then
   _ub_tmp="$(mktemp)"
-  while IFS="$(printf '\t')" read -r _r _k _p _m _t; do
+  _ub_n="$(wc -l < "$_ub" | tr -d ' ')"
+  head -n "$_ub_n" "$_ub" | while IFS="$(printf '\t')" read -r _r _k _p _m _t
+  do
     test -n "$_r" || continue
     test "$(( $(date +%s) - _t ))" -lt 259200 || continue
     wt-tell "$_r" "$_k" "$_p" "$_m" >/dev/null 2>&1 \
       || printf '%s\t%s\t%s\t%s\t%s\n' "$_r" "$_k" "$_p" "$_m" "$_t" \
         >> "$_ub_tmp"
-  done < "$_ub"
+  done
+  tail -n "+$((_ub_n + 1))" "$_ub" >> "$_ub_tmp"
   mv "$_ub_tmp" "$_ub"
 fi
 
-# The overdue w8 also gets its inbox row (wt-cold --overdue, listed
-# repos, at any hour) unless its tell just landed, which ended the w8;
-# wt-tell drops the row when a retry lands later. The stamp moves once
+# The overdue w8 also gets its inbox row (wt-cold --overdue, when a
+# listed repo has one due, at any hour) unless its tell just landed,
+# which ended the w8; wt-tell drops the row when a retry lands later. The stamp moves once
 # the ping went out, so a failure or a reboot retries it next run; after
 # an hour of failures it moves on anyway.
+_w8_cold="$(printf '%s\n' "$_w8_due" | while IFS= read -r _l; do
+  _m="${_l%%	*}"; _m="${_m%%/.worktrees/*}"
+  printf '%s\n' $_repos | grep -qxF "$_m" && echo 1 && break
+done)"
 if test -n "$_w8_last"; then
-  if test -z "$_w8_due" \
+  if test -z "$_w8_cold" \
     || gtimeout -k 10 300 wt-cold --overdue >/dev/null 2>&1 \
     || awk -v a="$_w8_last" -v b="$(date -v-60M +%FT%H:%M)" \
       'BEGIN { exit !(a < b) }'
