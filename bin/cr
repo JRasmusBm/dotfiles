@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -e
+
+_claude_resume() {
+  (
+    if test -n "$1"; then
+      (
+        claude --resume "$1"
+        return 0
+      )
+    fi
+
+    claude --continue || claude
+  )
+}
+
+_claude_resume "$@"
