@@ -23,5 +23,4 @@ while IFS=$'\t' read -r sess wt_path url; do
 done < "$state"
 free="$(vm_stat | awk '/Pages (free|inactive|speculative)/ \
   {gsub("\\.","",$NF); s+=$NF} END {printf "%.1f", s*16384/2^30}')"
-echo "free+inactive: ${free} GB · heavy slots busy:" \
-  "$(ls "$HOME/.cache/heavy-slots" 2>/dev/null | wc -l | tr -d ' ')"
+echo "free+inactive: ${free} GB · pool $(pool ls | head -1)"

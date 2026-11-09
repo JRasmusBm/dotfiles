@@ -80,7 +80,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.bin/test-slot hook",
+            "command": "~/.bin/pool hook browser",
             "timeout": 15
           }
         ]
@@ -90,8 +90,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.bin/heavy-slot hook",
-            "timeout": 5
+            "command": "~/.bin/pool hook bash",
+            "timeout": 15
           },
           {
             "type": "command",
@@ -141,7 +141,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.bin/test-slot release --quiet",
+            "command": "~/.bin/pool release --quiet",
             "timeout": 10
           },
           {

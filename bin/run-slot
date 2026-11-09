@@ -36,7 +36,7 @@ what isn't working, which waiting won't free, so those gates alone
 would stall everything with room left. An
 agent works while Claude marks its session `busy` (a turn or its
 background agents running), unless every tool call it runs only
-waits (a queued heavy slot, `gh … --watch`, a poll loop's sleep):
+waits (queued in `pool`, `gh … --watch`, a poll loop's sleep):
 waiters must not fill the slots. One waiting on me (`waiting`,
 `idle`) or on background shells only (`shell`) holds no slot. An
 admitted start (a row in reserved) counts as working, and as
@@ -47,9 +47,9 @@ most RUN_SLOT_BURST (3) new Claudes start per RUN_SLOT_RESERVE. A
 running turn is never paused; only starts wait, first in first out,
 tells first.
 
-heavy-slot can't deadlock with it: only starts wait here, and a
-start runs no Bash, so nothing waiting here holds or wants a heavy
-slot; an agent queued for one holds no run-slot either.
+pool can't deadlock with it: only starts wait here, and a start
+runs no Bash, so nothing waiting here holds or wants pool units; an
+agent queued in the pool holds no run-slot either (it counts parked).
 
 Close rule: see CLOSE_MIN. A closed session keeps its pane (now a
 shell) and scrollback, its board row and inbox rows; the next tell
@@ -183,12 +183,12 @@ def sessions():
     return out
 
 
-# A tool call that only waits: queued for a heavy slot, watching CI,
-# or a poll loop's sleep.
+# A tool call that only waits: queued in `pool`, watching CI, or a
+# poll loop's sleep.
 WAITS = re.compile(r'gh .*(--watch|run watch)|sleep ([5-9]|\d\d)')
-HEAVY_WAIT = os.path.join(
+POOL_STATE = os.path.join(
     os.environ.get('LOCAL_CONFIG') or os.path.expanduser('~/.config'),
-    'heavy-slots', '.wait')
+    'pool', 'state.json')
 
 
 def procs():
@@ -208,11 +208,15 @@ def parker(ps):
     kids = {}
     for p, (pp, _) in ps.items():
         kids.setdefault(pp, []).append(p)
-    # A live heavy-slot waiter (a marker left by a killed one may name
-    # a reused pid, so check the command too).
-    queued = {int(w) for w in (os.listdir(HEAVY_WAIT)
-                               if os.path.isdir(HEAVY_WAIT) else [])
-              if w.isdigit() and 'heavy-slot' in ps.get(int(w), (0, ''))[1]}
+    # A live pool waiter (a dead one's pid may be reused, so check the
+    # command too).
+    try:
+        with open(POOL_STATE) as f:
+            waiters = [q.get('waiter') for q in json.load(f).get('queue', [])]
+    except (OSError, ValueError):
+        waiters = []
+    queued = {w for w in waiters
+              if isinstance(w, int) and 'pool' in ps.get(w, (0, ''))[1]}
 
     def waits(p):
         if p in queued or WAITS.match(ps[p][1]):
@@ -268,7 +272,7 @@ class Room:
 
     @property
     def floor(self):
-        # Parked agents count here: one queued for a heavy slot is about
+        # Parked agents count here: one queued in the pool is about
         # to take 1.5-4 GB, and a parked guess may be wrong.
         return self.working + self.parked < FLOOR
 

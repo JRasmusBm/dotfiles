@@ -172,15 +172,21 @@ Off by default; many sessions share the RAM. Load the
 `dev-stack` skill before `dev up`, stop what you started,
 never stop what you didn't.
 
-Type-aware eslint/tsc builds a full TS program (1.5–4 GB) per
-run. A `PreToolUse` hook (`heavy-slot hook`) prefixes agents'
-`eslint`/`tsc`/`yarn lint*`/`check-ts*` commands with
-`heavy-slot take $$`: at most `HEAVY_SLOTS` (2) run at once,
-the rest wait ("heavy-slot: … waiting" on stderr). Give such
-commands a long `timeout`. `heavy-slot ls` shows holders.
-A running dev stack holds one too (`dev:<session>`, 1h,
-renewed by any tmux focus on that session; `dev down`
-frees it), so a stack left alone gives its slot back.
+Stacks, devtools browsers and type-aware tsc/eslint share one
+weighted pool (`pool ls`): hooks queue agents first in first
+out, and a queued tsc command waits ("pool: queued …" on
+stderr), so give it a long `timeout`.
+
+## Shared slots
+
+A slot is a lease, not a reservation: hold it only while using
+it, and release it on any wait (a person, CI, an agent, another
+queue). Prepare before taking one: the code done, the build
+green, the checklist written, the person you need at the
+keyboard. One heavy job per session, at the smallest scope
+that answers the question (changed files first, the full
+program only before a push). A shared blocker (a broken base,
+a stuck queue): fix it once and say so, so others don't too.
 
 ## Git
 

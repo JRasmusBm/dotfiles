@@ -1,0 +1,817 @@
+#!/usr/bin/env -S python3 -I
+"""pool — one weighted slot pool for agents' dev stacks, devtools
+browsers and heavy builds (type-aware tsc/eslint), so the Mac stays
+out of swap and a freed slot goes to the next agent at once.
+
+  pool [ls]            units held, holders, queue (oldest first)
+  pool :               fzf a holder or waiter, switch to its session
+  pool wait KIND       queue for a lease (KIND browser or stack) for
+                       this session; exit 0 once held. Keeps its place
+                       when asked again. Run it in the background
+  pool take heavy PID  queue for a heavy job that PID holds until it
+                       exits; exit 75 when this session already has a
+                       heavy job running or queued
+  pool release [--quiet]
+                       drop this session's lease and quit its devtools
+                       Chrome (the MCP restarts it on the next call)
+  pool touch [--human] [SESSION]
+                       renew SESSION's lease; --human renews only a
+                       lease jrb took himself (tmux focus via dev touch)
+  pool held SESSION [KIND]
+                       exit 0 when SESSION holds a lease (of KIND)
+  pool hook browser    PreToolUse hook, chrome-devtools tools: renew
+                       or take a browser lease, else block the call
+  pool hook bash       PreToolUse hook, Bash: prefix heavy commands
+                       with `pool take heavy $$`, refuse a second one
+                       per session; a localhost call renews the lease
+  pool log [N]         last N (20) history rows
+  pool test            self-test in a scratch LOCAL_CONFIG
+
+Weights (units): heavy POOL_HEAVY (4), stack POOL_STACK (4, its
+devtools Chrome included), browser POOL_BROWSER (1); capacity
+POOL_UNITS (12). From memlog 2026-11-03..09 (p90 footprint): one tsc
+4.7 GB, one stack 3.1 GB plus its Chrome 1.2 GB, a Chrome alone
+1.2 GB, so a unit is about 1.1 GB at p90. Pressure 2 (warn) ran 7% of
+the time with under 4 GB in these jobs, 32% at 4-8, 56% at 8-12, 89%
+past 12; p90 weights overstate the typical job by ~2x, so 12 units
+sits at 6-8 GB on a typical mix.
+
+One queue, strict first in first out: the oldest waiter goes first
+even when a smaller one behind it would fit. Waiters poll the state
+once a second and the reap they run frees dead holders, so a freed
+slot is handed on within about a second.
+
+Holders: a heavy job ends with its PID (or after POOL_STALL seconds,
+600, with no CPU in its process tree: it's TERMed). A lease (stack or
+browser) belongs to a tmux session and lasts POOL_IDLE seconds (600)
+from the session's last devtools call or localhost Bash call; then it
+expires: the stack goes down and the browser quits. Nothing extends a
+lease but use. A stack lease whose stack is gone after POOL_GRACE
+(180) is dropped. jrb's own stacks (CLAUDECODE unset) take their
+units at once, never queue, and are renewed by focus instead.
+
+State: $LOCAL_CONFIG/pool/state.json (flock on .lock). History:
+pool/history.tsv, one row per event: epoch event kind owner units
+wait_s hold_s used/cap queued detail; events queue, acquire,
+release, expire, stall, refuse, drop (waiter gone).
+"""
+import fcntl
+import glob
+import json
+import os
+import re
+import signal
+import subprocess
+import sys
+import time
+
+CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser('~/.config')
+DIR = os.path.join(CONF, 'pool')
+STATE = os.path.join(DIR, 'state.json')
+LOCK = os.path.join(DIR, '.lock')
+LOG = os.path.join(DIR, 'history.tsv')
+CAP = int(os.environ.get('POOL_UNITS', '12'))
+UNITS = {
+    'heavy': int(os.environ.get('POOL_HEAVY', '4')),
+    'stack': int(os.environ.get('POOL_STACK', '4')),
+    'browser': int(os.environ.get('POOL_BROWSER', '1')),
+}
+LEASES = ('browser', 'stack')
+IDLE = int(os.environ.get('POOL_IDLE', '600'))
+STALL = int(os.environ.get('POOL_STALL', '600'))
+GRACE = int(os.environ.get('POOL_GRACE', '180'))
+POLL = float(os.environ.get('POOL_POLL', '1'))
+AGENT = os.environ.get('CLAUDECODE') == '1'
+
+HEAVY_RE = re.compile(
+    r'(^|[;&|({]|\n)\s*([A-Za-z_]+=\S*\s+)*((npx|yarn|pnpm|exec|time)\s+)*'
+    r'(\S*/)?(eslint|tsc)(\s|$)'
+    r'|(^|[;&|({]|\n)\s*([A-Za-z_]+=\S*\s+)*(yarn|pnpm|npm run)\s+'
+    r'([^;&|]*\s)?(lint|check-ts)(:[a-z:-]+)?(\s|$)')
+LOCAL_RE = re.compile(r'(localhost|127\.0\.0\.1):\d+')
+READY = ('Take it only when ready to test: the code is done, the build '
+         'green, the checklist written, and the person you need at the '
+         'keyboard.')
+
+
+def now():
+    return int(time.time())
+
+
+def sh(*a):
+    try:
+        return subprocess.run(a, capture_output=True, text=True,
+                              timeout=10).stdout
+    except (OSError, subprocess.SubprocessError):
+        return ''
+
+
+def owner():
+    """The caller's session: POOL_OWNER, its tmux session, its
+    .worktrees/<slug>, else its parent pid."""
+    if os.environ.get('POOL_OWNER'):
+        return os.environ['POOL_OWNER']
+    if os.environ.get('TMUX_PANE'):
+        s = sh('tmux', 'display-message', '-p', '-t',
+               os.environ['TMUX_PANE'], '#S').strip()
+        if s:
+            return s
+    cwd = os.getcwd()
+    if '/.worktrees/' in cwd:
+        return cwd.split('/.worktrees/', 1)[1].split('/', 1)[0]
+    return f'pid-{os.getppid()}'
+
+
+def pid_alive(p):
+    try:
+        os.kill(int(p), 0)
+        return True
+    except (OSError, ValueError, TypeError):
+        return False
+
+
+def session_alive(s):
+    if s.startswith('pid-'):
+        return pid_alive(s[4:])
+    return subprocess.run(['tmux', 'has-session', '-t', f'={s}'],
+                          capture_output=True).returncode == 0
+
+
+def stack_running(s):
+    if s.startswith('pid-'):
+        return True
+    out = sh('tmux', 'list-panes', '-s', '-t', f'={s}', '-F', '#{@dev}')
+    return any(ln.strip() for ln in out.splitlines())
+
+
+def tree(pid):
+    kids = {}
+    for ln in sh('ps', '-axo', 'pid=,ppid=').splitlines():
+        p = ln.split()
+        if len(p) == 2:
+            kids.setdefault(int(p[1]), []).append(int(p[0]))
+    out, todo = [], [int(pid)]
+    while todo:
+        p = todo.pop()
+        out.append(p)
+        todo += kids.get(p, [])
+    return out
+
+
+def cpu(pid):
+    total = 0
+    for ln in sh('ps', '-o', 'time=', '-p',
+                 ','.join(map(str, tree(pid)))).splitlines():
+        m = re.match(r'\s*(?:(\d+)-)?(?:(\d+):)?(\d+):(\d+)', ln)
+        if m:
+            d, h, mi, s = (int(x or 0) for x in m.groups())
+            total += ((d * 24 + h) * 60 + mi) * 60 + s
+    return total
+
+
+def adopt():
+    """First run: count what test-slot and heavy-slot hold, so the
+    cutover doesn't overcommit while their stacks, browsers and builds
+    still run. Each lease gets a fresh idle window."""
+    out = []
+    for f in glob.glob(os.path.join(CONF, 'test-slots', '*.slot')):
+        try:
+            o = open(f).read().split('\t')[0].strip()
+        except OSError:
+            continue
+        if o and session_alive(o):
+            k = 'stack' if stack_running(o) else 'browser'
+            out.append({'kind': k, 'owner': o, 'units': UNITS[k],
+                        'tag': 'test-slot', 'since': now(), 'seen': now(),
+                        'pid': None, 'adopted': 'new'})
+    for f in glob.glob(os.path.join(CONF, 'heavy-slots', '*', 'pid')):
+        try:
+            pid = int(open(f).read().split()[0])
+        except (OSError, ValueError, IndexError):
+            continue
+        if pid_alive(pid):
+            tag = command_of(pid)
+            m = re.search(r'\.worktrees/([^/\s]+)', tag)
+            out.append({'kind': 'heavy',
+                        'owner': m.group(1) if m else f'heavy-slot-{pid}',
+                        'units': UNITS['heavy'], 'tag': tag,
+                        'since': now(), 'seen': now(), 'pid': pid,
+                        'adopted': 'new'})
+    return out
+
+
+class Pool:
+    """The state under flock: `with Pool() as p:` reads it, reaps it,
+    writes it back; side effects run after the lock is gone."""
+
+    def __enter__(self):
+        os.makedirs(DIR, exist_ok=True)
+        self.fd = open(LOCK, 'a')
+        fcntl.flock(self.fd, fcntl.LOCK_EX)
+        st = {}
+        try:
+            with open(STATE) as f:
+                st = json.load(f)
+        except ValueError:
+            pass
+        except OSError:
+            st = {'holders': adopt()}
+        self.holders = st.get('holders', [])
+        self.queue = st.get('queue', [])
+        self.after = []
+        for h in self.holders:
+            if h.get('adopted') == 'new':
+                h['adopted'] = True
+                self.log('acquire', h, wait=0, detail='adopted at cutover')
+        self.reap()
+        return self
+
+    def __exit__(self, *exc):
+        tmp = STATE + '.tmp'
+        with open(tmp, 'w') as f:
+            json.dump({'holders': self.holders, 'queue': self.queue}, f,
+                      indent=1)
+        os.replace(tmp, STATE)
+        fcntl.flock(self.fd, fcntl.LOCK_UN)
+        self.fd.close()
+        for fn in self.after:
+            fn()
+
+    def used(self):
+        return sum(h['units'] for h in self.holders)
+
+    def log(self, event, e, wait='', hold='', detail=''):
+        row = [now(), event, e['kind'], e['owner'], e['units'], wait,
+               hold, f'{self.used()}/{CAP}', len(self.queue),
+               detail.replace('\t', ' ').replace('\n', ' ')[:200]]
+        with open(LOG, 'a') as f:
+            f.write('\t'.join(map(str, row)) + '\n')
+
+    def drop(self, h, event, detail=''):
+        self.holders.remove(h)
+        self.log(event, h, hold=now() - h['since'], detail=detail)
+
+    def reap(self):
+        t = now()
+        for h in list(self.holders):
+            if h['kind'] == 'heavy':
+                if not pid_alive(h['pid']):
+                    self.drop(h, 'release')
+                    continue
+                c = cpu(h['pid'])
+                if c != h.get('cpu'):
+                    h['cpu'], h['cpu_at'] = c, t
+                elif t - h.get('cpu_at', t) >= STALL:
+                    for p in tree(h['pid']):
+                        try:
+                            os.kill(p, signal.SIGTERM)
+                        except OSError:
+                            pass
+                    self.drop(h, 'stall', f'pid {h["pid"]} no CPU {STALL}s')
+                    print(f'pool: TERMed pid {h["pid"]}, no CPU for '
+                          f'{STALL}s', file=sys.stderr)
+                continue
+            if not session_alive(h['owner']):
+                self.drop(h, 'release', 'session gone')
+            elif not h.get('human') and t - h['seen'] > IDLE:
+                self.drop(h, 'expire', f'idle {t - h["seen"]}s')
+                self.after.append(lambda o=h['owner'], k=h['kind']:
+                                  expired(o, k))
+            elif (h['kind'] == 'stack' and t - h['since'] > GRACE
+                  and not stack_running(h['owner'])):
+                self.drop(h, 'release', 'stack gone')
+        for q in list(self.queue):
+            if not pid_alive(q['waiter']):
+                self.queue.remove(q)
+                self.log('drop', q, wait=t - q['at'])
+
+    def lease(self, o):
+        return next((h for h in self.holders
+                     if h['owner'] == o and h['kind'] in LEASES), None)
+
+    def heavy(self, o):
+        """o's heavy job, held or queued, as (entry, 'running'|'queued')."""
+        for h in self.holders:
+            if h['owner'] == o and h['kind'] == 'heavy':
+                return h, 'running'
+        for q in self.queue:
+            if q['owner'] == o and q['kind'] == 'heavy':
+                return q, 'queued'
+        return None, None
+
+    def grant(self, q):
+        """Move the queue head q to holders when it fits."""
+        if not self.queue or self.queue[0] is not q:
+            return False
+        if self.used() + q['units'] > CAP:
+            return False
+        self.queue.pop(0)
+        h = {k: q[k] for k in ('kind', 'owner', 'units', 'tag')}
+        h.update(since=now(), seen=now(), pid=q.get('pid'))
+        self.holders.append(h)
+        self.log('acquire', h, wait=now() - q['at'], detail=q.get('tag', ''))
+        return True
+
+    def take_now(self, kind, o, human=False, tag=''):
+        h = {'kind': kind, 'owner': o, 'units': UNITS[kind], 'tag': tag,
+             'since': now(), 'seen': now(), 'pid': None}
+        if human:
+            h['human'] = True
+        self.holders.append(h)
+        self.log('acquire', h, wait=0, detail=tag)
+        return h
+
+
+def browser_pids(needle):
+    out = []
+    for ln in sh('ps', '-axo', 'pid=,command=').splitlines():
+        p = ln.strip().split(None, 1)
+        if (len(p) == 2 and '/Contents/MacOS/Google Chrome ' in p[1] + ' '
+                and '--window-name=Claude ' in p[1] and needle in p[1]):
+            out.append(int(p[0]))
+    return out
+
+
+def close_browser(o):
+    """Stop o's devtools Chrome: SIGUSR1 to its chrome-devtools-mcp
+    proxies (they restart it on the next call), else kill by window
+    name."""
+    if o.startswith('pid-'):
+        return
+    d = os.path.join(CONF, 'chrome-mcp', o)
+    for f in os.listdir(d) if os.path.isdir(d) else []:
+        if f.isdigit() and 'chrome-devtools-mcp-proxy' in sh(
+                'ps', '-o', 'command=', '-p', f):
+            try:
+                os.kill(int(f), signal.SIGUSR1)
+            except OSError:
+                pass
+    for p in browser_pids(f' · {o}:'):
+        try:
+            os.kill(p, signal.SIGTERM)
+        except OSError:
+            pass
+
+
+def expired(o, kind):
+    if o.startswith('pid-'):
+        return
+    if kind == 'stack':
+        env = dict(os.environ, DEV_SESSION=o)
+        subprocess.Popen(['dev', 'down'], env=env, start_new_session=True,
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    else:
+        close_browser(o)
+
+
+def queue_entry(p, kind, o, pid=None, tag=''):
+    """o's queue entry for kind, now waited on by this process; a new
+    one at the back, or the old one keeping its place."""
+    for q in p.queue:
+        if q['owner'] == o and q['kind'] == kind:
+            q['waiter'] = os.getpid()
+            return q
+    q = {'kind': kind, 'owner': o, 'units': UNITS[kind], 'pid': pid,
+         'waiter': os.getpid(), 'at': now(), 'tag': tag}
+    p.queue.append(q)
+    p.log('queue', q, detail=tag)
+    return q
+
+
+def wait_turn(kind, o, pid=None, tag=''):
+    said = False
+    while True:
+        with Pool() as p:
+            q = queue_entry(p, kind, o, pid, tag)
+            if p.grant(q):
+                return p.used()
+            pos = p.queue.index(q) + 1
+            used = p.used()
+        if not said:
+            print(f'pool: queued #{pos} for {kind} ({UNITS[kind]} units, '
+                  f'{used}/{CAP} held); waiting. `pool ls` shows the line.',
+                  file=sys.stderr)
+            said = True
+        time.sleep(POLL)
+
+
+def cmd_wait(kind):
+    if kind not in LEASES:
+        sys.exit(f'pool: wait takes {" or ".join(LEASES)}, not {kind}')
+    o = owner()
+    with Pool() as p:
+        h = p.lease(o)
+        if h and (h['kind'] == kind or h['kind'] == 'stack'):
+            h['seen'] = now()
+            return 0
+        if h:
+            # A browser lease growing into a stack: give the unit back
+            # first, so nothing is held while queued.
+            p.drop(h, 'release', 'upgrade to stack')
+        if not AGENT:
+            p.take_now(kind, o, human=True)
+            return 0
+    used = wait_turn(kind, o)
+    print(f'pool: {o} holds a {kind} lease ({used}/{CAP} units). It '
+          f'expires after {IDLE // 60} idle minutes (no devtools or '
+          'localhost call); `dev down` or `pool release` when done.')
+    return 0
+
+
+def cmd_take(kind, pid):
+    if kind != 'heavy':
+        sys.exit('usage: pool take heavy PID')
+    o = owner()
+    with Pool() as p:
+        line = lineage(pid)
+        if any(h['kind'] == 'heavy' and str(h['pid']) in line
+               for h in p.holders):
+            return 0
+        e, state = p.heavy(o)
+        if e and str(e.get('pid')) not in line:
+            p.log('refuse', {'kind': 'heavy', 'owner': o,
+                             'units': UNITS['heavy']},
+                  detail=f'{state}: {e.get("tag", "")}')
+            print(refusal(o, e, state), file=sys.stderr)
+            return 75
+    wait_turn('heavy', o, pid=int(pid), tag=command_of(pid))
+    return 0
+
+
+def lineage(pid):
+    """pid and its ancestors: a heavy job run inside one (the hook's
+    shell running `heavy tsc`) re-enters its slot."""
+    out, pid = [], str(pid)
+    while pid not in ('', '0', '1') and pid not in out and len(out) < 32:
+        out.append(pid)
+        pid = sh('ps', '-o', 'ppid=', '-p', pid).strip()
+    return out
+
+
+def refusal(o, e, state):
+    return (f'pool: {o} already has a heavy job {state} '
+            f'({e.get("tag") or "pid " + str(e.get("pid"))}). One heavy '
+            'job per session: wait for it, then run this one. Use the '
+            'smallest scope that answers the question (changed files '
+            'first; the full program only before a push).')
+
+
+def command_of(pid):
+    c = sh('ps', '-o', 'command=', '-p', str(pid)).strip()
+    # An agent's Bash shell: keep the command it evals.
+    m = re.search(r"(?:pool|heavy-slot) take (?:heavy )?\$\$"
+                  r"(?: \|\| exit 75)?\\012(.*?)"
+                  r"(' < /dev/null && pwd -P|$)", c)
+    if m:
+        c = m.group(1).replace('\\012', '; ')
+    return c[:160]
+
+
+def cmd_release(quiet=False):
+    o = owner()
+    msg = 'held no lease'
+    with Pool() as p:
+        h = p.lease(o)
+        if h and h.get('human') and AGENT:
+            msg = "holds jrb's own stack: left alone"
+        elif h:
+            p.drop(h, 'release')
+            msg = f'released its {h["kind"]} lease'
+        p.after.append(lambda: close_browser(o))
+    if not quiet:
+        print(f'pool: {o} {msg}; its devtools Chrome closed.')
+
+
+def cmd_touch(args):
+    human = '--human' in args
+    rest = [a for a in args if a != '--human']
+    o = rest[0] if rest else owner()
+    with Pool() as p:
+        h = p.lease(o)
+        if h and (h.get('human') or not human):
+            h['seen'] = now()
+
+
+def cmd_held(o, kind=None):
+    with Pool() as p:
+        h = p.lease(o)
+    return 0 if h and (kind is None or h['kind'] == kind) else 1
+
+
+def hook_browser():
+    sys.stdin.read()
+    o = owner()
+    with Pool() as p:
+        h = p.lease(o)
+        if h:
+            h['seen'] = now()
+            return 0
+        if not p.queue and p.used() + UNITS['browser'] <= CAP:
+            p.take_now('browser', o)
+            used = p.used()
+            print(json.dumps({'hookSpecificOutput': {
+                'hookEventName': 'PreToolUse',
+                'additionalContext':
+                    f'pool: {o} now holds a browser lease ({used}/{CAP} '
+                    f'units shared by all agents). It expires after '
+                    f'{IDLE // 60} minutes without a devtools call. Run '
+                    '`pool release` the moment you stop driving the '
+                    'browser (done, blocked, waiting on a person, CI or '
+                    'an agent), not at the end of the task.'}}))
+            return 0
+        waiting, used = len(p.queue), p.used()
+    print(f'pool: no browser lease for {o}: {used}/{CAP} units held, '
+          f'{waiting} waiting (`pool ls`). {READY} Then run `pool wait '
+          'browser` with run_in_background true (timeout 1500000) and '
+          'retry this call when it exits 0. Tell the user you are '
+          'waiting and work on something else meanwhile.',
+          file=sys.stderr)
+    return 2
+
+
+def hook_bash():
+    try:
+        inp = json.load(sys.stdin).get('tool_input', {})
+    except ValueError:
+        return 0
+    c = inp.get('command') or ''
+    if re.match(r'\s*(pool|heavy-slot|test-slot)\s', c):
+        return 0
+    if HEAVY_RE.search(c):
+        o = owner()
+        with Pool() as p:
+            e, state = p.heavy(o)
+            if e:
+                p.log('refuse', {'kind': 'heavy', 'owner': o,
+                                 'units': UNITS['heavy']},
+                      detail=f'{state}: {c}')
+        if e:
+            print(refusal(o, e, state), file=sys.stderr)
+            return 2
+        print(json.dumps({'hookSpecificOutput': {
+            'hookEventName': 'PreToolUse',
+            'updatedInput': dict(
+                inp, command='pool take heavy $$ || exit 75\n' + c)}}))
+        return 0
+    if LOCAL_RE.search(c):
+        cmd_touch([])
+    return 0
+
+
+def ago(t):
+    d = now() - t
+    return f'{d // 60}:{d % 60:02d}'
+
+
+def cmd_ls():
+    with Pool() as p:
+        holders, queue, used = list(p.holders), list(p.queue), p.used()
+    print(f'units: {used}/{CAP}')
+    for h in holders:
+        if h['kind'] == 'heavy':
+            note = f'pid {h["pid"]} {h.get("tag", "")}'
+        elif h.get('human'):
+            note = 'jrb, renewed by focus'
+        else:
+            left = IDLE - (now() - h['seen'])
+            note = f'idle {ago(h["seen"])}, expires in {max(left, 0) // 60}m'
+        print(f'  {h["units"]}u {h["kind"]:7} {h["owner"]}  held '
+              f'{ago(h["since"])}  {note}'[:200])
+    if queue:
+        print('queue:')
+    for i, q in enumerate(queue, 1):
+        print(f'  #{i} {q["units"]}u {q["kind"]:7} {q["owner"]}  waiting '
+              f'{ago(q["at"])}  {q.get("tag", "")}'[:200])
+
+
+def cmd_pick():
+    ls = subprocess.run([sys.argv[0], 'ls'], capture_output=True,
+                        text=True).stdout.splitlines()
+    rows = [ln for ln in ls if ln.startswith('  ')]
+    pick = subprocess.run(['fzf', '--prompt=pool> '], input='\n'.join(rows),
+                          capture_output=True, text=True).stdout.split()
+    if not pick:
+        return 1
+    s = pick[3] if pick[0].startswith('#') else pick[2]
+    verb = 'switch-client' if os.environ.get('TMUX') else 'attach-session'
+    return subprocess.call(['tmux', verb, '-t', f'={s}'])
+
+
+def cmd_log(n=20):
+    try:
+        with open(LOG) as f:
+            rows = f.readlines()[-int(n):]
+    except OSError:
+        rows = []
+    for r in rows:
+        f = r.rstrip('\n').split('\t')
+        f[0] = time.strftime('%m-%d %H:%M:%S', time.localtime(int(f[0])))
+        print('\t'.join(f))
+
+
+def cmd_test():
+    import tempfile
+    self = os.path.abspath(sys.argv[0])
+    tmp = tempfile.mkdtemp(prefix='pool-test.')
+    env = dict(os.environ, LOCAL_CONFIG=tmp, CLAUDECODE='1', POOL_POLL='0.2',
+               POOL_UNITS='8')
+    env.pop('TMUX_PANE', None)
+    env.pop('TMUX', None)
+    fails = []
+    keep = []
+
+    def life():
+        s = subprocess.Popen(['sh', '-c', 'sleep 600; :'],
+                             stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+        keep.append(s)
+        return s
+
+    def run(o, *a, stdin='', bg=False, **extra):
+        e = dict(env, POOL_OWNER=o, **extra)
+        if bg:
+            pr = subprocess.Popen([self, *a], env=e, stdout=subprocess.PIPE,
+                                  stderr=subprocess.PIPE, text=True)
+            keep.append(pr)
+            return pr
+        return subprocess.run([self, *a], env=e, input=stdin, text=True,
+                              capture_output=True)
+
+    def state():
+        with open(os.path.join(tmp, 'pool', 'state.json')) as f:
+            return json.load(f)
+
+    def check(name, ok):
+        print(('ok   ' if ok else 'FAIL ') + name)
+        if not ok:
+            fails.append(name)
+
+    def until(fn, secs=5):
+        end = time.time() + secs
+        while time.time() < end:
+            if fn():
+                return True
+            time.sleep(0.1)
+        return False
+
+    a, b, c, d = (f'pid-{life().pid}' for _ in range(4))
+    j1, j2 = life(), life()
+
+    r = run(a, 'take', 'heavy', str(j1.pid))
+    check('heavy: free pool takes at once', r.returncode == 0)
+    r = run(a, 'take', 'heavy', str(j2.pid))
+    check('heavy: second heavy job per session refused',
+          r.returncode == 75 and 'One heavy job per session' in r.stderr)
+    r = run(a, 'take', 'heavy', str(j1.pid))
+    check('heavy: same pid re-enters', r.returncode == 0)
+    kid = []
+    until(lambda: kid.extend(sh('pgrep', '-P', str(j1.pid)).split()) or kid)
+    r = run(a, 'take', 'heavy', kid[0] if kid else '0')
+    check('heavy: a job inside the holder re-enters (heavy in hook)',
+          r.returncode == 0 and len(state()['holders']) == 1)
+
+    hook = json.dumps({'tool_input': {'command': 'yarn tsc --noEmit'}})
+    r = run(a, 'hook', 'bash', stdin=hook)
+    check('hook bash: refuses while one runs',
+          r.returncode == 2 and 'already has a heavy job' in r.stderr)
+    r = run(b, 'hook', 'bash', stdin=hook)
+    out = json.loads(r.stdout or '{}').get('hookSpecificOutput', {})
+    check('hook bash: prefixes heavy command',
+          out.get('updatedInput', {}).get('command', '').startswith(
+              'pool take heavy $$ || exit 75\nyarn tsc'))
+    r = run(b, 'hook', 'bash',
+            stdin=json.dumps({'tool_input': {'command': 'ls'}}))
+    check('hook bash: leaves others alone', r.returncode == 0 and not r.stdout)
+
+    # a: heavy 4 of 8. b takes a stack (4): full.
+    w = run(b, 'wait', 'stack', bg=True)
+    check('lease: stack granted when it fits', w.wait(5) == 0)
+    r = run(c, 'hook', 'browser', stdin='{}')
+    check('hook browser: blocks when full, says how to wait',
+          r.returncode == 2 and 'pool wait browser' in r.stderr)
+
+    # c holds nothing, queues a stack; d queues a browser behind it.
+    wc = run(c, 'wait', 'stack', bg=True)
+    until(lambda: len(state()['queue']) == 1)
+    wd = run(d, 'wait', 'browser', bg=True)
+    until(lambda: len(state()['queue']) == 2)
+    check('queue: two waiters, in order',
+          [q['owner'] for q in state()['queue']] == [c, d])
+    check('queue: waiters hold no units',
+          all(h['owner'] not in (c, d) for h in state()['holders']))
+
+    # Free 4 units: c (head, 4) fits; d must not jump ahead before it.
+    t0 = time.time()
+    sh('pkill', '-P', str(j1.pid))
+    j1.kill()
+    j1.wait()
+    check('handoff: head gets the freed units within 2s',
+          wc.wait(5) == 0 and time.time() - t0 < 2)
+    check('fifo: browser behind it still waits (full again)',
+          wd.poll() is None)
+
+    # Upgrade: d waiting; c already holds stack. b releases.
+    run(b, 'release', '--quiet')
+    check('release: frees the lease and hands it on', wd.wait(5) == 0)
+    s = state()
+    check('state: c stack + d browser = 5/8',
+          sum(h['units'] for h in s['holders']) == 5)
+
+    # dev up from a browser holder never holds units while queued.
+    # a's heavy job (4) queues: 5 + 4 > 8.
+    fill = life()
+    run(a, 'take', 'heavy', str(fill.pid), bg=True)
+    until(lambda: len(state()['queue']) == 1, 2)
+    wu = run(d, 'wait', 'stack', bg=True)
+    until(lambda: any(q['owner'] == d for q in state()['queue']))
+    s = state()
+    check('dev up: a browser holder queued for a stack holds nothing',
+          all(h['owner'] != d for h in s['holders'])
+          and any(q['owner'] == d and q['kind'] == 'stack'
+                  for q in s['queue']))
+    for pr in keep:
+        if pr.args[:1] == [self]:
+            pr.kill()
+            pr.wait()  # a zombie still answers kill -0
+
+    # A dead waiter leaves the queue.
+    check('drop: dead waiters leave the queue',
+          until(lambda: (run(a, 'ls'), not state()['queue'])[1]))
+
+    # Idle lease expires.
+    e2 = dict(POOL_IDLE='1')
+    r = run(c, 'touch')
+    time.sleep(2.2)
+    run(c, 'ls', **e2)
+    check('idle: an unused lease expires',
+          all(h['owner'] != c for h in state()['holders']))
+    r = run(d, 'touch', '--human', d)
+    hist = open(os.path.join(tmp, 'pool', 'history.tsv')).read()
+    check('history: logs queue, acquire, release, expire, refuse, drop',
+          all(f'\t{ev}\t' in hist for ev in
+              ('queue', 'acquire', 'release', 'expire', 'refuse', 'drop')))
+    w = run(a, 'wait', 'browser', bg=True, CLAUDECODE='')
+    check("jrb's own lease: taken at once", w.wait(5) == 0)
+    r = run(a, 'ls')
+    check('ls: shows units and holders', r.stdout.startswith('units: '))
+
+    # Cutover: a first run counts what test-slot and heavy-slot hold.
+    old = tempfile.mkdtemp(prefix='pool-test.')
+    os.makedirs(os.path.join(old, 'test-slots'))
+    os.makedirs(os.path.join(old, 'heavy-slots', '1'))
+    with open(os.path.join(old, 'test-slots', f'{d}.slot'), 'w') as f:
+        f.write(f'{d}\t1\t2\n')
+    with open(os.path.join(old, 'heavy-slots', '1', 'pid'), 'w') as f:
+        f.write(f'{j2.pid}\n')
+    run(a, 'ls', LOCAL_CONFIG=old)
+    with open(os.path.join(old, 'pool', 'state.json')) as f:
+        got = sorted((h['kind'], h['units']) for h in json.load(f)['holders'])
+    check('cutover: adopts old stack and heavy holders',
+          got == [('heavy', 4), ('stack', 4)])
+    run(a, 'ls', LOCAL_CONFIG=old)
+    with open(os.path.join(old, 'pool', 'history.tsv')) as f:
+        check('cutover: adopted once',
+              f.read().count('adopted at cutover') == 2)
+
+    for pr in keep:
+        sh('pkill', '-P', str(pr.pid))
+        try:
+            pr.kill()
+        except OSError:
+            pass
+    print('all ok' if not fails else f'{len(fails)} failed')
+    return 1 if fails else 0
+
+
+def main(a):
+    cmd = a[0] if a else 'ls'
+    if cmd == 'ls':
+        cmd_ls()
+    elif cmd == ':':
+        return cmd_pick()
+    elif cmd == 'wait' and len(a) == 2:
+        return cmd_wait(a[1])
+    elif cmd == 'take' and len(a) == 3:
+        return cmd_take(a[1], a[2])
+    elif cmd == 'release':
+        cmd_release('--quiet' in a)
+    elif cmd == 'touch':
+        cmd_touch(a[1:])
+    elif cmd == 'held' and len(a) in (2, 3):
+        return cmd_held(*a[1:])
+    elif cmd == 'hook' and a[1:] == ['browser']:
+        return hook_browser()
+    elif cmd == 'hook' and a[1:] == ['bash']:
+        return hook_bash()
+    elif cmd == 'log':
+        cmd_log(*a[1:2])
+    elif cmd == 'test':
+        return cmd_test()
+    else:
+        print(__doc__.split('\n\n')[1], file=sys.stderr)
+        return 1
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]) or 0)
