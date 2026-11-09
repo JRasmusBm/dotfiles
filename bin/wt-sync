@@ -11,7 +11,10 @@
 # First, offline too: tmux-revive snapshots the Claude panes and, once
 # the tmux server died or restarted, brings them back as run-slot
 # makes room; run-slot closes stalled Claude sessions and starts queued agents
-# (run-slot ls).
+# (run-slot ls). `wt wake` in each repo of the list and each repo with a
+# snooze: a timed `wt sz` fires within a minute, after a reboot too.
+# A `wt w8` deadline that passed since the last run gets its overdue ping
+# (wt-cold --ping) at any hour.
 # Weekdays 08:00-19:00, every 10th minute, wt-cold syncs the inbox
 # with every work item that stopped moving (a `stalled` row each).
 # On a phone hotspot it polls every 5th minute only; a poll without a
@@ -34,8 +37,39 @@ run-slot pump >/dev/null 2>&1
 btabs expire >/dev/null 2>&1
 test "$(( $(date +%-M) % 5 ))" != 0 || btabs log >/dev/null 2>&1
 
+_repos="${WT_SYNC_REPOS:-$(cat "$HOME/.config/wt-sync-repos" 2>/dev/null)}"
+_boards="$LOCAL_CONFIG/worktrees"
+
+# Snoozes that came due go back on the board. Local, so before the
+# metered gate. Rows written by `wt sz` carry their main checkout.
+for _repo in $( { printf '%s\n' $_repos
+  cat "$_boards"/*.snoozed 2>/dev/null | cut -f6; } | sort -u); do
+  test -d "$_repo" || continue
+  (cd "$_repo" && gtimeout -k 5 60 wt wake >/dev/null 2>&1)
+done
+
 if _metered && test "$(( $(date +%-M) % 5 ))" != 0; then
   exit 0
+fi
+
+# A w8 deadline in (last run, now] gets its overdue ping now, at any
+# hour; wt-cold --sync keeps the weekday window for the general sweep.
+# The stamp moves only once the ping went out, so a gh failure or a
+# reboot retries it on the next run.
+_w8s="$LOCAL_CONFIG/wt-w8-stamp"
+_now="$(date +%FT%H:%M)"
+if test -f "$_w8s"; then
+  _last="$(cat "$_w8s")"
+  _due="$(for _repo in $_repos; do
+      cat "$_boards/$(basename "$_repo").waiting" 2>/dev/null
+    done | awk -F '\t' -v a="$_last" -v b="$_now" \
+      '$3 > a && $3 <= b { print; exit }')"
+  if test -z "$_due" || gtimeout -k 10 300 wt-cold --ping >/dev/null 2>&1
+  then
+    echo "$_now" > "$_w8s"
+  fi
+else
+  echo "$_now" > "$_w8s"
 fi
 
 # Unblock tells that couldn't be delivered when `wt` sent them (busy, or
@@ -53,8 +87,7 @@ if test -s "$_ub"; then
   mv "$_ub_tmp" "$_ub"
 fi
 
-for _repo in ${WT_SYNC_REPOS:-$(cat "$HOME/.config/wt-sync-repos" \
-  2>/dev/null)}; do
+for _repo in $_repos; do
   cd "$_repo" || continue
   # Every 5th minute: CI failures and reviews on my open PRs.
   test "$(( $(date +%-M) % 5 ))" != 0 || wt-pr-watch "$_repo"

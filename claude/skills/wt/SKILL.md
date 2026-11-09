@@ -122,13 +122,13 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `# SNOOZED` until a date or time: `monday`, `tomorrow`,
   `+3 days`, `2026-10-19`, `+3 hours`, `15:00` (parsed by
   `gdate -d`, must be in the future), recorded in
-  `<repo>.snoozed` as slug/branch/date[Ttime]/section/start. A time
-  also starts a detached timer that runs `wt wake` then.
-  Every `wt` run wakes whatever is due — back to the section it
-  was snoozed from (else `# IN PROGRESS`), and its agent is told
-  when it was snoozed and woke, and to double-check, same path as unblocking — so the board
-  corrects itself the next time `wt` is used on or after the
-  date; `wt wake` forces the check. Unlike `rb`, Linear is left
+  `<repo>.snoozed` as slug/branch/date[Ttime]/section/start/main
+  checkout. `wt-sync` runs `wt wake` every minute in each repo of
+  its list and each repo with a snooze (so a reboot doesn't lose
+  one), and so does every `wt` run: what's due goes back to the
+  section it was snoozed from (else `# IN PROGRESS`), and its agent
+  is told when it was snoozed and woke, and to double-check, same
+  path as unblocking. Unlike `rb`, Linear is left
   alone: a snooze is when I plan to look again, not a state the
   team shares. Snoozing clears its inbox, and `notify` stays
   silent for a snoozed worktree (so its Claude finishing
@@ -156,7 +156,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   in `<repo>.waiting`. Agents: before starting any wait or poll
   (deploy, CI, review, a colleague's answer, logs), run `wt w8
   <your estimate> "<what>"`. When the event arrives, `wt ip`.
-  Past the deadline it pings "overdue: <what>: investigate".
+  Past the deadline it pings "overdue: <what>: investigate":
+  `wt-sync` runs `wt-cold --ping` within a minute of it, at any
+  hour and after a reboot, and the ping gets its own row even when
+  the worktree has an unread one. Only repos in `wt-sync`'s list.
   Cleared by `ip`/`rt`/`rd`/`rp`/`ra`/`sz`/`done`/`rm` and by
   any delivered `wt-tell`.
 - `wt merged` — its PR merged: parks the worktree in `# PROD
@@ -359,7 +362,8 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   one silent `stalled` row (ranked below merge/blocked, above fyi)
   saying the next move; a pending row of its own makes it "waiting
   on you: …" instead (for a bare "done": the agent's last question,
-  else section and PR state). Re-pings `WT_STALL_MIN` (30) weekday-minutes
+  else section and PR state; an overdue w8 keeps its own row).
+  Re-pings `WT_STALL_MIN` (30) weekday-minutes
   after a clear; auto-clears on the next run once it isn't stalled
   (rows carry a ref, `notif seen-ref`, so a jump that re-keyed one
   onto a pane doesn't strand it). Batched rows:

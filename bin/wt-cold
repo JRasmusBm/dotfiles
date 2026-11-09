@@ -26,7 +26,8 @@ Each item is in exactly one state, checked in this order:
              BLOCKED on a ticket (ABC-123 in the reason): WAITING while
              it is started in Linear and changed in the last workday
              BLOCKED on free text: make it a ticket or snooze it
-             a pending inbox row on it: "waiting on you: <its message>",
+             a pending inbox row on it (not an overdue w8): "waiting
+             on you: <its message>",
              or for a bare "done" the agent's last question, else its
              section and PR state
              else the one touch it needs, read from PR, disk and section
@@ -34,7 +35,9 @@ Weekends don't count toward any elapsed time.
 
 Pinging: one `stalled` row (`notify`, ranked after merge and blocked)
 per STALLED item with no pending row on it, once it has stalled for
-WT_STALL_MIN (30) minutes; an overdue w8 at once. An item blocked on a
+WT_STALL_MIN (30) minutes; an overdue w8 at once, even when the
+worktree has a pending row of its own (wt-sync runs --ping within a
+minute of the deadline, at any hour). An item blocked on a
 stalled worktree gets none: the blocker's row says "+N blocked on
 this". A cleared row comes back after WT_STALL_MIN while the item is
 still STALLED. A row clears itself on the next run once its item is no
@@ -642,7 +645,10 @@ def collect():
             judge(b, it, st)
         for it in b.items.values():
             _, other = pending_for(it, inbox)
-            if it['state'] == 'STALLED' and other and not it.get('batch'):
+            # An overdue w8 keeps its own row: it ranks above an
+            # fyi the worktree already has.
+            if it['state'] == 'STALLED' and other and not it.get('batch') \
+                    and not it.get('now'):
                 it['why'] = f'waiting on you: {asks(it, other)}'
                 it['pin'] = True
         fold(b)
@@ -839,7 +845,7 @@ def main():
             # gh failed (a 504): PR-based judgements are blind, so
             # syncing now would clear rows and re-ping them next run.
             print('wt-cold: gh failed, inbox left as is')
-            return
+            return 1
         sent, dropped = ping(nd, inbox, boards, batches)
         log_counts(nd, items)
         print(f'{summary(items, batches)}: {sent} rows sent, '
