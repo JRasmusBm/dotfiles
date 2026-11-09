@@ -19,8 +19,8 @@ test -n "$_re" || exit 0
 if test "${1:-}" = --staged || test $# -eq 0; then
   _diff="$(git diff --cached -U0 --no-color --no-ext-diff)"
 else
-  _diff="$(git diff -U0 --no-color --no-ext-diff "$1" "$2")"
-fi
+  _diff="$(git diff -U0 --no-color --no-ext-diff "$1" "${2:?}")"
+fi || { echo "leak-check: can't diff: $*" >&2; exit 1; }
 
 _hits="$(printf '%s\n' "$_diff" | awk '
   /^\+\+\+ / { f = substr($0, 7); next }
