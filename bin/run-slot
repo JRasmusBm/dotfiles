@@ -5,13 +5,30 @@
         A start asks first. 0: go now (CMD is not run, the caller
         goes on). 75: queued; `pump` runs CMD once it is ID's turn,
         with RUN_SLOT_ID=ID so its own gate passes. No CMD: the
-        caller asks again by itself (every minute), and its slot
-        waits RUN_SLOT_RESERVE seconds for it. KIND is `tell` (a
-        reply to a tell, or the revive it needs: ahead of the rest)
-        or `start` (a new agent, a crash revive). Asking again with
-        the same ID keeps its place and replaces CMD; one admit lets
-        one caller through. IDs starting `tell:` deliver to a running
-        Claude; any other starts one.
+        caller asks again by itself, and its slot waits
+        RUN_SLOT_RESERVE seconds for it; it keeps its place in the
+        queue until it does. KIND, in the order they go: `revive` (a
+        chat that was mid-turn when its tmux server died: past the
+        cap, memory alone holds it), `tell` (a reply to a tell, or
+        the revive it needs) or `start` (a new agent, an idle chat
+        back after a crash). Asking again with the same ID keeps its
+        place and replaces CMD; one admit lets one caller through.
+        IDs starting `tell:` deliver to a running Claude; any other
+        starts one.
+  run-slot wait KIND ID
+        gate with no CMD, asked every 5 s until admitted, printing
+        `queued, place N of M (why)` as it changes: a start typed
+        into a pane before `claude` (wt) shows why it waits;
+        interrupted or its pane gone, it leaves the queue
+  run-slot needs-open SID SESSION
+        print why a chat whose Claude died (tmux-revive) must come
+        back now rather than as a closed session: its turn ended
+        within the close rule, it asked me, a tell is on its way, an
+        open `wt w8`, a wakeup or cron it set, the keep list; exit 1
+        when none
+  run-slot park SID PANE SESSION CWD
+        record a chat whose Claude died as closed in PANE (a shell),
+        as `close` does, so a focus, a tell or `revive` resumes it
   run-slot pend ID -- CMD
         hand run-slot a tell it must deliver to a Claude that is
         starting (wt-tell, after a revive): `pump` runs CMD with
@@ -38,11 +55,11 @@
   run-slot ls          room, working agents, queue, closed sessions
 
 Room: fewer than RUN_SLOTS (cores) agents working, at least
-RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure normal. Below
-RUN_SLOT_FLOOR (6) working, pressure warn (2) is fine too and
-RUN_SLOT_FLOOR_GB (4) free is enough: the memory is then held by
-what isn't working, which waiting won't free, so those gates alone
-would stall everything with room left. An
+RUN_SLOT_MIN_GB (WT_NIGHT_MIN_GB, 8) free and pressure under critical
+(4): macOS holds warn (2) for hours with GBs free, so free memory is
+the gauge. Below RUN_SLOT_FLOOR (6) working, RUN_SLOT_FLOOR_GB (4)
+free is enough: the memory is then held by what isn't working, which
+waiting won't free. A revive needs only the floor's memory. An
 agent works while Claude marks its session `busy` (a turn or its
 background agents running), unless every tool call it runs only
 waits (queued in `pool`, `gh … --watch`, a poll loop's sleep):
@@ -51,10 +68,9 @@ waiters must not fill the slots. One waiting on me (`waiting`,
 admitted start (a row in reserved) counts as working, and as
 RUN_SLOT_START_GB (0.5) less free memory, for
 RUN_SLOT_RESERVE seconds (120): a new Claude takes that long to show
-busy and reach its size, so the gauge lags; for the same reason at
-most RUN_SLOT_BURST (3) new Claudes start per RUN_SLOT_RESERVE. A
-running turn is never paused; only starts wait, first in first out,
-tells first.
+busy and reach its size, so the gauge lags: starts go as fast as
+that leaves room. A running turn is never paused; only starts wait,
+first in first out, revives and tells first.
 
 pool can't deadlock with it: only starts wait here, and a start
 runs no Bash, so nothing waiting here holds or wants pool units; an
@@ -84,6 +100,7 @@ import json
 import os
 import re
 import shlex
+import signal
 import subprocess
 import sys
 import time
@@ -108,9 +125,8 @@ MIN_GB = float(os.environ.get('RUN_SLOT_MIN_GB')
 FLOOR_GB = float(os.environ.get('RUN_SLOT_FLOOR_GB') or 4)
 START_GB = float(os.environ.get('RUN_SLOT_START_GB') or 0.5)
 RESERVE = int(os.environ.get('RUN_SLOT_RESERVE') or 120)
-BURST = int(os.environ.get('RUN_SLOT_BURST') or 3)
 TMUX = shlex.split(os.environ.get('RUN_SLOT_TMUX') or 'tmux')
-PRIO = {'tell': 0, 'start': 1}
+PRIO = {'revive': 0, 'tell': 1, 'start': 2}
 # Prompt cache: a revive within an hour of the last turn rewrites what
 # a kept session would have read: cache write 1.25 vs read 0.1.
 CACHE_TTL = 3600
@@ -273,14 +289,11 @@ class Room:
     def free_after(self):
         return self.free - START_GB * len(self.res)
 
-    @property
-    def starting(self):
-        return sum(not r[1].startswith('tell:') for r in self.res)
-
-    def ok(self, id_):
+    def ok(self, kind):
+        if kind == 'revive':
+            return self.calm() and self.free_after >= FLOOR_GB
         return (self.working < CAP and self.calm()
-                and self.free_after >= self.min_gb
-                and (id_.startswith('tell:') or self.starting < BURST))
+                and self.free_after >= self.min_gb)
 
     @property
     def floor(self):
@@ -293,18 +306,16 @@ class Room:
         return min(MIN_GB, FLOOR_GB) if self.floor else MIN_GB
 
     def calm(self):
-        return self.pressure <= 1 or (self.pressure == 2 and self.floor)
+        return self.pressure < 4
 
-    def why(self, id_=''):
-        if self.working >= CAP:
+    def why(self, kind=''):
+        if self.working >= CAP and kind != 'revive':
             return f'{self.working} working (cap {CAP})'
-        if not id_.startswith('tell:') and self.starting >= BURST:
-            return f'{self.starting} starting (burst {BURST})'
         if not self.calm():
-            return f'pressure {self.pressure}' + (
-                f', {self.working} working' if self.pressure == 2 else '')
-        if self.free_after < self.min_gb:
-            return f'{self.free_after:.1f} GB free (min {self.min_gb:g})'
+            return f'pressure {self.pressure}'
+        least = FLOOR_GB if kind == 'revive' else self.min_gb
+        if self.free_after < least:
+            return f'{self.free_after:.1f} GB free (min {least:g})'
         return 'room'
 
     def take(self, id_, used):
@@ -339,15 +350,17 @@ def gate(kind, id_, cmd):
                 return 75
             held[2:] = ['1']
             write(RESERVED, room.res)
+            write(QUEUE, [r for r in queue() if r[2] != id_])
             return 0
         q = queue()
+        held = {r[1] for r in room.res}
         ahead = []
         for r in q:
             if r[2] == id_:
                 break
-            if PRIO.get(r[1], 9) <= PRIO.get(kind, 9):
+            if PRIO.get(r[1], 9) <= PRIO.get(kind, 9) and r[2] not in held:
                 ahead.append(r)
-        if room.ok(id_) and not ahead:
+        if room.ok(kind) and not ahead:
             write(QUEUE, [r for r in q if r[2] != id_])
             room.take(id_, True)
             log('admit', id_, room, kind)
@@ -358,9 +371,48 @@ def gate(kind, id_, cmd):
               + ([] if old else [row]))
         if not old:
             log('queue', id_, room,
-                f'{room.why(id_)}; {len(ahead)} ahead' if ahead
-                else room.why(id_))
+                f'{room.why(kind)}; {len(ahead)} ahead' if ahead
+                else room.why(kind))
         return 75
+
+
+def place(id_):
+    """(N, M, why) of queued ID: its place among M queued, why it waits."""
+    q = queue()
+    n = next((i for i, r in enumerate(q, 1) if r[2] == id_), 0)
+    room = Room()
+    why = room.why(q[n - 1][1]) if n else 'room'
+    if why == 'room' and n > 1:
+        why = f'{n - 1} ahead'
+    return n, len(q), why
+
+
+def wait(kind, id_):
+    """Gate KIND ID until admitted, showing its place; interrupted
+    (Ctrl-C, the pane closed), it leaves the queue and frees a hold."""
+    global NOW
+    last = None
+    signal.signal(signal.SIGHUP, signal.default_int_handler)
+    signal.signal(signal.SIGTERM, signal.default_int_handler)
+    try:
+        while True:
+            NOW = time.time()
+            if gate(kind, id_, []) == 0:
+                if last:
+                    print('run-slot: your turn', flush=True)
+                return 0
+            now = place(id_)
+            if now != last:
+                print(f'run-slot: queued, place {now[0]} of {now[1]} '
+                      f'({now[2]}; run-slot ls)', flush=True)
+                last = now
+            time.sleep(5)
+    except KeyboardInterrupt:
+        with Lock():
+            write(QUEUE, [r for r in queue() if r[2] != id_])
+            write(RESERVED, [r for r in rows(RESERVED) if r[1] != id_])
+        log('left', id_, None, kind)
+        return 130
 
 
 def pend(id_, cmd):
@@ -416,20 +468,26 @@ def pump(skip=()):
     with Lock():
         room = Room(skip)
         q = queue()
+        held = {r[1] for r in room.res}
         rest = []
         for r in q:
-            # A start held back by the burst lets the tells behind it go.
-            if not room.ok(r[2]):
+            # Held for a caller that asks by itself: it keeps its place
+            # until it uses the slot (gate), and is held again if that
+            # lapses.
+            if r[2] in held:
                 rest.append(r)
-                if room.ok('tell:'):
-                    continue
-                rest += q[q.index(r) + 1:]
-                break
+                continue
+            # A start held back by the cap lets the revives behind it go.
+            if not room.ok(r[1]):
+                rest.append(r)
+                continue
             cmd = json.loads(r[3])
             room.take(r[2], bool(cmd))
             log('run' if cmd else 'hold', r[2], room, ' '.join(cmd)[:200])
             if cmd:
                 started.append(r)
+            else:
+                rest.append(r)
         write(QUEUE, rest)
     env = {k: v for k, v in os.environ.items() if k != 'TMUX_PANE'}
     for r in started:
@@ -580,9 +638,23 @@ def rss_mb(pid):
     return int(v) // 1024 if v else 0
 
 
+def pane_key(pane, name=''):
+    """A pane as its key `%5@agents-1` (shims/tmux): a bare one takes
+    session NAME's server from tmux-home, else default."""
+    if not pane or '@' in pane:
+        return pane
+    try:
+        with open(os.path.join(CONF, 'tmux-home', name)) as f:
+            return f'{pane}@{f.read().strip() or "default"}'
+    except OSError:
+        return f'{pane}@default'
+
+
 def pane_of(s):
     t = s.get('tmux') or ''
-    return t.rsplit('.', 1)[-1] if '.%' in t else None
+    if '.%' not in t:
+        return None
+    return pane_key(t.rsplit('.', 1)[-1], t.split(':')[0])
 
 
 def focused_panes():
@@ -669,6 +741,32 @@ def candidate(s, focus):
                    (s.get('startedAt') or 0) / 1000) or kept(s))
 
 
+def needs_open(sid, name):
+    """Why the chat sid in tmux session name, whose Claude died with
+    its server, comes back now (see candidate), or None."""
+    ctx, text, end = last_turn(sid)
+    if end and (NOW - end) / 60 < CLOSE_MIN:
+        return f'turn ended {(NOW - end) / 60:.0f}m ago'
+    if asks(text) or in_inbox(sid):
+        return 'asked me'
+    t = told(name)
+    if t and t.startswith('tell:'):
+        return f'tell on its way ({t})'
+    return (waiting(name) or timers(sid) or kept({'tmux': name}))
+
+
+def park(sid, pane, name, cwd):
+    ctx, _, end = last_turn(sid)
+    with Lock():
+        rs = [r for r in rows(CLOSED) if r[1] != sid
+              and NOW - float(r[0]) < 7 * 86400]
+        rs.append([int(NOW), sid, pane_key(pane, name), name, cwd, ctx,
+                   int(end), 'closed'])
+        write(CLOSED, rs)
+    log('park', sid, None, f'{name} {pane}')
+    return 0
+
+
 def close(dry, verbose):
     room = Room()
     focus = focused_panes()
@@ -728,11 +826,13 @@ def revive(key, focus=False):
     only in its pane."""
     if key == '.':
         key = os.environ.get('TMUX_PANE', '')
+    if key.startswith('%'):
+        key = pane_key(key)
     # Locked: the three focus hooks fire at once.
     with Lock():
         rs = rows(CLOSED)
         hit = next((r for r in reversed(rs) if r[7] == 'closed'
-                    and key in (r[1], r[2])), None)
+                    and key in (r[1], pane_key(r[2]))), None)
         if not hit:
             return 1
         _, sid, pane, name, cwd, ctx, end = hit[:7]
@@ -785,10 +885,19 @@ def ls():
 
 def main(a):
     cmd = a[0] if a else ''
+    if cmd in ('gate', 'wait') and len(a) >= 3 and a[1] not in PRIO:
+        sys.exit(f'run-slot: kind is {", ".join(PRIO)}, not {a[1]}')
     if cmd == 'gate' and len(a) >= 4 and a[3] == '--':
-        if a[1] not in PRIO:
-            sys.exit(f'run-slot: kind is tell or start, not {a[1]}')
         return gate(a[1], a[2], a[4:])
+    if cmd == 'wait' and len(a) == 3:
+        return wait(a[1], a[2])
+    if cmd == 'park' and len(a) == 5:
+        return park(*a[1:])
+    if cmd == 'needs-open' and len(a) == 3:
+        why = needs_open(a[1], a[2])
+        if why:
+            print(why)
+        return 0 if why else 1
     if cmd == 'pend' and len(a) >= 4 and a[2] == '--':
         return pend(a[1], a[3:])
     if cmd == 'pump':
@@ -811,7 +920,8 @@ def main(a):
         return revive(a[1])
     if cmd == 'focus' and len(a) == 2:
         hit = next((r for r in reversed(rows(CLOSED))
-                    if r[2] == a[1] and r[7] == 'closed'), None)
+                    if pane_key(r[2]) == pane_key(a[1])
+                    and r[7] == 'closed'), None)
         # A worktree's pane is its one chat's; a main checkout's is not.
         if hit and ('/.worktrees/' in hit[4] or in_inbox(hit[1])):
             revive(a[1], focus=True)

@@ -14,10 +14,10 @@ _t="$(mktemp -d /tmp/rst.XXXX)"
 unset TMUX TMUX_PANE RUN_SLOT_ID RUN_SLOT_PENDING
 export TMUX_TMPDIR="$_t/s" LOCAL_CONFIG="$_t/cfg" \
   CLAUDE_CONFIG_DIR="$_t/cc" FAKE="$_t/fake" RUN_SLOT_FREE_GB=100 \
-  RUN_SLOT_PRESSURE=1 RUN_SLOTS=12
+  RUN_SLOT_PRESSURE=1 RUN_SLOTS=12 TMUX_AGENT_SHARDS=0
 test -n "${KEEP:-}" || trap 'tmux kill-server 2>/dev/null; rm -rf "$_t"' EXIT
 mkdir -p "$TMUX_TMPDIR" "$FAKE/bin"
-export PATH="$FAKE/bin:$_bin:$PATH"
+export PATH="$FAKE/bin:$_root/shims:$_bin:$PATH"
 # Panes run /bin/sh, whose PATH no shell rc reorders: run-slot types a
 # bare `claude`, which must be the fake.
 export SHELL=/bin/sh ENV=
@@ -203,6 +203,66 @@ run-slot pump >/dev/null
 _check "expiry: a 3-day-old pending tell is dropped and logged" \
   'test ! -s "$_rs/pending" && grep -q "	drop	tell:gone:k	" \
     "$_rs/run-slot.log"'
+
+# --- gate: a revive goes past the cap, a hold keeps its place
+_given
+_g() { RUN_SLOTS=1 run-slot gate "$1" "$2" -- >/dev/null 2>&1; echo $?; }
+_check "gate: the first start takes the one slot" 'test "$(_g start a)" = 0'
+_check "gate: the next start waits on the cap" 'test "$(_g start c)" = 75'
+_g start d >/dev/null
+_check "gate: a revive goes past the cap" 'test "$(_g revive r)" = 0'
+: > "$_rs/reserved"
+RUN_SLOTS=1 run-slot pump >/dev/null
+_check "hold: the pump holds c's slot, c keeps its place in the queue" \
+  'grep -q "	c	0$" "$_rs/reserved" \
+    && cut -f3 "$_rs/queue" | tr "\n" " " | grep -qx "c d "'
+_check "hold: d stays behind c's hold" 'test "$(_g start d)" = 75'
+printf '%s\tc\t0\n' "$(($(date +%s) - 1))" > "$_rs/reserved"
+RUN_SLOTS=1 run-slot pump >/dev/null
+_check "hold: a lapsed hold is held again, still first" \
+  'grep -q "	c	0$" "$_rs/reserved" \
+    && test "$(head -1 "$_rs/queue" | cut -f3)" = c'
+_check "hold: c uses its slot and leaves the queue" \
+  'test "$(_g start c)" = 0 && test "$(cut -f3 "$_rs/queue")" = d'
+
+# --- wait: prints its place, goes once there is room
+_given
+printf '%s\tx\t1\n' "$(($(date +%s) + 600))" > "$_rs/reserved"
+RUN_SLOTS=1 run-slot wait start w > "$_t/wait.out" 2>&1 &
+_wp=$!
+_wait 'grep -q queued "$_t/wait.out"'
+_check "wait: shows its place and why" \
+  'grep -qx "run-slot: queued, place 1 of 1 (1 working (cap 1); run-slot ls)" \
+    "$_t/wait.out"'
+: > "$_rs/reserved"
+_wait '! kill -0 $_wp 2>/dev/null'
+wait "$_wp"; _rc=$?
+_check "wait: admitted once room frees, exit 0" \
+  'test "$_rc" = 0 && grep -qx "run-slot: your turn" "$_t/wait.out"'
+printf '%s\tx\t1\n' "$(($(date +%s) + 600))" > "$_rs/reserved"
+RUN_SLOTS=1 run-slot wait start h > "$_t/wait.out" 2>&1 &
+_wp=$!
+_wait 'grep -q queued "$_t/wait.out"'
+kill -HUP "$_wp"
+wait "$_wp"
+_check "wait: its pane closed, it leaves the queue" \
+  '! grep -q "	h	" "$_rs/queue" && grep -q "	left	h	" "$_rs/run-slot.log"'
+
+# --- needs-open: which chats a dead server's revive brings back now
+_given
+_transcript sold
+_check "needs-open: an old idle chat with nothing on its way stays closed" \
+  '! run-slot needs-open sold old >/dev/null'
+_now="$(date -u +%Y-%m-%dT%H:%M:%S)"
+printf '%s\n' "{\"type\":\"assistant\",\"timestamp\":\"$_now.000Z\",$(
+  )\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"Done.\"}]}}" \
+  > "$CLAUDE_CONFIG_DIR/projects/p/snew.jsonl"
+_check "needs-open: a turn that just ended comes back" \
+  'run-slot needs-open snew new | grep -q "^turn ended 0m ago"'
+printf 'old\tfeat/x\t2026-11-06T17:43\tCI\t1793979805\n' \
+  > "$LOCAL_CONFIG/worktrees/repo.waiting"
+_check "needs-open: an open wt w8 comes back" \
+  'run-slot needs-open sold old | grep -q "^wt w8 until"'
 
 echo "$_pass passed, $_fail failed"
 test "$_fail" = 0

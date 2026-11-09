@@ -17,7 +17,7 @@ export TMUX_TMPDIR="$_t/s" LOCAL_CONFIG="$_t/cfg" \
   CLAUDE_CONFIG_DIR="$_t/cc" FAKE="$_t/fake"
 test -n "${KEEP:-}" || trap 'tmux kill-server 2>/dev/null; rm -rf "$_t"' EXIT
 mkdir -p "$TMUX_TMPDIR" "$FAKE/bin"
-export PATH="$FAKE/bin:$_root/bin:$PATH"
+export PATH="$FAKE/bin:$_root/shims:$_root/bin:$PATH"
 
 # claude: forks the zsh below. It writes the session file
 # claude-pane reads, logs argv and each line typed to $PWD/.got, and
@@ -56,7 +56,19 @@ X
 for _c in notify; do
   printf '#!/bin/sh\necho "$*" >> "$FAKE/%s"\n' "$_c" > "$FAKE/bin/$_c"
 done
-printf '#!/bin/sh\nexit 0\n' > "$FAKE/bin/run-slot"
+# run-slot: logs each call; needs-open gives $FAKE/open's reason for a
+# sid listed there (`sid<TAB>reason`), else exit 1; a revive gate
+# refuses while $FAKE/full exists.
+cat > "$FAKE/bin/run-slot" <<'X'
+#!/bin/sh
+echo "$*" >> "$FAKE/run-slot.log"
+case "$1" in
+  needs-open) _r="$(awk -F '\t' -v s="$2" '$1 == s { print $2 }' \
+      "$FAKE/open" 2>/dev/null)"
+    test -n "$_r" && echo "$_r" ;;
+  gate) test "$2" != revive || ! test -f "$FAKE/full" ;;
+esac
+X
 printf '#!/bin/sh\nexit 1\n' > "$FAKE/bin/source_tmux_script"
 cat > "$FAKE/bin/default_tmux_session" <<'X'
 #!/bin/sh
@@ -71,7 +83,8 @@ _check() { if eval "$2"; then _ok "$1"; else _no "$1"; fi; }
 
 _given() {
   tmux kill-server 2>/dev/null
-  rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/w" "$FAKE/notify"
+  rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/w" "$FAKE/notify" \
+    "$FAKE/open" "$FAKE/full" "$FAKE/run-slot.log"
   mkdir -p "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR/sessions" "$_t/w"
 }
 
@@ -110,6 +123,7 @@ _said() {
 # --- crash: the server dies, a later run finds none
 _given
 _chat a work; _chat b; _settle 2
+printf 'sb\tturn ended 2m ago\n' > "$FAKE/open"
 _run
 _check "snapshot marks the spinning chat working, the idle one not" \
   'grep -q "^a	cli	.*	sa	1$" "$LOCAL_CONFIG/tmux-revive.snapshot" \
@@ -121,6 +135,10 @@ _check "crash: both queued and started, the working one with a time" \
   'test "$(cut -f1,2,8 "$_q" | sort | tr "\t\n" ",;")" \
     = "started,a,$(date +%H:%M);started,b,-;"'
 _run; _settle 2
+_check "crash: the working chat through a revive gate, first" \
+  'test "$(grep -E "^gate|^needs-open" "$FAKE/run-slot.log" | cut -d" " -f1-3 \
+    | tr "\n" ";")" = "gate revive revive:a:cli:sa;needs-open sb b;$(
+    )gate start revive:b:cli:sb;"'
 _check "crash: both resumed by session id" \
   'grep -qx "argv --resume sa" "$_t/w/a/.got" \
     && grep -qx "argv --resume sb" "$_t/w/b/.got"'
@@ -133,6 +151,40 @@ _check "crash: one ping sums it up" \
 _run
 _check "crash: a later run tells nobody again" \
   'test "$(_said a)" = 1 && test "$(wc -l < "$FAKE/notify")" -eq 1'
+
+# --- park: an idle chat with no reason to be up waits as closed, and
+# only once no working chat waits for room
+_given
+_chat a work; _chat c; _settle 2
+_run
+rm -f "$_t/w/a/.work"
+tmux kill-server; rm -f "$CLAUDE_CONFIG_DIR"/sessions/*
+: > "$FAKE/full"
+_run
+_check "park: the idle chat waits while a working one has no room" \
+  'test "$(cut -f1,2 "$_q" | sort | tr "\t\n" ",;")" = "todo,a;todo,c;" \
+    && ! grep -q "needs-open" "$FAKE/run-slot.log"'
+rm -f "$FAKE/full"
+_run; _settle 1
+_p="$(tmux display-message -p -t =c:cli '#{pane_id}' 2>/dev/null)"
+_check "park: the idle one gets a shell where it was, recorded closed" \
+  'grep -q "^park sc $_p c /.*/w/c$" "$FAKE/run-slot.log" \
+    && test "$(tmux display-message -p -t "$_p" "#{pane_current_command}")" \
+      != claude && test "$(cut -f1 "$_q" | grep -c parked)" = 1'
+_run; _settle 1; _run
+_check "park: the ping counts it" \
+  'grep -q "revived 1 Claude chat(s), told 1 to carry on, 1 idle ones $(
+    )closed (focus resumes)" "$FAKE/notify"'
+
+# --- timer: an idle chat whose wakeup died with it is told too
+_given
+_chat d; _settle 1
+_run
+tmux kill-server; rm -f "$CLAUDE_CONFIG_DIR"/sessions/*
+printf 'sd\twakeup at 10:00\n' > "$FAKE/open"
+_run; _run; _settle 1; _run
+_check "timer: resumed and told to carry on" \
+  'grep -qx "argv --resume sd" "$_t/w/d/.got" && test "$(_said d)" = 1'
 
 # --- restart: kill-server, a new server is up before the next run
 _given
