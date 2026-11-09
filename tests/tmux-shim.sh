@@ -14,7 +14,9 @@ test -x "$_realtmux" || _realtmux=/opt/homebrew/bin/tmux
 mkdir -p "$_t/s"
 trap 'TMUX_TMPDIR="$_t/s" TMUX_REAL="$_realtmux" "$_shim" -L agents-1 \
   kill-server 2>/dev/null; TMUX_TMPDIR="$_t/s" TMUX_REAL="$_realtmux" \
-  "$_shim" -L agents-2 kill-server 2>/dev/null; rm -rf "$_t"' EXIT
+  "$_shim" -L agents-2 kill-server 2>/dev/null; TMUX_TMPDIR="$_t/s" \
+  TMUX_REAL="$_realtmux" "$_shim" -L default kill-server 2>/dev/null
+  rm -rf "$_t"' EXIT
 export LOCAL_CONFIG="$_t/cfg"
 mkdir -p "$LOCAL_CONFIG"
 cat > "$_t/fake" <<'X'
@@ -124,6 +126,20 @@ run TMUX="/private/tmp/tmux-$_uid/agents-1,1,0" "$_shim" switch-client \
 expect "switch on the same server stays a switch" \
   "-L|agents-1|switch-client|-t|%3|"
 
+run "$_shim" display -p -t %5@agents-1 '#{pane_id} #S'
+expect "pane_id prints its server" \
+  "-L|agents-1|display|-p|-t|%5|#{pane_id}@#{b:socket_path} #S|"
+run "$_shim" -S /x/sock display -p '#{pane_id}'
+expect "pane_id left alone on another socket" \
+  "-S|/x/sock|display|-p|#{pane_id}|"
+cat > "$_t/fake-env" <<'X'
+#!/bin/sh
+printf '%s' "$TMUX_PANE" > "$FAKE_OUT"
+X
+chmod +x "$_t/fake-env"
+run TMUX_REAL="$_t/fake-env" TMUX_PANE=%9@agents-2 "$_shim" display -p x
+expect "TMUX_PANE reaches tmux bare" "%9"
+
 # Real tmux in a temp socket dir: placement, then lookups by name.
 _rt() {
   env -u TMUX -u TMUX_SERVER TMUX_TMPDIR="$_t/s" TMUX_REAL="$_realtmux" \
@@ -141,7 +157,7 @@ else
 fi
 _rt has-session -t =abc-1 && _ok "real lookup by name" \
   || _no "real lookup by name" "has-session failed"
-_p="$(_rt display -p -t =abc-1: '#{pane_id}@#{b:socket_path}')"
+_p="$(_rt display -p -t =abc-1: '#{pane_id}')"
 case "$_p" in %*@agents-*) ;; *) _p="" ;; esac
 test -n "$_p" && _rt display -p -t "$_p" '#S' | grep -qx abc-1 \
   && _ok "real pane key round-trips ($_p)" \
@@ -149,5 +165,16 @@ test -n "$_p" && _rt display -p -t "$_p" '#S' | grep -qx abc-1 \
 "$_realtmux" -S "$_t/s/tmux-$_uid/default" has-session 2>/dev/null \
   && _no "default untouched" "a default server started" \
   || _ok "default untouched"
+
+_rt new-session -d -s mine -c "$_t" 2>/dev/null
+_all="$(_rt list-panes -a -F '#{pane_id} #S' | sort -k2 | tr '\n' ' ')"
+case "$_all" in
+  "%"*"@$_srv abc-1 %"*"@default mine ") _ok "list-panes -a spans servers" ;;
+  *) _no "list-panes -a spans servers" "$_all" ;;
+esac
+test "$(_rt ls -F '#S' | sort | tr '\n' ' ')" = "abc-1 mine " \
+  && _ok "ls spans servers" || _no "ls spans servers" "$(_rt ls -F '#S')"
+test "$(_rt list-panes -t =mine: -F '#S')" = mine \
+  && _ok "list-panes -t stays on its server" || _no "list-panes -t" "?"
 
 exit "$_fail"

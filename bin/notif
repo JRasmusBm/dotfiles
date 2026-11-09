@@ -53,7 +53,11 @@ _recent() {
   echo "$(_inbox).recent"
 }
 
-_KEY='function key() { return $6 != "" ? $6 : $2 }
+# A bare pane id (a row from before pane keys named their server)
+# is on default.
+_KEY='function key() {
+  return $6 ~ /^%[0-9]+$/ ? $6 "@default" : $6 != "" ? $6 : $2
+}
 function rank(c) {
   return c == "env" ? 1 : c == "merge" ? 2 : c == "blocked" ? 3 \
     : c == "slack" ? 3.5 \
@@ -464,6 +468,14 @@ _notif_preview() {
 
 # My inbox actions feed the my-impact focus log, to tell jumps the
 # inbox called me to from ones I made on my own.
+case "${1:-}" in
+  next|later|focus|seen|arrive|go)
+    case "${2:-}" in
+      %*@*) ;;
+      %*) _a1="$1" _a2="$2@default"; shift 2; set -- "$_a1" "$_a2" "$@" ;;
+    esac ;;
+esac
+
 case "${1:-}" in
   ""|:|open|next|later|seen|focus)
     _sess="$(tmux display-message -p -t "${2:-}" '#S' 2>/dev/null)"

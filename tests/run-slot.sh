@@ -14,10 +14,10 @@ _t="$(mktemp -d /tmp/rst.XXXX)"
 unset TMUX TMUX_PANE RUN_SLOT_ID RUN_SLOT_PENDING
 export TMUX_TMPDIR="$_t/s" LOCAL_CONFIG="$_t/cfg" \
   CLAUDE_CONFIG_DIR="$_t/cc" FAKE="$_t/fake" RUN_SLOT_FREE_GB=100 \
-  RUN_SLOT_PRESSURE=1 RUN_SLOTS=12
+  RUN_SLOT_PRESSURE=1 RUN_SLOTS=12 TMUX_AGENT_SHARDS=0
 test -n "${KEEP:-}" || trap 'tmux kill-server 2>/dev/null; rm -rf "$_t"' EXIT
 mkdir -p "$TMUX_TMPDIR" "$FAKE/bin"
-export PATH="$FAKE/bin:$_bin:$PATH"
+export PATH="$FAKE/bin:$_root/shims:$_bin:$PATH"
 # Panes run /bin/sh, whose PATH no shell rc reorders: run-slot types a
 # bare `claude`, which must be the fake.
 export SHELL=/bin/sh ENV=

@@ -17,7 +17,7 @@ export TMUX_TMPDIR="$_t/s" LOCAL_CONFIG="$_t/cfg" \
   CLAUDE_CONFIG_DIR="$_t/cc" FAKE="$_t/fake"
 test -n "${KEEP:-}" || trap 'tmux kill-server 2>/dev/null; rm -rf "$_t"' EXIT
 mkdir -p "$TMUX_TMPDIR" "$FAKE/bin"
-export PATH="$FAKE/bin:$_root/bin:$PATH"
+export PATH="$FAKE/bin:$_root/shims:$_root/bin:$PATH"
 
 # claude: forks the zsh below. It writes the session file
 # claude-pane reads, logs argv and each line typed to $PWD/.got, and

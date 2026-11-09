@@ -17,20 +17,37 @@
 #
 # Live: ${CLAUDE_CONFIG_DIR:-~/.claude}/sessions/<pid>.json (sessionId,
 # cwd, tmux "sess:@win.%pane") of a running pid whose ancestry holds
-# that pane's shell (pane ids restart with the tmux server).
+# that pane's shell (pane ids restart with the tmux server). Panes
+# print as keys (`%5@agents-1`, shims/tmux): a bare pane in the json
+# takes its session's server from tmux-home, else default.
 # Gone: the cwd comes from its transcript's first row.
 
 _cd="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+_home="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/tmux-home"
+
+# _panes FILE: <key><TAB><sid><TAB><cwd> of the chat in session json FILE
+_panes() {
+  jq -r '(.tmux // "") as $t | [($t | sub(".*\\."; "")),
+    ($t | sub(":.*"; "")), .sessionId // "", .cwd // ""] | @tsv' "$1" \
+    2>/dev/null | while IFS="$(printf '\t')" read -r _p _n _s _c; do
+    case "$_p" in
+      %*@*) ;;
+      %*) _k=default
+        test ! -f "$_home/$_n" || read -r _k < "$_home/$_n"
+        _p="$_p@$_k" ;;
+      *) continue ;;
+    esac
+    printf '%s\t%s\t%s\n' "$_p" "$_s" "$_c"
+  done
+}
 
 _live() {
   for _f in "$_cd"/sessions/*.json; do
     test -f "$_f" || continue
     _pid="$(basename "$_f" .json)"
     kill -0 "$_pid" 2>/dev/null || continue
-    _pane="$(jq -r --arg s "$1" \
-      'select(.sessionId == $s) | .tmux // "" | sub(".*\\."; "")' \
-      "$_f" 2>/dev/null)"
-    case "$_pane" in %*) ;; *) continue ;; esac
+    _pane="$(_panes "$_f" | awk -F '\t' -v s="$1" '$2 == s { print $1 }')"
+    test -n "$_pane" || continue
     _shell="$(tmux display-message -p -t "$_pane" '#{pane_pid}' \
       2>/dev/null)" || continue
     _p="$_pid" _n=0
@@ -60,27 +77,25 @@ _cwd() {
 }
 
 _of() {
+  _k="$1"
+  case "$_k" in *@*) ;; *) _k="$_k@default" ;; esac
   for _f in "$_cd"/sessions/*.json; do
     test -f "$_f" || continue
     kill -0 "$(basename "$_f" .json)" 2>/dev/null || continue
-    jq -r --arg p "$1" \
-      'select((.tmux // "") | endswith("." + $p)) | .sessionId // empty' \
-      "$_f" 2>/dev/null
-  done | grep -m1 .
+    _panes "$_f"
+  done | awk -F '\t' -v k="$_k" '$1 == k && $2 != "" { print $2; exit }' \
+    | grep .
 }
 
 _map() {
   _ps="$(ps -A -o pid=,ppid=)"
-  _panes="$(tmux list-panes -a -F '#{pane_id} #{pane_pid}' 2>/dev/null)"
+  _lp="$(tmux list-panes -a -F '#{pane_id} #{pane_pid}' 2>/dev/null)"
   for _f in "$_cd"/sessions/*.json; do
     test -f "$_f" || continue
     _pid="$(basename "$_f" .json)"
     kill -0 "$_pid" 2>/dev/null || continue
-    jq -r '[(.tmux // "" | sub(".*\\."; "")), .sessionId // "", .cwd // ""]
-      | @tsv' "$_f" 2>/dev/null | while IFS="$(printf '\t')" read -r _p _s _c
-    do
-      case "$_p" in %*) ;; *) continue ;; esac
-      _shell="$(printf '%s\n' "$_panes" \
+    _panes "$_f" | while IFS="$(printf '\t')" read -r _p _s _c; do
+      _shell="$(printf '%s\n' "$_lp" \
         | awk -v p="$_p" '$1 == p { print $2 }')"
       test -n "$_shell" || continue
       printf '%s\n' "$_ps" | awk -v pid="$_pid" -v sh="$_shell" '
@@ -100,16 +115,16 @@ _open() {
   _live "$1" && return 0
   _dir="$(_cwd "$1")" || return 1
   test -d "$_dir" || return 1
-  _home="$_dir"
+  _top="$_dir"
   case "$_dir" in
     */.worktrees/?*)
       _s="${_dir#*/.worktrees/}"
-      _home="${_dir%%/.worktrees/*}/.worktrees/${_s%%/*}"
+      _top="${_dir%%/.worktrees/*}/.worktrees/${_s%%/*}"
       ;;
   esac
-  _sess="$(tmux-session-name-from-path "$_home")"
+  _sess="$(tmux-session-name-from-path "$_top")"
   if ! tmux has-session -t "=$_sess" 2>/dev/null; then
-    ( cd "$_home" && INITIATED_EXTERNALLY=true default_tmux_session ) \
+    ( cd "$_top" && INITIATED_EXTERNALLY=true default_tmux_session ) \
       >/dev/null 2>&1 || true
   fi
   _new="$(tmux new-window -d -P -F '#{pane_id}' -t "=$_sess:" \

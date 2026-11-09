@@ -13,8 +13,15 @@ if [[ "$HOME" == *com.termux* ]] \
   exec proot-distro login ubuntu "${proot_args[@]}"
 fi
 
-setopt histignorealldups sharehistory
+setopt histignorealldups sharehistory hist_fcntl_lock
 setopt rm_star_silent
+
+# A pane key names its tmux server (shims/tmux): %5@agents-1.
+if [[ -n "$TMUX_PANE" && "$TMUX_PANE" != *@* ]]; then
+  case "${${TMUX%%,*}:t}" in
+    default|agents-<->) export TMUX_PANE="$TMUX_PANE@${${TMUX%%,*}:t}" ;;
+  esac
+fi
 
 # Antigen
 
