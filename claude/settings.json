@@ -95,6 +95,11 @@
           },
           {
             "type": "command",
+            "command": "~/.bin/timer-gate hook",
+            "timeout": 5
+          },
+          {
+            "type": "command",
             "command": "~/.bin/docker-slot hook",
             "timeout": 310
           }

@@ -1,0 +1,127 @@
+#!/bin/sh
+#
+# timer-gate — agents schedule wake-ups through `wt w8` / `wt sz` only.
+# Denies Bash tool commands that hand-roll a timer instead: a sleep
+# loop, `sleep N && cmd`, a backgrounded sleep or `date +%s` deadline,
+# `wt-tell` fired from a deadline, or `at` / `crontab` / launchd
+# scheduling. Quoted text and heredoc bodies (commit messages, echo)
+# are ignored unless a shell or `at` runs them.
+# Scripts (wt itself) don't run through the Bash tool, so they pass.
+#
+#   timer-gate hook   PreToolUse hook for Bash: deny or pass (no output)
+#   timer-gate test   run the allowed/denied table against `hook`
+
+set -e
+
+_reason='Hand-rolled timers are blocked: waiting on something (CI, a deploy, a reply) -> `wt w8 <deadline> "<what>"`; know when you want to wake up -> `wt sz <when>`. Nothing else schedules a wake-up.'
+
+_hook() {
+  jq -c --arg reason "$_reason" '
+    .tool_input as $in
+    | ($in.command // "") as $raw
+    # What the shell runs, not what it quotes: drop heredoc bodies and
+    # quoted strings (commit messages, echo text, grep patterns), but
+    # keep bodies a shell or `at` executes (`sh -c '\''…'\''`, `bash <<EOF`).
+    | ($raw
+       | gsub("(?<pre>[^\n]*)<<-?\\s*[\"'\'']?(?<tag>[A-Za-z_]+)[\"'\'']?(?<rest>[^\n]*)\n(?<body>[\\s\\S]*?)\n\\s*\\k<tag>(?=\n|$)";
+           if (.pre | test("(^|[^A-Za-z_-])(sh|bash|zsh|at|batch)\\s"))
+           then .pre + " " + .rest + "\n" + .body + "\n"
+           else .pre + " " + .rest end)
+       | gsub("(?<pre>-c\\s+)?(?:'\''(?<sq>[^'\'']*)'\''|\"(?<dq>(?:[^\"\\\\]|\\\\.)*)\")";
+           if .pre or ((.dq // "") | test("\\$\\(|`"))
+           then (.pre // "") + "\n" + (.sq // .dq) + "\n"
+           else "\"\"" end)) as $c
+    | ($in.run_in_background == true) as $bg
+    | ($c | test("(^|[^&>|])&($|[^&>])|(^|[^A-Za-z_-])(nohup|setsid|disown)([^A-Za-z_-]|$)")) as $detached
+    | ($c | test("(^|[^A-Za-z_-])sleep\\s")) as $sleep
+    | ($c | test("\\b(while|until)\\b[\\s\\S]*\\bdo\\b[\\s\\S]*\\bsleep\\b")) as $sleeploop
+    | ($c | test("date\\s+\\+%s[\\s\\S]*-(lt|le|gt|ge)\\b|-(lt|le|gt|ge)\\b[\\s\\S]*date\\s+\\+%s")) as $deadline
+    | ($c | test("(^|[;&|({\n]|\\bthen|\\bdo)\\s*sleep\\s+[0-9.]+[smhd]?\\s*(&&|;|\n)\\s*[^\\s)}]")) as $sleepthen
+    | ($c | test("(^|[^A-Za-z_-])wt-tell([^A-Za-z_-]|$)")) as $tell
+    | ($c | test("(^|[;&|({]|\n)\\s*(sudo\\s+)?(at|batch)\\s+[^-\\s]|(^|[;&|({]|\n)\\s*(sudo\\s+)?crontab(\\s+(?!-l)|\\s*$)|launchctl\\s+(submit|load|bootstrap)|Start(Calendar)?Interval|(>\\s*|\\btee\\s+(-a\\s+)?|\\b(cp|mv|ln)\\s[^;&|\n]*)\\S*Library/Launch(Agents|Daemons)")) as $sched
+    | if (($detached or $bg) and ($sleep or $deadline))
+        or $sleeploop or $sleepthen
+        or ($tell and $deadline)
+        or $sched
+      then {hookSpecificOutput: {hookEventName: "PreToolUse",
+        permissionDecision: "deny", permissionDecisionReason: $reason}}
+      else empty end'
+}
+
+_case() {
+  _want="$1"
+  _bg="$2"
+  _cmd="$3"
+  _out="$(jq -nc --arg c "$_cmd" --argjson bg "$_bg" \
+    '{tool_input: {command: $c, run_in_background: $bg}}' | _hook)"
+  if test -n "$_out"; then _got=deny; else _got=allow; fi
+  if test "$_got" = "$_want"; then
+    printf 'ok    %-5s %s\n' "$_want" "$_cmd"
+  else
+    printf 'FAIL  want %s got %s: %s\n' "$_want" "$_got" "$_cmd"
+    _fail=1
+  fi
+}
+
+_test() {
+  _fail=0
+  _case deny false "nohup sh -c 'while [ \"\$(date +%s)\" -lt \"\$1\" ]; do sleep 30; done; exec wt-tell \"\$2\" k p \"\$3\"' _ 1 x y >/dev/null 2>&1 &"
+  _case deny false "(while true; do sleep 60; gh pr checks 1; done) &"
+  _case deny false "(sleep 600; gh pr checks 1) &"
+  _case deny false "sleep 3600 & disown"
+  _case deny true "sleep 600"
+  _case deny true "while ! gh pr checks 1; do sleep 30; done"
+  _case deny false "while ! gh pr checks 1; do sleep 30; done"
+  _case deny true "until [ \$(date +%s) -ge 1800000000 ]; do :; done; echo up"
+  _case deny false "sleep 600 && wt-tell slug k p 'wake up'"
+  _case deny false "sleep 5 && gh pr checks 1"
+  _case deny false "sleep 30; curl -s localhost:3000"
+  _case deny false "bash -c 'sleep 900 && wt-tell s k p hi'"
+  _case deny false "echo 'wt-tell s k p hi' | at 08:00 tomorrow"
+  _case deny false "at now + 2 hours <<EOF
+wt-tell s k p hi
+EOF"
+  _case deny false "(crontab -l; echo '0 8 * * * wt-tell s k p hi') | crontab -"
+  _case deny false "crontab -e"
+  _case deny false "launchctl submit -l wake -- wt-tell s k p hi"
+  _case deny false "launchctl load ~/Library/LaunchAgents/wake.plist"
+  _case deny false "cat > ~/Library/LaunchAgents/wake.plist <<'EOF'
+<plist/>
+EOF"
+  _case deny false "cp wake.plist ~/Library/LaunchAgents/"
+  _case allow false "sleep 2"
+  _case allow false "for f in a b; do echo \$f; done && sleep 1"
+  _case allow false "./scripts/test.sh  # waits on its own"
+  _case allow false "gh pr checks 1 --watch"
+  _case allow true "gh pr checks 1 --watch"
+  _case allow true "yarn test"
+  _case allow false "yarn dev > dev.log 2>&1 & curl -s localhost:3000"
+  _case allow false "wt-tell slug k p 'rebase onto dev'"
+  _case allow false "wt sz tomorrow 08:00"
+  _case allow false "wt sz mon 08:00"
+  _case allow false "wt w8 45m \"CI on #12\""
+  _case allow false "crontab -l"
+  _case allow false "ls ~/Library/LaunchAgents"
+  _case allow false "launchctl list | grep wake"
+  _case allow false "date +%s > start.txt; yarn dev > dev.log 2>&1 &"
+  _case allow false "grep -n 'at ' README.md && cat file 2>&1"
+  _case allow false "grep -rn 'sleep 5 && retry' bin/"
+  _case allow false "git commit -m 'never sleep 600 && wt-tell; use wt sz' -- bin/x"
+  _case allow false "git commit -F - <<'EOF'
+timer-gate: deny sleep 600 & and crontab -e
+
+nohup sh -c 'sleep 60; wt-tell s k p hi' &
+EOF"
+  _case allow false "echo \"use wt sz, not sleep 900 && wt-tell\""
+  _case allow false "git commit -m \"\$(cat <<'EOF'
+gate: sleep 900 && wt-tell is denied; (sleep 60; x) & too
+EOF
+)\""
+  return "$_fail"
+}
+
+case "${1:-}" in
+  hook) _hook ;;
+  test) _test ;;
+  *) sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac
