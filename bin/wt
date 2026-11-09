@@ -1674,6 +1674,15 @@ case "${1:-}" in
       *:y) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
       *) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
     esac
+    # Parking and the merge tell itself end any wait, so a merge that
+    # still has a deploy ahead leaves the agent waiting with nothing
+    # to wake it: wait on the deploy here (90m, the ship queue's
+    # usual run) instead of trusting every agent to remember.
+    if test "$_m_ship" = y && ! awk -F '\t' -v s="$(basename \
+      "$(git rev-parse --show-toplevel)")" '$1 == s { f = 1 }
+      END { exit !f }' "$(_waiting_file)" 2>/dev/null; then
+      _wt_w8 90m "PR #$_m_pr deploy to production, then verify it live"
+    fi
     _unblock_dependents "$(basename "$(git rev-parse --show-toplevel)")" \
       merged
     ;;

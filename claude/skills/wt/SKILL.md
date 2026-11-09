@@ -178,7 +178,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   REVIEW` (ticket → Needs live verification) when the repo's
   hook says it's already shipping to production (`jrb-hook
   shipping`), else `# READY TO DEPLOY` (unless
-  already in one of those or `# TO ANNOUNCE`), then unblocks the
+  already in one of those or `# TO ANNOUNCE`; when shipping it also
+  sets `wt w8 90m` on the deploy unless a wait is set, since parking
+  and the merge tell end waits), then unblocks the
   worktrees `wt rb`'d on it; an idle one's agent is told to rebase
   onto dev and carry on. I don't run it: when a PR merges, its
   agent is told (`pr-merged-tell`, from `claude-notify` or the
