@@ -42,7 +42,9 @@
 # known owner (Docker Desktop UI, devcontainers) keeps Docker up for
 # DOCKER_SLOT_TTL_USER after it started, then is stopped. Containers
 # from before labels are matched to a session by name (exp721-test-db
-# → exp-721*).
+# → exp-721*). With no tmux running (a crash tmux-revive undoes), no
+# session counts as gone: nothing is removed, and Docker quits once
+# nobody is checked in.
 
 set -e
 
@@ -114,10 +116,10 @@ _ttl() {
   else echo "$_ttl_user"; fi
 }
 
-# Sessions, one per line; fails when a tmux server runs but doesn't
-# answer, so a reaper that can't see tmux never takes it for
-# "everyone is gone". No tmux process at all: the server exited with
-# its last session, so "-" (known empty, never an owner name).
+# Sessions, one per line; fails when tmux can't tell, so a reaper
+# never takes that for "everyone is gone": 1 when a server runs but
+# doesn't answer, 2 when no tmux process runs at all (a crash, which
+# tmux-revive undoes, looks the same as the last session closing).
 _sessions() {
   if _sl="$(tmux list-sessions -F '#S' 2>/dev/null)"; then
     echo "${_sl:--}"
@@ -126,7 +128,7 @@ _sessions() {
   _r=0
   pgrep -x tmux >/dev/null 2>&1 || _r=$?
   test "$_r" = 1 || return 1
-  echo -
+  return 2
 }
 
 _alive() {
@@ -702,7 +704,8 @@ _unknown() {
 _cmd_reap() {
   _lock
   _now="$(_now)"
-  _sess="$(_sessions)" || _sess=''
+  _st=0
+  _sess="$(_sessions)" || _st=$?
   for _f in "$_dir"/in/*; do
     test -f "$_f" || continue
     _o="${_f##*/}"
@@ -728,7 +731,10 @@ _cmd_reap() {
     date +%F > "$_dir/seen/.day"
   fi
   _busy=''
-  _rows="$(printf '%s\n' "$_all" | _classify)"
+  # No tmux at all: every owner is unknown, so touch no container;
+  # only a check-in keeps Docker up. Quitting stops them, data kept.
+  _rows=''
+  test "$_st" = 2 || _rows="$(printf '%s\n' "$_all" | _classify)"
   # Ours (labelled or compose we saw) go with their volumes; one
   # matched by name only is stopped, its data kept for the prune.
   printf '%s\n' "$_rows" | while read -r _a _n _ow; do
@@ -755,9 +761,9 @@ _cmd_reap() {
   fi
   printf '%s\n' "$_rows" | grep -q '^busy ' && _busy=1
   ls "$_dir"/in/* >/dev/null 2>&1 && _busy=1
-  # No tmux answer (or no server left): can't tell whose test DBs
-  # these are, so keep them, and Docker, while any runs.
-  test -n "$_sess" \
+  # tmux runs but doesn't answer: can't tell whose test DBs these
+  # are, so keep them, and Docker, while any runs.
+  test -n "$_sess" || test "$_st" = 2 \
     || ! printf '%s\n' "$_all" | grep -q "${_sep}running${_sep}" \
     || _busy=1
   _lp="$(cat "$_dir/last-prune" 2>/dev/null || echo 0)"
