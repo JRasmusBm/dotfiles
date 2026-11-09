@@ -13,7 +13,7 @@
   <key>EnvironmentVariables</key>
   <dict>
     <key>PATH</key>
-    <string>/Users/jrasmusbm/projects/dotfiles/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
+    <string>/Users/jrasmusbm/projects/dotfiles/shims:/Users/jrasmusbm/projects/dotfiles/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin</string>
     <key>LOCAL_CONFIG</key>
     <string>/Users/jrasmusbm/.config/jrasmusbm</string>
   </dict>
