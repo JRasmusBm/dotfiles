@@ -6,12 +6,14 @@
 # its wrapped continuation lines. Resolution order: a branch or
 # worktree slug named on the line (backticked first), then a
 # ticket ID (EXP-238) inside a branch name, then a `#123` PR's
-# head branch via gh.
+# head branch via gh. A ref or name under the cursor wins over the
+# rest of the line, so `PLA-1 (#12, #13)` opens #13 from #13.
 #
-# Usage: tmux-open-worktree <pane> <path> <row> <line>
+# Usage: tmux-open-worktree <pane> <path> <row> <column> <line>
 #   path  pane_current_path, to find the repo
 #   row   history_size + y - scroll_position: the line's row
 #         counted from the top of history (a hint)
+#   column  copy_cursor_x / mouse_x: the cursor's column in line
 #   line  copy_cursor_line / mouse_line: the text itself
 
 import os
@@ -108,15 +110,33 @@ def resolve(text, trees, root):
     return None
 
 
+REF = re.compile(r"#\d+|[A-Z][A-Z0-9]*-\d+")
+
+
+def token_at(line, column):
+    for m in re.finditer(r"[\w./#-]+", line):
+        if m.start() <= column <= m.end():
+            return m.group(0).strip(".,:")
+    return ""
+
+
 def main():
-    pane, path, row = sys.argv[1:4]
-    line = " ".join(sys.argv[4:])
+    pane, path, row, column = sys.argv[1:5]
+    line = " ".join(sys.argv[5:])
+    token = token_at(line, int(column or 0))
     text = item_text(pane, line, int(row or 0))
     root = run(["git", "-C", path, "rev-parse", "--show-toplevel"]).strip()
     if not root:
         message(f"open-worktree: {path} isn't in a git repo")
         return
-    branch = resolve(text, worktrees(root), root)
+    trees = worktrees(root)
+    branch = token and resolve(token, trees, root)
+    # A ref under the cursor without a worktree says so, rather than
+    # opening another ref's worktree from the same line.
+    if not branch and REF.fullmatch(token):
+        message(f"open-worktree: no worktree for {token}")
+        return
+    branch = branch or resolve(text, trees, root)
     if not branch:
         message(f"open-worktree: no worktree for: {text[:60]}")
         return
