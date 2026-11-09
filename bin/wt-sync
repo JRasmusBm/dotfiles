@@ -13,8 +13,9 @@
 # makes room; run-slot closes stalled Claude sessions and starts queued agents
 # (run-slot ls). `wt wake` in each repo of the list and each repo with a
 # snooze: a timed `wt sz` fires within a minute, after a reboot too.
-# A `wt w8` deadline that passed since the last run gets its overdue ping
-# (wt-cold --overdue, no other row) at any hour.
+# A `wt w8` deadline that passed since the last run, in any repo, tells
+# its agent (wt-tell, retried); an untold one in a listed repo also gets
+# its overdue inbox row (wt-cold --overdue, no other row), at any hour.
 # Weekdays 08:00-19:00, every 10th minute, wt-cold syncs the inbox
 # with every work item that stopped moving (a `stalled` row each).
 # On a phone hotspot it polls every 5th minute only; a poll without a
@@ -53,42 +54,80 @@ if _metered && test "$(( $(date +%-M) % 5 ))" != 0; then
   exit 0
 fi
 
-# A w8 deadline in (last run, now] gets its overdue row now, at any
-# hour; wt-cold --sync keeps the weekday window for every other row.
-# The stamp moves once the ping went out, so a failure or a reboot
-# retries it next run; after an hour of failures it moves on anyway.
+# A w8 deadline in (last run, now], in any repo (rows written by `wt
+# w8` carry their main checkout; older ones resolve through the list):
+# its agent is told to check now, queued in wt-unblocked so the loop
+# below delivers it and retries it. Each row once: the queue is deduped
+# and a delivered tell ends the w8.
 _w8s="$LOCAL_CONFIG/wt-w8-stamp"
 _now="$(date +%FT%H:%M)"
-if test -f "$_w8s"; then
-  _last="$(cat "$_w8s")"
-  _due="$(for _repo in $_repos; do
-      cat "$_boards/$(basename "$_repo").waiting" 2>/dev/null
-    done | awk -F '\t' -v a="$_last" -v b="$_now" \
-      '$3 > a && $3 <= b { print; exit }')"
-  if test -z "$_due" \
-    || gtimeout -k 10 300 wt-cold --overdue >/dev/null 2>&1 \
-    || awk -v a="$_last" -v b="$(date -v-60M +%FT%H:%M)" \
-      'BEGIN { exit !(a < b) }'
-  then
-    echo "$_now" > "$_w8s"
-  fi
-else
-  echo "$_now" > "$_w8s"
+_w8_last="$(cat "$_w8s" 2>/dev/null)"
+test -n "$_w8_last" || echo "$_now" > "$_w8s"
+_w8_due=""
+if test -n "$_w8_last"; then
+  _w8_due="$(awk -F '\t' -v a="$_w8_last" -v b="$_now" -v repos="$_repos" \
+    -v t="$(date +%s)" '
+    BEGIN {
+      n = split(repos, r, /[ \n]+/)
+      for (i = 1; i <= n; i++) { k = r[i]; sub(/.*\//, "", k); main[k] = r[i] }
+    }
+    FNR == 1 { f = FILENAME; sub(/.*\//, "", f); sub(/\.waiting$/, "", f) }
+    $3 > a && $3 <= b {
+      m = $6 != "" ? $6 : main[f]
+      if (m == "") next
+      dl = $3; sub(/T/, " ", dl)
+      printf "%s/.worktrees/%s\tw8:%s:%s\tOverdue: %s waited on %s " \
+        "(expected %s)\tYour wt w8 deadline passed: you waited on %s, " \
+        "expected by %s. Check on it now. If it arrived, carry on " \
+        "(wt ip). If not, find out why, then wt w8 a new estimate, or " \
+        "tell me what blocks it.\t%s\n", m, $1, $1, $5, $1, $4, dl, $4,
+        dl, t
+    }' "$_boards"/*.waiting 2>/dev/null)"
+  printf '%s\n' "$_w8_due" | while IFS= read -r _l; do
+    test -n "$_l" || continue
+    grep -qF "$(printf '%s' "$_l" | cut -f1,2)	" \
+      "$LOCAL_CONFIG/wt-unblocked" 2>/dev/null \
+      || printf '%s\n' "$_l" >> "$LOCAL_CONFIG/wt-unblocked"
+  done
 fi
 
-# Unblock tells that couldn't be delivered when `wt` sent them (busy, or
-# the session had just started): retried until told, dropped after 3 days.
+# Tells queued by `wt` (unblocked, awake) that couldn't be delivered
+# when sent (busy, or the session had just started), and the overdue w8
+# tells above: retried until told, dropped after 3 days.
 _ub="$LOCAL_CONFIG/wt-unblocked"
+# Lines `wt` appends while the loop runs are kept, not overwritten.
 if test -s "$_ub"; then
   _ub_tmp="$(mktemp)"
-  while IFS="$(printf '\t')" read -r _r _k _p _m _t; do
+  _ub_n="$(wc -l < "$_ub" | tr -d ' ')"
+  head -n "$_ub_n" "$_ub" | while IFS="$(printf '\t')" read -r _r _k _p _m _t
+  do
     test -n "$_r" || continue
     test "$(( $(date +%s) - _t ))" -lt 259200 || continue
     wt-tell "$_r" "$_k" "$_p" "$_m" >/dev/null 2>&1 \
       || printf '%s\t%s\t%s\t%s\t%s\n' "$_r" "$_k" "$_p" "$_m" "$_t" \
         >> "$_ub_tmp"
-  done < "$_ub"
+  done
+  tail -n "+$((_ub_n + 1))" "$_ub" >> "$_ub_tmp"
   mv "$_ub_tmp" "$_ub"
+fi
+
+# The overdue w8 also gets its inbox row (wt-cold --overdue, when a
+# listed repo has one due, at any hour) unless its tell just landed,
+# which ended the w8; wt-tell drops the row when a retry lands later. The stamp moves once
+# the ping went out, so a failure or a reboot retries it next run; after
+# an hour of failures it moves on anyway.
+_w8_cold="$(printf '%s\n' "$_w8_due" | while IFS= read -r _l; do
+  _m="${_l%%	*}"; _m="${_m%%/.worktrees/*}"
+  printf '%s\n' $_repos | grep -qxF "$_m" && echo 1 && break
+done)"
+if test -n "$_w8_last"; then
+  if test -z "$_w8_cold" \
+    || gtimeout -k 10 300 wt-cold --overdue >/dev/null 2>&1 \
+    || awk -v a="$_w8_last" -v b="$(date -v-60M +%FT%H:%M)" \
+      'BEGIN { exit !(a < b) }'
+  then
+    echo "$_now" > "$_w8s"
+  fi
 fi
 
 for _repo in $_repos; do

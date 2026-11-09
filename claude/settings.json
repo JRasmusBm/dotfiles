@@ -3,7 +3,8 @@
   "permissions": {
     "allow": [
       "Bash(gh pr ready *)",
-      "Bash(gh pr merge *)"
+      "Bash(gh pr merge *)",
+      "Bash(wt done *)"
     ],
     "defaultMode": "auto"
   },

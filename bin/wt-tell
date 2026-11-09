@@ -12,7 +12,9 @@
 # one is run from there once there is room. A worktree that is gone
 # (or WT_TELL_NO_REVIVE set): pings me (check) with <ping> once
 # instead. Claude busy: fails too. A tell or ping delivered ends
-# the worktree's `wt w8`: what it waited on has arrived.
+# the worktree's `wt w8`: what it waited on has arrived. A w8:* tell
+# (wt-sync, at the deadline) also drops the worktree's overdue inbox
+# row: its agent checks now and pings me if it needs me.
 
 _root="$1" _key="$2" _msg="$3" _prompt="$4"
 test -n "$_root" && test -n "$_key" && test -n "$_prompt" \
@@ -20,10 +22,23 @@ test -n "$_root" && test -n "$_key" && test -n "$_prompt" \
 _told="${LOCAL_CONFIG:?}/wt-told"
 _w8_done() {
   _wf="$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting"
+  case "$_key" in
+    w8:*) notif seen-ref "$(basename "${_root%%/.worktrees/*}")/$(basename \
+      "$_root")" >/dev/null 2>&1 || true ;;
+  esac
   test -f "$_wf" || return 0
   awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
 }
 grep -qxF "$_root	$_key" "$_told" 2>/dev/null && exit 0
+# A w8:<slug>:<start> tell is moot once that w8 ended (`wt ip`, `rm`,
+# a delivered tell) or a new `wt w8` replaced it: done, nothing to say.
+case "$_key" in
+  w8:*)
+    awk -F '\t' -v s="$(basename "$_root")" -v t="${_key##*:}" \
+      '$1 == s && $5 == t { f = 1 } END { exit !f }' \
+      "$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting" \
+      2>/dev/null || exit 0 ;;
+esac
 # $1: a run-slot id, revive per worktree (two tells, one revive) or
 # tell per key. A pumped rerun keeps WT_TELL_NO_REVIVE.
 _gate() {
@@ -53,8 +68,10 @@ if test -z "$_pane"; then
   if ! grep -qxF "$_root	ping:$_key" "$_told" 2>/dev/null; then
     echo "$_root	ping:$_key" >> "$_told"
     _w8_done
-    ( cd "$_root" && TMUX_PANE= NOTIFY_CLASS=check \
-      notify "$(basename "$_root")" "$_msg" )
+    # A gone worktree pings from its main checkout.
+    ( { cd "$_root" 2>/dev/null || cd "${_root%%/.worktrees/*}"; } \
+      && TMUX_PANE='' NOTIFY_CLASS=check notify "$(basename "$_root")" \
+        "$_msg" )
   fi
   exit 1
 fi

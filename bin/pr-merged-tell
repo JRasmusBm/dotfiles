@@ -31,4 +31,6 @@ _hint="$(jrb-hook "$_root" merged-hint "$_pr" 2>/dev/null)"
 exec wt-tell "$_root" "merged:$_pr" \
   "#$_pr merged, no agent session: check it, wt merged" \
   "PR #$_pr is merged${_by:+ (merged by $_by)}. Please \
-${_hint:-check where it is headed} and update the worktree with wt merged."
+${_hint:-check where it is headed} and update the worktree with wt merged. \
+If the merge already made it live (no deploy step), run wt rp instead, \
+wt w8 until its effect should show, check it, then wt done."
