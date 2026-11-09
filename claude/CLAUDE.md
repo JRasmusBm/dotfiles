@@ -184,9 +184,10 @@ it, and release it on any wait (a person, CI, an agent, another
 queue). Prepare before taking one: the code done, the build
 green, the checklist written, the person you need at the
 keyboard. One heavy job per session, at the smallest scope
-that answers the question (changed files first, the full
-program only before a push). A shared blocker (a broken base,
-a stuck queue): fix it once and say so, so others don't too.
+that answers the question (changed files first). Where the
+repo's CI runs the full checks on a draft PR, let CI run them.
+A shared blocker (a broken base, a stuck queue): fix it once
+and say so, so others don't too.
 
 ## Git
 

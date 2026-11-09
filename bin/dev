@@ -10,8 +10,6 @@
 #                    DEV_WAIT_URLS
 #   dev down         rebuild `run` as a single fresh shell, release
 #                    the lease
-#   dev touch <sess> renew jrb's own stack lease (tmux focus hooks
-#                    call it); an agent's lease renews only with use
 #   dev trust [file] show .jrb/dev (or file) and trust its digest
 #   dev ls           list tagged dev panes across all sessions
 #   dev :            fzf a session with dev panes, switch to its `run`
@@ -366,12 +364,6 @@ _has_stack() {
   tmux list-panes -s -t "=$1" -F '#{@dev}' 2>/dev/null | $_grep -q .
 }
 
-_dev_touch() {
-  _s="${1:?usage: dev touch <session>}"
-  _has_stack "$_s" || return 0
-  pool touch --human "$_s"
-}
-
 # One watcher per session: when its stack lease is gone (expired or
 # released), take the stack down if it is still up.
 _start_expire() {
@@ -448,14 +440,14 @@ _dev_logs() {
 }
 
 _usage() {
-  echo "Usage: dev [up [--wait]|down|touch <sess>|trust|ls|:|logs <tag>]" >&2
+  echo "Usage: dev [up [--wait]|down|trust|ls|:|logs <tag>]" >&2
   exit 1
 }
 
 case "${1:-}" in
   up) shift; _dev_up "$@" ;;
   down) _dev_down ;;
-  touch) _dev_touch "${2:-}" ;;
+  touch) exit 0 ;; # focus hooks of tmux servers started before the pool
   _expire) _dev_expire "${2:-}" ;;
   trust) shift; _dev_trust "$@" ;;
   ls) _dev_ls ;;

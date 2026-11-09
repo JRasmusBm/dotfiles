@@ -14,9 +14,7 @@ out of swap and a freed slot goes to the next agent at once.
   pool release [--quiet]
                        drop this session's lease and quit its devtools
                        Chrome (the MCP restarts it on the next call)
-  pool touch [--human] [SESSION]
-                       renew SESSION's lease; --human renews only a
-                       lease jrb took himself (tmux focus via dev touch)
+  pool touch [SESSION]  renew SESSION's lease
   pool held SESSION [KIND]
                        exit 0 when SESSION holds a lease (of KIND)
   pool hook browser    PreToolUse hook, chrome-devtools tools: renew
@@ -25,9 +23,14 @@ out of swap and a freed slot goes to the next agent at once.
                        with `pool take heavy $$`, refuse a second one
                        per session; a localhost call renews the lease
   pool log [N]         last N (20) history rows
+  pool waits [N]       last N (20) waits, one row each: queued, ended,
+                       outcome (granted, gone, waiting), wait_s, units,
+                       kind, session, command
   pool test            self-test in a scratch LOCAL_CONFIG
 
-Weights (units): heavy POOL_HEAVY (4), stack POOL_STACK (4, its
+Weights (units): heavy POOL_HEAVY (4, or the first line of
+POOL_HEAVY_WEIGHTS, `UNITS REGEX`, whose regex matches "CWD COMMAND":
+builds differ, from 1.9 to 5.6 GB median per run), stack POOL_STACK (4, its
 devtools Chrome included), browser POOL_BROWSER (1); capacity
 POOL_UNITS (12). From memlog 2026-11-03..09 (p90 footprint): one tsc
 4.7 GB, one stack 3.1 GB plus its Chrome 1.2 GB, a Chrome alone
@@ -48,7 +51,8 @@ from the session's last devtools call or localhost Bash call; then it
 expires: the stack goes down and the browser quits. Nothing extends a
 lease but use. A stack lease whose stack is gone after POOL_GRACE
 (180) is dropped. jrb's own stacks (CLAUDECODE unset) take their
-units at once, never queue, and are renewed by focus instead.
+units at once, never queue and never expire: `dev down` or the end of
+the session frees them.
 
 State: $LOCAL_CONFIG/pool/state.json (flock on .lock). History:
 pool/history.tsv, one row per event: epoch event kind owner units
@@ -213,7 +217,8 @@ def adopt():
             m = re.search(r'\.worktrees/([^/\s]+)', tag)
             out.append({'kind': 'heavy',
                         'owner': m.group(1) if m else f'heavy-slot-{pid}',
-                        'units': UNITS['heavy'], 'tag': tag,
+                        'units': heavy_units(f'{cwd_of(pid)} {tag}'),
+                        'tag': tag,
                         'since': now(), 'seen': now(), 'pid': pid,
                         'adopted': 'new'})
     return out
@@ -399,21 +404,39 @@ def expired(o, kind):
         close_browser(o)
 
 
-def queue_entry(p, kind, o, pid=None, tag=''):
+def cwd_of(pid):
+    out = sh('lsof', '-a', '-p', str(pid), '-d', 'cwd', '-Fn')
+    return next((l[1:] for l in out.splitlines() if l.startswith('n')), '')
+
+
+def heavy_units(cmd):
+    """POOL_HEAVY_WEIGHTS: lines of `UNITS REGEX`, matched against
+    "CWD COMMAND"; the first match wins, else POOL_HEAVY."""
+    for line in os.environ.get('POOL_HEAVY_WEIGHTS', '').splitlines():
+        u, _, rx = line.strip().partition(' ')
+        try:
+            if rx and re.search(rx.strip(), cmd):
+                return int(u)
+        except (re.error, ValueError):
+            continue
+    return UNITS['heavy']
+
+
+def queue_entry(p, kind, o, pid=None, tag='', units=None):
     """o's queue entry for kind, now waited on by this process; a new
     one at the back, or the old one keeping its place."""
     for q in p.queue:
         if q['owner'] == o and q['kind'] == kind:
             q['waiter'] = os.getpid()
             return q
-    q = {'kind': kind, 'owner': o, 'units': UNITS[kind], 'pid': pid,
+    q = {'kind': kind, 'owner': o, 'units': units or UNITS[kind], 'pid': pid,
          'waiter': os.getpid(), 'at': now(), 'tag': tag}
     p.queue.append(q)
     p.log('queue', q, detail=tag)
     return q
 
 
-def wait_turn(kind, o, pid=None, tag=''):
+def wait_turn(kind, o, pid=None, tag='', units=None):
     said = False
     while True:
         if pid and not pid_alive(pid):
@@ -425,7 +448,7 @@ def wait_turn(kind, o, pid=None, tag=''):
                 p.queue = [q for q in p.queue
                            if not (q['owner'] == o and q['kind'] == kind)]
                 return p.used()
-            q = queue_entry(p, kind, o, pid, tag)
+            q = queue_entry(p, kind, o, pid, tag, units)
             if p.grant(q):
                 return p.used()
             pos = p.queue.index(q) + 1
@@ -480,7 +503,9 @@ def cmd_take(kind, pid):
                   detail=f'{state}: {e.get("tag", "")}')
             print(refusal(o, e, state), file=sys.stderr)
             return 75
-    wait_turn('heavy', o, pid=int(pid), tag=command_of(pid))
+    tag = command_of(pid)
+    wait_turn('heavy', o, pid=int(pid), tag=tag,
+              units=heavy_units(f'{cwd_of(pid)} {tag}'))
     return 0
 
 
@@ -499,7 +524,8 @@ def refusal(o, e, state):
             f'({e.get("tag") or "pid " + str(e.get("pid"))}). One heavy '
             'job per session: wait for it, then run this one. Use the '
             'smallest scope that answers the question (changed files '
-            'first; the full program only before a push).')
+            "first). Where the repo's CI runs the full checks on a "
+            'draft PR, let CI run them.')
 
 
 def command_of(pid):
@@ -529,12 +555,10 @@ def cmd_release(quiet=False):
 
 
 def cmd_touch(args):
-    human = '--human' in args
-    rest = [a for a in args if a != '--human']
-    o = rest[0] if rest else owner()
+    o = args[0] if args else owner()
     with Pool() as p:
         h = p.lease(o)
-        if h and (h.get('human') or not human):
+        if h:
             h['seen'] = now()
 
 
@@ -579,7 +603,8 @@ DOC_RE = re.compile(
     r"^(?P<head>[^\n]*?(?<!<)<<-?(?!<)\s*\\?(['\"]?)(?P<tag>[A-Za-z_]\w*)\2"
     r"[^\n]*)\n(?P<body>.*?)^\s*(?P=tag)\s*$", re.S | re.M)
 SHELL_RE = re.compile(r'(^|[;&|(]|\s)(sh|bash|zsh|ssh|xargs|eval)(\s|$)')
-FLAG_C_RE = re.compile(r'(^|\s)-[A-Za-z]*c\s*$')
+FLAG_C_RE = re.compile(
+    r'(^|[\s;&|(/])(sh|bash|zsh|dash)(\s+-[A-Za-z]+)*\s+-[A-Za-z]*c\s*$')
 
 
 def quote_end(c, i):
@@ -765,6 +790,36 @@ def cmd_log(n=20):
         print('\t'.join(f))
 
 
+def cmd_waits(n=20):
+    """One row per wait, from the queue row to its acquire or drop."""
+    try:
+        with open(LOG) as f:
+            rows = [r.rstrip('\n').split('\t') for r in f]
+    except OSError:
+        rows = []
+    t = lambda e: time.strftime('%m-%d %H:%M:%S', time.localtime(int(e)))
+    open_, out = {}, []
+    for f in rows:
+        if len(f) < 10:
+            continue
+        key = (f[2], f[3])
+        if f[1] == 'queue':
+            open_[key] = f
+        elif f[1] in ('acquire', 'drop') and key in open_:
+            q = open_.pop(key)
+            out.append([t(q[0]), t(f[0]),
+                        'granted' if f[1] == 'acquire' else 'gone',
+                        int(f[0]) - int(q[0]), q[4], q[2], q[3], q[9]])
+    with Pool() as p:
+        waiting = list(p.queue)
+    for q in waiting:
+        out.append([t(q['at']), '-', 'waiting', now() - q['at'],
+                    q['units'], q['kind'], q['owner'], q.get('tag', '')])
+    print('queued\tended\toutcome\twait_s\tunits\tkind\tsession\tcommand')
+    for r in out[-int(n):]:
+        print('\t'.join(map(str, r)))
+
+
 def cmd_test():
     import tempfile
     self = os.path.abspath(sys.argv[0])
@@ -802,7 +857,7 @@ def cmd_test():
         if not ok:
             fails.append(name)
 
-    def until(fn, secs=5):
+    def until(fn, secs=20):
         end = time.time() + secs
         while time.time() < end:
             if fn():
@@ -843,6 +898,8 @@ def cmd_test():
                 'echo "x $(git rev-parse HEAD)\nyarn tsc passes"',
                 "gh pr create --title 'use bash' --body-file - <<'EOF'\n"
                 "yarn tsc fails\nEOF",
+                "python3 - <<'PY'\nprint('yarn check-ts')\nPY",
+                'python3 -c "import os; print(1)\nyarn tsc"',
                 "cat <<'EOF' > f\ntsc\nEOF\necho done"):
         r = run(a, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
@@ -851,7 +908,8 @@ def cmd_test():
     for cmd in ('pool ls && yarn tsc', 'out="$(yarn tsc 2>&1)"',
                 "bash <<EOF\nyarn tsc\nEOF", 'x=$((1<<2))\nyarn tsc\n2',
                 "sh -c 'yarn tsc'", "bash -lc 'yarn tsc'", 'x=`yarn tsc`',
-                "cat<<'EOF' > f\ndon't\nEOF\nyarn tsc", '(cd x && yarn tsc)'):
+                "cat<<'EOF' > f\ndon't\nEOF\nyarn tsc", '(cd x && yarn tsc)',
+                "/bin/sh -ec 'yarn tsc'"):
         r = run(b, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: still gated ({cmd[:12]!r})',
@@ -921,11 +979,20 @@ def cmd_test():
     run(c, 'ls', **e2)
     check('idle: an unused lease expires',
           all(h['owner'] != c for h in state()['holders']))
-    r = run(d, 'touch', '--human', d)
+    r = run(d, 'touch', d)
     hist = open(os.path.join(tmp, 'pool', 'history.tsv')).read()
     check('history: logs queue, acquire, release, expire, refuse, drop',
           all(f'\t{ev}\t' in hist for ev in
               ('queue', 'acquire', 'release', 'expire', 'refuse', 'drop')))
+    wv = run(a, 'waits', '100').stdout
+    check('waits: one row per wait, granted and gone',
+          '\tgranted\t' in wv and '\tgone\t' in wv)
+    t3 = dict(LOCAL_CONFIG=tempfile.mkdtemp(prefix='pool-test.'),
+              POOL_HEAVY_WEIGHTS='bad [regex\n2 sleep 600\n6 never')
+    run(b, 'take', 'heavy', str(life().pid), **t3)
+    with open(os.path.join(t3['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
+        check('weights: the first matching POOL_HEAVY_WEIGHTS line sets units',
+              [h['units'] for h in json.load(f)['holders']] == [2])
     w = run(a, 'wait', 'browser', bg=True, CLAUDECODE='')
     check("jrb's own lease: taken at once", w.wait(5) == 0)
     r = run(a, 'ls')
@@ -1019,6 +1086,8 @@ def main(a):
         return hook_bash()
     elif cmd == 'legacy-ls':
         cmd_legacy_ls()
+    elif cmd == 'waits':
+        cmd_waits(*a[1:2])
     elif cmd == 'log':
         cmd_log(*a[1:2])
     elif cmd == 'test':
