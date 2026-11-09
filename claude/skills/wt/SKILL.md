@@ -159,8 +159,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt w8 <duration|time> "<what>"` (`wait`) — the worktree
   waits on an event until a deadline (`45m`, `2h`, `15:00`),
   in `<repo>.waiting`. Agents: before starting any wait or poll
-  (deploy, CI, review, a colleague's answer, logs), run `wt w8
-  <your estimate> "<what>"`. When the event arrives, `wt ip`.
+  (deploy, CI, review, a colleague's answer, logs, a live effect
+  to check such as the next scheduled run), run `wt w8 <your
+  estimate> "<what>"`, never ask me whether to wait. When the
+  event arrives, `wt ip`.
   Past the deadline it pings "overdue: <what>: investigate":
   `wt-sync` runs `wt-cold --overdue` (that row only, no sweep)
   within a minute of it, at any hour and after a reboot, and the
@@ -180,6 +182,9 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `wt-sync` launchd job every minute) to check where it's
   headed (`jrb-hook merged-hint`) and run it; a session that
   isn't running is started with its agent first.
+  Where the merge is the release (no deploy step, e.g. a tooling
+  repo with no hook) READY TO DEPLOY is wrong: `wt rp`, `wt w8`
+  until its effect should show, check it, then `wt done`.
   No inbox ping for it. A PR that needs no deploy (`jrb-hook
   nodeploy`) gets one tell at merge to check it where it runs
   and close the ticket. Deploy and ship-queue tells (on a
