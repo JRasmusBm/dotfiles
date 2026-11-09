@@ -81,10 +81,7 @@ _wait() {
 }
 
 _given() {
-  # kill-server returns before the server is gone: a new-session sent
-  # meanwhile lands on the dying one ("duplicate session: _").
   tmux kill-server 2>/dev/null
-  _wait '! tmux ls >/dev/null 2>&1'
   rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/w/.worktrees/.worktrees" \
     "$FAKE/notify" "$FAKE/notif"
   mkdir -p "$_rs" "$LOCAL_CONFIG/worktrees" "$CLAUDE_CONFIG_DIR/sessions" \

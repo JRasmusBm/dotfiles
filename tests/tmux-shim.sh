@@ -9,8 +9,15 @@ set -u
 _root="$(cd "$(dirname "$0")/.." && pwd)"
 _shim="${1:-$_root/shims/tmux}"
 _t="$(mktemp -d)"
-_realtmux="$(command -v -p tmux 2>/dev/null || echo /opt/homebrew/bin/tmux)"
-test -x "$_realtmux" || _realtmux=/opt/homebrew/bin/tmux
+# The real tmux, as the shim finds it: `command -v -p` can name the shim,
+# and a shim run as its own TMUX_REAL execs itself forever.
+_realtmux=/opt/homebrew/bin/tmux
+_ifs="$IFS"; IFS=:
+for _d in $PATH; do
+  case "$_d" in */shims) continue ;; esac
+  if test -x "$_d/tmux"; then _realtmux="$_d/tmux"; break; fi
+done
+IFS="$_ifs"
 mkdir -p "$_t/s"
 trap 'TMUX_TMPDIR="$_t/s" TMUX_REAL="$_realtmux" "$_shim" -L agents-1 \
   kill-server 2>/dev/null; TMUX_TMPDIR="$_t/s" TMUX_REAL="$_realtmux" \
@@ -128,7 +135,7 @@ expect "switch on the same server stays a switch" \
 
 run "$_shim" display -p -t %5@agents-1 '#{pane_id} #S'
 expect "pane_id prints its server" \
-  "-L|agents-1|display|-p|-t|%5|#{pane_id}@#{b:socket_path} #S|"
+  "-L|agents-1|display|-p|-t|%5|#{?pane_id,#{pane_id}@#{b:socket_path},} #S|"
 run "$_shim" -S /x/sock display -p '#{pane_id}'
 expect "pane_id left alone on another socket" \
   "-S|/x/sock|display|-p|#{pane_id}|"
@@ -176,5 +183,8 @@ test "$(_rt ls -F '#S' | sort | tr '\n' ' ')" = "abc-1 mine " \
   && _ok "ls spans servers" || _no "ls spans servers" "$(_rt ls -F '#S')"
 test "$(_rt list-panes -t =mine: -F '#S')" = mine \
   && _ok "list-panes -t stays on its server" || _no "list-panes -t" "?"
+# A missing session prints no pane: an `@default` alone would read as one.
+_p="$(_rt display -p -t =gone:cli '#{pane_id}')"
+test -z "$_p" && _ok "no pane, no pane key" || _no "no pane, no pane key" "$_p"
 
 exit "$_fail"
