@@ -445,7 +445,7 @@ so the phone sees it under the new account (log:
 account with `/login` then `cswap add --alias <name>`.
 An artifact published before a swap reads "not found" after it
 unless I shared it with my other login. Don't report that or ask
-me to share: republish it under the active login (no `url`) and
+me to share: republish it under the active login (`/repa`) and
 from then on update that copy, never the one you can't reach.
 A session sees only its active login's artifacts; the
 `artifact-ledger.sh` hook logs every publish with its login, and
