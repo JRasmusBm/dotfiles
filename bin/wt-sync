@@ -60,7 +60,7 @@ fi
 # agent is told to check now, queued in wt-unblocked so the loop below
 # delivers it and retries it. Old ones too, from before the stamp
 # existed or a run that missed them. Each row once: the queue is
-# deduped, wt-told skips a told key and a delivered tell ends the w8.
+# deduped and wt-tell ends a w8 once told (or skips one pending).
 # Only a deadline in (last run, now] is fresh: it alone triggers the
 # overdue ping below, so an old row doesn't re-ping every minute.
 _w8s="$LOCAL_CONFIG/wt-w8-stamp"

@@ -99,7 +99,10 @@ PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" w8:old:100 m p
 check 'exits 0 (nothing to retry)' 'test $? = 0'
 check 'that w8 row ends' '! grep -q "^old	" "$_w8/ice.waiting"'
 check 'other rows kept' 'grep -q "^other	" "$_w8/ice.waiting"'
-check 'told once: no second tell' '! test -s "$FAKE/calls"'
+check 'its overdue inbox row drops' \
+  'grep -q "^notif seen-ref ice/old" "$FAKE/calls"'
+check 'told once: no second tell' \
+  '! grep -qv "^notif seen-ref" "$FAKE/calls"'
 printf '%s\tw8:old:100\n' "$_r" > "$LOCAL_CONFIG/wt-told"
 _row old "2026-11-07T08:50" 777 > "$_w8/ice.waiting"
 PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" w8:old:100 m p
@@ -109,5 +112,27 @@ printf '%s\tci:1:abc\n' "$_r" > "$LOCAL_CONFIG/wt-told"
 PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" ci:1:abc m p
 check 'a told non-w8 key leaves the w8 alone' \
   'grep -q "^old	" "$_w8/ice.waiting"'
+
+printf '%s\tping:w8:old:100\n' "$_r" > "$LOCAL_CONFIG/wt-told"
+_row old "2026-11-07T08:50" 100 > "$_w8/ice.waiting"
+PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" w8:old:100 m p
+check 'a pinged w8 (no session then) ends too, exit 0' \
+  'test $? = 0 && ! grep -q "^old	" "$_w8/ice.waiting"'
+
+echo '# wt-tell: the revived chat has the tell pending'
+: > "$LOCAL_CONFIG/wt-told"; : > "$FAKE/calls"
+mkdir -p "$LOCAL_CONFIG/run-slots" "$_r"
+printf '1\ttell:old:w8:old:100\t[]\n' > "$LOCAL_CONFIG/run-slots/pending"
+_row old "2026-11-07T08:50" 100 > "$_w8/ice.waiting"
+PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" w8:old:100 m p
+check 'exits 0 and leaves it to the pending run' \
+  'test $? = 0 && ! test -s "$FAKE/calls"'
+check 'the w8 stays until that run tells it' \
+  'grep -q "^old	" "$_w8/ice.waiting"'
+: > "$FAKE/calls"
+RUN_SLOT_PENDING=1 PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" \
+  w8:old:100 m p
+check 'the pending run itself goes on to tell' \
+  'grep -q "^run-slot\|^wt open\|^notif" "$FAKE/calls" || test -s "$LOCAL_CONFIG/wt-told"'
 
 exit "$_fail"

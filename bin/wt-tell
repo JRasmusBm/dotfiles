@@ -27,6 +27,7 @@ _told="${LOCAL_CONFIG:?}/wt-told"
 # Ours alone: a tmux server `wt open` starts must not hand it on.
 _pending="${RUN_SLOT_PENDING:-}"
 unset RUN_SLOT_PENDING
+# Ends the worktree's w8, or with $1 only the w8 started at $1.
 _w8_done() {
   _wf="$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting"
   case "$_key" in
@@ -34,20 +35,23 @@ _w8_done() {
       "$_root")" >/dev/null 2>&1 || true ;;
   esac
   test -f "$_wf" || return 0
-  awk -F '\t' -v s="$(basename "$_root")" '$1 != s' "$_wf" | sponge "$_wf"
+  awk -F '\t' -v s="$(basename "$_root")" -v t="${1:-}" \
+    '!($1 == s && (t == "" || $5 == t))' "$_wf" | sponge "$_wf"
 }
-# Told already. That same w8 row still there (wt-sync offers every
-# overdue one each minute) ends now, so it stops coming back.
-if grep -qxF "$_root	$_key" "$_told" 2>/dev/null; then
-  case "$_key" in
-    w8:*)
-      _wf="$(basename "${_root%%/.worktrees/*}")"
-      _wf="$LOCAL_CONFIG/worktrees/$_wf.waiting"
-      test ! -f "$_wf" || awk -F '\t' -v s="$(basename "$_root")" \
-        -v t="${_key##*:}" '!($1 == s && $5 == t)' "$_wf" | sponge "$_wf" ;;
-  esac
-  exit 0
-fi
+grep -qxF "$_root	$_key" "$_told" 2>/dev/null && _done=1 || _done=""
+case "$_key" in
+  w8:*)
+    # Told or pinged already. That w8 row still there (wt-sync offers
+    # every overdue one each minute) ends now, so it stops coming back.
+    test -n "$_done" || ! grep -qxF "$_root	ping:$_key" "$_told" \
+      2>/dev/null || _done=1
+    test -z "$_done" || _w8_done "${_key##*:}"
+    # Its revived chat has it pending (run-slot deliver): leave it there,
+    # or both could tell it.
+    test -n "$_pending" || ! cut -f2 "$LOCAL_CONFIG/run-slots/pending" \
+      2>/dev/null | grep -qxF "tell:$(basename "$_root"):$_key" || exit 0 ;;
+esac
+test -z "$_done" || exit 0
 # A w8:<slug>:<start> tell is moot once that w8 ended (`wt ip`, `rm`,
 # a delivered tell) or a new `wt w8` replaced it: done, nothing to say.
 case "$_key" in
