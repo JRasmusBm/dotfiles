@@ -1,9 +1,13 @@
 #!/bin/sh
 # test-slot — replaced by `pool`. Sessions started before the switch
-# still call this from their hooks; delete once none run (`pool` notes).
+# still call this from their hooks; delete once none run.
+p="$(dirname "$0")/pool"
 case "${1:-}" in
-  hook) exec "$(dirname "$0")/pool" hook browser ;;
-  release) shift; exec "$(dirname "$0")/pool" release "$@" ;;
-  acquire|wait) exec "$(dirname "$0")/pool" wait browser ;;
-  *) exec "$(dirname "$0")/pool" ls ;;
+  hook) exec "$p" hook browser ;;
+  release) shift; exec "$p" release "$@" ;;
+  acquire|wait) exec "$p" wait browser ;;
+  touch) exec "$p" touch ;;
+  ls|'') exec "$p" ls ;;
+  rush|unrush) exit 0 ;;
+  *) echo "test-slot: replaced by pool (pool ls)" >&2; exit 1 ;;
 esac

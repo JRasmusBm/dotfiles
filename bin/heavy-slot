@@ -1,9 +1,14 @@
 #!/bin/sh
-# heavy-slot — replaced by `pool`. Sessions started before the switch
-# still call this from their hooks; delete once none run (`pool` notes).
+# heavy-slot — replaced by `pool`. Sessions, `dev _expire` loops and
+# devtools proxies started before the switch still call this; delete
+# once none run.
+p="$(dirname "$0")/pool"
 case "${1:-}" in
-  hook) exec "$(dirname "$0")/pool" hook bash ;;
-  take) exec "$(dirname "$0")/pool" take heavy \
-    "${2:?usage: heavy-slot take PID}" ;;
-  *) exec "$(dirname "$0")/pool" ls ;;
+  hook) exec "$p" hook bash ;;
+  take) exec "$p" take heavy "${2:?usage: heavy-slot take PID}" ;;
+  run) shift; "$p" take heavy $$ || exit $?; exec "$@" ;;
+  ls) "$p" ls >&2; exec "$p" legacy-ls ;;
+  # Old `dev` mid-run: the pool tracks stacks itself now.
+  hold|free|rush|unrush) exit 0 ;;
+  *) echo "heavy-slot: replaced by pool (pool ls)" >&2; exit 1 ;;
 esac
