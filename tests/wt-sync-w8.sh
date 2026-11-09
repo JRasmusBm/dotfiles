@@ -5,7 +5,7 @@
 # overdue w8 not yet told is told, old ones too; only a deadline since
 # the last run triggers the wt-cold --overdue ping). Nothing real is
 # touched: LOCAL_CONFIG and the repos are a temp dir, every command
-# wt-sync calls but these two is a logging fake first on PATH. BIN
+# they call (tmux and notify too) is a logging fake first on PATH. BIN
 # defaults to this checkout's bin/ (point it at another to compare).
 
 set -u
@@ -21,14 +21,16 @@ export WT_SYNC_REPOS="$_t/r/ice $_t/r/dot"
 
 # Every neighbour logs its argv. wt-tell fails (not delivered), so what
 # wt-sync queued stays in wt-unblocked to read. route prints nothing:
-# not metered.
+# not metered. tmux finds no pane: wt-tell revives, through fakes.
 for c in tmux-revive run-slot btabs wt wt-cold jrb-hook wt-pr-watch \
-  wt-tell route ipconfig notif; do
+  wt-tell route ipconfig notif notify tmux claude-pane claude-pane-idle
+do
   printf '#!/bin/sh\necho "%s $*" >> "$FAKE/calls"\n' "$c" \
     > "$FAKE/bin/$c"
   chmod +x "$FAKE/bin/$c"
 done
 echo 'exit 1' >> "$FAKE/bin/wt-tell"
+echo 'exit 1' >> "$FAKE/bin/tmux"
 _path="$FAKE/bin:$_bin:$PATH"
 
 _fail=0
@@ -105,9 +107,11 @@ check 'told once: no second tell' \
   '! grep -qv "^notif seen-ref" "$FAKE/calls"'
 printf '%s\tw8:old:100\n' "$_r" > "$LOCAL_CONFIG/wt-told"
 _row old "2026-11-07T08:50" 777 > "$_w8/ice.waiting"
+: > "$FAKE/calls"
 PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" w8:old:100 m p
 check 'a newer w8 of that worktree is kept' \
   'grep -q "^old	.*	777	" "$_w8/ice.waiting"'
+check 'and so is its overdue inbox row' '! test -s "$FAKE/calls"'
 printf '%s\tci:1:abc\n' "$_r" > "$LOCAL_CONFIG/wt-told"
 PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" ci:1:abc m p
 check 'a told non-w8 key leaves the w8 alone' \
@@ -122,7 +126,8 @@ check 'a pinged w8 (no session then) ends too, exit 0' \
 echo '# wt-tell: the revived chat has the tell pending'
 : > "$LOCAL_CONFIG/wt-told"; : > "$FAKE/calls"
 mkdir -p "$LOCAL_CONFIG/run-slots" "$_r"
-printf '1\ttell:old:w8:old:100\t[]\n' > "$LOCAL_CONFIG/run-slots/pending"
+printf '%s\ttell:old:w8:old:100\t[]\n' "$(date +%s)" \
+  > "$LOCAL_CONFIG/run-slots/pending"
 _row old "2026-11-07T08:50" 100 > "$_w8/ice.waiting"
 PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" w8:old:100 m p
 check 'exits 0 and leaves it to the pending run' \
@@ -132,7 +137,12 @@ check 'the w8 stays until that run tells it' \
 : > "$FAKE/calls"
 RUN_SLOT_PENDING=1 PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" \
   w8:old:100 m p
-check 'the pending run itself goes on to tell' \
-  'grep -q "^run-slot\|^wt open\|^notif" "$FAKE/calls" || test -s "$LOCAL_CONFIG/wt-told"'
+check 'the pending run itself goes on to tell (revives)' \
+  'grep -q "^run-slot gate tell revive:old" "$FAKE/calls"'
+: > "$FAKE/calls"
+printf '1\ttell:old:w8:old:100\t[]\n' > "$LOCAL_CONFIG/run-slots/pending"
+PATH="$FAKE/bin:$_bin:$PATH" "$_bin/wt-tell" "$_r" w8:old:100 m p
+check 'a pending tell past its TTL no longer holds it back' \
+  'grep -q "^run-slot gate tell revive:old" "$FAKE/calls"'
 
 exit "$_fail"
