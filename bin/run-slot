@@ -12,10 +12,16 @@
         the same ID keeps its place and replaces CMD; one admit lets
         one caller through. IDs starting `tell:` deliver to a running
         Claude; any other starts one.
+  run-slot pend ID -- CMD
+        hand run-slot a tell it must deliver to a Claude that is
+        starting (wt-tell, after a revive): `pump` runs CMD with
+        RUN_SLOT_PENDING=1 until it exits 0, for up to 3 days, and
+        `close` keeps that session open meanwhile. ID is
+        `tell:<session>:<key>`; the same ID replaces CMD.
   run-slot pump [--except SID]
-        start queued items while there is room (wt-sync every
-        minute, and the Stop hook: SID is the agent that just
-        stopped and still reads busy)
+        start queued items while there is room, then retry pending
+        tells (wt-sync every minute, and the Stop hook: SID is the
+        agent that just stopped and still reads busy)
   run-slot stop      Stop hook: pump, detached
   run-slot close [-n] [-v]
         close the stalled sessions the close rule picks (wt-sync,
@@ -58,8 +64,9 @@ closed: a session named in keep, one name per line (its Claude
 session name or tmux session), e.g. one I use from my phone through
 Remote Control, which dies with the process.
 
-State in $LOCAL_CONFIG/run-slots/: keep, queue, reserved, closed (one
-row per close: epoch sid pane session cwd ctx last_turn_end state).
+State in $LOCAL_CONFIG/run-slots/: keep, queue, reserved, pending
+(epoch id cmd), closed (one row per close: epoch sid pane session cwd
+ctx last_turn_end state).
 Every admit, queue, run, hold, close and revive is a row in
 run-slot.log there: epoch event id working free_gb pressure detail;
 closes and revives carry their token estimate (input-token
@@ -85,6 +92,8 @@ CLAUDE = os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser(
     '~/.claude')
 QUEUE = os.path.join(DIR, 'queue')
 RESERVED = os.path.join(DIR, 'reserved')
+PENDING = os.path.join(DIR, 'pending')
+PENDING_TTL = 3 * 86400
 CLOSED = os.path.join(DIR, 'closed')
 KEEP = os.path.join(DIR, 'keep')
 LOG = os.path.join(DIR, 'run-slot.log')
@@ -347,6 +356,54 @@ def gate(kind, id_, cmd):
         return 75
 
 
+def pend(id_, cmd):
+    with Lock():
+        rs = rows(PENDING)
+        old = next((r for r in rs if r[1] == id_), None)
+        row = [old[0] if old else f'{NOW:.0f}', id_, json.dumps(cmd)]
+        write(PENDING, [row if r[1] == id_ else r for r in rs]
+              + ([] if old else [row]))
+    if not old:
+        log('pend', id_, None, ' '.join(cmd)[:200])
+    return 0
+
+
+def pending():
+    """Pending tells (ts, id, cmd json), dropping those past the TTL."""
+    with Lock():
+        rs = rows(PENDING)
+        live = [r for r in rs if NOW - float(r[0]) < PENDING_TTL]
+        if len(live) < len(rs):
+            write(PENDING, live)
+    for r in rs:
+        if r not in live:
+            log('drop', r[1], None, 'pending tell expired')
+    return live
+
+
+def deliver():
+    """Run each pending tell once; a 0 exit means it landed."""
+    env = {k: v for k, v in os.environ.items()
+           if k not in ('TMUX_PANE', 'RUN_SLOT_ID')}
+    done = []
+    for r in pending():
+        try:
+            ok = subprocess.run(json.loads(r[2]),
+                                env=dict(env, RUN_SLOT_PENDING='1'),
+                                stdin=subprocess.DEVNULL,
+                                capture_output=True,
+                                timeout=60).returncode == 0
+        except (OSError, subprocess.TimeoutExpired):
+            ok = False
+        if ok:
+            done.append(r[1])
+            log('deliver', r[1], None)
+    if done:
+        with Lock():
+            write(PENDING, [r for r in rows(PENDING) if r[1] not in done])
+    return len(done)
+
+
 def pump(skip=()):
     started = []
     with Lock():
@@ -374,6 +431,7 @@ def pump(skip=()):
                              env=dict(env, RUN_SLOT_ID=r[2]),
                              stdin=subprocess.DEVNULL, stdout=out,
                              stderr=out, start_new_session=True)
+    deliver()
     return len(started)
 
 
@@ -545,10 +603,30 @@ def kept(s):
     return None
 
 
+def waiting(name):
+    """name's worktree has an open `wt w8`, overdue or not: its agent
+    is to be told when the deadline passes, so it stays up for it."""
+    for f in glob.glob(os.path.join(CONF, 'worktrees', '*.waiting')):
+        for r in rows(f):
+            if r[0] == name and len(r) > 2:
+                return 'wt w8 until ' + r[2].replace('T', ' ')
+    return None
+
+
+def told(name):
+    """A tell for session name is on its way: admitted (wt-tell types
+    right after its gate) or pending until its Claude is ready."""
+    ids = [r[1] for r in reserved()] + [r[1] for r in rows(PENDING)]
+    return next((i for i in ids if i == f'revive:{name}' or i.startswith(
+        (f'tell:{name}:', f'revive:{name}:'))), None)
+
+
 def candidate(s, focus):
-    """Why s stays open, or None to close it: idle, its turn ended
-    CLOSE_MIN minutes ago, not asking me, not focused, an empty prompt,
-    no background work, no wakeup or cron still to fire and not on the
+    """Why s stays open, or None to close it: idle, its turn ended and
+    its process started CLOSE_MIN minutes ago (a revived chat counts
+    from its restart, not its last turn days ago), not asking me, not
+    focused, an empty prompt, no background work, no tell on its way,
+    no open `wt w8`, no wakeup or cron still to fire and not on the
     keep list. Sets s['turn'] = (ctx, text, end)."""
     if s.get('kind', 'interactive') != 'interactive':
         return 'not interactive'
@@ -563,6 +641,9 @@ def candidate(s, focus):
     idle = (NOW - end) / 60
     if idle < CLOSE_MIN:
         return f'idle {idle:.0f}m < {CLOSE_MIN:g}m'
+    up = (NOW - (s.get('startedAt') or 0) / 1000) / 60
+    if up < CLOSE_MIN:
+        return f'started {up:.0f}m ago < {CLOSE_MIN:g}m'
     if asks(text):
         return 'asked me'
     if pane in focus:
@@ -573,7 +654,11 @@ def candidate(s, focus):
     screen = tmux('capture-pane', '-p', '-t', pane, '-S', '-40') or ''
     if BG.search(screen):
         return 'background work'
-    return (timers(s.get('sessionId', ''),
+    name = (s.get('tmux') or '').split(':')[0]
+    t = told(name)
+    if t:
+        return f'tell on its way ({t})'
+    return (waiting(name) or timers(s.get('sessionId', ''),
                    (s.get('startedAt') or 0) / 1000) or kept(s))
 
 
@@ -600,10 +685,7 @@ def close(dry, verbose):
         if dry:
             continue
         with Lock():
-            # wt-tell types right after its gate: a live reservation
-            # for this session means a tell is on its way.
-            if any(r[1].startswith((f'tell:{name}:', f'revive:{name}'))
-                   for r in reserved()):
+            if told(name):
                 continue
             tmux('send-keys', '-t', pane, '-l', '/exit')
             time.sleep(0.3)
@@ -679,6 +761,9 @@ def ls():
     for r in queue():
         age = int(NOW - float(r[0])) // 60
         print(f'queued\t{r[1]}\t{r[2]}\t{age}m')
+    for r in rows(PENDING):
+        age = int(NOW - float(r[0])) // 60
+        print(f'pending\t{r[1]}\t{age}m')
     for r in rows(CLOSED):
         if r[7] == 'closed':
             print(f'closed\t{r[3]}\t{r[2]}\t{r[1]}\t'
@@ -691,6 +776,8 @@ def main(a):
         if a[1] not in PRIO:
             sys.exit(f'run-slot: kind is tell or start, not {a[1]}')
         return gate(a[1], a[2], a[4:])
+    if cmd == 'pend' and len(a) >= 4 and a[2] == '--':
+        return pend(a[1], a[3:])
     if cmd == 'pump':
         skip = a[2:3] if a[1:2] == ['--except'] else []
         print(pump(skip))

@@ -6,15 +6,17 @@
 # reboot) or no Claude in its cli window: starts it with
 # `claude --continue` there (plain `claude` when the worktree has
 # no conversation yet; the session `run-slot close` closed there,
-# if it did), and fails without recording the tell, so the caller's
-# next run tells it once Claude is up. Reviving and telling both wait
-# their turn in `run-slot` (room on the Mac, tells first); a queued
-# one is run from there once there is room. A worktree that is gone
-# (or WT_TELL_NO_REVIVE set): pings me (check) with <ping> once
-# instead. Claude busy: fails too. A tell or ping delivered ends
-# the worktree's `wt w8`: what it waited on has arrived. A w8:* tell
-# (wt-sync, at the deadline) also drops the worktree's overdue inbox
-# row: its agent checks now and pings me if it needs me.
+# if it did) and hands the tell to `run-slot pend`, which delivers it
+# once Claude is up and keeps the session open until then: exit 0,
+# though not yet told, so the caller stops retrying. Reviving and
+# telling both wait their turn in `run-slot` (room on the Mac, tells
+# first); a queued one is run from there once there is room. A
+# worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check)
+# with <ping> once instead. Claude busy: fails too. A tell or ping
+# delivered ends the worktree's `wt w8`: what it waited on has
+# arrived. A w8:* tell (wt-sync, at the deadline) also drops the
+# worktree's overdue inbox row: its agent checks now and pings me if
+# it needs me.
 
 _root="$1" _key="$2" _msg="$3" _prompt="$4"
 test -n "$_root" && test -n "$_key" && test -n "$_prompt" \
@@ -41,10 +43,15 @@ case "$_key" in
 esac
 # $1: a run-slot id, revive per worktree (two tells, one revive) or
 # tell per key. A pumped rerun keeps WT_TELL_NO_REVIVE.
-_gate() {
-  run-slot gate tell "$1" -- env \
-    WT_TELL_NO_REVIVE="${WT_TELL_NO_REVIVE:-}" \
+_rerun() {
+  "$@" env WT_TELL_NO_REVIVE="${WT_TELL_NO_REVIVE:-}" \
     wt-tell "$_root" "$_key" "$_msg" "$_prompt" >/dev/null
+}
+_gate() { _rerun run-slot gate tell "$1" --; }
+# A pending run (run-slot pump) reports back: 1 = not told yet.
+_pend() {
+  test -z "${RUN_SLOT_PENDING:-}" || return 1
+  _rerun run-slot pend "tell:$(basename "$_root"):$_key" --
 }
 
 _pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
@@ -54,15 +61,17 @@ _cmd="$(tmux display-message -p -t "$_pane" '#{pane_current_command}' \
 case "$_cmd" in zsh|bash|sh|fish) _shell=1 ;; *) _shell="" ;; esac
 if { test -z "$_pane" || test -n "$_shell"; } \
   && test -z "${WT_TELL_NO_REVIVE:-}" && test -d "$_root"; then
-  _gate "revive:$(basename "$_root")" || exit 1
-  if test -n "$_pane"; then
-    run-slot revive "$_pane" >/dev/null \
-      || tmux send-keys -t "$_pane" "claude --continue || claude" Enter
-  else
-    ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
-      wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true
+  if _gate "revive:$(basename "$_root")"; then
+    if test -n "$_pane"; then
+      run-slot revive "$_pane" >/dev/null \
+        || tmux send-keys -t "$_pane" "claude --continue || claude" Enter
+    else
+      ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
+        wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true
+    fi
   fi
-  exit 1
+  _pend
+  exit
 fi
 if test -z "$_pane"; then
   if ! grep -qxF "$_root	ping:$_key" "$_told" 2>/dev/null; then
@@ -73,7 +82,9 @@ if test -z "$_pane"; then
       && TMUX_PANE='' NOTIFY_CLASS=check notify "$(basename "$_root")" \
         "$_msg" )
   fi
-  exit 1
+  # Pinged instead: a pending run is settled.
+  test -n "${RUN_SLOT_PENDING:-}"
+  exit
 fi
 claude-pane-idle "$_pane" || exit 1
 _gate "tell:$(basename "$_root"):$_key" || exit 1
