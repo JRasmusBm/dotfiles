@@ -187,8 +187,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   `wt feat|fix`, swarm `launch`) waits there until the Mac has
   room (under 12 working, 8 GB free, pressure normal; tells
   first). `wt-sync` closes a Claude whose turn ended an hour
-  ago (not asking me, unfocused, nothing running) and the next
-  tell, a focus on its pane or `run-slot revive` resumes it.
+  ago (not asking me, unfocused, nothing running, not named in
+  `$LOCAL_CONFIG/run-slots/keep`: sessions I drive from my phone
+  through Remote Control, which dies with the process) and the
+  next tell, a focus on its pane or `run-slot revive` resumes it.
   `run-slot ls` shows room, queue and closed sessions.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
   that first moves the ticket to Done / Canceled (refuses

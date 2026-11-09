@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os
+import re
 from sys import argv
 import platform
 from pathlib import Path
@@ -12,6 +13,16 @@ from subprocess import run
 
 def get(command):
     return run(command, capture_output=True).stdout.decode("utf-8")
+
+
+def open_ref(ref):
+    """A `#123` PR of the cwd's repo or an `ABC-123` ticket (via
+    `lin`, which knows the Linear workspace): True when opened."""
+    if re.fullmatch(r"#\d+", ref):
+        return run(["gh", "pr", "view", ref[1:], "--web"]).returncode == 0
+    if re.fullmatch(r"[A-Z][A-Z0-9]*-\d+", ref):
+        return run(["lin", ref]).returncode == 0
+    return False
 
 
 def main():
@@ -68,6 +79,9 @@ def main():
         found = [Path(t) / raw_file_path for t in trees if (Path(t) / raw_file_path).exists()]
         if found:
             file_path = max(found, key=lambda f: f.stat().st_mtime)
+
+    if file_path is None and not reveal and open_ref(path):
+        return
 
     if file_path is None:
         print(f"Cannot find file {raw_file_path}")

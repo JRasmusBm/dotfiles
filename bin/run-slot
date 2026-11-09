@@ -53,10 +53,13 @@ slot; an agent queued for one holds no run-slot either.
 
 Close rule: see CLOSE_MIN. A closed session keeps its pane (now a
 shell) and scrollback, its board row and inbox rows; the next tell
-(wt-tell), focus (tmux hook) or `run-slot revive` resumes it.
+(wt-tell), focus (tmux hook) or `run-slot revive` resumes it. Never
+closed: a session named in keep, one name per line (its Claude
+session name or tmux session), e.g. one I use from my phone through
+Remote Control, which dies with the process.
 
-State in $LOCAL_CONFIG/run-slots/: queue, reserved, closed (one row
-per close: epoch sid pane session cwd ctx last_turn_end state).
+State in $LOCAL_CONFIG/run-slots/: keep, queue, reserved, closed (one
+row per close: epoch sid pane session cwd ctx last_turn_end state).
 Every admit, queue, run, hold, close and revive is a row in
 run-slot.log there: epoch event id working free_gb pressure detail;
 closes and revives carry their token estimate (input-token
@@ -83,6 +86,7 @@ CLAUDE = os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser(
 QUEUE = os.path.join(DIR, 'queue')
 RESERVED = os.path.join(DIR, 'reserved')
 CLOSED = os.path.join(DIR, 'closed')
+KEEP = os.path.join(DIR, 'keep')
 LOG = os.path.join(DIR, 'run-slot.log')
 OUT = os.path.join(DIR, 'run-slot.out')
 CAP = int(os.environ.get('RUN_SLOTS') or os.cpu_count() or 12)
@@ -529,11 +533,23 @@ def focused_panes():
 CLOSE_MIN = float(os.environ.get('RUN_SLOT_CLOSE_MIN') or 60)
 
 
+def kept(s):
+    """s is named in KEEP (Claude session name or tmux session)."""
+    try:
+        with open(KEEP) as fh:
+            names = {ln.strip() for ln in fh} - {''}
+    except OSError:
+        return None
+    if {s.get('name'), (s.get('tmux') or '').split(':')[0]} & names:
+        return 'keep list'
+    return None
+
+
 def candidate(s, focus):
     """Why s stays open, or None to close it: idle, its turn ended
     CLOSE_MIN minutes ago, not asking me, not focused, an empty prompt,
-    no background work and no wakeup or cron still to fire. Sets
-    s['turn'] = (ctx, text, end)."""
+    no background work, no wakeup or cron still to fire and not on the
+    keep list. Sets s['turn'] = (ctx, text, end)."""
     if s.get('kind', 'interactive') != 'interactive':
         return 'not interactive'
     if s.get('status') != 'idle':
@@ -557,8 +573,8 @@ def candidate(s, focus):
     screen = tmux('capture-pane', '-p', '-t', pane, '-S', '-40') or ''
     if BG.search(screen):
         return 'background work'
-    return timers(s.get('sessionId', ''),
-                  (s.get('startedAt') or 0) / 1000)
+    return (timers(s.get('sessionId', ''),
+                   (s.get('startedAt') or 0) / 1000) or kept(s))
 
 
 def close(dry, verbose):
