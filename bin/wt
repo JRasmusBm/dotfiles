@@ -124,7 +124,9 @@ _board_has_section() {
 }
 
 # What each waiting worktree waits on and until when (`wt w8`):
-# slug<TAB>branch<TAB>deadline (YYYY-MM-DDTHH:MM)<TAB>what<TAB>start.
+# slug<TAB>branch<TAB>deadline (YYYY-MM-DDTHH:MM)<TAB>what<TAB>start
+# <TAB>main checkout. wt-sync reads the checkout to tell the agent at
+# the deadline, so a repo outside its list is told too.
 _waiting_file() {
   echo "$LOCAL_CONFIG/worktrees/$(_repo_name).waiting"
 }
@@ -1249,10 +1251,10 @@ _wt_snooze() {
 # The current worktree waits on <what> (a deploy, CI, a review, a
 # colleague's answer) until <when>: a duration (`1h`, `30m`, `+2
 # hours`) or a time (`15:30`, `tomorrow 9am`). Until then `wt-cold`
-# counts it WAITING and sends no stalled ping; after it, the row is
-# STALLED with "overdue: <what>", and wt-sync runs `wt-cold --ping`
-# within a minute of the deadline, at any hour, so that lands on time
-# (after a reboot too). `ip`, `rt`,
+# counts it WAITING and sends no stalled ping. Within a minute of the
+# deadline, at any hour and after a reboot too, wt-sync tells its agent
+# to check now (wt-tell, retried); until that lands the row is STALLED
+# with "overdue: <what>" (wt-cold --overdue, listed repos). `ip`, `rt`,
 # `rd`, `rp`, `ra`, `sz`, `done`, `rm` and any `wt-tell` delivered to
 # the worktree (the event arrived) end the wait.
 _wt_w8() {
@@ -1274,8 +1276,9 @@ _wt_w8() {
     exit 1
   fi
   _w8_drop "$_self"
-  printf '%s\t%s\t%s\t%s\t%s\n' "$_self" "$(git branch --show-current)" \
-    "$_until" "$(printf '%s' "$2" | tr '\t\n' '  ')" "$(date +%s)" \
+  printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$_self" \
+    "$(git branch --show-current)" "$_until" \
+    "$(printf '%s' "$2" | tr '\t\n' '  ')" "$(date +%s)" "$(_main_root)" \
     >> "$(_waiting_file)"
   echo "wt: waiting on $2 until $(echo "$_until" | tr T ' ')" >&2
 }

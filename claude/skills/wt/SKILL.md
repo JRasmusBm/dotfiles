@@ -163,12 +163,14 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   to check such as the next scheduled run), run `wt w8 <your
   estimate> "<what>"`, never ask me whether to wait. When the
   event arrives, `wt ip`.
-  Past the deadline it pings "overdue: <what>: investigate":
-  `wt-sync` runs `wt-cold --overdue` (that row only, no sweep)
-  within a minute of it, at any hour and after a reboot, and the
-  ping gets its own row even when the worktree has an unread one
-  or its last row was cleared before the deadline. Only repos in
-  `wt-sync`'s list.
+  Within a minute of the deadline, at any hour and after a reboot,
+  `wt-sync` tells its agent what it waited on, when it expected
+  it, and to check now (`wt-tell`, retried via `wt-unblocked`), in
+  any repo: the row carries its main checkout. Until that tell
+  lands I get "overdue: <what>: investigate" (`wt-cold --overdue`,
+  that row only, its own row even over an unread one; repos in
+  `wt-sync`'s list); a landed tell drops it, since the agent pings
+  me if it needs me.
   Cleared by `ip`/`rt`/`rd`/`rp`/`ra`/`sz`/`done`/`rm` and by
   any delivered `wt-tell`.
 - `wt merged` — its PR merged: parks the worktree in `# PROD
