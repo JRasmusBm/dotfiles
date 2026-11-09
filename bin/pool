@@ -85,10 +85,10 @@ REAP = int(os.environ.get('POOL_REAP', '5'))
 AGENT = os.environ.get('CLAUDECODE') == '1'
 
 HEAVY_RE = re.compile(
-    r'(^|[;&|({]|\n)\s*([A-Za-z_]+=\S*\s+)*((npx|yarn|pnpm|exec|time)\s+)*'
-    r'(\S*/)?(eslint|tsc)(\s|$)'
-    r'|(^|[;&|({]|\n)\s*([A-Za-z_]+=\S*\s+)*(yarn|pnpm|npm run)\s+'
-    r'([^;&|]*\s)?(lint|check-ts)(:[a-z:-]+)?(\s|$)')
+    r'(^|[;&|({`]|\n)\s*([A-Za-z_]+=\S*\s+)*((npx|yarn|pnpm|exec|time)\s+)*'
+    r'(\S*/)?(eslint|tsc)(\s|[)`]|$)'
+    r'|(^|[;&|({`]|\n)\s*([A-Za-z_]+=\S*\s+)*(yarn|pnpm|npm run)\s+'
+    r'([^;&|)`]*\s)?(lint|check-ts)(:[a-z:-]+)?(\s|[)`]|$)')
 LOCAL_RE = re.compile(r'(localhost|127\.0\.0\.1):\d+')
 READY = ('Take it only when ready to test: the code is done, the build '
          'green, the checklist written, and the person you need at the '
@@ -576,18 +576,73 @@ def hook_browser():
 
 
 DOC_RE = re.compile(
-    r"^(?P<head>[^\n]*?(?<![\w)$])<<-?\s*(['\"]?)(?P<tag>[A-Za-z_]\w*)\2"
+    r"^(?P<head>[^\n]*?(?<!<)<<-?(?!<)\s*\\?(['\"]?)(?P<tag>[A-Za-z_]\w*)\2"
     r"[^\n]*)\n(?P<body>.*?)^\s*(?P=tag)\s*$", re.S | re.M)
 SHELL_RE = re.compile(r'(^|[;&|(]|\s)(sh|bash|zsh|ssh|xargs|eval)(\s|$)')
+FLAG_C_RE = re.compile(r'(^|\s)-[A-Za-z]*c\s*$')
+
+
+def quote_end(c, i):
+    """Index of the quote closing the one at c[i] (len(c) if none)."""
+    q, j, n = c[i], i + 1, len(c)
+    esc = q == '"' or c[i - 1:i] == '$'  # $'..' takes \\ escapes
+    while j < n and c[j] != q:
+        if q == '"' and c.startswith('$(', j):
+            j = paren_end(c, j + 2)
+        j += 2 if esc and c[j:j + 1] == '\\' else 1
+    return min(j, n)
+
+
+def paren_end(c, i):
+    """Index of the `)` closing the `$(` whose body starts at c[i]."""
+    depth, n = 1, len(c)
+    while i < n:
+        ch = c[i]
+        if ch == '\\':
+            i += 1
+        elif ch in '\'"':
+            i = quote_end(c, i)
+        elif ch == '(':
+            depth += 1
+        elif ch == ')':
+            depth -= 1
+            if not depth:
+                return i
+        i += 1
+    return n
+
+
+def ran_parts(body):
+    """The parts of a double-quoted string the shell runs: $(...) and
+    unescaped backticks, each as its own command line."""
+    out, i, n = [], 0, len(body)
+    while i < n:
+        if body[i] == '\\':
+            i += 2
+        elif body.startswith('$(', i):
+            j = paren_end(body, i + 2)
+            out.append('\n' + unquoted(body[i + 2:j]) + '\n')
+            i = j + 1
+        elif body[i] == '`':
+            j = body.find('`', i + 1)
+            j = n if j < 0 else j
+            out.append('\n' + unquoted(body[i + 1:j]) + '\n')
+            i = j + 1
+        else:
+            i += 1
+    return ''.join(out)
 
 
 def unquoted(c):
     """c with the text a shell never runs blanked out, so `tsc` in a
     commit message, an echo, a comment or a heredoc for a file isn't
-    taken for a build. Kept: `$(...)` and backticks in double quotes,
-    `sh -c '...'`, and heredocs fed to a shell."""
-    c = DOC_RE.sub(lambda m: m['head'] + '\n' + (
-        m['body'] if SHELL_RE.search(m['head']) else ''), c)
+    taken for a build. Kept: `$(...)` and backticks, `sh -c '...'`,
+    and heredocs fed to a shell."""
+    def doc(m):
+        head = re.sub(r"'[^']*'|\"(\\.|[^\"\\])*\"", "''", m['head'])
+        return m['head'] + '\n' + (
+            m['body'] if SHELL_RE.search(head) else '')
+    c = DOC_RE.sub(doc, c)
     out, i, n = [], 0, len(c)
     while i < n:
         ch = c[i]
@@ -597,21 +652,19 @@ def unquoted(c):
         elif ch == '#' and (i == 0 or c[i - 1] in ' \t\n;&|('):
             j = c.find('\n', i)
             i = n if j < 0 else j
-        elif ch == "'":
-            j = c.find("'", i + 1)
-            j = n if j < 0 else j
+        elif ch in '\'"':
+            j = quote_end(c, i)
             body = c[i + 1:j]
-            ran = re.search(r'(^|\s)-c\s*$', ''.join(out))
-            out.append('\n' + body + '\n' if ran else "''")
+            if FLAG_C_RE.search(''.join(out)):
+                out.append('\n' + body + '\n')
+            elif ch == '"':
+                out.append("''" + ran_parts(body))
+            else:
+                out.append("''")
             i = j + 1
-        elif ch == '"':
-            j = i + 1
-            while j < n and c[j] != '"':
-                j += 2 if c[j] == '\\' else 1
-            body = c[i + 1:j]
-            ran = '$(' in body or '`' in body or re.search(
-                r'(^|\s)-c\s*$', ''.join(out))
-            out.append('\n' + body + '\n' if ran else "''")
+        elif c.startswith('$(', i) and not c.startswith('$((', i):
+            j = paren_end(c, i + 2)
+            out.append('(' + unquoted(c[i + 2:j]) + ')')
             i = j + 1
         else:
             out.append(ch)
@@ -786,6 +839,10 @@ def cmd_test():
             stdin=json.dumps({'tool_input': {'command': 'ls'}}))
     check('hook bash: leaves others alone', r.returncode == 0 and not r.stdout)
     for cmd in ('git commit -m "fix\n\neslint passes\n(tsc too)"',
+                'git commit -m "$(echo "tsc fix")"',
+                'echo "x $(git rev-parse HEAD)\nyarn tsc passes"',
+                "gh pr create --title 'use bash' --body-file - <<'EOF'\n"
+                "yarn tsc fails\nEOF",
                 "cat <<'EOF' > f\ntsc\nEOF\necho done"):
         r = run(a, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
@@ -793,7 +850,8 @@ def cmd_test():
               r.returncode == 0 and not r.stdout)
     for cmd in ('pool ls && yarn tsc', 'out="$(yarn tsc 2>&1)"',
                 "bash <<EOF\nyarn tsc\nEOF", 'x=$((1<<2))\nyarn tsc\n2',
-                "sh -c 'yarn tsc'"):
+                "sh -c 'yarn tsc'", "bash -lc 'yarn tsc'", 'x=`yarn tsc`',
+                "cat<<'EOF' > f\ndon't\nEOF\nyarn tsc", '(cd x && yarn tsc)'):
         r = run(b, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: still gated ({cmd[:12]!r})',
