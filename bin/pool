@@ -20,6 +20,7 @@ out of swap and a freed slot goes to the next agent at once.
   pool hook browser    PreToolUse hook, chrome-devtools tools: renew
                        or take a browser lease, else block the call
   pool hook bash       PreToolUse hook, Bash: prefix heavy commands
+                       (builds and test runs, see Heavy jobs)
                        with `pool take heavy $$`, refuse a second one
                        per session; a localhost call renews the lease
   pool log [N]         last N (20) history rows
@@ -28,11 +29,19 @@ out of swap and a freed slot goes to the next agent at once.
                        kind, session, command
   pool test            self-test in a scratch LOCAL_CONFIG
 
-Weights (units): heavy POOL_HEAVY (4, or the first line of
-POOL_HEAVY_WEIGHTS, `UNITS REGEX`, whose regex matches "CWD COMMAND":
-builds differ, from 1.9 to 5.6 GB median per run), stack POOL_STACK (4, its
-devtools Chrome included), browser POOL_BROWSER (1); capacity
-POOL_UNITS (12). From memlog 2026-11-03..09 (p90 footprint): one tsc
+Heavy jobs: type-aware builds (tsc, eslint, `yarn lint`, `check-ts`)
+and test runs (mocha, `yarn test:*`, `yarn/npm test`, `run-tests`).
+
+Weights (units): heavy POOL_HEAVY (4) for a build or a full test
+suite (`yarn test`, `npm test`, `run-tests`), POOL_TEST (2) for a
+targeted test run (mocha, `yarn test:mocha FILES`) with neither beside
+it; the first line of POOL_HEAVY_WEIGHTS, `UNITS REGEX`, whose regex
+matches "CWD COMMAND", wins over both (builds differ, from 1.9 to 5.6
+GB median per run). Stack POOL_STACK (4, its devtools Chrome
+included), browser POOL_BROWSER (1); capacity POOL_UNITS (12). Mocha
+from memlog 2026-11-03..09: 294 runs, p50 0.85 GB, p90 3.2 GB, max
+5.8 GB; ungated, five builds and test runs once ran at once (~15 GB)
+while the pool saw two. From memlog 2026-11-03..09 (p90 footprint): one tsc
 4.7 GB, one stack 3.1 GB plus its Chrome 1.2 GB, a Chrome alone
 1.2 GB, so a unit is about 1.1 GB at p90. Pressure 2 (warn) ran 7% of
 the time with under 4 GB in these jobs, 32% at 4-8, 56% at 8-12, 89%
@@ -77,6 +86,7 @@ LOG = os.path.join(DIR, 'history.tsv')
 CAP = int(os.environ.get('POOL_UNITS', '12'))
 UNITS = {
     'heavy': int(os.environ.get('POOL_HEAVY', '4')),
+    'test': int(os.environ.get('POOL_TEST', '2')),
     'stack': int(os.environ.get('POOL_STACK', '4')),
     'browser': int(os.environ.get('POOL_BROWSER', '1')),
 }
@@ -88,11 +98,20 @@ POLL = float(os.environ.get('POOL_POLL', '1'))
 REAP = int(os.environ.get('POOL_REAP', '5'))
 AGENT = os.environ.get('CLAUDECODE') == '1'
 
-HEAVY_RE = re.compile(
-    r'(^|[;&|({`]|\n)\s*([A-Za-z_]+=\S*\s+)*((npx|yarn|pnpm|exec|time)\s+)*'
-    r'(\S*/)?(eslint|tsc)(\s|[)`]|$)'
-    r'|(^|[;&|({`]|\n)\s*([A-Za-z_]+=\S*\s+)*(yarn|pnpm|npm run)\s+'
-    r'([^;&|)`]*\s)?(lint|check-ts)(:[a-z:-]+)?(\s|[)`]|$)')
+CMD = r'(^|[;&|({`]|\n)\s*([A-Za-z_]+=\S*\s+)*'
+END = r'(\s|[;&|)`]|$)'
+BUILD_RE = re.compile(
+    CMD + r'((npx|yarn|pnpm|exec|time)\s+)*(\S*/)?(eslint|tsc)' + END
+    + '|' + CMD + r'(yarn|pnpm|npm run)\s+([^;&|)`]*\s)?'
+    r'(lint|check-ts)(:[a-z:-]+)?' + END)
+SUITE_RE = re.compile(
+    CMD + r'((yarn|pnpm|npm( run)?)\s+test|((exec|time|node)\s+)*'
+    r'(\S*/)?run-tests(\.[cm]?[jt]s)?)' + END)
+MOCHA_RE = re.compile(
+    CMD + r'((npx|yarn|pnpm|exec|time)\s+)*(\S*/)?mocha' + END
+    + '|' + CMD + r'(yarn|pnpm|npm run)\s+test:[a-z:-]+' + END)
+HEAVY_RE = re.compile('|'.join(
+    r.pattern for r in (BUILD_RE, SUITE_RE, MOCHA_RE)))
 LOCAL_RE = re.compile(r'(localhost|127\.0\.0\.1):\d+')
 READY = ('Take it only when ready to test: the code is done, the build '
          'green, the checklist written, and the person you need at the '
@@ -217,7 +236,7 @@ def adopt():
             m = re.search(r'\.worktrees/([^/\s]+)', tag)
             out.append({'kind': 'heavy',
                         'owner': m.group(1) if m else f'heavy-slot-{pid}',
-                        'units': heavy_units(f'{cwd_of(pid)} {tag}'),
+                        'units': heavy_units(cwd_of(pid), tag),
                         'tag': tag,
                         'since': now(), 'seen': now(), 'pid': pid,
                         'adopted': 'new'})
@@ -409,16 +428,21 @@ def cwd_of(pid):
     return next((l[1:] for l in out.splitlines() if l.startswith('n')), '')
 
 
-def heavy_units(cmd):
+def heavy_units(cwd, c):
     """POOL_HEAVY_WEIGHTS: lines of `UNITS REGEX`, matched against
-    "CWD COMMAND"; the first match wins, else POOL_HEAVY."""
+    "CWD COMMAND"; the first match wins. Else a targeted test run
+    (mocha, `yarn test:*`) with no build or full suite beside it takes
+    POOL_TEST, anything else POOL_HEAVY."""
     for line in os.environ.get('POOL_HEAVY_WEIGHTS', '').splitlines():
         u, _, rx = line.strip().partition(' ')
         try:
-            if rx and re.search(rx.strip(), cmd):
+            if rx and re.search(rx.strip(), f'{cwd} {c}'):
                 return int(u)
         except (re.error, ValueError):
             continue
+    if (MOCHA_RE.search(c) and not BUILD_RE.search(c)
+            and not SUITE_RE.search(c)):
+        return UNITS['test']
     return UNITS['heavy']
 
 
@@ -454,7 +478,7 @@ def wait_turn(kind, o, pid=None, tag='', units=None):
             pos = p.queue.index(q) + 1
             used = p.used()
         if not said:
-            print(f'pool: queued #{pos} for {kind} ({UNITS[kind]} units, '
+            print(f'pool: queued #{pos} for {kind} ({q["units"]} units, '
                   f'{used}/{CAP} held); waiting. `pool ls` shows the line.',
                   file=sys.stderr)
             said = True
@@ -505,7 +529,7 @@ def cmd_take(kind, pid):
             return 75
     tag = command_of(pid)
     wait_turn('heavy', o, pid=int(pid), tag=tag,
-              units=heavy_units(f'{cwd_of(pid)} {tag}'))
+              units=heavy_units(cwd_of(pid), tag))
     return 0
 
 
@@ -831,8 +855,8 @@ def cmd_test():
     fails = []
     keep = []
 
-    def life():
-        s = subprocess.Popen(['sh', '-c', 'sleep 600; :'],
+    def life(tail=':'):
+        s = subprocess.Popen(['sh', '-c', f'sleep 600; {tail}'],
                              stdout=subprocess.DEVNULL,
                              stderr=subprocess.DEVNULL)
         keep.append(s)
@@ -900,7 +924,10 @@ def cmd_test():
                 "yarn tsc fails\nEOF",
                 "python3 - <<'PY'\nprint('yarn check-ts')\nPY",
                 'python3 -c "import os; print(1)\nyarn tsc"',
-                "cat <<'EOF' > f\ntsc\nEOF\necho done"):
+                "cat <<'EOF' > f\ntsc\nEOF\necho done",
+                "git commit -m 'mocha passes'", 'grep -r mocha src',
+                'cat scripts/run-tests', 'yarn add -D mocha',
+                'echo "yarn test fails"', 'ls node_modules/.bin/mocha'):
         r = run(a, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: quoted tsc is no build ({cmd[:9]})',
@@ -909,11 +936,20 @@ def cmd_test():
                 "bash <<EOF\nyarn tsc\nEOF", 'x=$((1<<2))\nyarn tsc\n2',
                 "sh -c 'yarn tsc'", "bash -lc 'yarn tsc'", 'x=`yarn tsc`',
                 "cat<<'EOF' > f\ndon't\nEOF\nyarn tsc", '(cd x && yarn tsc)',
-                "/bin/sh -ec 'yarn tsc'"):
+                "/bin/sh -ec 'yarn tsc'", 'yarn test:mocha a.test.ts',
+                'yarn mocha x', 'npx mocha x', 'node_modules/.bin/mocha x',
+                'mocha x', 'yarn test', 'npm test', 'npm run test',
+                'node scripts/run-tests', 'cd x && NODE_ENV=t yarn test',
+                'yarn tsc;', 'npx mocha x&& y'):
         r = run(b, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: still gated ({cmd[:12]!r})',
               'pool take heavy' in r.stdout)
+    for cmd, u in (('yarn test:mocha a.test.ts', 2), ('npx mocha x', 2),
+                   ('node_modules/.bin/mocha x', 2), ('yarn test', 4),
+                   ('npm test', 4), ('node scripts/run-tests', 4),
+                   ('yarn tsc; yarn test:mocha x', 4), ('yarn tsc', 4)):
+        check(f'weights: {cmd!r} takes {u} units', heavy_units('/x', cmd) == u)
 
     # a: heavy 4 of 8. b takes a stack (4): full.
     w = run(b, 'wait', 'stack', bg=True)
@@ -993,6 +1029,12 @@ def cmd_test():
     with open(os.path.join(t3['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
         check('weights: the first matching POOL_HEAVY_WEIGHTS line sets units',
               [h['units'] for h in json.load(f)['holders']] == [2])
+    t4 = dict(LOCAL_CONFIG=tempfile.mkdtemp(prefix='pool-test.'),
+              POOL_TEST='3')
+    run(b, 'take', 'heavy', str(life('true || npx mocha x').pid), **t4)
+    with open(os.path.join(t4['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
+        check('weights: POOL_TEST sets a targeted test run\'s units',
+              [h['units'] for h in json.load(f)['holders']] == [3])
     w = run(a, 'wait', 'browser', bg=True, CLAUDECODE='')
     check("jrb's own lease: taken at once", w.wait(5) == 0)
     r = run(a, 'ls')
