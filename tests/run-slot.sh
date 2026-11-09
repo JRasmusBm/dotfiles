@@ -81,9 +81,9 @@ _wait() {
 
 _given() {
   tmux kill-server 2>/dev/null
-  rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/w" "$FAKE/notify"
+  rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/w/.worktrees/.worktrees" "$FAKE/notify"
   mkdir -p "$_rs" "$LOCAL_CONFIG/worktrees" "$CLAUDE_CONFIG_DIR/sessions" \
-    "$CLAUDE_CONFIG_DIR/projects/p" "$_t/w"
+    "$CLAUDE_CONFIG_DIR/projects/p" "$_t/w/.worktrees/.worktrees"
   tmux -f /dev/null new-session -d -s _ /bin/sh
 }
 
@@ -101,20 +101,20 @@ _transcript() {
 # _closed NAME: run-slot closed NAME's Claude 64 hours ago; its cli
 # pane is a shell now.
 _closed() {
-  mkdir -p "$_t/w/$1"
-  tmux new-session -d -s "$1" -n cli -c "$_t/w/$1" /bin/sh
+  mkdir -p "$_t/w/.worktrees/$1"
+  tmux new-session -d -s "$1" -n cli -c "$_t/w/.worktrees/$1" /bin/sh
   _p="$(tmux display-message -p -t "=$1:cli" '#{pane_id}')"
   _transcript "s$1"
   printf '%s\ts%s\t%s\t%s\t%s\t1000\t%s\tclosed\n' "$(date +%s)" "$1" \
-    "$_p" "$1" "$_t/w/$1" "$(($(date +%s) - 230400))" >> "$_rs/closed"
+    "$_p" "$1" "$_t/w/.worktrees/$1" "$(($(date +%s) - 230400))" >> "$_rs/closed"
   echo "$_p"
 }
 
 # _open NAME: a Claude that started (and last spoke) 64 hours ago.
 _open() {
-  mkdir -p "$_t/w/$1"; : > "$_t/w/$1/.ready"
+  mkdir -p "$_t/w/.worktrees/$1"; : > "$_t/w/.worktrees/$1/.ready"
   _transcript "s$1"
-  tmux new-session -d -s "$1" -n cli -c "$_t/w/$1" \
+  tmux new-session -d -s "$1" -n cli -c "$_t/w/.worktrees/$1" \
     "FAKE_SID=s$1 FAKE_STARTED=$((($(date +%s) - 230400) * 1000)) \
 exec $FAKE/bin/claude"
 }
@@ -122,9 +122,9 @@ exec $FAKE/bin/claude"
 _up() { test -n "$(grep -l "\"s$1\"" "$CLAUDE_CONFIG_DIR"/sessions/*.json \
   2>/dev/null)"; }
 _cmd() { tmux display-message -p -t "=$1:cli" '#{pane_current_command}'; }
-_said() { grep -c "^said $2\$" "$_t/w/$1/.got" 2>/dev/null; }
+_said() { grep -c "^said $2\$" "$_t/w/.worktrees/$1/.got" 2>/dev/null; }
 _tell() {
-  wt-tell "$_t/w/pla" deployed:production:9073 "#9073 on production" \
+  wt-tell "$_t/w/.worktrees/pla" deployed:production:9073 "#9073 on production" \
     "PR 9073 is on production"
 }
 
@@ -135,7 +135,7 @@ _closed pla >/dev/null
 _tell; _rc=$?
 _wait '_up pla'
 _check "tell: wt-tell revives the closed chat by its session id" \
-  'grep -qx "argv --resume spla" "$_t/w/pla/.got"'
+  'grep -qx "argv --resume spla" "$_t/w/.worktrees/pla/.got"'
 _check "tell: handed to run-slot (exit 0), not yet told" \
   'test "$_rc" = 0 && ! grep -q deployed "$LOCAL_CONFIG/wt-told" 2>/dev/null'
 _check "tell: run-slot ls shows it pending" \
@@ -149,7 +149,7 @@ _check "close: a chat revived minutes ago is not closed, 64h idle or not" \
   'test "$(_cmd pla)" = claude \
     && run-slot close -n -v | grep -q "^keep	pla	started 0m ago"'
 # Two minutes on: the revive's reservation is over, Claude is ready.
-: > "$_rs/reserved"; : > "$_t/w/pla/.ready"
+: > "$_rs/reserved"; : > "$_t/w/.worktrees/pla/.ready"
 _wait 'claude-pane-idle "$(tmux display-message -p -t =pla:cli "#{pane_id}")"'
 _check "close: a pending tell keeps it open past the start grace" \
   'RUN_SLOT_CLOSE_MIN=0 run-slot close -n -v \
@@ -158,7 +158,7 @@ run-slot pump >/dev/null
 _wait 'test "$(_said pla "PR 9073 is on production")" = 1'
 _check "tell: delivered once Claude is ready, recorded as told" \
   'test "$(_said pla "PR 9073 is on production")" = 1 \
-    && grep -qx "$_t/w/pla	deployed:production:9073" \
+    && grep -qx "$_t/w/.worktrees/pla	deployed:production:9073" \
       "$LOCAL_CONFIG/wt-told"'
 _check "tell: no longer pending" '! run-slot ls | grep -q "^pending"'
 run-slot pump >/dev/null; _tell
@@ -173,7 +173,7 @@ _check "close: once told and idle, the rule closes it again" \
 
 # --- focus: I focus a closed pane, it is revived, close runs
 _given
-_p="$(_closed foc)"; : > "$_t/w/foc/.ready"
+_p="$(_closed foc)"; : > "$_t/w/.worktrees/foc/.ready"
 run-slot focus "$_p" >/dev/null
 _wait '_up foc'
 _wait 'claude-pane-idle "$_p"'

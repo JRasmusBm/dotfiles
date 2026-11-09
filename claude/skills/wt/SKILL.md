@@ -206,8 +206,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   tell, a focus on its pane or `run-slot revive` resumes it. A
   tell that revives hands itself to `run-slot pend`: the pump
   types it once Claude is ready (up to 3 days), and the chat
-  stays open until then. `run-slot ls` shows room, queue,
-  pending tells and closed sessions.
+  stays open until then. A main checkout's session holds many
+  chats, so a chat there is found by sid only (`WT_TELL_SID`,
+  inbox jumps), never `--continue`: focusing its pane resumes one
+  only while it has an inbox row, and a tell with no sid becomes
+  a ping. `run-slot ls` shows room, queue, pending tells and
+  closed sessions.
 - `wt done [:|<name>]` / `wt cancel [:|<name>]` — `wt rm`
   that first moves the ticket to Done / Canceled (refuses
   to remove if Linear fails); `cancel` also closes my open

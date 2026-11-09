@@ -31,7 +31,10 @@
         bring a closed session back in its pane (shell there), else
         in a new window; `.` is this pane
   run-slot focus PANE  tmux focus hook: revive PANE if run-slot
-                       closed the Claude that ran there
+                       closed the Claude that ran there; in a main
+                       checkout's pane (many chats) only while that
+                       chat has an inbox row: landing there on the
+                       way to another chat must not bring it back
   run-slot ls          room, working agents, queue, closed sessions
 
 Room: fewer than RUN_SLOTS (cores) agents working, at least
@@ -708,6 +711,12 @@ def close(dry, verbose):
         print('\n'.join(out))
 
 
+def in_inbox(sid):
+    """sid has an inbox row waiting on me (notify's column 9)."""
+    return any(len(r) > 8 and r[8] == sid
+               for r in rows(os.path.join(CONF, 'notifications')))
+
+
 def revive(key, focus=False):
     """Resume the session closed in pane or with sid KEY: in its pane
     while that is still the shell it left in the same tmux session (a
@@ -797,7 +806,10 @@ def main(a):
     if cmd == 'revive' and len(a) == 2:
         return revive(a[1])
     if cmd == 'focus' and len(a) == 2:
-        if any(r[2] == a[1] and r[7] == 'closed' for r in rows(CLOSED)):
+        hit = next((r for r in reversed(rows(CLOSED))
+                    if r[2] == a[1] and r[7] == 'closed'), None)
+        # A worktree's pane is its one chat's; a main checkout's is not.
+        if hit and ('/.worktrees/' in hit[4] or in_inbox(hit[1])):
             revive(a[1], focus=True)
         return 0
     if cmd == 'ls':

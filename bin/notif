@@ -246,8 +246,14 @@ _notif_jump() {
   _j_path="$3"
   _j_sid="${4:-}"
   if test -n "$_j_sid"; then
-    _j_live="$(claude-pane "$_j_sid" || true)"
-    _j_to="${_j_live:-$(claude-pane open "$_j_sid" 2>/dev/null || true)}"
+    _j_live="$(claude-pane "$_j_sid" || true)" _j_to=""
+    # Closed by run-slot: resume it (in its pane while that is a shell)
+    # and mark it revived, so a later focus there doesn't resume it
+    # again; else a new window.
+    test -n "$_j_live" \
+      || _j_to="$(run-slot revive "$_j_sid" 2>/dev/null)" || _j_to=""
+    _j_to="${_j_live:-${_j_to:-$(claude-pane open "$_j_sid" 2>/dev/null \
+      || true)}}"
     if test -n "$_j_to" && tmux switch-client -t "$_j_to" 2>/dev/null; then
       tmux select-window -t "$_j_to" 2>/dev/null || true
       tmux select-pane -t "$_j_to" 2>/dev/null || true

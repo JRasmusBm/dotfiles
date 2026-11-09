@@ -8,7 +8,9 @@
 # no conversation yet; the session `run-slot close` closed there,
 # if it did) and hands the tell to `run-slot pend`, which delivers it
 # once Claude is up and keeps the session open until then: exit 0,
-# though not yet told, so the caller stops retrying. Reviving and
+# though not yet told, so the caller stops retrying. WT_TELL_SID names
+# the chat instead (a main checkout's: there `--continue` opens the
+# wrong one, so without a sid it gets the ping below). Reviving and
 # telling both wait their turn in `run-slot` (room on the Mac, tells
 # first); a queued one is run from there once there is room. A
 # worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check)
@@ -48,6 +50,7 @@ esac
 # tell per key. A pumped rerun keeps WT_TELL_NO_REVIVE.
 _rerun() {
   "$@" env WT_TELL_NO_REVIVE="${WT_TELL_NO_REVIVE:-}" \
+    WT_TELL_SID="${_sid:-}" \
     wt-tell "$_root" "$_key" "$_msg" "$_prompt" >/dev/null
 }
 _gate() { _rerun run-slot gate tell "$1" --; }
@@ -57,8 +60,29 @@ _pend() {
   _rerun run-slot pend "tell:$(basename "$_root"):$_key" --
 }
 
-_pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
-  '#{pane_id}' 2>/dev/null)" || _pane=""
+# WT_TELL_SID: the chat to tell, wherever it runs (claude-pane); not
+# running, it is resumed by id and the tell pends. Without one a
+# main checkout (many chats in one session) gets the ping: its `cli`
+# pane is whichever chat ran there last, never the one meant.
+_sid="${WT_TELL_SID:-}"
+if test -n "$_sid"; then
+  _pane="$(claude-pane "$_sid" 2>/dev/null)" || _pane=""
+  if test -z "$_pane"; then
+    test -z "${WT_TELL_NO_REVIVE:-}" || exit 1
+    if _gate "revive:$_sid"; then
+      run-slot revive "$_sid" >/dev/null 2>&1 \
+        || claude-pane open "$_sid" >/dev/null 2>&1 || true
+    fi
+    _pend
+    exit
+  fi
+elif case "$_root" in */.worktrees/*) false ;; *) true ;; esac; then
+  _pane=""
+  WT_TELL_NO_REVIVE=1
+else
+  _pane="$(tmux display-message -p -t "=$(basename "$_root"):cli" \
+    '#{pane_id}' 2>/dev/null)" || _pane=""
+fi
 _cmd="$(tmux display-message -p -t "$_pane" '#{pane_current_command}' \
   2>/dev/null)" || _cmd=""
 case "$_cmd" in zsh|bash|sh|fish) _shell=1 ;; *) _shell="" ;; esac
