@@ -119,7 +119,9 @@ for _a in "$@"; do
     continue
   fi
   case "$_a" in
-    -t|-s|-c) _want="${_a#-}" ;;
+    # list-panes -s is a flag (the whole session), not a target.
+    -s) test -n "$_list" || _want=s ;;
+    -t|-c) _want="${_a#-}" ;;
     -a) _all="${_list:+1}" ;;
     -t?*|-s?*)
       _v="${_a#-?}"

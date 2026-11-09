@@ -183,6 +183,9 @@ test "$(_rt ls -F '#S' | sort | tr '\n' ' ')" = "abc-1 mine " \
   && _ok "ls spans servers" || _no "ls spans servers" "$(_rt ls -F '#S')"
 test "$(_rt list-panes -t =mine: -F '#S')" = mine \
   && _ok "list-panes -t stays on its server" || _no "list-panes -t" "?"
+test "$(_rt list-panes -s -t =abc-1 -F '#S' | sort -u)" = abc-1 \
+  && _ok "list-panes -s -t stays on its server" \
+  || _no "list-panes -s -t" "$(_rt list-panes -s -t =abc-1 -F '#S' 2>&1)"
 # A missing session prints no pane: an `@default` alone would read as one.
 _p="$(_rt display -p -t =gone:cli '#{pane_id}')"
 test -z "$_p" && _ok "no pane, no pane key" || _no "no pane, no pane key" "$_p"
