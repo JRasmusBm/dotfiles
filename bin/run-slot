@@ -388,11 +388,11 @@ def deliver():
     done = []
     for r in pending():
         try:
-            ok = subprocess.run(json.loads(r[2]),
-                                env=dict(env, RUN_SLOT_PENDING='1'),
-                                stdin=subprocess.DEVNULL,
-                                capture_output=True,
-                                timeout=60).returncode == 0
+            with open(OUT, 'a') as out:
+                ok = subprocess.run(json.loads(r[2]),
+                                    env=dict(env, RUN_SLOT_PENDING='1'),
+                                    stdin=subprocess.DEVNULL, stdout=out,
+                                    stderr=out, timeout=60).returncode == 0
         except (OSError, subprocess.TimeoutExpired):
             ok = False
         if ok:

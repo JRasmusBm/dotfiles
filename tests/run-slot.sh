@@ -48,9 +48,12 @@ cat > "$FAKE_ZSH" <<'X'
 sid="${FAKE_SID:-}"
 test "${1:-}" = --resume && sid="$2"
 w="$(tmux display-message -p -t "$TMUX_PANE" '#S:#{window_id}')"
-printf '{"sessionId":"%s","cwd":"%s","tmux":"%s.%s","startedAt":%s,"status":"idle"}\n' \
-  "$sid" "$PWD" "$w" "$TMUX_PANE" "${FAKE_STARTED:-$(($(date +%s) * 1000))}" \
-  > "$CLAUDE_CONFIG_DIR/sessions/$$.json"
+{
+  printf '{"sessionId":"%s","cwd":"%s","tmux":"%s.%s",' "$sid" "$PWD" "$w" \
+    "$TMUX_PANE"
+  printf '"startedAt":%s,"status":"idle"}\n' \
+    "${FAKE_STARTED:-$(($(date +%s) * 1000))}"
+} > "$CLAUDE_CONFIG_DIR/sessions/$$.json"
 echo "argv $*" >> .got
 until test -f .ready; do sleep 0.2; done
 idle() { printf '\n❯ \n-- INSERT --\n'; }
@@ -89,7 +92,9 @@ _transcript() {
   _at="$(date -u -r $(($(date +%s) - 230400)) +%Y-%m-%dT%H:%M:%S)"
   printf '%s\n' \
     "{\"type\":\"user\",\"timestamp\":\"$_at.000Z\",\"message\":{}}" \
-    "{\"type\":\"assistant\",\"timestamp\":\"$_at.000Z\",\"message\":{\"content\":[{\"type\":\"text\",\"text\":\"Done.\"}]}}" \
+    "{\"type\":\"assistant\",\"timestamp\":\"$_at.000Z\",$(
+      )\"message\":{\"content\":[{\"type\":\"text\",$(
+      )\"text\":\"Done.\"}]}}" \
     > "$CLAUDE_CONFIG_DIR/projects/p/$1.jsonl"
 }
 
