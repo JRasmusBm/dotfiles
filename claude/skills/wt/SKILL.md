@@ -163,7 +163,7 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   (deploy, CI, review, a colleague's answer, logs, a live effect
   to check such as the next scheduled run), run `wt w8 <your
   estimate> "<what>"`, never ask me whether to wait. When the
-  event arrives, `wt ip`.
+  event arrives, `wt w8 done` (ends the wait, board untouched).
   Within a minute of the deadline, at any hour and after a reboot,
   `wt-sync` tells its agent what it waited on, when it expected
   it, and to check now (`wt-tell`, retried via `wt-unblocked`), in
@@ -173,8 +173,11 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   that row only, its own row even over an unread one; repos in
   `wt-sync`'s list); a landed tell drops it, since the agent pings
   me if it needs me.
-  Cleared by `ip`/`rt`/`rd`/`rp`/`ra`/`sz`/`done`/`rm` and by
-  any delivered `wt-tell`.
+  Cleared by `w8 done`/`ip`/`rt`/`rd`/`rp`/`ra`/`sz`/`done`/`rm`
+  and by its deadline tell. Any other tell (merged, deploy stage,
+  unblock, …) leaves it open: only the agent knows if that was
+  the event, so the tell ends with what it waits on, until when
+  (or that it is overdue), and to `wt w8 done` if so.
 - `wt merged` — its PR merged: parks the worktree in `# PROD
   REVIEW` (ticket → Needs live verification) when the repo's
   hook says it's already shipping to production (`jrb-hook

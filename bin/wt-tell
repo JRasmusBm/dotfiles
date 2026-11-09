@@ -14,10 +14,12 @@
 # telling both wait their turn in `run-slot` (room on the Mac, tells
 # first); a queued one is run from there once there is room. A
 # worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check)
-# with <ping> once instead. Claude busy: fails too. A tell or ping
-# delivered ends the worktree's `wt w8`: what it waited on has
-# arrived. A w8:* tell (wt-sync, at the deadline) also drops the
-# worktree's overdue inbox row: its agent checks now and pings me if
+# with <ping> once instead. Claude busy: fails too. Only the agent
+# knows whether a tell is what its `wt w8` waits on, so any other tell
+# leaves the w8 open and ends with what it waits on, until when (or
+# that it is overdue), and to `wt w8 done` if this was it. A w8:* tell
+# (wt-sync, at the deadline) ends the w8 and drops the worktree's
+# overdue inbox row: its agent checks now, sets a new w8 or pings me if
 # it needs me.
 
 _root="$1" _key="$2" _msg="$3" _prompt="$4"
@@ -27,28 +29,41 @@ _told="${LOCAL_CONFIG:?}/wt-told"
 # Ours alone: a tmux server `wt open` starts must not hand it on.
 _pending="${RUN_SLOT_PENDING:-}"
 unset RUN_SLOT_PENDING
-# Ends the worktree's w8; for a w8:<slug>:<start> tell only that one.
+_slug="$(basename "$_root")" _repo="$(basename "${_root%%/.worktrees/*}")"
+_wf="$LOCAL_CONFIG/worktrees/$_repo.waiting"
 _start=""
 case "$_key" in w8:*) _start="${_key##*:}" ;; esac
+# A w8:<slug>:<start> tell ends that w8 and its overdue inbox row; any
+# other tell leaves the w8 to its agent.
 _w8_done() {
-  _wf="$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting"
-  case "$_key" in
-    w8:*) notif seen-ref "$(basename "${_root%%/.worktrees/*}")/$(basename \
-      "$_root")" >/dev/null 2>&1 || true ;;
-  esac
+  test -n "$_start" || return 0
+  notif seen-ref "$_repo/$_slug" >/dev/null 2>&1 || true
   test -f "$_wf" || return 0
-  awk -F '\t' -v s="$(basename "$_root")" -v t="$_start" \
-    '!($1 == s && (t == "" || $5 == t))' "$_wf" | sponge "$_wf"
+  awk -F '\t' -v s="$_slug" -v t="$_start" '!($1 == s && $5 == t)' "$_wf" \
+    | sponge "$_wf"
+}
+# The open w8 any other tell leaves in place, as a line for the prompt.
+_w8_open() {
+  test -z "$_start" || return 0
+  awk -F '\t' -v s="$_slug" -v now="$(date +%FT%H:%M)" '$1 == s {
+      d = $3; sub(/T/, " ", d)
+      if ($3 > now)
+        printf " Your wt w8 is still open: %s, until %s.", $4, d
+      else
+        printf " Your wt w8 is overdue (since %s): %s. Check on it now.",
+          d, $4
+      printf " If this tell was that event, run wt w8 done; else it " \
+        "stays open."
+    }' "$_wf" 2>/dev/null
 }
 _told_k() { grep -qxF "$_root	$1" "$_told" 2>/dev/null; }
 case "$_key" in
   w8:*)
-    # Moot once that w8 ended (`wt ip`, `rm`, a delivered tell) or a
-    # new `wt w8` replaced it: done, nothing to say.
-    awk -F '\t' -v s="$(basename "$_root")" -v t="$_start" \
-      '$1 == s && $5 == t { f = 1 } END { exit !f }' \
-      "$LOCAL_CONFIG/worktrees/$(basename "${_root%%/.worktrees/*}").waiting" \
-      2>/dev/null || exit 0
+    # Moot once that w8 ended (`wt w8 done`, `ip`, `rm`, its delivered
+    # tell) or a new `wt w8` replaced it: done, nothing to say.
+    awk -F '\t' -v s="$_slug" -v t="$_start" \
+      '$1 == s && $5 == t { f = 1 } END { exit !f }' "$_wf" 2>/dev/null \
+      || exit 0
     # Told or pinged already, its row still there (wt-sync offers every
     # overdue one each minute): it ends now, so it stops coming back.
     if _told_k "$_key" || _told_k "ping:$_key"; then
@@ -145,6 +160,6 @@ _gate "tell:$(basename "$_root"):$_key" || exit 1
 echo "$_root	$_key" >> "$_told"
 _w8_done
 notif seen "$_pane" all >/dev/null 2>&1 || true
-tmux send-keys -t "$_pane" -l "$_prompt"
+tmux send-keys -t "$_pane" -l "$_prompt$(_w8_open)"
 sleep 0.5
 tmux send-keys -t "$_pane" Enter

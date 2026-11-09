@@ -2,7 +2,8 @@
 #
 # tests/run-slot.sh [BIN] — scenarios for bin/run-slot and bin/wt-tell
 # against a throwaway tmux server and a fake `claude` (RAS-20: a chat
-# revived for a tell gets it and is not closed first). Nothing real is
+# revived for a tell gets it and is not closed first; RAS-28: only its
+# deadline tell ends a wt w8). Nothing real is
 # touched: TMUX_TMPDIR, LOCAL_CONFIG and CLAUDE_CONFIG_DIR are a temp
 # dir, the fakes come first on PATH. Needs cc. BIN defaults to this
 # checkout's bin/ (point it at another checkout's to compare).
@@ -80,8 +81,12 @@ _wait() {
 }
 
 _given() {
+  # kill-server returns before the server is gone: a new-session sent
+  # meanwhile lands on the dying one ("duplicate session: _").
   tmux kill-server 2>/dev/null
-  rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/w/.worktrees/.worktrees" "$FAKE/notify"
+  _wait '! tmux ls >/dev/null 2>&1'
+  rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/w/.worktrees/.worktrees" \
+    "$FAKE/notify" "$FAKE/notif"
   mkdir -p "$_rs" "$LOCAL_CONFIG/worktrees" "$CLAUDE_CONFIG_DIR/sessions" \
     "$CLAUDE_CONFIG_DIR/projects/p" "$_t/w/.worktrees/.worktrees"
   tmux -f /dev/null new-session -d -s _ /bin/sh
@@ -194,6 +199,55 @@ printf 'old\tfeat/x\t2026-11-06T17:43\tCI on rebased #8918\t1793979805\n' \
   > "$LOCAL_CONFIG/worktrees/repo.waiting"
 _check "w8: a chat whose worktree has a wt w8 is not closed" \
   'run-slot close -n -v | grep -q "^keep	old	wt w8 until 2026-11-06 17:43"'
+
+# --- w8 tells (RAS-28): another tell leaves the agent's wt w8 open and
+# reminds it; the deadline tell ends it and drops the overdue row
+_given
+_open wai; _wait '_up wai'
+_wait 'claude-pane-idle "$(tmux display-message -p -t =wai:cli "#{pane_id}")"'
+printf 'wai\tfeat/wai\t2999-01-01T14:32\tcheck pool after merge\t17\t%s\n' \
+  "$_t/w" > "$LOCAL_CONFIG/worktrees/w.waiting"
+wt-tell "$_t/w/.worktrees/wai" merged:620 "#620 merged" "PR 620 is merged." \
+  >/dev/null
+_wait 'test "$(_said wai "PR 620 is merged.*")" = 1'
+_check "w8: a merge tell leaves the w8 row in place" \
+  'grep -q "^wai	" "$LOCAL_CONFIG/worktrees/w.waiting"'
+_check "w8: the merge tell says what the w8 waits on, until when, wt ip" \
+  'grep -qxF "said PR 620 is merged. Your wt w8 is still open: check pool \
+after merge, until 2999-01-01 14:32. If this tell was that event, run wt w8 \
+done; else it stays open." "$_t/w/.worktrees/wai/.got"'
+_check "w8: the merge tell leaves the overdue inbox row" \
+  '! grep -q seen-ref "$FAKE/notif" 2>/dev/null'
+# Its deadline passed, its own tell still queued (Claude was busy).
+sed -i '' 's/2999-01-01T14:32/2020-11-09T14:32/' \
+  "$LOCAL_CONFIG/worktrees/w.waiting"
+wt-tell "$_t/w/.worktrees/wai" ci:abc "CI red" "CI failed on abc." >/dev/null
+_wait 'test "$(_said wai "CI failed on abc.*")" = 1'
+_check "w8: past its deadline a tell says the w8 is overdue, check now" \
+  'grep -qxF "said CI failed on abc. Your wt w8 is overdue (since \
+2020-11-09 14:32): check pool after merge. Check on it now. If this tell was \
+that event, run wt w8 done; else it stays open." "$_t/w/.worktrees/wai/.got"'
+wt-tell "$_t/w/.worktrees/wai" w8:wai:17 "Overdue: wai" \
+  "Your wt w8 deadline passed." >/dev/null
+_wait 'test "$(_said wai "Your wt w8 deadline passed.")" = 1'
+_check "w8: the deadline tell is told as is, no reminder" \
+  'test "$(grep -c "deadline passed.*w8 done" "$_t/w/.worktrees/wai/.got")" = 0'
+_check "w8: the deadline tell ends the w8" \
+  '! grep -q "^wai	" "$LOCAL_CONFIG/worktrees/w.waiting"'
+_check "w8: the deadline tell drops the overdue inbox row" \
+  'grep -qx "seen-ref w/wai" "$FAKE/notif"'
+wt-tell "$_t/w/.worktrees/wai" deployed:620 "#620 live" "PR 620 is live." \
+  >/dev/null
+_wait 'test "$(_said wai "PR 620 is live.")" = 1'
+_check "w8: with no w8 open a tell is told as is" \
+  'test "$(grep -c "^said PR 620 is live" "$_t/w/.worktrees/wai/.got")" = 1'
+_check "w8: a pinged tell (worktree gone) leaves the w8 too" '
+  printf "gon\tfeat/gon\t2026-11-09T14:32\tx\t18\n" \
+    >> "$LOCAL_CONFIG/worktrees/w.waiting"
+  WT_TELL_NO_REVIVE=1 wt-tell "$_t/w/.worktrees/gon" merged:7 "#7 merged" \
+    "PR 7 is merged." >/dev/null
+  grep -q "#7 merged" "$FAKE/notify" \
+    && grep -q "^gon	" "$LOCAL_CONFIG/worktrees/w.waiting"'
 
 # --- expiry: a pending tell is dropped after 3 days
 _given

@@ -1252,14 +1252,20 @@ _wt_snooze() {
 # counts it WAITING and sends no stalled ping. Within a minute of the
 # deadline, at any hour and after a reboot too, wt-sync tells its agent
 # to check now (wt-tell, retried); until that lands the row is STALLED
-# with "overdue: <what>" (wt-cold --overdue, listed repos). `ip`, `rt`,
-# `rd`, `rp`, `ra`, `sz`, `done`, `rm` and any `wt-tell` delivered to
-# the worktree (the event arrived) end the wait.
+# with "overdue: <what>" (wt-cold --overdue, listed repos). `wt w8
+# done` (the event arrived), `ip`, `rt`, `rd`, `rp`, `ra`, `sz`, `done`,
+# `rm` and its deadline tell end the wait; any other tell leaves it
+# open and reminds the agent of it.
 _wt_w8() {
   _require_worktree
   _self="$(basename "$(git rev-parse --show-toplevel)")"
+  if test "${1:-}" = done; then
+    _w8_drop "$_self"
+    echo "wt: done waiting" >&2
+    return 0
+  fi
   if test -z "${1:-}" || test -z "${2:-}"; then
-    echo "wt: usage: wt w8 <1h|30m|15:30|...> \"<what>\"" >&2
+    echo "wt: usage: wt w8 <1h|30m|15:30|...> \"<what>\" | wt w8 done" >&2
     exit 1
   fi
   # A wait on me hides my question as WAITING, so wt-cold never
@@ -1680,7 +1686,7 @@ case "${1:-}" in
       *:y) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
       *) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
     esac
-    # Parking and the merge tell itself end any wait, so a merge that
+    # Parking ends any wait, so a merge that
     # still has a deploy ahead leaves the agent waiting with nothing
     # to wake it: wait on the deploy here (90m, the ship queue's
     # usual run) instead of trusting every agent to remember.
