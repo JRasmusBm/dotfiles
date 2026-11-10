@@ -30,7 +30,10 @@ once CI and the PR reviewer are green and your own testing gives
 high confidence: the user's path run on real data, through devtools
 or the product's MCP where it applies, evidence in the PR body, and
 a PR in my tooling repos (dotfiles, the private overlay), which you
-merge yourself, unasked, once your own test passes; my
+merge yourself, unasked, once your own test passes. Prod broken for
+users (a crashing page) needs no word either: unless someone's open
+PR already fixes it, roll back or roll forward to a stable state at
+once, then tell me. My
 word to ship also covers the merge the queue refuses (workflow
 files), resolving review threads the code already answers (reply
 with the commit that fixed it, then resolve), and cancelling your
