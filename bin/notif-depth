@@ -46,6 +46,8 @@ def session(ctx):
 
 
 def read_rows(path, cleared):
+    """[(arrived, cleared|None, row)], skipping lines too short to be
+    a row (a message split by raw newlines, RAS-47)."""
     out = []
     try:
         f = open(path, errors='replace')
@@ -58,10 +60,17 @@ def read_rows(path, cleared):
                 c, row = int(p[0]), p[1:]
             else:
                 c, row = None, p
+            if len(row) < 5:
+                continue
             out.append((int(row[0]), c, row))
         except (ValueError, IndexError):
             continue
     return out
+
+
+def inbox():
+    """Pending rows."""
+    return [r for _, _, r in read_rows(INBOX, False)]
 
 
 def pings():

@@ -68,12 +68,20 @@ if [ -n "$LOCAL_CONFIG" ]; then
     _path="$PWD"
   fi
   mkdir -p "$(dirname "$_inbox")"
+  # One row per notification: newlines and tabs in the title or
+  # message would split it into junk rows (RAS-47), so they become a
+  # separator here (the toast above keeps them).
+  _flat() {
+    printf '%s\n' "$1" | awk '{ gsub(/[\t\r]/, " ") }
+      $0 !~ /^ *$/ { printf "%s%s", (n++ ? " \302\267 " : ""), $0 }'
+  }
   # Row: epoch  ctx  title  message  path  pane  mode  class  sid
   # [ref]. NOTIFY_SID (a Claude session id) finds the chat again once
   # its pane is gone (`claude-pane`); the path is the anchor `notif`
   # reopens from otherwise (e.g. after `wt rt`/`rm`).
   printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s\n' \
-    "$(date +%s)" "$_ctx" "$_title" "$_msg" "$_path" \
+    "$(date +%s)" "$_ctx" "$(_flat "$_title")" "$(_flat "$_msg")" \
+    "$_path" \
     "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" "${NOTIFY_SID:-}" \
     "${NOTIFY_REF:+	$NOTIFY_REF}" >> "$_inbox"
   focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
