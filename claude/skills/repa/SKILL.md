@@ -9,9 +9,21 @@ A session sees only its active login's artifacts (see `wt` skill,
 Claude accounts). After a swap, the old link can't be read or updated
 from here, so the fix is a new copy, never a share request.
 
+## Check the active login first
+
+Read it (`cswap list`, the `(active)` row) before anything else, and
+again after every swap notice: the session's own context email and the
+ledger lag behind it. Report it by name. On a borrowed login
+(`~/.config/borrowed-logins`) Rasmus can't open claude.ai links, so
+the copy he needs is local: publish the page through Artifact as
+usual, the `artifact-local.sh` hook opens it in his browser and logs
+its `file://` path, and that path is the link you hand back. Don't
+wait to be asked: a swap onto a borrowed login mid-task means the
+local copy, unprompted.
+
 ## Find the page
 
-`artifacts` (this dir) / `artifacts <query>` lists every publish from
+`artifacts` / `artifacts <query>` (on PATH) lists every publish from
 the ledger with its login and source file; an argument to `/repa` is
 that query. No row means nothing was ever published: say so plainly
 and don't invent one (if the work owed an artifact, building it is
@@ -32,10 +44,11 @@ just write.
 
 ## Publish and switch over
 
-- Publish with no `url` (a new artifact on this login), same title,
+- Publish with no `url` (a new artifact on this login, or the local
+  copy on a borrowed one), same title,
   same supporting `files`. Uploaded assets and an artifact database
   don't travel: re-upload the assets, and say if db rows were lost.
 - Replace the old link wherever it was handed out (PR body, ticket
   comment), and from then on update only the new copy.
-- Report the new URL with its login; `artifacts` marks the old one
+- Report the new URL (or `file://` path) with its login; `artifacts` marks the old one
   `stale`.
