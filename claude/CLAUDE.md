@@ -39,7 +39,8 @@ the turn:
 `wt-sync` tells you what happens next), and "is it
 released/deployed?":
 confirm it is live, then run read-only checks that it behaves as
-intended (logs, replica, live bundle). Long pipelines, polls and
+intended (logs, replica, the UI opened in a browser: a bundle grep
+proves it shipped, not that it renders). Long pipelines, polls and
 browser loops run in a background agent; the main thread stays free
 to talk. A stop while your own background work runs doesn't
 ping me, so tell me when you need me, even mid-wait: a decision
