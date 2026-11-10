@@ -130,6 +130,8 @@ check "brief: each priority, current step, worktree state" \
    && grep -q "   now: ABC-7 the fix" "$_t/brief" \
    && grep -q "   abc-7-fix: no agent" "$_t/brief" \
    && grep -A2 "^2\. Another" "$_t/brief" | grep -q "no worktree on it"'
+check "ls: a step's board section and agent state beside it" \
+  'p ls | grep -q "ABC-7 the fix   \[in progress: no agent\]   <- now"'
 
 # Swapping two outcomes pins the one moved up, not the one moved down.
 awk '/^[^ #]/ { n++ } n == 2 { print }' "$_f" > "$_t/next"
