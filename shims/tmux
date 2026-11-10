@@ -8,6 +8,8 @@
 #   temp dir is gone).
 # - kill-server on `default` in the real socket dir, unless
 #   TMUX_KILL_SERVER=1. Every kill-server is logged.
+# A TMUX_TMPDIR other than /tmp beats $TMUX: the command reaches the
+# server it names, not the pane's live one.
 # TMUX_REAL names the real binary (default: the next tmux on PATH).
 #
 # Shells started while agents ran on their own servers (RAS-33) still
@@ -44,6 +46,22 @@ if test "${TMUX_TMPDIR+x}" = x \
   echo "tmux: refused: TMUX_TMPDIR='$TMUX_TMPDIR' is empty or missing," \
     "so this would reach the real server" >&2
   exit 1
+fi
+
+# tmux prefers $TMUX's socket over TMUX_TMPDIR, so inside tmux a test's
+# own TMUX_TMPDIR still reached the live server (RAS-41). A TMUX_TMPDIR
+# other than /tmp wins: drop TMUX and TMUX_PANE unless $TMUX already
+# names a socket in it (a pane of that server).
+if test -n "${TMUX_TMPDIR:-}" && test -n "${TMUX:-}"; then
+  _td="$(cd "$TMUX_TMPDIR" && pwd -P)"
+  case "$_td" in
+    /tmp|/private/tmp) ;;
+    *)
+      case "${TMUX%%,*}" in
+        "$_td"/tmux-*/*|"${TMUX_TMPDIR%/}"/tmux-*/*) ;;
+        *) unset TMUX TMUX_PANE ;;
+      esac ;;
+  esac
 fi
 
 # kill-server (or a prefix of it) as a command: first non-flag word, or
@@ -98,7 +116,7 @@ if test -n "$_kill"; then
   _log "allowed: kill-server $_sock"
 fi
 
-TMUX_PANE="${TMUX_PANE%@default}"
+test -z "${TMUX_PANE+x}" || TMUX_PANE="${TMUX_PANE%@default}"
 _n=$#
 _tv=""
 while test "$_n" -gt 0; do

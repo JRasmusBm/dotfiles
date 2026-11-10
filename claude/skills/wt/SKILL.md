@@ -292,7 +292,8 @@ and pane ids all assume it (a split onto agents-N servers broke
 them, RAS-37). The `tmux` shim only guards: it refuses
 `kill-server` on the real `default` (`TMUX_KILL_SERVER=1` to mean
 it) and an empty or missing `TMUX_TMPDIR`, the test cleanup that
-killed every agent.
+killed every agent; and a `TMUX_TMPDIR` other than /tmp beats the
+pane's `$TMUX`, so a test's tmux reaches its own server.
 
 `tmux-watch` (launchd) keeps the server up: on a death it logs
 the cause (`tmux-watch.log`: signal, exit status, the shim's

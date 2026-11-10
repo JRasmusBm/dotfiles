@@ -23,6 +23,7 @@ mkdir -p "$_t/s"
 # so a kill-server here would kill the server the test runs in.
 unset TMUX TMUX_PANE
 trap 'TMUX_TMPDIR="$_t/s" "$_realtmux" kill-server 2>/dev/null
+  TMUX_TMPDIR="$_t/live" "$_realtmux" kill-server 2>/dev/null
   rm -rf "$_t"' EXIT
 export LOCAL_CONFIG="$_t/cfg"
 mkdir -p "$LOCAL_CONFIG"
@@ -102,6 +103,27 @@ chmod +x "$_t/fake-env"
 run TMUX_REAL="$_t/fake-env" TMUX_PANE=%9@default "$_shim" display -p x
 expect "TMUX_PANE reaches tmux bare" "%9"
 
+# A TMUX_TMPDIR of its own beats the live pane's $TMUX (RAS-41).
+cat > "$_t/fake-tmux" <<'X2'
+#!/bin/sh
+printf '%s|%s' "${TMUX-<unset>}" "${TMUX_PANE-<unset>}" > "$FAKE_OUT"
+X2
+chmod +x "$_t/fake-tmux"
+_live="/private/tmp/tmux-$_uid/default,1,0"
+run TMUX_REAL="$_t/fake-tmux" TMUX="$_live" TMUX_PANE=%3 \
+  TMUX_TMPDIR="$_t/s" "$_shim" display -p x
+expect "own TMUX_TMPDIR drops live TMUX and TMUX_PANE" "<unset>|<unset>"
+_sd="$(cd "$_t/s" && pwd -P)"
+run TMUX_REAL="$_t/fake-tmux" TMUX="$_sd/tmux-$_uid/default,1,0" \
+  TMUX_PANE=%3 TMUX_TMPDIR="$_t/s" "$_shim" display -p x
+expect "a pane of the TMUX_TMPDIR server keeps TMUX" \
+  "$_sd/tmux-$_uid/default,1,0|%3"
+for _d in /tmp /tmp/ /private/tmp; do
+  run TMUX_REAL="$_t/fake-tmux" TMUX="$_live" TMUX_PANE=%3 \
+    TMUX_TMPDIR="$_d" "$_shim" display -p x
+  expect "TMUX_TMPDIR=$_d keeps TMUX" "$_live|%3"
+done
+
 # Real tmux in a temp socket dir: one server for every session.
 _rt() {
   env -u TMUX TMUX_TMPDIR="$_t/s" TMUX_REAL="$_realtmux" "$_shim" "$@"
@@ -122,5 +144,36 @@ case "$_p" in %[0-9]*) _ok "pane_id is bare ($_p)" ;;
 _rt display -p -t "$_p@default" '#S' | grep -qx abc-1 \
   && _ok "real %N@default target resolves" \
   || _no "real %N@default target" "$(_rt display -p -t "$_p@default" '#S' 2>&1)"
+
+# From inside a pane of a "live" server, a fresh TMUX_TMPDIR reaches its
+# own server, and its kill-server leaves the live one up.
+mkdir -p "$_t/live"
+_lt() { env TMUX_TMPDIR="$_t/live" "$_realtmux" "$@"; }
+_lt new-session -d -s agent 'sleep 60'
+_livetmux="$(_lt display -p -t agent: '#{socket_path},#{pid},0')"
+_livepid="$(_lt display -p '#{pid}')"
+_in() {
+  env TMUX="$_livetmux" TMUX_PANE=%0 TMUX_TMPDIR="$_t/s" \
+    TMUX_REAL="$_realtmux" "$_shim" "$@"
+}
+_sock="$(_in display -p '#{socket_path}' 2>&1)"
+case "$_sock" in
+  "$_sd"/*) _ok "display from a live pane answers from TMUX_TMPDIR" ;;
+  *) _no "display from a live pane" "answered from $_sock" ;;
+esac
+_spid="$(_rt display -p '#{pid}')"
+_in kill-server 2>/dev/null
+test "$(_lt display -p '#{pid}' 2>/dev/null)" = "$_livepid" \
+  && _ok "kill-server from a live pane spares the live server" \
+  || _no "live server survives" "pid now '$(_lt display -p '#{pid}' 2>&1)'"
+# kill-server returns before the server is gone. (tpm's background run
+# may start a fresh one there: only this pid counts.)
+_i=0
+while kill -0 "$_spid" 2>/dev/null && test "$_i" -lt 20; do
+  sleep 0.1; _i=$((_i + 1))
+done
+kill -0 "$_spid" 2>/dev/null \
+  && _no "TMUX_TMPDIR server killed" "pid $_spid still up" \
+  || _ok "kill-server hit the TMUX_TMPDIR server"
 
 exit "$_fail"
