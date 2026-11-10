@@ -123,6 +123,10 @@ spec is the source of truth; an unspec'd case takes the closest
 spec'd state. Multi-piece work: orthogonal agent-ready briefs
 (goal, deps, settled context, files to read, skills, grill-on,
 acceptance, boundaries), a shared settled section, a task graph.
+Settled = what I or a stakeholder said, or what base already does;
+your own requirements (undo, recovery, extra modes) are proposals,
+marked so, and never settled: briefed agents build the smallest
+version and ask, so they don't build what nobody asked for.
 
 ## Line Length — HARD LIMIT
 
