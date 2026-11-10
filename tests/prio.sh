@@ -138,6 +138,14 @@ p edit
 check "edit: swap of two pins the one moved up" \
   'test "$(tr "\n" "," < "$_f.pinned")" = "Fix the login,Another,"'
 
+# A vim-like editor opens each priority as one fold, steps included.
+printf '#!/bin/sh\necho "$@" > "%s/args"\n' "$_t" > "$_t/bin/nvim"
+chmod +x "$_t/bin/nvim"
+EDITOR=nvim p edit
+check "edit: vim-like editor gets a fold per priority" \
+  'grep -q "foldmethod=expr foldlevel=0" "$_t/args" \
+   && grep -q "$_f\$" "$_t/args"'
+
 p done "Another" >/dev/null
 check "done: gone, not a removal" \
   '! grep -q "^Another" "$_f" && ! grep -q "Another" "$_f.removed"'
