@@ -3,7 +3,7 @@
 # compaction hid: --resume and ctrl+o stop at "Conversation compacted",
 # the .jsonl keeps it all. Prompts and replies only, no tool calls.
 #
-#   claude-log            latest session of this directory, in $EDITOR
+#   claude-log            latest session of this directory, in nvim
 #   claude-log <id>       that session (id or prefix, any project)
 #   claude-log : [query]  fuzzy pick a session
 #   claude-log -p ...     print to stdout instead of opening
@@ -61,5 +61,5 @@ if ((print)); then
 else
   out=$(mktemp -t claude-log).md
   render >"$out"
-  ${EDITOR:-nvim} +'$' "$out"
+  nvim -R +'$' "$out"
 fi
