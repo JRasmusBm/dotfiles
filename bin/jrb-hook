@@ -13,12 +13,14 @@
 #   nodeploy <pr>          exit 0 when a merged PR needs no deploy
 #   merged-hint <pr>       a sentence added to the merge tell
 #   sync                   wt-sync's per-repo tick (deploy/ship tells)
+#   stalled <what> <why>   the tick was killed at its cap 3 runs in a
+#                          row: raise it where someone acts on it
 # No hook, untrusted, or an event the hook doesn't handle: exit 1,
 # printing nothing (untrusted warns once per call on stderr).
 
 _dir="$1" _event="$2"
 test -n "$_dir" && test -n "$_event" \
-  || { sed -n '3,18s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+  || { sed -n '3,20s/^# \{0,1\}//p' "$0" >&2; exit 2; }
 shift 2
 _common="$(git -C "$_dir" rev-parse --path-format=absolute \
   --git-common-dir 2>/dev/null)" || exit 1

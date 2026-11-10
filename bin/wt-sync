@@ -4,7 +4,8 @@
 # repo in $WT_SYNC_REPOS (default: the paths listed one per line in
 # ~/.config/wt-sync-repos, kept outside dotfiles):
 #   - its trusted .jrb/wt-hook sync (jrb-hook): the repo's own tells
-#     about merged PRs, deploys and ship queues (pr-merged-tell, wt-tell);
+#     about merged PRs, deploys and ship queues (pr-merged-tell, wt-tell),
+#     killed at 120 s; the 3rd kill in a row runs its `stalled` event;
 #   - every 5th minute, wt-pr-watch tells the agent of a worktree whose
 #     open PR has failing CI or a review newer than its last push, once
 #     per head sha / review.
@@ -145,6 +146,15 @@ for _repo in $_repos; do
   # A hung network call must not stall the next minute's run: launchd
   # starts none while this one lives, so revive and tabs would stop.
   gtimeout -k 10 120 jrb-hook "$_repo" sync
+  _rc=$?
+  _kf="$LOCAL_CONFIG/wt-sync.kills.$(basename "$_repo")"
+  case $_rc in
+    124|137) _k=$(( $(cat "$_kf" 2>/dev/null || echo 0) + 1 ))
+      echo "$_k" > "$_kf"
+      test "$_k" != 3 || jrb-hook "$_repo" stalled "killed 3 runs in a row" \
+        "Its tick was killed at the 120 s cap 3 runs in a row." ;;
+    *) rm -f "$_kf" ;;
+  esac
 done
 
 # Foreground: launchd kills what a job leaves behind when it exits.
