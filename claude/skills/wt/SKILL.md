@@ -314,7 +314,27 @@ the registry, where `wt resume` brings it back.
 `status-right`, before the inbox count, as coloured text
 (`in progress`, `team review`, `blocked`, `off board`, …); an
 active `wt w8` shows instead as `w8 15:40 <what…>` (red
-`overdue` past the deadline).
+`overdue` past the deadline). A worktree on a priority gets a red
+`P0 #N` before it.
+
+Priorities (P0s): `$LOCAL_CONFIG/priorities`, one outcome per line
+in rank order, indented sources (`> Who date link "quote"`) and steps
+(`- [ ] ABC-123 …`; first unchecked = current). `prio` lists, `M-,` /
+`prio e` edits in a popup (moving or deleting a line is the re-rank;
+a hand-deleted outcome or step is never re-added by capture, and an
+outcome moved up by hand stays above `prio add --top`). Capture:
+`prio add [--top] [--by] [--date] [--link] [--quote] "<outcome>"
+[step…]` (exit 3: removed by hand). A worktree is on priority N when
+its branch names the ticket of an unchecked step of N. Every minute
+`prio sync` (from `wt-sync`) moves such board rows into a `# P0`
+section at the top (back to their old section, kept in
+`<repo>.p0`, when the priority goes; PROD REVIEW, TO ANNOUNCE,
+BLOCKED, NEEDS FOCUS and SNOOZED rows stay put), and gives each
+priority whose current step no worktree carries a silent `step`
+inbox row; jumping to it opens the popup. `wt feat|fix` warns (never
+blocks) when the new branch is on no priority while a P0 worktree is
+stalled or has no agent. `prio brief` is the morning text; the side
+files and the rest are in `bin/prio`'s header.
 
 Alt-N speed-dial is separate: line N of the current ts
 profile (`tsp`, `$LOCAL_CONFIG/ts-profiles/…`; Alt-0 = line
@@ -374,7 +394,9 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   `after-select-window`) run `notif arrive "#{pane_id}"`.
 - `M-i` / `notif next <pane>` — jump to the pending pane
   queued after the current one (oldest if here isn't
-  pending), so repeated `M-i` rotates through them.
+  pending), so repeated `M-i` rotates through them. Pings of
+  worktrees on priority 1 come first, then 2, …, then the rest;
+  class orders within each.
 - `M-k` / `notif focus <pane>` — toggle focus on this pane's
   worktree (main checkout: its Claude chat, by sid): when it pings, it ranks above every class and `M-i`
   from anywhere goes there first. No ping, no pull: it only calls
