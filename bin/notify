@@ -7,7 +7,9 @@
 # agents), merge (one keystroke ships a PR), blocked (an agent
 # waits on my answer), fail, check (verify after deploy), unset
 # (git-w8, bw8, ...), stalled (`wt-cold`: a work item stopped moving;
-# inbox only, no toast, sound or bell), fyi (nothing needed: inbox
+# inbox only, no toast, sound or bell), step (`prio sync`: a
+# priority's current step that no worktree carries; inbox only, and
+# ranked by that priority in `notif`), fyi (nothing needed: inbox
 # only too). NOTIFY_CTX names the row's place when not called from a
 # pane (default: the cwd's basename). NOTIFY_REF tags the row with an
 # id that survives a jump re-keying it to another pane, so its sender
@@ -31,14 +33,14 @@ case "$_here" in
 esac
 
 _class="${NOTIFY_CLASS:-}"
-case "$_class" in fyi|stalled) ;; *)
+case "$_class" in fyi|stalled|step) ;; *)
 osascript -e "display notification \"$_msg\" with title \"$_title\""
 afplay "$_sound" &
 ;; esac
 
 # Tmux bell for status bar highlight
 if [ -n "$TMUX_PANE" ] && [ "$_class" != fyi ] \
-  && [ "$_class" != stalled ]; then
+  && [ "$_class" != stalled ] && [ "$_class" != step ]; then
   _tty="$(tmux display-message -p -t "$TMUX_PANE" '#{pane_tty}')"
   if [ -n "$_tty" ]; then
     printf '\a' > "$_tty"
