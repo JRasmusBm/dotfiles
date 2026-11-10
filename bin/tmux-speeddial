@@ -61,13 +61,7 @@ _tmux_speeddial() {
         session_name="${_entry#*:}"
         export TMUX_SESSION_NAME="$session_name"
         ;;
-      # A plain entry is one of my own sessions, which live on the
-      # default server; M-N run from a client on agents-K inherits
-      # that server, and would miss it and make a stray copy there.
-      *)
-        session_name="$_entry"
-        export TMUX_SERVER=default
-        ;;
+      *) session_name="$_entry" ;;
     esac
 
     if tmux has-session -t "=$session_name" 2>/dev/null; then

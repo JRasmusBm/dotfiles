@@ -279,22 +279,19 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 Sessions are always named by worktree slug (the main
 checkout by repo name).
 
-tmux runs as several servers: `default` holds my own sessions,
-`agents-1..N` the worktree sessions (placed by name, in
-`$LOCAL_CONFIG/tmux-home`), so one death takes a slice of the
-chats and never my panes. The `tmux` shim routes every call to
-the right server: pane keys read `%N@<server>`, `ls` and `-a`
-scans span all servers, and a switch to another server's session
-detaches into it. It refuses `kill-server` on a live server
-(`TMUX_KILL_SERVER=1` to mean it) and an empty or missing
-`TMUX_TMPDIR`, the test cleanup that killed every agent.
+One tmux server (`default`) holds every session: M-i, switches
+and pane ids all assume it (a split onto agents-N servers broke
+them, RAS-37). The `tmux` shim only guards: it refuses
+`kill-server` on the real `default` (`TMUX_KILL_SERVER=1` to mean
+it) and an empty or missing `TMUX_TMPDIR`, the test cleanup that
+killed every agent.
 
-`tmux-watch` (launchd) keeps each server up: on a death it logs
+`tmux-watch` (launchd) keeps the server up: on a death it logs
 the cause (`tmux-watch.log`: signal, exit status, the shim's
 kill-server row naming its caller, crash report), starts the
 server again and runs `tmux-revive` at once. tmux-revive
-snapshots every Claude pane per server every 20 s (session,
-window, cwd, sid, mid-turn or not) and rebuilds a dead server's
+snapshots every Claude pane every 20 s (session,
+window, cwd, sid, mid-turn or not) and rebuilds the dead server's
 sessions under their old names: mid-turn chats first, each
 resumed (`claude --resume <sid>`) past the cap and told at its
 empty prompt to check git status and carry on; then idle ones
@@ -445,7 +442,9 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   then recreate the session at the stored path (its worktree
   root). A removed worktree comes back first via `wt resume`
   (Claude continues in `cli`); a place with nothing to
-  resume is cleared (`M-i` skips to the next).
+  resume is cleared with a "Cleared <ctx>: gone" message. A place
+  that exists but won't take the switch keeps its rows: `M-i`
+  moves on and names it ("Could not switch to …").
 - A counter badge (`#(notif count)` → green `(N)`, distinct
   pending panes) sits in `status-right` before the date.
 - `M-y` / `notif seen <pane>` — mark this pane done: drop

@@ -1,13 +1,12 @@
 #!/usr/bin/env python3
-"""tmux-watch — keep every tmux server up and say why one died.
+"""tmux-watch — keep the tmux server up and say why it died.
 
   tmux-watch          watch (launchd KeepAlive, com.jrasmusbm.tmux-watch)
-  tmux-watch status   each server: pid, owned or adopted, uptime
+  tmux-watch status   the server: pid, owned or adopted, uptime
 
-Servers are `default` and `agents-1..N` (`tmux-all servers`). Each one
-missing is started as a child (`tmux -L <name> -D`, in its own process
-group so a launchd unload leaves it up) with the login shell's
-environment, so its death comes back as an exit status or signal. A
+One server, `default`, holds every session. Missing, it is started
+as a child (`tmux -L default -D`, in its own process group so a
+launchd unload leaves it up) with the login shell's environment, so its death comes back as an exit status or signal. A
 server already running when the watch starts is adopted and polled
 each second; its cause is then whatever the logs show.
 
@@ -15,12 +14,12 @@ On a death, one row in $LOCAL_CONFIG/tmux-watch.log: the server, its
 pid and uptime, how it ended, the shim's kill-server rows for it from
 the last minute (tmux-guard.log, naming the caller) and any new tmux
 crash report. The cause line also goes to tmux-watch.last for
-tmux-revive's ping (deaths within a minute of each other share it).
+tmux-revive's ping (deaths within a minute share it).
 The server is started again at once (backing off when it dies
 again within a minute), then tmux-revive runs right away and every
 5 s while its queue has work, so the chats it held come back without
 waiting for wt-sync's minute. Otherwise it runs every 20 s, so
-its snapshot knows which chats were mid-turn when a server dies.
+its snapshot knows which chats were mid-turn when the server dies.
 """
 
 import calendar
@@ -47,9 +46,7 @@ SNAPSHOT_EVERY = float(os.environ.get("TMUX_WATCH_SNAPSHOT_EVERY", "20"))
 REVIVE = os.environ.get("TMUX_WATCH_REVIVE", "tmux-revive")
 
 
-def servers():
-    n = int(os.environ.get("TMUX_AGENT_SHARDS", "2"))
-    return ["default"] + [f"agents-{i}" for i in range(1, n + 1)]
+SERVERS = ["default"]
 
 
 def now():
@@ -75,7 +72,7 @@ def login_env():
     except Exception as e:
         log(f"login env failed ({e}), using launchd's")
         env = dict(os.environ)
-    for k in ("TMUX", "TMUX_PANE", "TMUX_SERVER", "TMUX_KILL_SERVER"):
+    for k in ("TMUX", "TMUX_PANE", "TMUX_KILL_SERVER"):
         env.pop(k, None)
     env.setdefault("LANG", "en_US.UTF-8")
     env["LOCAL_CONFIG"] = CFG
@@ -276,7 +273,7 @@ def main():
     os.makedirs(CFG, exist_ok=True)
     signal.signal(signal.SIGTERM, lambda *_: sys.exit(0))
     env = login_env()
-    watch = [Server(n, env) for n in servers()]
+    watch = [Server(n, env) for n in SERVERS]
     for s in watch:
         s.start()
     save(watch)

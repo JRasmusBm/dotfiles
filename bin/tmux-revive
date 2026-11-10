@@ -4,15 +4,13 @@
 # every 5 s while its queue has work, every 20 s otherwise) and by
 # wt-sync every minute: brings the Claude chats back after a server
 # dies (a crash) or restarts (kill-server). One run at a time (a lock).
-#   - Snapshots each live server (`tmux-all servers`: default,
-#     agents-1..N) to $LOCAL_CONFIG/tmux-revive.snapshot (default) or
-#     tmux-revive.snapshot.<server>: `server <pid> <start_time>`, then
-#     per pane running Claude session<TAB>window<TAB>cwd<TAB>sid<TAB>work
-#     (`claude-pane map`; sid `-` when Claude wrote no session file;
-#     work `1` when the pane shows Claude's spinner or a background
-#     wait, else `-`).
-#   - A server gone, or with another start_time than its snapshot's,
-#     queues each chat of that snapshot that isn't live on any server
+#   - Snapshots the live server to $LOCAL_CONFIG/tmux-revive.snapshot:
+#     `server <pid> <start_time>`, then per pane running Claude
+#     session<TAB>window<TAB>cwd<TAB>sid<TAB>work (`claude-pane map`;
+#     sid `-` when Claude wrote no session file; work `1` when the
+#     pane shows Claude's spinner or a background wait, else `-`).
+#   - The server gone, or with another start_time than the snapshot's,
+#     queues each chat of the snapshot that isn't live
 #     (tmux-revive.queue), once per dead server (tmux-revive.done),
 #     with the time the new server started (else now) for a working
 #     one. Mid-turn chats go first.
@@ -25,11 +23,10 @@
 #     its session gets a shell where it was and `run-slot park` records
 #     it closed, so a focus on that pane or a tell resumes it.
 #     A missing session is rebuilt like `wt open` does (its .tmux, else
-#     the run/vim/cli layout) under its old name, on its own server
-#     (tmux-home, shims/tmux), and `claude --resume <sid>` (no sid:
-#     `claude --continue || claude`) is typed into a window it just
-#     built with the old window's name (`cli`), else into a new window
-#     of that name. Panes it didn't build are never touched.
+#     the run/vim/cli layout) under its old name, and `claude --resume
+#     <sid>` (no sid: `claude --continue || claude`) is typed into a
+#     window it just built with the old window's name (`cli`), else
+#     into a new window of that name. Panes it didn't build are never touched.
 #   - A later run checks each started pane runs Claude, and once a
 #     chat that was working shows an empty prompt, tells it: `tmux
 #     restarted at <time> while you were working. Check git status and
@@ -37,10 +34,10 @@
 #     10 min: `untold`). Once none is pending, one notify ping sums up
 #     revived, told, parked and failed chats and the cause tmux-watch
 #     logged (rows in tmux-revive.log).
-# tmux-revive forget — drop the snapshots and queue, so a deliberate
+# tmux-revive forget — drop the snapshot and queue, so a deliberate
 # kill-server stays dead.
 # Tests: TMUX_TMPDIR (TMUX unset) points every tmux call, children's
-# too, at other servers; CLAUDE_CONFIG_DIR at other session files;
+# too, at another server; CLAUDE_CONFIG_DIR at other session files;
 # TMUX_REVIVE_CLAUDE replaces the `claude` typed.
 
 _dir="${LOCAL_CONFIG:?}"
@@ -53,7 +50,7 @@ _claude="${TMUX_REVIVE_CLAUDE:-claude}"
 _t="$(printf '\t')"
 
 if test "${1:-}" = forget; then
-  rm -f "$_snap" "$_snap".* "$_q"
+  rm -f "$_snap" "$_q"
   exit 0
 fi
 
@@ -79,7 +76,7 @@ _working() {
 }
 
 # pane<TAB>session<TAB>window<TAB>cwd<TAB>sid<TAB>work of every Claude
-# pane on every server (pane keys name their server).
+# pane.
 _claude_panes() {
   _m="$(claude-pane map)"
   tmux -u list-panes -a -F \
@@ -99,40 +96,35 @@ _claude_panes() {
     done
 }
 
-_live="$(_claude_panes)"
+_server="$(tmux display-message -p '#{pid} #{start_time}' 2>/dev/null)"
+_live="$(test -z "$_server" || _claude_panes)"
 
-for _srv in $(tmux-all servers); do
-  _f="$_snap"
-  test "$_srv" = default || _f="$_snap.$_srv"
-  _server="$(tmux -L "$_srv" display-message -p '#{pid} #{start_time}' \
-    2>/dev/null)"
-  # The server the snapshot saw is gone: queue its chats, once.
-  _prev="$(sed -n '1s/^server //p' "$_f" 2>/dev/null)"
-  if test -n "$_prev" && test "$_prev" != "$_server" \
-    && ! grep -qxF "$_prev" "$_done" 2>/dev/null; then
-    echo "$_prev" >> "$_done"
-    _rt="$(date +%H:%M)"
-    test -z "$_server" || _rt="$(date -r "${_server#* }" +%H:%M)"
-    sed 1d "$_f" | while IFS="$_t" read -r _s _w _cwd _sid _work; do
-      test -n "$_s" || continue
-      if test "$_sid" != -; then
-        printf '%s\n' "$_live" | cut -f5 | grep -qxF "$_sid" && continue
-      else
-        printf '%s\n' "$_live" | cut -f4 | grep -qxF "$_cwd" && continue
-      fi
-      _tell=-
-      test "$_work" != 1 || _tell="$_rt"
-      printf 'todo\t%s\t%s\t%s\t%s\t-\t%s\t%s\n' "$_s" "$_w" "$_cwd" \
-        "$_sid" "$(date +%s)" "$_tell"
-    done >> "$_q"
-  fi
-  if test -n "$_server"; then
-    _tmp="$(mktemp)"
-    { echo "server $_server"
-      printf '%s\n' "$_live" | grep "^%[0-9]*@$_srv$_t" | cut -f2-
-    } > "$_tmp" && mv "$_tmp" "$_f"
-  fi
-done
+# The server the snapshot saw is gone: queue its chats, once.
+_prev="$(sed -n '1s/^server //p' "$_snap" 2>/dev/null)"
+if test -n "$_prev" && test "$_prev" != "$_server" \
+  && ! grep -qxF "$_prev" "$_done" 2>/dev/null; then
+  echo "$_prev" >> "$_done"
+  _rt="$(date +%H:%M)"
+  test -z "$_server" || _rt="$(date -r "${_server#* }" +%H:%M)"
+  sed 1d "$_snap" | while IFS="$_t" read -r _s _w _cwd _sid _work; do
+    test -n "$_s" || continue
+    if test "$_sid" != -; then
+      printf '%s\n' "$_live" | cut -f5 | grep -qxF "$_sid" && continue
+    else
+      printf '%s\n' "$_live" | cut -f4 | grep -qxF "$_cwd" && continue
+    fi
+    _tell=-
+    test "$_work" != 1 || _tell="$_rt"
+    printf 'todo\t%s\t%s\t%s\t%s\t-\t%s\t%s\n' "$_s" "$_w" "$_cwd" \
+      "$_sid" "$(date +%s)" "$_tell"
+  done >> "$_q"
+fi
+
+if test -n "$_server"; then
+  _tmp="$(mktemp)"
+  { echo "server $_server"; printf '%s\n' "$_live" | cut -f2-; } \
+    | grep . > "$_tmp" && mv "$_tmp" "$_snap"
+fi
 
 test -s "$_q" || exit 0
 

@@ -53,10 +53,11 @@ _recent() {
   echo "$(_inbox).recent"
 }
 
-# A bare pane id (a row from before pane keys named their server)
-# is on default.
-_KEY='function key() {
-  return $6 ~ /^%[0-9]+$/ ? $6 "@default" : $6 != "" ? $6 : $2
+# A row written while agents ran on their own servers (RAS-33) may
+# key its pane %N@default: that is pane %N.
+_KEY='function key(  p) {
+  p = $6; sub(/@default$/, "", p)
+  return p != "" ? p : $2
 }
 function rank(c) {
   return c == "env" ? 1 : c == "merge" ? 2 : c == "blocked" ? 3 \
@@ -243,8 +244,10 @@ _notif_rekey() {
 # else recreate the session at its path (its worktree root, for
 # a worktree; a removed one comes back via `wt resume`, Claude
 # continuing). A fallback landing re-keys the rows to the pane
-# landed on. Returns 1 when the place is truly gone.
+# landed on. Returns 1 when the place is truly gone, 2 when it is
+# there but switching to it failed.
 _notif_jump() {
+  _j_stuck=""
   _j_key="$1"
   _j_ctx="$2"
   _j_path="$3"
@@ -269,6 +272,7 @@ _notif_jump() {
       fi
       return 0
     fi
+    test -z "$_j_to" || _j_stuck=1
   fi
   case "$_j_key" in
     %*)
@@ -278,6 +282,10 @@ _notif_jump() {
         _notif_drop "$_j_key" arrive
         return 0
       fi
+      # Not a bare exit status: with no client, display-message
+      # -t on a dead pane falls back to another and succeeds.
+      test "$(tmux display-message -p -t "$_j_key" '#{pane_id}' \
+        2>/dev/null)" != "$_j_key" || _j_stuck=1
       ;;
   esac
   if tmux switch-client -t "=$_j_ctx" 2>/dev/null; then
@@ -285,6 +293,7 @@ _notif_jump() {
     _notif_drop "$(tmux display-message -p '#{pane_id}')" arrive
     return 0
   fi
+  ! tmux has-session -t "=$_j_ctx" 2>/dev/null || _j_stuck=1
   _j_home="$_j_path"
   case "$_j_path" in
     */.worktrees/*)
@@ -312,16 +321,24 @@ _notif_jump() {
       _notif_rekey "$_j_key" "$_j_sess" sticky
       return 0
     fi
+    _j_stuck=1
   fi
+  test -z "$_j_stuck" || return 2
   return 1
 }
 
 # Arriving at a live place clears its non-sticky rows (in
 # _notif_jump); starting or resuming a session for them does
-# not. A gone place is dropped entirely.
+# not. A gone place is dropped entirely, and says so; one that is
+# there but would not take the switch keeps its rows (returns 2).
 _go() {
-  _notif_jump "$1" "$2" "$3" "${4:-}" && return 0
+  _g_rc=0
+  _notif_jump "$1" "$2" "$3" "${4:-}" || _g_rc=$?
+  case "$_g_rc" in
+    0|2) return "$_g_rc" ;;
+  esac
   _notif_drop "$1"
+  tmux display-message "Cleared ${2:-$1}: gone" 2>/dev/null || true
   return 1
 }
 
@@ -331,12 +348,15 @@ _go() {
 _notif_next() {
   _f="$(_inbox)"
   _here_key="${1:-}"
+  _skip="" _stuck=""
   while test -f "$_f"; do
     _line="$(awk -F'\t' -v h="$_here_key" -v blk="$(_blocked)" \
+      -v skip=" $_skip " \
       -v nfc="$(_needsfocus)" \
       -v foc="$(_focused)" "$_KEY"'
       {
         k = key()
+        if (index(skip, " " k " ")) next
         if (!(k in r)) { o[++n] = k; r[k] = 999; t[k] = $1 }
         if (prio($8, $5, k) < r[k]) r[k] = prio($8, $5, k)
         if (focused(k, $5)) fk[k] = 1
@@ -355,11 +375,22 @@ _notif_next() {
         print row[o[at % n + 1]]
       }' "$_f")"
     test -n "$_line" || break
-    _go "$(printf '%s' "$_line" | cut -f1)" \
-      "$(printf '%s' "$_line" | cut -f2)" \
+    _n_key="$(printf '%s' "$_line" | cut -f1)"
+    _n_ctx="$(printf '%s' "$_line" | cut -f2)"
+    _n_rc=0
+    _go "$_n_key" "$_n_ctx" \
       "$(printf '%s' "$_line" | cut -f3)" \
-      "$(printf '%s' "$_line" | cut -f4)" && return 0
+      "$(printf '%s' "$_line" | cut -f4)" || _n_rc=$?
+    case "$_n_rc" in
+      0) return 0 ;;
+      2) _skip="$_skip $_n_key" _stuck="$_stuck ${_n_ctx:-$_n_key}" ;;
+    esac
   done
+  if test -n "$_stuck"; then
+    tmux display-message "Could not switch to$_stuck (kept in the inbox)" \
+      2>/dev/null || true
+    return 1
+  fi
   tmux display-message "No other notifications" 2>/dev/null || true
 }
 
@@ -471,8 +502,8 @@ _notif_preview() {
 case "${1:-}" in
   next|later|focus|seen|arrive|go)
     case "${2:-}" in
-      %*@*) ;;
-      %*) _a1="$1" _a2="$2@default"; shift 2; set -- "$_a1" "$_a2" "$@" ;;
+      %*@default) _a1="$1" _a2="${2%@default}"; shift 2
+        set -- "$_a1" "$_a2" "$@" ;;
     esac ;;
 esac
 

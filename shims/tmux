@@ -1,37 +1,18 @@
 #!/bin/sh
 # Every `tmux` goes through here (shims/ is first on PATH): a guard on
-# the calls that took every agent down, and routing across the tmux
-# servers that hold them.
+# the calls that took every agent down.
 #
-# Servers: `default` holds my own sessions; a worktree's session lives
-# on `agents-K` (K from its name, TMUX_AGENT_SHARDS servers, default 2;
-# 0 keeps everything on default), so one death takes a slice of the
-# chats and never my panes. `$LOCAL_CONFIG/tmux-home/<session>` names
-# a session's server, written when the session is first made.
-#
-# Routing, first match wins: -L/-S given; a target (-t, -s) ending in
-# `@<server>` (a pane key such as `%5@agents-1`; the suffix is
-# stripped); TMUX_SERVER=<server>; the target session's tmux-home;
-# for new-session, a start dir (-c, else $PWD) inside a worktree
-# places it on an agents server; else tmux's own ($TMUX, then
-# default). switch-client to a session on another server becomes a
-# detach-client -E that attaches there.
-#
-# Pane keys: `#{pane_id}` in an arg prints `%N@<server>` (on default
-# and agents-*; nothing when there is no pane), and $TMUX_PANE (zshrc
-# qualifies it the same way) is passed to tmux bare, so a pane id
-# stored anywhere routes back to its own server, wherever it is used
-# from. With no server named, list-sessions, list-clients and `-a`
-# scans (list-panes, list-windows) ask every live server and join the
-# output.
-#
-# Guard, refused with exit 1 and a row in $LOCAL_CONFIG/tmux-guard.log:
+# Refused with exit 1 and a row in $LOCAL_CONFIG/tmux-guard.log:
 # - TMUX_TMPDIR set but empty or not a directory: tmux would fall back
 #   to /tmp and act on the real server (a test's cleanup after its
 #   temp dir is gone).
-# - kill-server on `default` or `agents-*` in the real socket dir,
-#   unless TMUX_KILL_SERVER=1. Every kill-server is logged.
+# - kill-server on `default` in the real socket dir, unless
+#   TMUX_KILL_SERVER=1. Every kill-server is logged.
 # TMUX_REAL names the real binary (default: the next tmux on PATH).
+#
+# Shells started while agents ran on their own servers (RAS-33) still
+# hold TMUX_PANE=%N@default, and pass it on: the suffix is dropped
+# here, from it and from -t/-s, so `-t "$TMUX_PANE"` finds the pane.
 
 _log() {
   _l="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/tmux-guard.log"
@@ -65,206 +46,78 @@ if test "${TMUX_TMPDIR+x}" = x \
   exit 1
 fi
 
-_home="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/tmux-home"
-_shards="${TMUX_AGENT_SHARDS:-2}"
-_L="" _S="" _cmd="" _sfx="" _reg="" _tgt="" _sname="" _dir="" _kill=""
-_new="" _sw="" _cl="" _want="" _atcmd="" _list="" _all="" _cmds=0
+# kill-server (or a prefix of it) as a command: first non-flag word, or
+# right after a `;`. -L/-S name the socket.
+_L="" _S="" _kill="" _want="" _atcmd=1 _pre=1
 for _a in "$@"; do
   if test -n "$_want"; then
-    _v="$_a"
-    case "$_want" in
-      L) _L="$_v" ;;
-      S) _S="$_v" ;;
-      t|s)
-        case "$_v" in
-          *@default|*@agents-[0-9]*)
-            test -n "$_sfx" || _sfx="${_v##*@}"
-            _v="${_v%@*}"
-            ;;
-        esac
-        if test "$_want" = s && test -n "$_new"; then
-          _sname="$_v"
-        elif test -z "$_tgt"; then
-          _tgt="$_v"
-        fi
-        ;;
-      c) if test -n "$_new"; then _dir="$_v"; elif test -n "$_sw"; then
-           _cl="$_v"; fi ;;
-    esac
+    case "$_want" in L) _L="$_a" ;; S) _S="$_a" ;; esac
     _want=""
     continue
   fi
-  if test -z "$_cmd"; then
+  if test -n "$_pre"; then
     case "$_a" in
-      -L|-S|-f|-c|-T) _want="${_a#-}"; test "$_want" = L || \
-        test "$_want" = S || _want=x ;;
-      -L?*) _L="${_a#-L}" ;;
-      -S?*) _S="${_a#-S}" ;;
+      -L|-S) _want="${_a#-}"; continue ;;
+      -f|-c|-T) _want=x; continue ;;
+      -L?*) _L="${_a#-L}"; continue ;;
+      -S?*) _S="${_a#-S}"; continue ;;
       -*) continue ;;
-      *) _cmd="$_a" ;;
     esac
-    test -n "$_cmd" || continue
-    _atcmd=1
+    _pre=""
   fi
   if test -n "$_atcmd"; then
     _atcmd=""
-    _cmds=$((_cmds + 1))
     case "$_a" in
-      ls|lsc|list-sessions|list-clients) _list=1 _all=1 ;;
-      lsp|lsw|list-panes|list-windows) _list=1 ;;
-      new|new-s|new-se*) _new=1 ;;
-      switchc|switch-c*) _sw=1 ;;
       kill-ser|kill-serv|kill-serve|kill-server) _kill=1 ;;
     esac
     continue
   fi
-  case "$_a" in
-    # list-panes -s is a flag (the whole session), not a target.
-    -s) test -n "$_list" || _want=s ;;
-    -t|-c) _want="${_a#-}" ;;
-    -a) _all="${_list:+1}" ;;
-    -t?*|-s?*)
-      _v="${_a#-?}"
-      case "$_v" in
-        *@default|*@agents-[0-9]*)
-          test -n "$_sfx" || _sfx="${_v##*@}"
-          _v="${_v%@*}"
-          ;;
-      esac
-      test -n "$_tgt" || _tgt="$_v"
-      ;;
-    \;|*\;) _atcmd=1 ;;
-  esac
+  case "$_a" in \;|*\;) _atcmd=1 ;; esac
 done
-
-_srv=""
-if test -z "$_L$_S"; then
-  if test -n "$_sfx"; then
-    _srv="$_sfx"
-  elif test -n "${TMUX_SERVER:-}"; then
-    _srv="$TMUX_SERVER"
-  else
-    _n="${_sname:-$_tgt}"
-    _n="${_n#=}"
-    _n="${_n%%:*}"
-    case "$_n" in ""|%*|@*|\$*) ;; *)
-      if test -f "$_home/$_n"; then
-        read -r _srv < "$_home/$_n"
-      elif test -n "$_new" && test "$_shards" -gt 0 \
-        && test -n "$_sname"; then
-        case "${_dir:-$PWD}" in
-          */.worktrees/?*)
-            _k="$(printf %s "$_sname" | cksum | cut -d' ' -f1)"
-            _srv="agents-$((_k % _shards + 1))"
-            mkdir -p "$_home" && echo "$_srv" > "$_home/$_sname"
-            ;;
-        esac
-      fi
-      ;;
-    esac
-  fi
-fi
 
 if test -n "$_kill"; then
   _dir0="${TMUX_TMPDIR:-/tmp}/tmux-${UID:-$(id -u)}"
   if test -n "$_S"; then
     _sock="$_S"
-  elif test -n "${_L:-$_srv}"; then
-    _sock="$_dir0/${_L:-$_srv}"
+  elif test -n "$_L"; then
+    _sock="$_dir0/$_L"
   elif test -n "${TMUX:-}"; then
     _sock="${TMUX%%,*}"
   else
     _sock="$_dir0/default"
   fi
-  _guarded=""
   case "$_sock" in
-    /tmp/tmux-"${UID:-$(id -u)}"/*|/private/tmp/tmux-"${UID:-$(id -u)}"/*)
-      case "${_sock##*/}" in default|agents-*) _guarded=1 ;; esac ;;
+    /tmp/tmux-"${UID:-$(id -u)}"/default|/private/tmp/tmux-"${UID:-$(id -u)}"/default)
+      if test "${TMUX_KILL_SERVER:-}" != 1; then
+        _log "refused: kill-server $_sock"
+        echo "tmux: refused: kill-server on $_sock holds live agents" \
+          "(TMUX_KILL_SERVER=1 to mean it; tmux-kill-all does)" >&2
+        exit 1
+      fi ;;
   esac
-  if test -n "$_guarded" && test "${TMUX_KILL_SERVER:-}" != 1; then
-    _log "refused: kill-server $_sock"
-    echo "tmux: refused: kill-server on $_sock holds live agents" \
-      "(TMUX_KILL_SERVER=1 to mean it; tmux-kill-all does)" >&2
-    exit 1
-  fi
   _log "allowed: kill-server $_sock"
 fi
 
-if test -n "$_sw" && test -n "$_srv" && test -n "${TMUX:-}"; then
-  _cur="${TMUX%%,*}"
-  if test "${_cur##*/}" != "$_srv"; then
-    set -- detach-client
-    test -z "$_cl" || set -- "$@" -t "$_cl"
-    exec "$_real" "$@" -E "exec tmux -L $_srv attach-session -t '$_tgt'"
+TMUX_PANE="${TMUX_PANE%@default}"
+_n=$#
+_tv=""
+while test "$_n" -gt 0; do
+  _a="$1"
+  shift
+  if test -n "$_tv"; then
+    _a="${_a%@default}"
+    _tv=""
+  else
+    case "$_a" in
+      -t|-s) _tv=1 ;;
+      -t?*@default|-s?*@default) _a="${_a%@default}" ;;
+    esac
   fi
-fi
-
-if test -n "$_sfx"; then
-  _n=$#
-  _strip=""
-  while test "$_n" -gt 0; do
-    _a="$1"
-    shift
-    if test -n "$_strip"; then
-      _a="${_a%@*}"
-      _strip=""
-    else
-      case "$_a" in
-        -t|-s) _strip=1
-          case "${1:-}" in *@default|*@agents-[0-9]*) ;; *) _strip="" ;; esac
-          ;;
-        -t?*@default|-t?*@agents-[0-9]*|-s?*@default|-s?*@agents-[0-9]*)
-          _a="${_a%@*}" ;;
-      esac
-    fi
-    set -- "$@" "$_a"
-    _n=$((_n - 1))
-  done
-fi
-
-case "${TMUX_PANE:-}" in *@*) TMUX_PANE="${TMUX_PANE%@*}" ;; esac
-
-if test -z "$_S"; then
-  _name="${_L:-$_srv}"
-  test -n "$_name" || { _name="${TMUX%%,*}"; _name="${_name##*/}"; }
-  case "${_name:-default}" in default|agents-[0-9]*)
-    _n=$#
-    while test "$_n" -gt 0; do
-      _a="$1" _o=""
-      shift
-      while :; do
-        case "$_a" in
-          *'#{pane_id}'*)
-            _o="$_o${_a%%'#{pane_id}'*}#{?pane_id,#{pane_id}@#{b:socket_path},}"
-            _a="${_a#*'#{pane_id}'}"
-            ;;
-          *) _o="$_o$_a"; break ;;
-        esac
-      done
-      set -- "$@" "$_o"
-      _n=$((_n - 1))
-    done
-    ;;
-  esac
-fi
-
-if test "$_list$_all" = 11 && test "$_cmds" = 1 \
-  && test -z "$_L$_S$_srv$_tgt"; then
-  _rc=1
-  _dir0="${TMUX_TMPDIR:-/tmp}/tmux-${UID:-$(id -u)}"
-  _i=0
-  while test "$_i" -le "$_shards"; do
-    _s=default
-    test "$_i" = 0 || _s="agents-$_i"
-    _i=$((_i + 1))
-    test -S "$_dir0/$_s" || continue
-    "$_real" -L "$_s" "$@" 2>/dev/null && _rc=0
-  done
-  exit "$_rc"
-fi
+  set -- "$@" "$_a"
+  _n=$((_n - 1))
+done
 
 # A server started from launchd (no LANG) gives its panes the C locale:
 # vim then reads UTF-8 as latin1.
 export LANG="${LANG:-en_US.UTF-8}"
-test -z "$_srv" || set -- -L "$_srv" "$@"
 exec "$_real" "$@"
