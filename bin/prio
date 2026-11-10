@@ -67,8 +67,9 @@ HEADING = re.compile(r'^\s*#|:\s*$')
 # Post-merge and parking sections: wt owns them, `# P0` leaves them be.
 KEEP = {'PROD REVIEW', 'TO ANNOUNCE', 'BLOCKED', 'NEEDS FOCUS', 'SNOOZED'}
 TEMPLATE = """\
-# Priorities, rank = line order. Move a line to re-rank, delete it to
-# drop it (capture won't add it back). Under each, indented:
+# Priorities, rank = line order. Each is folded with its steps: dd/p
+# moves it whole, zo opens it. Delete one to drop it (capture won't add
+# it back). Under each, indented:
 #   > Who YYYY-MM-DD <link|-> "quote"
 #   - [ ] ABC-123 a step   (first unchecked = current step)
 """
@@ -285,7 +286,14 @@ def cmd_edit(_args):
     old = read()
     if not os.path.exists(FILE):
         write(FILE, TEMPLATE)
-    subprocess.call([os.environ.get('EDITOR') or 'vim', FILE])
+    editor = os.environ.get('EDITOR') or 'vim'
+    # Each priority is one closed fold with its sources and steps, so
+    # dd/p moves the whole block; zo opens one to edit it.
+    fold = ['-c', 'setlocal foldmethod=expr foldlevel=0 foldminlines=0'
+            ' | let &l:foldexpr = "getline(v:lnum) =~ \'^\\s\' ? 1'
+            ' : getline(v:lnum) =~ \'^\\(#\\|$\\)\' ? 0 : \'>1\'"'] \
+        if os.path.basename(editor) in ('v', 'vi', 'vim', 'nvim') else []
+    subprocess.call([editor, *fold, FILE])
     new = read()
     if new != (old or TEMPLATE):
         after_edit(old, new)
