@@ -12,6 +12,13 @@ set -- $(tmux display-message -p -t "$_p" \
 test "${1:-}" = 0 || exit 1
 case "${2:-}" in
   claude|[0-9]*.[0-9]*.[0-9]*) ;;
+  # A wrapper script (cr) shows as its shell while Claude runs under it:
+  # Claude must be the tty's foreground process.
+  zsh|bash|sh|fish)
+    _tty="$(tmux display-message -p -t "$_p" '#{pane_tty}' 2>/dev/null)"
+    ps -o tpgid=,pgid=,comm= -t "${_tty#/dev/}" 2>/dev/null \
+      | awk '$1 == $2 && $3 ~ /(^|\/)claude$/ { f = 1 } END { exit !f }' \
+      || exit 1 ;;
   *) exit 1 ;;
 esac
 
