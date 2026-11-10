@@ -256,7 +256,8 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt clean [-f]` — remove every worktree (incl. orphans)
   whose PR is merged (via `gh`), confirming each; `-f` skips
   prompts. Keeps `# PROD REVIEW` entries: a merged PR there
-  still needs checking in prod, so `wt done` removes them.
+  still needs checking in prod, so `wt done` removes them
+  (or `wt-cold`, once its ticket is Done or Canceled).
   First sweeps subagent worktrees
   (`.claude/worktrees/agent-*`, invisible to `wt`) untouched
   for `WT_AGENT_TTL` hours (24): pinned to `refs/wt/<id>`,
@@ -427,7 +428,11 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   waiting, snoozed or stalled. Stalled pings until touched, so an
   empty inbox means nothing is waiting on me. Don't add rules that
   let work go quiet without a state. States, checked in order:
-  SNOOZED (`wt sz` to a future date; the only parking), WAITING (a
+  REMOVED (a PROD REVIEW row whose ticket is Done or Canceled, or,
+  with no ticket, whose PR closed and worktree is gone: `--ping`
+  takes it off the board with `wt retire`, like `wt done` minus
+  Linear, keeping a checkout with unpushed work on disk; logged to
+  `wt-cold-retired.log`, never pinged), SNOOZED (`wt sz` to a future date; the only parking), WAITING (a
   `wt w8` before its deadline, beating everything else; else a
   background agent/shell under 60 min), ACTIVE (agent mid-turn; 60
   min with no pane change or commit = STALLED "spinning?"), STALLED

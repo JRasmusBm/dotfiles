@@ -15,6 +15,12 @@ with or without a worktree on disk; plus one batched item each for my
 open PRs not on the board and worktrees on disk with no board row.
 
 Each item is in exactly one state, checked in this order:
+  REMOVED  a PROD REVIEW row whose ticket is Done or Canceled (no
+           ticket in the branch: its PR merged or closed and no
+           worktree), unless its agent is mid-turn. Never pinged:
+           --ping / --sync take it off the board (`wt retire`, one
+           Linear query per run), logged to $LOCAL_CONFIG/
+           wt-cold-retired.log
   SNOOZED  `wt sz` until a date, or BLOCKED on a worktree that is
   WAITING  `wt w8 <when> "<what>"` before its deadline (an agent may
            poll meanwhile); or the agent waits on a background agent
@@ -81,6 +87,9 @@ STATES = ['STALLED', 'WAITING', 'ACTIVE', 'SNOOZED']
 LIVE = {'P0', 'IN PROGRESS', 'TEAM REVIEW', 'PAUSED', 'BLOCKED', 'NEEDS FOCUS'}
 TICKET = re.compile(r'\b[A-Z][A-Z0-9]*-[0-9]+\b')
 NOW = time.time()
+RETIRED = os.path.join(CONF, 'wt-cold-retired.log')
+# Off for --overdue, which runs every minute on local files alone.
+RETIRE = True
 
 
 def notif_depth():
@@ -300,26 +309,44 @@ def linear_key():
 _tickets = {}
 
 
-def ticket(tid):
-    """(state type, updatedAt epoch) or None when Linear can't say."""
-    if tid in _tickets:
-        return _tickets[tid]
-    res, key = None, linear_key()
+def tickets(tids):
+    """Fetch these tickets in one Linear query into ticket()'s cache;
+    a ticket Linear can't say anything about is cached as None."""
+    tids = sorted({t for t in tids if t and t not in _tickets})
+    if not tids:
+        return
+    data, key = {}, linear_key()
     if key:
-        q = json.dumps({'query': 'query($id:String!){issue(id:$id)'
-                        '{state{type} updatedAt}}', 'variables': {'id': tid}})
+        q = '{' + ' '.join(f't{n}: issue(id: {json.dumps(t)})'
+                           '{state{type} updatedAt}'
+                           for n, t in enumerate(tids)) + '}'
         req = urllib.request.Request(
-            'https://api.linear.app/graphql', data=q.encode(),
+            'https://api.linear.app/graphql',
+            data=json.dumps({'query': q}).encode(),
             headers={'Authorization': key,
                      'Content-Type': 'application/json'})
         try:
             with urllib.request.urlopen(req, timeout=15) as r:
-                i = json.load(r)['data']['issue']
-            res = (i['state']['type'], iso_ts(i['updatedAt']))
+                # An unknown id nulls its alias, not the rest.
+                data = json.load(r).get('data') or {}
         except Exception:
-            res = None
-    _tickets[tid] = res
-    return res
+            pass
+    for n, t in enumerate(tids):
+        i = data.get(f't{n}')
+        _tickets[t] = (i['state']['type'], iso_ts(i['updatedAt'])) \
+            if i else None
+
+
+def ticket(tid):
+    """(state type, updatedAt epoch) or None when Linear can't say."""
+    tickets([tid])
+    return _tickets[tid]
+
+
+def branch_ticket(branch):
+    """The branch's ticket id, read the way `lin id` reads it."""
+    m = re.search(r'[a-z]+-[0-9]+', branch, re.I)
+    return m.group(0).upper() if m else None
 
 
 def load_state():
@@ -389,6 +416,12 @@ def judge(b, it, st, seen=()):
     seen = seen + (it['slug'],)
     s = st.setdefault(f"{b.repo}/{it['slug']}", {})
     slug, sec = it['slug'], it['sec'].upper()
+
+    if sec == 'PROD REVIEW' and RETIRE:
+        gone = work_closed(b, it)
+        if gone:
+            it.update(state='REMOVED', why=gone[1], ended=gone[0])
+            return
 
     sz = b.snoozed.get(slug)
     # A date alone wakes at 08:00 (`wt wake`).
@@ -461,7 +494,11 @@ def judge(b, it, st, seen=()):
         if ref and ref != slug:
             dep = b.items[ref]
             judge(b, dep, st, seen)
-            if dep['state'] == 'STALLED':
+            if dep['state'] == 'REMOVED':
+                it.update(state='WAITING',
+                          why=f'blocked by {ref[:30]}, which leaves the '
+                              'board: unblocks then')
+            elif dep['state'] == 'STALLED':
                 # Its why and ping are folded into the blocker's (fold).
                 it.update(state='STALLED', since=dep.get('since'),
                           dep=ref, why=f'blocked by {ref[:30]}')
@@ -565,6 +602,64 @@ def judge(b, it, st, seen=()):
               since=max(main, ctime, s.get('moved', 0)))
 
 
+def work_closed(b, it):
+    """(Done|Canceled, why) when a PROD REVIEW row's work is closed:
+    its ticket is Done or Canceled; with no ticket in the branch, its
+    PR merged or closed and nothing is on disk. None otherwise, and
+    while an agent of it is mid-turn: it may be running `wt done`."""
+    path = it['path']
+    if any(pane_state(p[0])[0] for p in b.claude if p[1] == it['slug']
+           or (path and (p[2] == path or p[2].startswith(path + '/')))):
+        return None
+    tid = branch_ticket(it['branch'])
+    if tid:
+        t = ticket(tid)
+        end = {'completed': 'Done', 'canceled': 'Canceled'}.get(
+            t and t[0])
+        return end and (end, f'{tid} {end.lower()}')
+    if path:
+        return None
+    pr = (b.prs or {}).get(it['branch'])
+    if not pr and b.prs is not None:
+        # Older than prs()'s page: ask for this branch's alone.
+        try:
+            pr = (json.loads(sh('gh', 'pr', 'list', '--state', 'all',
+                                '--head', it['branch'], '--limit', '1',
+                                '--json', 'number,state', cwd=b.root))
+                  or [None])[0]
+        except ValueError:
+            pr = None
+    if pr and pr['state'] in ('MERGED', 'CLOSED'):
+        return ('Done' if pr['state'] == 'MERGED' else 'Canceled',
+                f"no ticket, #{pr['number']} {pr['state'].lower()}, "
+                'no worktree')
+    return None
+
+
+def retire(boards):
+    """Take each REMOVED row off its board (`wt retire`), logged to
+    RETIRED: epoch, repo, branch, Done|Canceled, why, what wt said."""
+    n = 0
+    for b in boards:
+        for it in list(b.items.values()):
+            if it['state'] != 'REMOVED':
+                continue
+            try:
+                r = subprocess.run(['wt', 'retire', it['branch'],
+                                    it['ended']], cwd=b.root,
+                                   capture_output=True, text=True,
+                                   timeout=60)
+                said, ok = r.stderr, r.returncode == 0
+            except (OSError, subprocess.TimeoutExpired) as e:
+                said, ok = str(e), False
+            said = ' '.join(said.split()) or ('ok' if ok else 'failed')
+            with open(RETIRED, 'a') as f:
+                f.write('\t'.join([str(int(NOW)), b.repo, it['branch'],
+                                   it['ended'], it['why'], said]) + '\n')
+            n += ok
+    return n
+
+
 def last_question(sid):
     """The last line ending in `?` the chat's agent wrote since my last
     prompt, or ''."""
@@ -645,8 +740,13 @@ def collect():
     claude = panes()
     st = load_state()
     boards, batches = [], []
-    for root in nd.repo_roots():
-        b = Board(nd, root, inbox, claude)
+    every = [Board(nd, root, inbox, claude) for root in nd.repo_roots()]
+    if RETIRE:
+        tickets(branch_ticket(it['branch']) for b in every
+                for it in b.items.values()
+                if it['sec'].upper() == 'PROD REVIEW')
+    for b in every:
+        root = b.root
         for it in b.items.values():
             judge(b, it, st)
         for it in b.items.values():
@@ -849,6 +949,8 @@ def main():
     g.add_argument('--overdue', action='store_true')
     g.add_argument('--brief', action='store_true')
     o = ap.parse_args()
+    global RETIRE
+    RETIRE = not o.overdue
     if o.brief:
         return brief()
     if o.sync:
@@ -865,11 +967,12 @@ def main():
             # syncing now would clear rows and re-ping them next run.
             print('wt-cold: gh failed, inbox left as is')
             return 1
+        gone = 0 if o.overdue else retire(boards)
         sent, dropped = ping(nd, inbox, boards, batches, o.overdue)
         if not o.overdue:
             log_counts(nd, items)
         print(f'{summary(items, batches)}: {sent} rows sent, '
-              f'{dropped} cleared')
+              f'{dropped} cleared, {gone} off the board')
         return
     print(summary(items, batches))
     for s in STATES:
@@ -879,6 +982,12 @@ def main():
             print(f'\n{s} ({len(rs)})')
             for i in rs:
                 print(line(i))
+    gone = [i for i in items if i['state'] == 'REMOVED']
+    if gone:
+        print(f'\nREMOVED ({len(gone)}, work closed: --ping takes them '
+              'off the board, no ping)')
+        for i in gone:
+            print(line(i))
     if batches:
         print(f'\nBATCHED ({len(batches)})')
         for x in batches:
