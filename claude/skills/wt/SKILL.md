@@ -55,10 +55,22 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   "Can you please fix <url>? Please also examine the video
   and the images"; `feat` → "Can you please read <url> and
   relative feature docs? Then please grill me on the
-  solution."; both then add the hand-back bar: test on
-  every surface the change touches, publish an artifact of
-  how it was tested, run `/iterate-review` until green, hand
-  back with PR, artifact and what could bite us. A project
+  solution."; both then add the hand-back bar, in two
+  phases. Phase 1 (build and align): test on every surface
+  the change touches, publish an artifact of how it was
+  tested (design, tests, screenshots), open a draft PR, hand
+  back with PR, artifact, what could bite us and an "Added
+  beyond the ask" list (each as a question); no
+  `/iterate-review`, the row stays IN PROGRESS. Phase 2
+  (polish for release, the `/rd` skill): `/iterate-review`
+  until green, then `wt rd`. Going straight on is the
+  implementing agent's call: yes when no design choice I'd
+  want to see is open (clear bug, one obvious behaviour,
+  mechanical, exact spec), no for new UI or behaviour with
+  more than one reasonable design. My word overrides it: my
+  words relayed verbatim, the `rd`/`no-rd` Linear label
+  (linear-listener tells the agent when `rd` lands), `/rd`
+  or `/ship`. A parent brief never decides it. A project
   URL (either command) gets the plain feat prompt, widened
   to the project's overview, documents, milestones and
   issues. Generic (not per-repo) — relies on
@@ -143,7 +155,8 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
 - `wt night [HH:MM]` (`wt-night`) — leaving for the night
   (default until 07:30): `caffeinate` until then, and each idle
   agent of a `# IN PROGRESS` worktree is told to work alone to
-  the hand-back bar, taking its own recommended answers. Skipped:
+  the hand-back bar, taking its own recommended answers (phase
+  1 only, unless it has `/rd` or the `rd` label). Skipped:
   open PRs that are green and wait on me, worktrees with no
   session, busy agents. A finished one replies so and stops: no
   invented work. Told in the background, paced: at most 3

@@ -112,8 +112,9 @@ if test "${1:-}" = feed; then
           _before="$(_worktrees | cut -f1)"
           WT_NO_ATTACH=1 WT_PROMPT_EXTRA="I'm away until $_until. Please take your \
 recommended option where you'd normally ask me and work toward the \
-hand-back bar. Don't start or queue follow-ups tonight: list them in a \
-short summary for the morning." wt feat "$_next" </dev/null >/dev/null 2>&1 \
+hand-back bar. Your own answers are not my design approval: phase 2 \
+only as the kickoff allows it. Don't start or queue follow-ups \
+tonight: list them in a short summary for the morning." wt feat "$_next" </dev/null >/dev/null 2>&1 \
             || { echo "failed to start $_next"; continue; }
           _wt="$(_worktrees | cut -f1 | grep -vxF "$_before" | head -1)"
           test -z "$_wt" || echo "$_wt	night:$_day" >> "$LOCAL_CONFIG/wt-told"
@@ -169,7 +170,8 @@ awk '
 
 _prompt="I'm away until $_until. Please keep working until then toward \
 the hand-back bar, taking your recommended option where you'd normally \
-ask me. If you're finished or need me, say so in one line and stop. \
+ask me. Your own answers are not my design approval: phase 2 (/rd) only \
+as the kickoff allows it. If you're finished or need me, say so in one line and stop. \
 Follow-ups you filed for this work: queue at most 2 with wt night queue \
 <url> (never wt feat tonight). End with a short summary for the morning."
 if test -n "${WT_NIGHT_DRY:-}"; then
