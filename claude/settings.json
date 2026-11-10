@@ -101,6 +101,11 @@
           },
           {
             "type": "command",
+            "command": "~/.bin/pr-gate hook",
+            "timeout": 20
+          },
+          {
+            "type": "command",
             "command": "~/.bin/docker-slot hook",
             "timeout": 310
           }

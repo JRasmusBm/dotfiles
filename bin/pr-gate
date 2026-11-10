@@ -1,0 +1,108 @@
+#!/bin/sh
+#
+# pr-gate — every PR has its own ticket and wt worktree. Denies a
+# Bash tool command that runs `gh pr create` (drafts too, also inside
+# a compound command; quoted text and heredoc bodies don't count):
+#   - from a subagent checkout (`.claude/worktrees/`);
+#   - from a branch off its repo's board (`$LOCAL_CONFIG/worktrees/
+#     <repo>`), unless the repo merges directly (no `.jrb/wt-hook`)
+#     or wt doesn't manage it (no board);
+#   - from a branch whose ticket id (`<type>/<initials>/abc-123-…`,
+#     `abc-123-…`) already has an open PR from another branch.
+# The checkout is the tool call's cwd, or a `cd <dir>` before the
+# `gh pr create`; the branch is its `--head`, else the checked-out
+# one. If `gh pr list` fails, the ticket-id check is skipped.
+#
+#   pr-gate hook   PreToolUse hook for Bash: deny or pass (no output)
+
+set -e
+
+_board='A PR needs its own ticket and wt worktree: `wt fix|feat <ticket url>` from the main checkout (work-management). Port the commits there, then open the PR.'
+
+_parse='
+  (.tool_input.command // "") as $raw
+  | ($raw
+     | gsub("(?<pre>[^\n]*)<<-?\\s*[\"'"'"']?(?<tag>[A-Za-z_]+)[\"'"'"']?(?<rest>[^\n]*)\n(?<body>[\\s\\S]*?)\n\\s*\\k<tag>(?=\n|$)";
+         if (.pre | test("(^|[^A-Za-z_-])(sh|bash|zsh)\\s"))
+         then .pre + " " + .rest + "\n" + .body + "\n"
+         else .pre + " " + .rest end)
+     | gsub("(?<pre>-c\\s+)?(?:'"'"'(?<sq>[^'"'"']*)'"'"'|\"(?<dq>(?:[^\"\\\\]|\\\\.)*)\")";
+         if .pre or ((.dq // "") | test("\\$\\(|`"))
+         then (.pre // "") + "\n" + (.sq // .dq) + "\n"
+         else "\"\"" end)) as $c
+  | "(?:\"(?<dq>[^\"]*)\"|'"'"'(?<sq>[^'"'"']*)'"'"'|(?<bare>[^\\s;&|)]+))" as $arg
+  | def val: .dq // .sq // .bare;
+    def last_arg($re): [capture($re + $arg; "g") | val] | last // "";
+  select($c | test("(^|[^A-Za-z0-9_./-])gh\\s+pr\\s+create([^A-Za-z0-9_-]|$)"))
+  | ($raw | [match("gh\\s+pr\\s+create"; "g")] | last // {offset: 0}) as $m
+  | ($raw[:$m.offset]) as $before
+  | ($raw[$m.offset:]) as $after
+  | [ .cwd // "",
+      ($before | last_arg("(?:^|[;&|(\n])\\s*cd\\s+")),
+      ($after | last_arg("\\s(?:--head|-H)(?:=|\\s+)")),
+      ($after | last_arg("\\s(?:--repo|-R)(?:=|\\s+)")) ]
+  | join("\u001f")'
+
+_deny() {
+  jq -nc --arg r "$1" '{hookSpecificOutput: {hookEventName: "PreToolUse",
+    permissionDecision: "deny", permissionDecisionReason: $r}}'
+  exit 0
+}
+
+_first_id() {
+  sed -nE 's#^(.*/)?([A-Za-z]+-[0-9]+)(-.*)?$#\2#p' | tr 'A-Z' 'a-z'
+}
+
+_hook() {
+  _p="$(jq -r "$_parse")"
+  test -n "$_p" || exit 0
+  _us="$(printf '\037')"
+  IFS="$_us" read -r _cwd _cd _head _repo <<EOF
+$_p
+EOF
+  _cwd="${_cwd:-$PWD}"
+  case "$_cd" in
+    '') _dir="$_cwd" ;;
+    '~'|'~/'*) _dir="$HOME${_cd#\~}" ;;
+    /*) _dir="$_cd" ;;
+    *) _dir="$_cwd/$_cd" ;;
+  esac
+  _top="$(git -C "$_dir" rev-parse --show-toplevel 2>/dev/null)" \
+    || _top="$(git -C "$_cwd" rev-parse --show-toplevel 2>/dev/null)" \
+    || exit 0
+  case "$_top/" in */.claude/worktrees/*) _deny "$_board" ;; esac
+
+  _branch="${_head##*:}"
+  test -n "$_branch" \
+    || _branch="$(git -C "$_top" branch --show-current 2>/dev/null)" \
+    || true
+  _main="$(dirname "$(git -C "$_top" rev-parse --path-format=absolute \
+    --git-common-dir)")"
+  _of="${LOCAL_CONFIG:-$HOME/.config}/worktrees/$(basename "$_main")"
+  if test -f "$_of" && test -e "$_main/.jrb/wt-hook" \
+    && ! { test -n "$_branch" && grep -qxF "$_branch" "$_of"; }; then
+    _deny "$_board"
+  fi
+
+  _id="$(printf '%s\n' "$_branch" | _first_id)"
+  test -n "$_id" || exit 0
+  if ! _open="$(cd "$_top" && timeout 10 gh pr list --state open \
+    --limit 1000 --json headRefName,url ${_repo:+--repo "$_repo"} \
+    2>/dev/null)"; then
+    echo "pr-gate: gh pr list failed; ticket-id check skipped" >&2
+    exit 0
+  fi
+  _other="$(printf '%s' "$_open" | jq -r --arg id "$_id" --arg b "$_branch" '
+    .[] | select(.headRefName != $b)
+    | select((.headRefName
+        | capture("^(?:.*/)?(?<i>[A-Za-z]+-[0-9]+)(?:-|$)").i
+        | ascii_downcase) == $id)
+    | .url' | head -1)"
+  test -z "$_other" || _deny "$(echo "$_id" | tr 'a-z' 'A-Z') already \
+has an open PR from another branch: $_other. $_board"
+}
+
+case "${1:-}" in
+  hook) _hook ;;
+  *) sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac
