@@ -131,6 +131,13 @@ check "brief: each priority, current step, worktree state" \
    && grep -q "   abc-7-fix: no agent" "$_t/brief" \
    && grep -A2 "^2\. Another" "$_t/brief" | grep -q "no worktree on it"'
 
+# Swapping two outcomes pins the one moved up, not the one moved down.
+awk '/^[^ #]/ { n++ } n == 2 { print }' "$_f" > "$_t/next"
+awk '/^[^ #]/ { n++ } n != 2 { print }' "$_f" >> "$_t/next"
+p edit
+check "edit: swap of two pins the one moved up" \
+  'test "$(tr "\n" "," < "$_f.pinned")" = "Fix the login,Another,"'
+
 p done "Another" >/dev/null
 check "done: gone, not a removal" \
   '! grep -q "^Another" "$_f" && ! grep -q "Another" "$_f.removed"'

@@ -216,7 +216,9 @@ def set_pinned(names, ps):
 
 
 def lcs(a, b):
-    """The longest common subsequence of a and b, as a set."""
+    """The longest common subsequence of a and b, as a set. On a tie
+    (a swap) it leaves out the one that moved up, so that one counts
+    as moved by hand."""
     t = [[0] * (len(b) + 1) for _ in range(len(a) + 1)]
     for i in range(len(a) - 1, -1, -1):
         for j in range(len(b) - 1, -1, -1):
@@ -227,7 +229,8 @@ def lcs(a, b):
         if a[i] == b[j]:
             out.add(a[i])
             i, j = i + 1, j + 1
-        elif t[i + 1][j] >= t[i][j + 1]:
+        elif t[i + 1][j] > t[i][j + 1] or (
+                t[i + 1][j] == t[i][j + 1] and b.index(a[i]) < i):
             i += 1
         else:
             j += 1
