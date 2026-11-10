@@ -736,7 +736,7 @@ def fold(b):
 
 def collect():
     nd = notif_depth()
-    inbox = tsv(nd.INBOX)
+    inbox = nd.inbox()
     claude = panes()
     st = load_state()
     boards, batches = [], []
@@ -880,7 +880,7 @@ def log_counts(nd, items):
     """One line per pinging run: epoch, stalled, waiting, active,
     snoozed, inbox pending (distinct keys, as `notif count`)."""
     n = [sum(1 for i in items if i['state'] == s) for s in STATES]
-    pend = len({nd.key(r) for r in tsv(nd.INBOX)})
+    pend = len({nd.key(r) for r in nd.inbox()})
     with open(COUNTS, 'a') as f:
         f.write('\t'.join(map(str, [int(NOW), *n, pend])) + '\n')
 

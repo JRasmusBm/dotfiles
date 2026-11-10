@@ -58,8 +58,12 @@ _recent() {
 }
 
 # A row written while agents ran on their own servers (RAS-33) may
-# key its pane %N@default: that is pane %N.
-_KEY='function key(  p) {
+# key its pane %N@default: that is pane %N. Every program reading
+# rows starts with this, so its first rule skips a line that is no row
+# (no epoch first, or too short: a message split by raw newlines,
+# RAS-47); a rewrite of the inbox drops it.
+_KEY='$1 !~ /^[0-9]+$/ || NF < 5 { next }
+function key(  p) {
   p = $6; sub(/@default$/, "", p)
   return p != "" ? p : $2
 }
