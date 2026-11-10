@@ -666,6 +666,7 @@ _wt_typed() {
   fi
 
   _branch="$(_branch_from "$_type" "$_arg")"
+  prio warn "$_branch" || true
   _wt_add "$_branch"
 
   # Only Linear URLs get a Claude kickoff prompt; free text

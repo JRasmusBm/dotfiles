@@ -4,7 +4,9 @@
 # (`wt` order file), as coloured text. Blocked wins, then an
 # active `wt w8` (`w8 15:40 <what…>`, red `overdue` once past
 # its deadline; the reason is cut to $WT_BADGE_W8_LEN, 24),
-# then the section. Prints nothing outside a worktree.
+# then the section. A worktree on a priority (`prio rank`) gets
+# `P0 #N` first; in the board's `# P0` section, the section shown is
+# the one it came from. Prints nothing outside a worktree.
 # Usage: wt-badge [dir]
 
 cd "${1:-.}" 2>/dev/null || exit 0
@@ -17,11 +19,14 @@ _root="${_top%%/.worktrees/*}"
 _slug="${_top##*/}"
 _branch="$(git branch --show-current 2>/dev/null)"
 _cfg="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_root##*/}"
+_p0=""
+_n="$(prio rank "$_branch" 2>/dev/null || prio rank "$_slug" 2>/dev/null)" \
+  && _p0="#[fg=red,bold]P0 ##$_n#[default] "
 
 if test -f "$_cfg.blocked" \
   && awk -F '\t' -v s="$_slug" '$1 == s { f = 1 } END { exit !f }' \
     "$_cfg.blocked"; then
-  echo '#[fg=red]blocked '
+  echo "$_p0#[fg=red]blocked "
   exit 0
 fi
 
@@ -38,7 +43,7 @@ if test -f "$_cfg.waiting"; then
       exit
     }' "$_cfg.waiting")"
   if test -n "$_w8"; then
-    echo "$_w8"
+    echo "$_p0$_w8"
     exit 0
   fi
 fi
@@ -54,6 +59,12 @@ _section="$(test -f "$_cfg" && awk -v b="$_branch" -v s="$_slug" '
   e != "" && (e == b || e == s) { print toupper(h); exit }
 ' "$_cfg")"
 
+if test "$_section" = P0; then
+  _section="$(awk -F '\t' -v b="$_branch" -v s="$_slug" '
+    $1 == b || $1 == s { print toupper($2); exit }' "$_cfg.p0" 2>/dev/null)"
+  _section="${_section:-IN PROGRESS}"
+fi
+
 case "$_section" in
   'IN PROGRESS') _c=yellow ;;
   'TEAM REVIEW') _c=cyan ;;
@@ -65,4 +76,4 @@ case "$_section" in
   '') _c='#aaaaaa' _section='OFF BOARD' ;;
   *) _c='#aaaaaa' ;;
 esac
-echo "#[fg=$_c]$(echo "$_section" | tr 'A-Z' 'a-z') "
+echo "$_p0#[fg=$_c]$(echo "$_section" | tr 'A-Z' 'a-z') "

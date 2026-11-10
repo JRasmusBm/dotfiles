@@ -3,8 +3,8 @@
 # wt-night [HH:MM]   (as `wt night`) — I'm away until HH:MM (07:30):
 #   - keeps the Mac awake until then (caffeinate; a closed lid on
 #     battery still sleeps);
-#   - tells each idle agent of a `# IN PROGRESS` worktree to work on
-#     alone until then. Left alone: a worktree whose PR is open, green
+#   - tells each idle agent of a `# IN PROGRESS` or `# P0` worktree to
+#     work on alone until then. Left alone: a worktree whose PR is open, green
 #     and up to date (it waits on me), one with no Claude session, and
 #     a busy one (it is working already). The prompt says a finished
 #     one replies so and stops, so nothing runs for no reason.
@@ -156,7 +156,7 @@ awk '
     h = $0; sub(/^[[:space:]]*#+[[:space:]]*/, "", h); sub(/:[[:space:]]*$/, "", h)
     next
   }
-  h == "IN PROGRESS" && NF { print $1 }' "$LOCAL_CONFIG/worktrees/$(basename "$_root")" \
+  (h == "IN PROGRESS" || h == "P0") && NF { print $1 }' "$LOCAL_CONFIG/worktrees/$(basename "$_root")" \
   | while read -r _b; do
     if printf '%s\n' "$_green" | grep -qxF "$_b"; then
       continue
