@@ -1137,7 +1137,8 @@ _wt_park() {
   # Parked as merged and live: what waits on it is free, whichever way
   # it got here (agents park with rp/ra and skip `wt merged`).
   case "$1" in
-    'PROD REVIEW'|'TO ANNOUNCE') _unblock_dependents "$_wt_name" merged ;;
+    'PROD REVIEW'|'TO ANNOUNCE')
+      _unblock_dependents "$_wt_name" merged || true ;;
   esac
   test "$1" = 'IN PROGRESS' \
     || _notif_clear "$(git rev-parse --show-toplevel)"
