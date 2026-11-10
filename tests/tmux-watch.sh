@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # tests/tmux-watch.sh — bin/tmux-watch against real tmux servers in a
-# temp socket dir: it adopts a running server and starts a missing
+# temp socket dir: it starts a missing server and adopts a running
 # one, notices each death within seconds with its cause (SIGKILL,
 # kill-server through the shim, adopted), starts the server again and
 # runs tmux-revive (a fake that records the time) at once.
@@ -9,7 +9,7 @@
 set -u
 _root="$(cd "$(dirname "$0")/.." && pwd)"
 _t="$(mktemp -d)"
-export TMUX_TMPDIR="$_t/s" LOCAL_CONFIG="$_t/cfg" TMUX_AGENT_SHARDS=1 \
+export TMUX_TMPDIR="$_t/s" LOCAL_CONFIG="$_t/cfg" \
   TMUX_WATCH_ENV=inherit TMUX_WATCH_TICK=0.2 \
   TMUX_WATCH_REVIVE="$_t/revive" PATH="$_root/shims:$_root/bin:$PATH"
 unset TMUX TMUX_PANE
@@ -21,8 +21,11 @@ date +%s.%N >> "$LOCAL_CONFIG/revived"
 X
 chmod +x "$_t/revive"
 _w=""
-trap 'test -z "$_w" || kill "$_w" 2>/dev/null; for s in default agents-1; do
-  tmux -L "$s" kill-server 2>/dev/null; done; rm -rf "$_t"' EXIT
+_stop() {
+  test -z "$_w" || { kill "$_w" 2>/dev/null; wait "$_w" 2>/dev/null; }
+  _w=""
+}
+trap '_stop; tmux -L default kill-server 2>/dev/null; rm -rf "$_t"' EXIT
 
 _fail=0
 _ok() { echo "ok   $1"; }
@@ -37,52 +40,60 @@ _wait() {
   eval "$1"
 }
 
-tmux -L default new-session -d -s mine
-_p0="$(_pid default)"
 "$_root/bin/tmux-watch" & _w=$!
-_wait 'test -n "$(_pid agents-1)"' && _ok "missing agents-1 started" \
-  || _no "missing agents-1 started" "no server"
-test "$(_pid default)" = "$_p0" && _ok "running default adopted, not replaced" \
-  || _no "running default adopted" "pid $(_pid default) != $_p0"
-"$_root/bin/tmux-watch" status | grep -q "agents-1.*owned" \
-  && _ok "status shows agents-1 owned" \
+_wait 'test -n "$(_pid default)"' && _ok "missing default started" \
+  || _no "missing default started" "no server"
+"$_root/bin/tmux-watch" status | grep -q "default.*owned" \
+  && _ok "status shows default owned" \
   || _no "status" "$("$_root/bin/tmux-watch" status)"
+"$_root/bin/tmux-watch" status | grep -q "agents-" \
+  && _no "one server" "$("$_root/bin/tmux-watch" status)" \
+  || _ok "no agents-N server"
 
 _died() {
   _wait "grep -q \"$1.*DIED\" \"$LOCAL_CONFIG/tmux-watch.log\" 2>/dev/null"
 }
 
-_p1="$(_pid agents-1)"
-tmux -L agents-1 new-session -d -s chat
+_p1="$(_pid default)"
+tmux -L default new-session -d -s chat
 _t0="$(date +%s.%N)"
 kill -9 "$_p1"
-if _died agents-1; then
+if _died default; then
   _t1="$(date +%s.%N)"
   _ok "SIGKILL noticed in $(echo "$_t1 - $_t0" | bc | cut -c1-4)s"
 else
   _no "SIGKILL noticed" "no DIED row"
 fi
-grep -q "agents-1.*DIED.*killed by SIGKILL" "$LOCAL_CONFIG/tmux-watch.log" \
+grep -q "default.*DIED.*killed by SIGKILL" "$LOCAL_CONFIG/tmux-watch.log" \
   && _ok "cause: killed by SIGKILL" \
   || _no "cause SIGKILL" "$(grep DIED "$LOCAL_CONFIG/tmux-watch.log")"
-_wait 'test -n "$(_pid agents-1)" && test "$(_pid agents-1)" != "$_p1"' \
-  && _ok "agents-1 started again" || _no "agents-1 restarted" "none"
+_wait 'test -n "$(_pid default)" && test "$(_pid default)" != "$_p1"' \
+  && _ok "default started again" || _no "default restarted" "none"
 _wait 'test -s "$LOCAL_CONFIG/revived"' && _ok "tmux-revive run at once" \
   || _no "tmux-revive run" "never"
-grep -q "agents-1: killed by SIGKILL" "$LOCAL_CONFIG/tmux-watch.last" \
+grep -q "default: killed by SIGKILL" "$LOCAL_CONFIG/tmux-watch.last" \
   && _ok "cause left for revive's ping" || _no "tmux-watch.last" "missing"
 
 : > "$LOCAL_CONFIG/tmux-watch.log"
-sh -c 'tmux -L agents-1 kill-server'
-_died agents-1
-grep -q "agents-1.*DIED.*kill-server: pid=.*parent=.*args=-L agents-1 kill-server" \
+sh -c 'tmux -L default kill-server'
+_died default
+grep -q "default.*DIED.*kill-server: pid=.*parent=.*args=-L default kill-server" \
   "$LOCAL_CONFIG/tmux-watch.log" && _ok "cause: kill-server names its caller" \
   || _no "cause kill-server" "$(cat "$LOCAL_CONFIG/tmux-watch.log")"
+_wait 'test -n "$(_pid default)"'
 
+# A server already up when the watch starts is adopted, not replaced.
+_stop
+_p0="$(_pid default)"
+"$_root/bin/tmux-watch" & _w=$!
+_wait '"$_root/bin/tmux-watch" status | grep -q "default.*adopted"' \
+  && test "$(_pid default)" = "$_p0" \
+  && _ok "running default adopted, not replaced" \
+  || _no "running default adopted" "$("$_root/bin/tmux-watch" status)"
 : > "$LOCAL_CONFIG/tmux-watch.log"
 kill -9 "$_p0"
 _died default
-grep -q "default.*DIED.*adopted" "$LOCAL_CONFIG/tmux-watch.log" \
+grep -q "default	DIED pid $_p0 " "$LOCAL_CONFIG/tmux-watch.log" \
   && _ok "adopted server's death logged" \
   || _no "adopted death" "$(cat "$LOCAL_CONFIG/tmux-watch.log")"
 _wait 'test -n "$(_pid default)"' && _ok "default started again" \

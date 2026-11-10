@@ -370,8 +370,8 @@ def pending_for(it, inbox):
     ids = {p[0] for p in it.get('panes', [])}
     for r in inbox:
         r = r + [''] * (9 - len(r))
-        if re.fullmatch(r'%\d+', r[5]):
-            r[5] += '@default'
+        if re.fullmatch(r'%\d+@default', r[5]):
+            r[5] = r[5][:-len('@default')]
         on = r[1] == slug or r[1].split(':', 1)[0] == slug \
             or r[4] == path or r[4].startswith(path + '/') or r[5] in ids
         if on:

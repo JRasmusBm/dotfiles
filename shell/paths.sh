@@ -84,7 +84,7 @@ fi
 PATH="$HOME/.pyenv/shims:$HOME/.pyenv/bin:$PATH"
 
 # docker goes through bin/docker-slot, so Docker Desktop runs only
-# while someone is checked in; tmux through its guard and router.
+# while someone is checked in; tmux through its guard.
 PATH="$DOTFILES/shims:$PATH"
 
 export PATH=$PATH

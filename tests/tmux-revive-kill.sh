@@ -1,24 +1,21 @@
 #!/bin/sh
 #
 # tests/tmux-revive-kill.sh — a stub server kill, end to end: real
-# tmux servers in a temp socket dir, the shim placing 30 chats (20
-# mid-turn, 10 idle) on agents-1/agents-2, and the real tmux-watch,
-# tmux-revive, run-slot and claude-pane; only `claude` is a fake that
-# takes FAKE_BOOT seconds to start. Two scenarios:
-#   slice  agents-1 is SIGKILLed: its chats come back, agents-2's and
-#          my default session are untouched.
-#   all30  both agents servers are SIGKILLed at once: timed from the
-#          kill to the last mid-turn chat resumed and told to carry
-#          on (bar: 300 s), mid-turn ones admitted before any idle one
-#          is parked, every idle one parked and resumable by focus.
+# tmux server in a temp socket dir with 30 chats (20 mid-turn, 10
+# idle), and the real shim, tmux-watch, tmux-revive, run-slot and
+# claude-pane; only `claude` is a fake that takes FAKE_BOOT seconds to
+# start. The server is SIGKILLed: timed from the kill to the last
+# mid-turn chat resumed and told to carry on (bar: 300 s), mid-turn
+# ones admitted before any idle one is parked, every idle one parked
+# and resumable by focus.
 # Prints the timings; needs cc. Nothing real is touched.
 
 set -u
 _root="$(cd "$(dirname "$0")/.." && pwd)"
 _t="$(mktemp -d /tmp/trk.XXXX)"
-unset TMUX TMUX_PANE TMUX_SERVER RUN_SLOT_ID
+unset TMUX TMUX_PANE RUN_SLOT_ID
 export TMUX_TMPDIR="$_t/s" LOCAL_CONFIG="$_t/cfg" CLAUDE_CONFIG_DIR="$_t/cc" \
-  FAKE="$_t/fake" TMUX_AGENT_SHARDS=2 TMUX_WATCH_ENV=inherit \
+  FAKE="$_t/fake" TMUX_WATCH_ENV=inherit \
   TMUX_WATCH_TICK=0.2 TMUX_WATCH_SNAPSHOT_EVERY=2 RUN_SLOT_FREE_GB=100 \
   RUN_SLOT_PRESSURE=2 RUN_SLOTS=12 FAKE_BOOT="${FAKE_BOOT:-2}" \
   SHELL=/bin/sh ENV=
@@ -29,9 +26,7 @@ _stop() {
   test -z "$_w" || kill "$_w" 2>/dev/null
   test -z "$_w" || wait "$_w" 2>/dev/null
   _w=""
-  for _s in default agents-1 agents-2; do
-    tmux -L "$_s" kill-server 2>/dev/null
-  done
+  tmux -L default kill-server 2>/dev/null
 }
 test -n "${KEEP:-}" || trap '_stop; rm -rf "$_t"' EXIT
 
@@ -90,19 +85,17 @@ _until() {
 }
 _now() { perl -MTime::HiRes=time -e 'printf "%.2f", time'; }
 _r="$_t/r/.worktrees"
-_srv() { cat "$LOCAL_CONFIG/tmux-home/$1"; }
 _told() { grep -c '^said [0-9.]* tmux restarted at' "$_r/$1/.got" 2>/dev/null; }
 _resumed() { grep -c '^argv [0-9.]* --resume' "$_r/$1/.got" 2>/dev/null; }
 
 # _given: a fresh world, tmux-watch up, 30 chats (c01-c20 mid-turn),
-# my own session `mine` on default, every snapshot taken.
+# the snapshot taken.
 _given() {
   _stop
   rm -rf "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR" "$_t/r" "$FAKE/notify"
   mkdir -p "$LOCAL_CONFIG" "$CLAUDE_CONFIG_DIR/sessions"
   "$_root/bin/tmux-watch" >/dev/null 2>&1 & _w=$!
-  _until 'tmux -L agents-2 display -p x >/dev/null 2>&1' 40
-  tmux -L default new-session -d -s mine -c "$_t" /bin/sh
+  _until 'tmux -L default display -p x >/dev/null 2>&1' 40
   _i=1
   while test "$_i" -le 30; do
     _c="c$(printf %02d "$_i")"
@@ -113,57 +106,18 @@ _given() {
     _i=$((_i + 1))
   done
   _until 'test "$(claude-pane map | wc -l)" -ge 30' 80
-  _until 'test "$(cat "$LOCAL_CONFIG"/tmux-revive.snapshot.agents-* \
-    2>/dev/null | grep -c "	1$")" = 20' 80
-  _mine="$(tmux -L default display -p '#{pid}') $(tmux display -p \
-    -t =mine: '#{pane_pid}')"
+  _until 'test "$(grep -c "	1$" "$LOCAL_CONFIG/tmux-revive.snapshot" \
+    2>/dev/null)" = 20' 80
 }
 
 _quiet() {
   ! test -s "$LOCAL_CONFIG/tmux-revive.queue" && test -s "$FAKE/notify"
 }
 
-# --- slice: one agents server dies
-_given
-_a1="$(cd "$LOCAL_CONFIG/tmux-home" && grep -lx agents-1 c* | tr '\n' ' ')"
-_a2="$(cd "$LOCAL_CONFIG/tmux-home" && grep -lx agents-2 c* | tr '\n' ' ')"
-_check "slice: the shim spread the chats over both agents servers" \
-  'test -n "$_a1" && test -n "$_a2" && test -z "$(ls "$LOCAL_CONFIG/tmux-home" \
-    | grep -v "^c")"'
-_t0="$(_now)"
-kill -9 "$(tmux -L agents-1 display -p '#{pid}')"
-_until _quiet 1200
-_t1="$(_now)"
-_hot=0 _back=0 _park=0
-for _c in $_a1; do
-  if test -f "$_r/$_c/.work"; then
-    _hot=$((_hot + 1))
-    test "$(_resumed "$_c")" = 1 && test "$(_told "$_c")" = 1 \
-      && _back=$((_back + 1))
-  else
-    grep -q "	$_c	" "$LOCAL_CONFIG/run-slots/closed" && _park=$((_park + 1))
-  fi
-done
-_n1="$(echo $_a1 | wc -w | tr -d ' ')"
-_check "slice: agents-1's $_hot mid-turn chats resumed and told, the \
-other $((_n1 - _hot)) parked ($(echo "$_t1 - $_t0" | bc)s)" \
-  'test "$_back" = "$_hot" && test "$((_back + _park))" = "$_n1"'
-_same=1
-for _c in $_a2; do
-  test "$(_resumed "$_c")" = 0 && test "$(_told "$_c")" = 0 || _same=0
-done
-_check "slice: agents-2's chats untouched" 'test "$_same" = 1'
-_check "slice: my default server and pane untouched" \
-  'test "$(tmux -L default display -p "#{pid}") $(tmux display -p \
-    -t =mine: "#{pane_pid}")" = "$_mine"'
-_check "slice: the ping names the cause" \
-  'grep -q "cause .*agents-1: killed by SIGKILL" "$FAKE/notify"'
-
-# --- all30: both agents servers die at once
+# --- all30: the server dies
 _given
 _t0="$(_now)"
-kill -9 "$(tmux -L agents-1 display -p '#{pid}')" \
-  "$(tmux -L agents-2 display -p '#{pid}')"
+kill -9 "$(tmux -L default display -p '#{pid}')"
 _hotdone() {
   _k=0
   for _c in $(cd "$_r" && ls); do
@@ -194,12 +148,10 @@ run-slot focus "$_p" >/dev/null
 _until 'test "$(_resumed c25)" = 1' 40
 _check "all30: focusing a parked chat's pane resumes it" \
   'test "$(_resumed c25)" = 1'
-_check "all30: my default pane untouched" \
-  'test "$(tmux display -p -t =mine: "#{pane_pid}")" = "${_mine#* }"'
 _check "all30: one ping sums it up" \
   'test "$(wc -l < "$FAKE/notify" | tr -d " ")" = 1 && grep -q \
     "revived 20 Claude chat(s), told 20 to carry on, 10 idle ones closed.*\
-agents-1: killed by SIGKILL.*agents-2: killed by SIGKILL" "$FAKE/notify"'
+default: killed by SIGKILL" "$FAKE/notify"'
 
 test "$_fail" = 0 || cat "$FAKE/notify"
 echo "$_pass passed, $_fail failed"

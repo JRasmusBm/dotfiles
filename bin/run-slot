@@ -643,23 +643,15 @@ def rss_mb(pid):
     return int(v) // 1024 if v else 0
 
 
-def pane_key(pane, name=''):
-    """A pane as its key `%5@agents-1` (shims/tmux): a bare one takes
-    session NAME's server from tmux-home, else default."""
-    if not pane or '@' in pane:
-        return pane
-    try:
-        with open(os.path.join(CONF, 'tmux-home', name)) as f:
-            return f'{pane}@{f.read().strip() or "default"}'
-    except OSError:
-        return f'{pane}@default'
+def pane_key(pane):
+    """A pane id as stored: `%5@default`, written while agents ran on
+    their own servers (RAS-33), is pane %5."""
+    return pane[:-len('@default')] if pane.endswith('@default') else pane
 
 
 def pane_of(s):
     t = s.get('tmux') or ''
-    if '.%' not in t:
-        return None
-    return pane_key(t.rsplit('.', 1)[-1], t.split(':')[0])
+    return t.rsplit('.', 1)[-1] if '.%' in t else None
 
 
 def focused_panes():
@@ -765,7 +757,7 @@ def park(sid, pane, name, cwd):
     with Lock():
         rs = [r for r in rows(CLOSED) if r[1] != sid
               and NOW - float(r[0]) < 7 * 86400]
-        rs.append([int(NOW), sid, pane_key(pane, name), name, cwd, ctx,
+        rs.append([int(NOW), sid, pane_key(pane), name, cwd, ctx,
                    int(end), 'closed'])
         write(CLOSED, rs)
     log('park', sid, None, f'{name} {pane}')
