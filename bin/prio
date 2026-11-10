@@ -571,10 +571,10 @@ def cmd_warn(args):
     if not bad:
         return 0
     ps = {p['rank']: p['outcome'] for p in load()}
-    print('prio: this is not on a priority, while these P0 rows wait:',
+    print('prio: this is not on a priority, while these priority rows wait:',
           file=sys.stderr)
     for r, s, _, st in bad:
-        print(f'  P0 #{r} {ps.get(r, "")}: {s} ({st})', file=sys.stderr)
+        print(f'  P{r - 1} {ps.get(r, "")}: {s} ({st})', file=sys.stderr)
     return 0
 
 

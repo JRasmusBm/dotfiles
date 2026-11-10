@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # tests/prio-badge-warn.sh [BIN] — a worktree on a priority shows
-# `P0 #N` first in its tmux badge (wt-badge), its section in `# P0`
+# `P<rank-1>` first in its tmux badge (wt-badge), its section in `# P0`
 # being the one it came from; `prio warn` (what `wt feat|fix` runs
 # first) warns on stderr, never blocking, when the new branch is on no
 # priority while a priority's worktree stalls or has no agent. A temp
@@ -41,20 +41,20 @@ printf 'feat/jrb/abc-2-two\tTEAM REVIEW\n' > "$_b.p0"
 printf 'One\n  - [ ] ABC-1 a\nTwo\n  - [ ] ABC-2 b\n' \
   > "$LOCAL_CONFIG/priorities"
 
-is "badge: P0 #N, then the section it came from" \
+is "badge: P1 for rank 2, then the section it came from" \
   "$(wt-badge "$_r/.worktrees/abc-2-two")" \
-  "#[fg=red,bold]P0 ##2#[default] #[fg=cyan]team review "
+  "#[fg=red,bold]P1#[default] #[fg=cyan]team review "
 is "badge: off any priority, as before" \
   "$(wt-badge "$_r/.worktrees/other")" "#[fg=yellow]in progress "
 printf 'abc-2-two\tfeat/jrb/abc-2-two\tother\n' > "$_b.blocked"
-is "badge: P0 #N before blocked" \
+is "badge: P1 for rank 2 before blocked" \
   "$(wt-badge "$_r/.worktrees/abc-2-two")" \
-  "#[fg=red,bold]P0 ##2#[default] #[fg=red]blocked "
+  "#[fg=red,bold]P1#[default] #[fg=red]blocked "
 rm "$_b.blocked"
 
 prio warn feat/jrb/new-thing 2> "$_t/err"; _rc=$?
 is "warn: exit 0 (never blocks)" "$_rc" 0
-grep -q 'P0 #2 Two: abc-2-two (no agent)' "$_t/err" \
+grep -q 'P1 Two: abc-2-two (no agent)' "$_t/err" \
   && ok "warn: names the P0 worktree with no agent" \
   || no "warn: no agent" "$(cat "$_t/err")"
 prio warn feat/jrb/abc-1-new 2> "$_t/err"
