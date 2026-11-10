@@ -2,7 +2,8 @@
 """The ranked priorities (P0s) that steer the board, the inbox and new
 starts, kept in one hand-edited file: $LOCAL_CONFIG/priorities.
 
-  prio | prio ls        the priorities in rank order, with their steps
+  prio | prio ls        the priorities in rank order, with their steps and
+                        where each step's worktree stands
   prio e                edit them (a tmux popup inside tmux, else here)
   prio edit             edit them here, in $EDITOR
   prio add [--top] [--by WHO] [--date D] [--link URL] [--quote Q]
@@ -271,6 +272,8 @@ def cmd_ls(_args):
     if not ps:
         print('No priorities (prio e)')
         return 0
+    at = step_status({ticket(x['text']) for q in ps for x in q['steps']}
+                     - {''}, board_files())
     for p in ps:
         print(f"{p['rank']}. {p['outcome']}")
         for s in p['sources']:
@@ -278,8 +281,27 @@ def cmd_ls(_args):
         cur = current(p)
         for s in p['steps']:
             mark = 'x' if s['done'] else ' '
-            print(f"   [{mark}] {s['text']}" + ('   <- now' if s is cur else ''))
+            where = at.get(ticket(s['text']) or '', '')
+            print(f"   [{mark}] {s['text']}" + (f'   [{where}]' if where else '')
+                  + ('   <- now' if s is cur else ''))
     return 0
+
+
+def step_status(ts, boards):
+    """{ticket: 'section: state'} for each step ticket with a worktree on
+    a board, so ls shows where each step stands without a second command."""
+    ag, st = agents(), stalled()
+    rows = [(e, sec) for bd in boards for _, e, sec in entries(bd)]
+    out = {}
+    for t in ts:
+        for e, sec in rows:
+            if on(e, t):
+                s = e.rsplit('/', 1)[-1]
+                state = ('stalled: ' + st[s]) if st.get(s) else 'stalled' \
+                    if s in st else 'agent' if s in ag else 'no agent'
+                out[t] = f'{sec.lower()}: {state}'
+                break
+    return out
 
 
 def cmd_edit(_args):
