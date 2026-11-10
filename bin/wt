@@ -1111,6 +1111,44 @@ _wt_evict() {
     >/dev/null 2>&1 </dev/null &
 }
 
+# `wt retire <branch> <Done|Canceled>` (wt-cold): a board row whose
+# ticket closed without `wt done` leaves the board the way `wt done`
+# takes it off, minus Linear, which is already final. A checkout
+# holding work no remote has (dirty files, unpushed commits) stays on
+# disk with its branch and session, off the board.
+_wt_retire() {
+  _root="$(_main_root)"
+  _match="$(_wt_match "$1")"
+  _rt_path="${_match%%$(printf '\t')*}"
+  if test -n "$_rt_path"; then
+    _rt_dirty="$(git -C "$_rt_path" status --porcelain | wc -l \
+      | tr -d ' ')"
+    _rt_ahead="$(git -C "$_rt_path" rev-list --count HEAD --not \
+      --remotes 2>/dev/null || echo 0)"
+    # A merged branch whose remote was deleted: its PR holds the work.
+    if test "$_rt_ahead" != 0 && test "$(cd "$_root" && timeout 20 \
+      gh pr list --state all --head "$1" --limit 1 --json headRefOid \
+      -q '.[0].headRefOid' 2>/dev/null)" = \
+      "$(git -C "$_rt_path" rev-parse HEAD)"; then
+      _rt_ahead=0
+    fi
+    if test "$_rt_dirty$_rt_ahead" = 00; then
+      _WT_ENDED="$2" _wt_evict "$1" "$_rt_path"
+      return
+    fi
+    echo "wt: keeping $_rt_path on disk ($_rt_dirty dirty files," \
+      "$_rt_ahead unpushed commits)" >&2
+  fi
+  _rt_name="$(basename "${_rt_path:-$1}")"
+  _of="$(_order_file)"
+  _of_drop_line "$(_board_line "$_of" "$1" "$_rt_name")" "$_of"
+  _unblock_dependents "$_rt_name"
+  _snooze_drop "$_rt_name"
+  _w8_drop "$_rt_name"
+  _nf_drop "$_rt_name"
+  echo "wt: took $1 off the board ($2)" >&2
+}
+
 _require_worktree() {
   _git_dir="$(cd "$(git rev-parse --git-dir)" && pwd)"
   _common="$(cd "$(git rev-parse --git-common-dir)" \
@@ -1709,6 +1747,7 @@ case "${1:-}" in
   ra) _wt_park 'TO ANNOUNCE' 'Needs announcement' ;;
   done) shift; _WT_STATE=Done; _wt_evict "${1:-.}" ;;
   cancel) shift; _WT_STATE=Canceled; _wt_evict "${1:-.}" ;;
+  retire) shift; _wt_retire "$1" "$2" ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
   resume) shift; _wt_resume "$@" ;;
