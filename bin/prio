@@ -289,9 +289,12 @@ def cmd_edit(_args):
     editor = os.environ.get('EDITOR') or 'vim'
     # Each priority is one closed fold with its sources and steps, so
     # dd/p moves the whole block; zo opens one to edit it.
+    # No backslashes: the -c string passes through a double-quoted vim
+    # string, which ate them and made every line its own fold.
     fold = ['-c', 'setlocal foldmethod=expr foldlevel=0 foldminlines=0'
-            ' | let &l:foldexpr = "getline(v:lnum) =~ \'^\\s\' ? 1'
-            ' : getline(v:lnum) =~ \'^\\(#\\|$\\)\' ? 0 : \'>1\'"'] \
+            ' | let &l:foldexpr = "indent(v:lnum) ? 1'
+            ' : getline(v:lnum) =~ \'^#\' || getline(v:lnum) ==# \'\''
+            ' ? 0 : \'>1\'"'] \
         if os.path.basename(editor) in ('v', 'vi', 'vim', 'nvim') else []
     subprocess.call([editor, *fold, FILE])
     new = read()
