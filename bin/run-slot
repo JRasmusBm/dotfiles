@@ -46,7 +46,8 @@
         others stay
   run-slot revive PANE|SID|.
         bring a closed session back in its pane (shell there), else
-        in a new window; `.` is this pane
+        in a new window; `.` is this pane. A big one comes back as a
+        fresh, briefed chat (claude-fresh resume)
   run-slot focus PANE  tmux focus hook: revive PANE if run-slot
                        closed the Claude that ran there; in a main
                        checkout's pane (many chats) only while that
@@ -845,8 +846,9 @@ def revive(key, focus=False):
             # hash -r: a shell that ran claude before shims/claude
             # existed has it cached past the shim (Remote Control off
             # on a borrowed login).
-            tmux('send-keys', '-t', pane,
-                 f'hash -r; claude --resume {sid}', 'Enter')
+            args = sh('claude-fresh', 'resume', sid) or f'--resume {sid}'
+            tmux('send-keys', '-t', pane, f'hash -r; claude {args}',
+                 'Enter')
             where = pane
         elif focus:
             return 1

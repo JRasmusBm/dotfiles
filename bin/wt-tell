@@ -6,7 +6,7 @@
 # reboot) or no Claude in its cli window: starts it with
 # `claude --continue` there (plain `claude` when the worktree has
 # no conversation yet; the session `run-slot close` closed there,
-# if it did) and hands the tell to `run-slot pend`, which delivers it
+# if it did; a big chat as a fresh, briefed one: claude-fresh resume) and hands the tell to `run-slot pend`, which delivers it
 # once Claude is up and keeps the session open until then: exit 0,
 # though not yet told, so the caller stops retrying. WT_TELL_SID names
 # the chat instead (a main checkout's: there `--continue` opens the
@@ -132,8 +132,8 @@ if { test -z "$_pane" || test -n "$_shell"; } \
   if _gate "revive:$(basename "$_root")"; then
     if test -n "$_pane"; then
       run-slot revive "$_pane" >/dev/null \
-        || tmux send-keys -t "$_pane" \
-          "hash -r; claude --continue || claude" Enter
+        || tmux send-keys -t "$_pane" "hash -r; claude $(claude-fresh \
+          resume - "$_root" 2>/dev/null || echo --continue) || claude" Enter
     else
       ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
         wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true

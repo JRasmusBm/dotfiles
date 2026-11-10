@@ -6,14 +6,16 @@
 # claude-pane of <pane>   print the session id of the Claude in <pane>
 # claude-pane open <sid>  the live pane, else resume <sid> in a new
 #                         window of its checkout's tmux session
-#                         (created if missing); print that pane
+#                         (created if missing), fresh when it is big
+#                         (claude-fresh resume); print that pane
 # claude-pane map         every live chat: <pane><TAB><sid><TAB><cwd>
 #
 # A Claude chat's identity is its session id, not the pane it runs
 # in: panes get killed and reused, and the main checkout's session
 # holds many chats, so a pane or path can't find one again. The
 # inbox (`notif`), `chats` (M-/) and `slack-inbox` watches keep the
-# id and ask here where it is now.
+# id and ask here where it is now; a chat handed on to a fresh one
+# (claude-fresh) answers as that one.
 #
 # Live: ${CLAUDE_CONFIG_DIR:-~/.claude}/sessions/<pid>.json (sessionId,
 # cwd, tmux "sess:@win.%pane") of a running pid whose ancestry holds
@@ -114,15 +116,19 @@ _open() {
   fi
   _new="$(tmux new-window -d -P -F '#{pane_id}' -t "=$_sess:" \
     -c "$_dir" -n claude)" || return 1
-  tmux send-keys -t "$_new" "claude --resume $1" Enter
+  _a="$(claude-fresh resume "$1" 2>/dev/null)" || _a="--resume $1"
+  tmux send-keys -t "$_new" "claude $_a" Enter
   echo "$_new"
 }
 
+# A chat handed on to a fresh one (claude-fresh) is found as that one.
+_next() { claude-fresh next "$1" 2>/dev/null || echo "$1"; }
+
 case "${1:-}" in
   "") sed -n '3,11s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
-  cwd) _cwd "${2:?sid}" ;;
+  cwd) _cwd "$(_next "${2:?sid}")" ;;
   of) _of "${2:?pane}" ;;
-  open) _open "${2:?sid}" ;;
+  open) _open "$(_next "${2:?sid}")" ;;
   map) _map ;;
-  *) _live "$1" ;;
+  *) _live "$(_next "$1")" ;;
 esac

@@ -24,7 +24,8 @@
 #     it closed, so a focus on that pane or a tell resumes it.
 #     A missing session is rebuilt like `wt open` does (its .tmux, else
 #     the run/vim/cli layout) under its old name, and `claude --resume
-#     <sid>` (no sid: `claude --continue || claude`) is typed into a
+#     <sid>` (no sid: `claude --continue || claude`; a big chat: a
+#     fresh, briefed one, claude-fresh resume) is typed into a
 #     window it just built with the old window's name (`cli`), else
 #     into a new window of that name. Panes it didn't build are never touched.
 #   - A later run checks each started pane runs Claude, and once a
@@ -178,9 +179,11 @@ _start() {
     return
   fi
   if test "$_sid" != -; then
-    tmux send-keys -t "$_pane" "$_claude --resume $_sid" Enter
+    _a="$(claude-fresh resume "$_sid" 2>/dev/null)" || _a="--resume $_sid"
+    tmux send-keys -t "$_pane" "$_claude $_a" Enter
   else
-    tmux send-keys -t "$_pane" "$_claude --continue || $_claude" Enter
+    _a="$(claude-fresh resume - "$_cwd" 2>/dev/null)" || _a=--continue
+    tmux send-keys -t "$_pane" "$_claude $_a || $_claude" Enter
   fi
   _st=started
 }

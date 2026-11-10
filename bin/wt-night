@@ -4,7 +4,8 @@
 #   - keeps the Mac awake until then (caffeinate; a closed lid on
 #     battery still sleeps);
 #   - tells each idle agent of a `# IN PROGRESS` or `# P0` worktree to
-#     work on alone until then. Left alone: a worktree whose PR is open, green
+#     work on alone until then (one over 150k context: in a fresh,
+#     briefed chat, `claude-fresh`). Left alone: a worktree whose PR is open, green
 #     and up to date (it waits on me), one with no Claude session, and
 #     a busy one (it is working already). The prompt says a finished
 #     one replies so and stops, so nothing runs for no reason.
@@ -48,8 +49,28 @@ _worktrees() {
     /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }'
 }
 
-# Tell worktree $1's idle agent $3 once (key $2); 0 told, 1 busy.
+# Tell worktree $1's idle agent $3 once (key $2); 0 told, 1 busy. A
+# chat over CLAUDE_FRESH_CTX (150k) gets the tell in a fresh chat
+# instead, after an automatic brief (claude-fresh): each turn of a
+# night's work there would re-read all of it.
 _tell() {
+  _pane="$(tmux display-message -p -t "=$(basename "$1"):cli" \
+    '#{pane_id}' 2>/dev/null)" || _pane=""
+  _sid="$(test -z "$_pane" || claude-pane of "$_pane" 2>/dev/null)" \
+    || _sid=""
+  _ctx="$(test -z "$_sid" || claude-fresh ctx "$_sid" 2>/dev/null)" \
+    || _ctx=0
+  if test "${_ctx:-0}" -gt "${CLAUDE_FRESH_CTX:-150000}"; then
+    test -z "${WT_NIGHT_DRY:-}" \
+      || { echo "would hand $(basename "$1") to a fresh chat"; return 0; }
+    claude-pane-idle "$_pane" || return 1
+    grep -qxF "$1	$2" "$LOCAL_CONFIG/wt-told" 2>/dev/null && return 0
+    { claude-fresh brief "$_sid"; printf '\n## What to do now\n\n%s\n' \
+      "$3"; } | claude-fresh hand "$_pane" >/dev/null || return 1
+    echo "$1	$2" >> "$LOCAL_CONFIG/wt-told"
+    echo "handed $(basename "$1") to a fresh chat ($(( _ctx / 1000 ))k)"
+    return 0
+  fi
   test -z "${WT_NIGHT_DRY:-}" || { echo "would tell $(basename "$1")"; return 0; }
   WT_TELL_NO_REVIVE=1 wt-tell "$1" "$2" "night" "$3" 2>/dev/null \
     && echo "told $(basename "$1")"
