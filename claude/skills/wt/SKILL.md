@@ -201,6 +201,14 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   sync`, which `wt-sync` runs per repo. All go
   through `wt-tell`: idle Claude gets the prompt, a worktree
   with no session gets me a `check` ping.
+- Telling another agent yourself (`wt-tell <worktree path> <key>
+  <ping> <prompt>`, path not slug): send the goal and why, in a
+  few sentences, and let the agent pick the how. No file lists,
+  steps or "every X" scope: it follows them literally, and I
+  often mean "where it makes sense". One tell per key and
+  worktree; a correction is a new key. Exit 1 with no output means
+  its Claude is busy and nothing was delivered: retry when idle,
+  don't assume it landed.
 - `run-slot` — every agent start (tells, revives, detached
   `wt feat|fix`, swarm `launch`) waits there until the Mac has
   room (under the cap of working chats, free memory above the
