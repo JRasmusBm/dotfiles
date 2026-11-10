@@ -138,13 +138,20 @@ p edit
 check "edit: swap of two pins the one moved up" \
   'test "$(tr "\n" "," < "$_f.pinned")" = "Fix the login,Another,"'
 
-# A vim-like editor opens each priority as one fold, steps included.
-printf '#!/bin/sh\necho "$@" > "%s/args"\n' "$_t" > "$_t/bin/nvim"
-chmod +x "$_t/bin/nvim"
-EDITOR=nvim p edit
-check "edit: vim-like editor gets a fold per priority" \
-  'grep -q "foldmethod=expr foldlevel=0" "$_t/args" \
-   && grep -q "$_f\$" "$_t/args"'
+# A vim-like editor opens each priority as one closed fold, steps
+# included: real nvim records where each line's fold starts.
+if command -v nvim >/dev/null; then
+  printf '#!/bin/sh\nexec %s --headless -u NONE -i NONE "$@" -c %s -c "qa!"\n' \
+    "$(command -v nvim)" \
+    "'call writefile(map(range(1, line(\"\$\")), \"foldclosed(v:val)\"), \"$_t/folds\")'" \
+    > "$_t/bin/nvim"
+  chmod +x "$_t/bin/nvim"
+  EDITOR=nvim p edit </dev/null >/dev/null 2>&1
+  check "edit: nvim folds each priority with its lines" \
+    'test "$(grep -n "^[^ #]" "$_f" | cut -d: -f1 | tr "\n" ,)" \
+       = "$(sort -un "$_t/folds" | grep -v "^-1" | tr "\n" ,)" \
+     && test "$(grep -c "^-1" "$_t/folds")" = "$(grep -c "^#\|^$" "$_f")"'
+fi
 
 p done "Another" >/dev/null
 check "done: gone, not a removal" \
