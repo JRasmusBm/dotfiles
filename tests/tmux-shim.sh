@@ -18,12 +18,15 @@ for _d in $PATH; do
   if test -x "$_d/tmux"; then _realtmux="$_d/tmux"; break; fi
 done
 IFS="$_ifs"
-mkdir -p "$_t/s"
+mkdir -p "$_t/s" "$_t/live"
 # No $TMUX anywhere below: tmux targets $TMUX's server over TMUX_TMPDIR,
 # so a kill-server here would kill the server the test runs in.
 unset TMUX TMUX_PANE
-trap 'TMUX_TMPDIR="$_t/s" "$_realtmux" kill-server 2>/dev/null
-  TMUX_TMPDIR="$_t/live" "$_realtmux" kill-server 2>/dev/null
+# Cleanup names each socket by path: real tmux given a TMUX_TMPDIR that
+# is gone falls back to /tmp, and kill-server there kills every agent.
+trap 'for _k in "$_t"/s/tmux-*/default "$_t"/live/tmux-*/default; do
+    test -S "$_k" && "$_realtmux" -S "$_k" kill-server 2>/dev/null
+  done
   rm -rf "$_t"' EXIT
 export LOCAL_CONFIG="$_t/cfg"
 mkdir -p "$LOCAL_CONFIG"
@@ -147,7 +150,6 @@ _rt display -p -t "$_p@default" '#S' | grep -qx abc-1 \
 
 # From inside a pane of a "live" server, a fresh TMUX_TMPDIR reaches its
 # own server, and its kill-server leaves the live one up.
-mkdir -p "$_t/live"
 _lt() { env TMUX_TMPDIR="$_t/live" "$_realtmux" "$@"; }
 _lt new-session -d -s agent 'sleep 60'
 _livetmux="$(_lt display -p -t agent: '#{socket_path},#{pid},0')"
