@@ -3,6 +3,10 @@
 export FZF_DEFAULT_OPTS="--preview 'preview {}'"
 export LOCAL_CONFIG="$HOME/.config/jrasmusbm"
 export XDG_CONFIG_HOME="$HOME/.config"
+# tmux-watch keeps the live server out of /tmp (RAS-41); the shim finds
+# it too, this is for the bare binary.
+[[ -d $HOME/.local/state/tmux && -z ${TMUX_TMPDIR+x} ]] \
+  && export TMUX_TMPDIR="$HOME/.local/state/tmux"
 # Shell-opened tabs close 5 minutes after they last had focus (btabs).
 export BROWSER=browse
 

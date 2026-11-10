@@ -10,6 +10,9 @@
 #   TMUX_KILL_SERVER=1. Every kill-server is logged.
 # A TMUX_TMPDIR other than /tmp beats $TMUX: the command reaches the
 # server it names, not the pane's live one.
+# Once tmux-watch has moved the live server to ~/.local/state/tmux, a
+# call with neither TMUX_TMPDIR nor $TMUX goes there, and kill-server
+# on its `default` is refused too.
 # TMUX_REAL names the real binary (default: the next tmux on PATH).
 #
 # Shells started while agents ran on their own servers (RAS-33) still
@@ -46,6 +49,14 @@ if test "${TMUX_TMPDIR+x}" = x \
   echo "tmux: refused: TMUX_TMPDIR='$TMUX_TMPDIR' is empty or missing," \
     "so this would reach the real server" >&2
   exit 1
+fi
+
+# The live server's socket dir is in $HOME, so tmux's /tmp fallback
+# can't reach it (tmux-watch, RAS-41).
+_live="$HOME/.local/state/tmux"
+if test -z "${TMUX_TMPDIR+x}" && test -z "${TMUX:-}" && test -d "$_live"
+then
+  export TMUX_TMPDIR="$_live"
 fi
 
 # tmux prefers $TMUX's socket over TMUX_TMPDIR, so inside tmux a test's
@@ -105,7 +116,7 @@ if test -n "$_kill"; then
     _sock="$_dir0/default"
   fi
   case "$_sock" in
-    /tmp/tmux-"${UID:-$(id -u)}"/default|/private/tmp/tmux-"${UID:-$(id -u)}"/default)
+    /tmp/tmux-"${UID:-$(id -u)}"/default|/private/tmp/tmux-"${UID:-$(id -u)}"/default|"$_live"/tmux-"${UID:-$(id -u)}"/default)
       if test "${TMUX_KILL_SERVER:-}" != 1; then
         _log "refused: kill-server $_sock"
         echo "tmux: refused: kill-server on $_sock holds live agents" \

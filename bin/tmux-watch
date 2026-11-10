@@ -20,6 +20,14 @@ again within a minute), then tmux-revive runs right away and every
 5 s while its queue has work, so the chats it held come back without
 waiting for wt-sync's minute. Otherwise it runs every 20 s, so
 its snapshot knows which chats were mid-turn when the server dies.
+
+The server's socket dir is ~/.local/state/tmux (TMUX_WATCH_LIVE), not
+/tmp (RAS-41). tmux falls back to /tmp for a TMUX_TMPDIR it can't use,
+so a test whose temp dir was gone killed every agent. A server already
+in /tmp is adopted; the next one it starts goes in the new dir. From
+then on /tmp/tmux-UID is a plain file, kept in place every tick, so
+that fallback fails ("is not a directory"). With TMUX_TMPDIR set
+(tests), that dir is used as is.
 """
 
 import calendar
@@ -47,6 +55,17 @@ REVIVE = os.environ.get("TMUX_WATCH_REVIVE", "tmux-revive")
 
 
 SERVERS = ["default"]
+FIXED = os.environ.get("TMUX_TMPDIR")
+LIVE = os.environ.get(
+    "TMUX_WATCH_LIVE", os.path.join(HOME, ".local/state/tmux"))
+LEGACY = os.environ.get("TMUX_WATCH_LEGACY", "/tmp")
+UID = os.getuid()
+
+
+def sock_dir():
+    if FIXED is not None:
+        return FIXED
+    return LIVE if os.path.isdir(LIVE) else LEGACY
 
 
 def now():
@@ -93,11 +112,45 @@ def live_pid(name):
         out = subprocess.run(
             [TMUX, "-L", name, "display-message", "-p", "#{pid}"],
             capture_output=True, text=True, timeout=5,
+            env=dict(os.environ, TMUX_TMPDIR=sock_dir()),
         )
     except subprocess.TimeoutExpired:
         return None
     pid = out.stdout.strip()
     return int(pid) if out.returncode == 0 and pid.isdigit() else None
+
+
+def block_legacy():
+    """Once the server lives in LIVE, keep a file at LEGACY/tmux-UID."""
+    if FIXED is not None or not os.path.isdir(LIVE):
+        return
+    p = os.path.join(LEGACY, f"tmux-{UID}")
+    try:
+        st = os.lstat(p)
+    except FileNotFoundError:
+        st = None
+    if st is not None and not os.path.isdir(p):
+        try:
+            os.utime(p)
+        except OSError:
+            pass
+        return
+    if st is not None:
+        try:
+            up = subprocess.run(
+                [TMUX, "-S", os.path.join(p, "default"),
+                 "display-message", "-p", "x"],
+                capture_output=True, timeout=5,
+            ).returncode == 0
+        except subprocess.TimeoutExpired:
+            up = True
+        if up:
+            return
+        os.rename(p, f"{p}.old-{int(time.time())}")
+        log(f"moved {p} aside")
+    with open(p, "w") as f:
+        f.write(f"tmux-watch: the tmux server lives in {LIVE} (RAS-41)\n")
+    log(f"{p} is a file now: a /tmp fallback can't reach a server")
 
 
 def alive(pid):
@@ -175,6 +228,9 @@ class Server:
             log(f"{self.name}\tdied {len(recent)}x in a minute, "
                 f"waiting {wait}s")
             time.sleep(wait)
+        if FIXED is None:
+            os.makedirs(LIVE, exist_ok=True)
+        self.env["TMUX_TMPDIR"] = sock_dir()
         self.proc = subprocess.Popen(
             [TMUX, "-L", self.name, "-D"],
             env=self.env, cwd=HOME, start_new_session=True,
@@ -186,7 +242,7 @@ class Server:
             if live_pid(self.name):
                 break
             time.sleep(0.1)
-        log(f"{self.name}\tstarted pid {self.pid}")
+        log(f"{self.name}\tstarted pid {self.pid} in {sock_dir()}")
 
     def check(self):
         if self.proc is not None:
@@ -241,6 +297,7 @@ def save(watch):
     data = {
         s.name: {
             "pid": s.pid, "owned": s.proc is not None, "since": s.since,
+            "dir": sock_dir(),
         } for s in watch
     }
     tmp = STATE + ".tmp"
@@ -260,7 +317,7 @@ def status():
         up = int(time.time() - s["since"]) if s.get("since") else 0
         how = "owned" if s.get("owned") else "adopted"
         print(f"{name}\tpid {s.get('pid')}\t{how}\tup {up // 3600}h"
-              f"{up % 3600 // 60:02d}m")
+              f"{up % 3600 // 60:02d}m\t{s.get('dir', '')}")
     return 0
 
 
@@ -280,6 +337,7 @@ def main():
     log("watching " + " ".join(s.name for s in watch))
     revive, last_revive, kick = None, 0.0, False
     while True:
+        block_legacy()
         for s in watch:
             how = s.check()
             if how is None:
@@ -295,6 +353,7 @@ def main():
             since >= REVIVE_EVERY and queue_busy()
         )
         if due and revive is None:
+            env["TMUX_TMPDIR"] = sock_dir()
             revive = subprocess.Popen(
                 [REVIVE], env=env, cwd=HOME, stdin=subprocess.DEVNULL,
                 stdout=open(os.path.join(CFG, "tmux-revive.out"), "a"),

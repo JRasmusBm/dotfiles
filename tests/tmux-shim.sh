@@ -42,10 +42,12 @@ _fail=0
 _ok() { echo "ok   $1"; }
 _no() { echo "FAIL $1: $2"; _fail=1; }
 
-# run [env...] -- args: the shim on the fake, no TMUX, real socket dir
+# run [env...] -- args: the shim on the fake, no TMUX, real socket dir.
+# HOME is a temp one: with ~/.local/state/tmux the shim would pick it.
+mkdir -p "$_t/home"
 run() {
   rm -f "$FAKE_OUT"
-  env -u TMUX -u TMUX_TMPDIR -u TMUX_KILL_SERVER \
+  env -u TMUX -u TMUX_TMPDIR -u TMUX_KILL_SERVER HOME="$_t/home" \
     TMUX_REAL="$_t/fake" "$@" 2>"$_t/err"
 }
 got() { cat "$FAKE_OUT" 2>/dev/null || echo "<not run>"; }
@@ -126,6 +128,30 @@ for _d in /tmp /tmp/ /private/tmp; do
     TMUX_TMPDIR="$_d" "$_shim" display -p x
   expect "TMUX_TMPDIR=$_d keeps TMUX" "$_live|%3"
 done
+
+# Once tmux-watch moved the live server to ~/.local/state/tmux, a bare
+# call goes there and kill-server on it is refused.
+cat > "$_t/fake-dir" <<'X3'
+#!/bin/sh
+printf '%s' "${TMUX_TMPDIR-<unset>}" > "$FAKE_OUT"
+X3
+chmod +x "$_t/fake-dir"
+run TMUX_REAL="$_t/fake-dir" "$_shim" display -p x
+expect "no live dir: TMUX_TMPDIR stays unset" "<unset>"
+_hl="$_t/home/.local/state/tmux"
+mkdir -p "$_hl"
+run TMUX_REAL="$_t/fake-dir" "$_shim" display -p x
+expect "live dir: a bare call goes there" "$_hl"
+run TMUX_REAL="$_t/fake-dir" TMUX_TMPDIR="$_t/s" "$_shim" display -p x
+expect "live dir: an own TMUX_TMPDIR wins" "$_t/s"
+run TMUX_REAL="$_t/fake-dir" TMUX="$_hl/tmux-$_uid/default,1,0" \
+  "$_shim" display -p x
+expect "live dir: a pane keeps \$TMUX's server" "<unset>"
+run "$_shim" kill-server; refused "kill-server on the moved live server refused" \
+  "kill-server $_hl/tmux-$_uid/default" $?
+run TMUX="$_hl/tmux-$_uid/default,1,0" "$_shim" kill-server
+refused "kill-server via a moved \$TMUX refused" "$_hl" $?
+rm -rf "$_t/home/.local"
 
 # Real tmux in a temp socket dir: one server for every session.
 _rt() {
