@@ -78,7 +78,7 @@ CAP = 3600
 STATES = ['STALLED', 'WAITING', 'ACTIVE', 'SNOOZED']
 # Sections where a merged PR or a missing worktree means the row is
 # left over, not on its way.
-LIVE = {'IN PROGRESS', 'TEAM REVIEW', 'PAUSED', 'BLOCKED', 'NEEDS FOCUS'}
+LIVE = {'P0', 'IN PROGRESS', 'TEAM REVIEW', 'PAUSED', 'BLOCKED', 'NEEDS FOCUS'}
 TICKET = re.compile(r'\b[A-Z][A-Z0-9]*-[0-9]+\b')
 NOW = time.time()
 

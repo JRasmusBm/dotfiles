@@ -13,6 +13,9 @@
 # makes room; run-slot closes stalled Claude sessions and starts queued agents
 # (run-slot ls). `wt wake` in each repo of the list and each repo with a
 # snooze: a timed `wt sz` fires within a minute, after a reboot too.
+# Then `prio sync`: board rows on a priority move into `# P0` (and back
+# out), and a priority's current step no worktree carries gets its own
+# inbox row.
 # A passed `wt w8` deadline, in any repo, tells its agent once (wt-tell,
 # retried); one that passed since the last run, untold, in a listed repo
 # also gets its overdue inbox row (wt-cold --overdue, no other row), at
@@ -50,6 +53,8 @@ _boards="$LOCAL_CONFIG/worktrees"
     test -d "$_repo" || continue
     (cd "$_repo" && gtimeout -k 5 60 wt wake >/dev/null 2>&1 </dev/null)
   done
+
+gtimeout -k 5 30 prio sync >/dev/null 2>&1 </dev/null
 
 if _metered && test "$(( $(date +%-M) % 5 ))" != 0; then
   exit 0
