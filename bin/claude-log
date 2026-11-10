@@ -1,0 +1,65 @@
+#!/usr/bin/env bash
+# Read a Claude session's whole conversation, including what a
+# compaction hid: --resume and ctrl+o stop at "Conversation compacted",
+# the .jsonl keeps it all. Prompts and replies only, no tool calls.
+#
+#   claude-log            latest session of this directory, in $EDITOR
+#   claude-log <id>       that session (id or prefix, any project)
+#   claude-log : [query]  fuzzy pick a session
+#   claude-log -p ...     print to stdout instead of opening
+set -euo pipefail
+
+projects=~/.claude/projects
+print=0
+[[ ${1:-} == -p ]] && { print=1; shift; }
+
+pick() {
+  case "${1:-}" in
+    '')
+      local dir=$projects/$(pwd -P | sed 's|[^A-Za-z0-9]|-|g')
+      ls -t "$dir"/*.jsonl 2>/dev/null | head -1 ;;
+    :)
+      shift
+      ls -t "$projects"/*/*.jsonl \
+        | while read -r f; do
+            t=$(jq -r 'select(.type=="custom-title") | .customTitle' \
+              "$f" 2>/dev/null | tail -1)
+            printf '%s\t%s  %s\n' "$f" "$(basename "$f" .jsonl | cut -c1-8)" \
+              "${t:-$(basename "$(dirname "$f")")}"
+          done \
+        | fzf --with-nth=2.. --delimiter='\t' --query="${1:-}" \
+        | cut -f1 ;;
+    *)
+      ls -t "$projects"/*/"$1"*.jsonl 2>/dev/null | head -1 ;;
+  esac
+}
+
+file=$(pick "$@")
+[[ -n $file ]] || { echo "claude-log: no session found" >&2; exit 1; }
+
+render() {
+  jq -r '
+    def text: if type == "string" then .
+      else [.[]? | select(.type == "text") | .text] | join("\n") end;
+    select((.isSidechain // false) | not)
+    | if .isCompactSummary then
+        "\n---- conversation compacted \(.timestamp // "") ----\n"
+      elif .type == "user" and ((.isMeta // false) | not) then
+        (.message.content | text) as $t
+        | select($t != "")
+        | "\n## You  \(.timestamp // "" | .[0:16])\n\n\($t)"
+      elif .type == "assistant" then
+        (.message.content | text) as $t
+        | select($t != "")
+        | "\n### Claude\n\n\($t)"
+      else empty end
+  ' "$file"
+}
+
+if ((print)); then
+  render
+else
+  out=$(mktemp -t claude-log).md
+  render >"$out"
+  ${EDITOR:-nvim} +'$' "$out"
+fi
