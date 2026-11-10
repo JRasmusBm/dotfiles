@@ -309,6 +309,12 @@ it) and an empty or missing `TMUX_TMPDIR`, the test cleanup that
 killed every agent; and a `TMUX_TMPDIR` other than /tmp beats the
 pane's `$TMUX`, so a test's tmux reaches its own server.
 
+The server's sockets live in `~/.local/state/tmux`, not /tmp:
+tmux falls back to /tmp for a `TMUX_TMPDIR` it can't use, so
+tmux-watch keeps a plain file at /tmp/tmux-UID and that fallback
+errors instead of reaching every agent (RAS-41). A server still in
+/tmp is adopted; the next start moves it.
+
 `tmux-watch` (launchd) keeps the server up: on a death it logs
 the cause (`tmux-watch.log`: signal, exit status, the shim's
 kill-server row naming its caller, crash report), starts the
