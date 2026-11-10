@@ -5,7 +5,7 @@
 # active `wt w8` (`w8 15:40 <what…>`, red `overdue` once past
 # its deadline; the reason is cut to $WT_BADGE_W8_LEN, 24),
 # then the section. A worktree on a priority (`prio rank`) gets
-# `P0 #N` first; in the board's `# P0` section, the section shown is
+# `P<rank-1>` first (P0, P1, …); in the board's `# P0` section, the section shown is
 # the one it came from. Prints nothing outside a worktree.
 # Usage: wt-badge [dir]
 
@@ -21,7 +21,7 @@ _branch="$(git branch --show-current 2>/dev/null)"
 _cfg="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_root##*/}"
 _p0=""
 _n="$(prio rank "$_branch" 2>/dev/null || prio rank "$_slug" 2>/dev/null)" \
-  && _p0="#[fg=red,bold]P0 ##$_n#[default] "
+  && _p0="#[fg=red,bold]P$((_n - 1))#[default] "
 
 if test -f "$_cfg.blocked" \
   && awk -F '\t' -v s="$_slug" '$1 == s { f = 1 } END { exit !f }' \
