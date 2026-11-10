@@ -44,3 +44,11 @@ such a commit.
 - **[private-overlay](claude/skills/private-overlay/SKILL.md)** (global) — What goes in public dotfiles vs the private overlay (`~/.private`), and the seams between them. Load before editing any skill, CLAUDE.md, script or setting.
 
 - **[commit](.claude/skills/commit/SKILL.md)** — Create atomic commits from uncommitted changes. Groups related modifications into logical, self-contained commits.
+
+## Tests
+
+`tests/*.sh` run real tmux on throwaway servers. Unset `TMUX`
+and `TMUX_PANE` before the first tmux call: tmux prefers the
+socket in `$TMUX` over `TMUX_TMPDIR`, so a test's cleanup
+`kill-server` otherwise kills the server the agent runs in.
+After a run, check the real servers' pids are unchanged.
