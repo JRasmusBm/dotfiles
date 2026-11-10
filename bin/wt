@@ -1125,6 +1125,13 @@ _wt_retire() {
       | tr -d ' ')"
     _rt_ahead="$(git -C "$_rt_path" rev-list --count HEAD --not \
       --remotes 2>/dev/null || echo 0)"
+    # A merged branch whose remote was deleted: its PR holds the work.
+    if test "$_rt_ahead" != 0 && test "$(cd "$_root" && timeout 20 \
+      gh pr list --state all --head "$1" --limit 1 --json headRefOid \
+      -q '.[0].headRefOid' 2>/dev/null)" = \
+      "$(git -C "$_rt_path" rev-parse HEAD)"; then
+      _rt_ahead=0
+    fi
     if test "$_rt_dirty$_rt_ahead" = 00; then
       _WT_ENDED="$2" _wt_evict "$1" "$_rt_path"
       return

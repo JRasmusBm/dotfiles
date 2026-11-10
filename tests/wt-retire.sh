@@ -16,7 +16,7 @@ unset TMUX TMUX_PANE
 export LOCAL_CONFIG="$_t/cfg" FAKE="$_t/fake"
 mkdir -p "$LOCAL_CONFIG/worktrees" "$FAKE/bin"
 for c in tmux notif notify tsp docker-slot wt-tell lin \
-  tmux-session-name-from-path jrb-hook; do
+  tmux-session-name-from-path jrb-hook gh; do
   printf '#!/bin/sh\necho "%s $*" >> "$FAKE/calls"\n' "$c" \
     > "$FAKE/bin/$c"
   chmod +x "$FAKE/bin/$c"
@@ -25,6 +25,10 @@ done
 echo 'exit 1' >> "$FAKE/bin/lin"
 echo 'exit 1' >> "$FAKE/bin/wt-tell"
 echo 'basename "$1"' >> "$FAKE/bin/tmux-session-name-from-path"
+# gh: a PR's head is $FAKE/pr-<last path part of the branch>.
+echo '
+case "$*" in *--head*) for a; do test "$p" = --head && br="$a"; p="$a"
+done; cat "$FAKE/pr-${br##*/}" 2>/dev/null ;; esac' >> "$FAKE/bin/gh"
 export PATH="$FAKE/bin:$_bin:$PATH"
 # My global hooks prompt on /dev/tty; this repo is scratch.
 export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath \
@@ -43,15 +47,20 @@ git clone -q "$_t/origin.git" "$_t/app" 2>/dev/null
 _r="$_t/app"
 git -C "$_r" commit -q --allow-empty -m init
 git -C "$_r" push -q origin HEAD 2>/dev/null
-for s in clean dirty ahead; do
+for s in clean dirty ahead squashed; do
   git -C "$_r" worktree add -q -b "fix/jrb/$s" "$_r/.worktrees/$s"
   git -C "$_r/.worktrees/$s" push -q origin "fix/jrb/$s" 2>/dev/null
 done
 echo x > "$_r/.worktrees/dirty/x"
 git -C "$_r/.worktrees/ahead" commit -q --allow-empty -m local
+# Squash-merged, remote branch deleted: its commit is on no remote,
+# but it is its PR's head.
+git -C "$_r/.worktrees/squashed" commit -q --allow-empty -m pr
+git -C "$_r/.worktrees/squashed" rev-parse HEAD > "$FAKE/pr-squashed"
 _of="$LOCAL_CONFIG/worktrees/app"
 printf '%s\n' '# IN PROGRESS' fix/jrb/dep '# PROD REVIEW' \
-  fix/jrb/clean fix/jrb/dirty fix/jrb/ahead fix/jrb/gone \
+  fix/jrb/clean fix/jrb/dirty fix/jrb/ahead fix/jrb/squashed \
+  fix/jrb/gone \
   fix/jrb/open > "$_of"
 printf 'dep\tfix/jrb/dep\tgone\tfix/jrb/gone\n' \
   > "$LOCAL_CONFIG/worktrees/app.blocked"
@@ -88,6 +97,10 @@ check 'but its branch stays' \
   'git -C "$_r" rev-parse -q --verify fix/jrb/ahead >/dev/null'
 check 'it says why it kept them' \
   'test "$(grep -c "keeping .* on disk" "$_t/err")" = 2'
+retire fix/jrb/squashed Done
+sleep 2
+check 'commits only its PR holds: removed like a pushed one' \
+  '! onboard fix/jrb/squashed && ! test -d "$_r/.worktrees/squashed"'
 check 'open row untouched' 'onboard fix/jrb/open'
 
 echo '# wt-cold: which PROD REVIEW rows leave'
