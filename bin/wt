@@ -1134,6 +1134,12 @@ _wt_park() {
   _w8_drop "$_wt_name"
   _board_move "$_branch" "$_wt_name" "$1"
   _linear "$2" "$_branch" || true
+  # Parked as merged and live: what waits on it is free, whichever way
+  # it got here (agents park with rp/ra and skip `wt merged`).
+  case "$1" in
+    'PROD REVIEW'|'TO ANNOUNCE')
+      _unblock_dependents "$_wt_name" merged || true ;;
+  esac
   test "$1" = 'IN PROGRESS' \
     || _notif_clear "$(git rev-parse --show-toplevel)"
 }
