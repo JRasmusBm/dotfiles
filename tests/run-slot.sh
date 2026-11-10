@@ -270,11 +270,15 @@ _check "hold: the pump holds c's slot, c keeps its place in the queue" \
 _check "hold: d stays behind c's hold" 'test "$(_g start d)" = 75'
 printf '%s\tc\t0\n' "$(($(date +%s) - 1))" > "$_rs/reserved"
 RUN_SLOTS=1 run-slot pump >/dev/null
-_check "hold: a lapsed hold is held again, still first" \
-  'grep -q "	c	0$" "$_rs/reserved" \
-    && test "$(head -1 "$_rs/queue" | cut -f3)" = c'
-_check "hold: c uses its slot and leaves the queue" \
-  'test "$(_g start c)" = 0 && test "$(cut -f3 "$_rs/queue")" = d'
+_check "hold: a lapsed hold is dropped, d gets the slot" \
+  'grep -q "	drop	c	.*hold lapsed" "$_rs/run-slot.log" \
+    && grep -q "	d	0$" "$_rs/reserved" \
+    && test "$(cut -f3 "$_rs/queue")" = d'
+_check "hold: c asking again queues behind d" \
+  'test "$(_g start c)" = 75 \
+    && cut -f3 "$_rs/queue" | tr "\n" " " | grep -qx "d c "'
+_check "hold: d uses its slot and leaves the queue" \
+  'test "$(_g start d)" = 0 && test "$(cut -f3 "$_rs/queue")" = c'
 
 # --- wait: prints its place, goes once there is room
 _given

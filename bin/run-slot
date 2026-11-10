@@ -7,7 +7,7 @@
         with RUN_SLOT_ID=ID so its own gate passes. No CMD: the
         caller asks again by itself, and its slot waits
         RUN_SLOT_RESERVE seconds for it; it keeps its place in the
-        queue until it does. KIND, in the order they go: `revive` (a
+        queue until it does, and leaves it if the hold lapses unused. KIND, in the order they go: `revive` (a
         chat that was mid-turn when its tmux server died: past the
         cap, memory alone holds it), `tell` (a reply to a tell, or
         the revive it needs) or `start` (a new agent, an idle chat
@@ -477,10 +477,15 @@ def pump(skip=()):
         rest = []
         for r in q:
             # Held for a caller that asks by itself: it keeps its place
-            # until it uses the slot (gate), and is held again if that
-            # lapses.
+            # until it uses the slot (gate). A hold that lapsed unused
+            # means the caller stopped asking (tmux-revive parked it,
+            # exited): drop it, or it holds a slot again every pump and
+            # starves the tells behind it. Asking again queues anew.
             if r[2] in held:
                 rest.append(r)
+                continue
+            if r[4:] == ['held']:
+                log('drop', r[2], None, 'hold lapsed unclaimed')
                 continue
             # A start held back by the cap lets the revives behind it go.
             if not room.ok(r[1]):
@@ -492,7 +497,7 @@ def pump(skip=()):
             if cmd:
                 started.append(r)
             else:
-                rest.append(r)
+                rest.append(r[:4] + ['held'])
         write(QUEUE, rest)
     env = {k: v for k, v in os.environ.items() if k != 'TMUX_PANE'}
     for r in started:
