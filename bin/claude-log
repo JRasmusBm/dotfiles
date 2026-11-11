@@ -5,6 +5,7 @@
 #
 #   claude-log            latest session of this directory, in nvim
 #   claude-log <id>       that session (id or prefix, any project)
+#   claude-log .          the chat in the active tmux pane (prefix h)
 #   claude-log : [query]  fuzzy pick a session
 #   claude-log -p ...     print to stdout instead of opening
 set -euo pipefail
@@ -15,9 +16,15 @@ print=0
 
 pick() {
   case "${1:-}" in
+    .)
+      local pane sid
+      pane=$(tmux display-message -p "#{pane_id}")
+      sid=$(claude-pane of "$pane" 2>/dev/null) \
+        && pick "$sid" \
+        || (cd "$(tmux display-message -p "#{pane_current_path}")" && pick) ;;
     '')
       local dir=$projects/$(pwd -P | sed 's|[^A-Za-z0-9]|-|g')
-      ls -t "$dir"/*.jsonl 2>/dev/null | head -1 ;;
+      ls -t "$dir"/*.jsonl 2>/dev/null | sed -n 1p ;;
     :)
       shift
       ls -t "$projects"/*/*.jsonl \
@@ -30,7 +37,7 @@ pick() {
         | fzf --with-nth=2.. --delimiter='\t' --query="${1:-}" \
         | cut -f1 ;;
     *)
-      ls -t "$projects"/*/"$1"*.jsonl 2>/dev/null | head -1 ;;
+      ls -t "$projects"/*/"$1"*.jsonl 2>/dev/null | sed -n 1p ;;
   esac
 }
 
