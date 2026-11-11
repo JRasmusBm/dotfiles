@@ -1,55 +1,83 @@
 #!/usr/bin/env python3
 """The ranked priorities (P0s) that steer the board, the inbox and new
-starts, kept in one hand-edited file: $LOCAL_CONFIG/priorities.
+starts. The ranked outcomes are one hand-edited file,
+$LOCAL_CONFIG/priorities; their tickets come from Linear: each
+priority points at the Linear groupings that hold its work.
 
-  prio | prio ls        the priorities in rank order, with their steps and
-                        where each step's worktree stands
+  prio | prio ls        the priorities in rank order, with their
+                        groupings and tickets, and where each ticket's
+                        worktree stands
   prio e                edit them (a tmux popup inside tmux, else here)
   prio edit             edit them here, in $EDITOR
   prio add [--top] [--by WHO] [--date D] [--link URL] [--quote Q]
-           "<outcome>" [step ...]
+           "<outcome>" [note ...]
                         capture: add the outcome, or its new source and
-                        steps; exit 3 for an outcome removed by hand
+                        notes; exit 3 for an outcome removed by hand
   prio done "<outcome>" drop it (history keeps it; not a removal)
-  prio tickets          rank<TAB>TICKET<TAB>outcome, unchecked steps
+  prio in "<outcome>" <grouping>
+                        point the priority at a grouping too
+  prio link [-n] "<outcome>"
+                        an agent finds the grouping that fits it, or
+                        creates one, and links it (-n: print only)
+  prio guess <TICKET>   accept or reject a guessed priority (popup)
+  prio linear search|projects <words>
+                        Linear lookups for the agents
+  prio tickets          rank<TAB>TICKET<TAB>outcome, open tickets
   prio slugs [board...] rank<TAB>slug<TAB>branch of board rows on one
   prio rank <slug|branch|path>  its rank; exit 1 when on none
-  prio brief            each priority, its current step, its worktrees
-                        and their state (the morning ping's text)
+  prio brief            each priority, whether it needs me, its
+                        worktrees and their state (the morning ping)
   prio warn <branch>    stderr warning when <branch> is on no priority
                         while a priority's worktree stalls or has no
                         agent (`wt feat|fix`)
-  prio sync             wt-sync, every minute: the boards' `# P0`
-                        sections, and an inbox row per step no
-                        worktree carries
+  prio sync             wt-sync, every minute: reads Linear, moves the
+                        boards' `# P0` rows, links new outcomes, and
+                        guesses a priority for new tickets in none
 
 File: one priority per line with no indent, in rank order (its text is
 the outcome and its key); under it, indented, sources
-`> Who YYYY-MM-DD <link|-> "quote"` and steps `- [ ] text` /
-`- [x] text`. A step's ticket is the first ABC-123 in its text. The
-current step is the first unchecked one. A worktree is on priority N
-when its branch (or dir) holds the ticket of an unchecked step of N.
-`#` lines and blank lines are ignored.
+`> Who YYYY-MM-DD <link|-> "quote"`, groupings `in <grouping>`, and
+any other line as a note (a step with no ticket, a hint for the
+linking agent). A grouping is a Linear project URL, a parent issue
+(ABC-123 or its URL: its sub-issues, two levels deep) or
+`label:<name>`; ` # ...` after it is a comment. A ticket is on
+priority N when it is assigned to me, open, and in one of N's
+groupings; under two priorities it counts for the higher one. A
+worktree is on priority N when its branch (or dir) names such a
+ticket. `#` lines and blank lines are ignored.
 
 Side files, next to it:
-  priorities.log      epoch, actor (hand|capture|import), rank, outcome,
-                      every step's ticket; a snapshot per change (rank 0
-                      and no outcome: nothing ranked)
-  priorities.removed  epoch, outcome, step (empty: the whole priority)
-                      that a hand edit dropped; capture never re-adds
+  priorities.tickets  what sync last read from Linear: outcome, TICKET,
+                      open|done, title (done: in the last 7 days)
+  priorities.log      epoch, actor (hand|capture|linear), rank,
+                      outcome, its open tickets; a snapshot per change
+                      (rank 0 and no outcome: nothing ranked)
+  priorities.removed  epoch, outcome that a hand edit dropped; capture
+                      never re-adds it
   priorities.pinned   outcomes moved up or added by hand; capture never
                       inserts above them
-  priorities.rows     step inbox rows: key, last epoch seen pending
+  priorities.links    epoch, outcome, started|linked|none|failed,
+                      detail: the linking agent's runs
+  priorities.guesses  TICKET, asked|none|accepted|rejected, rank,
+                      epoch; a `-` cursor row: new tickets count from
+  priorities.err      the last Linear read's error, if it failed
   worktrees/<repo>.p0 board rows `prio sync` moved into `# P0`: entry,
                       the section it came from
+
+Env: LINEAR_API_KEY (else ~/.config/linear.env), PRIO_LINEAR_CMD
+(tests: reads the request JSON on stdin, prints the answer),
+PRIO_CLAUDE (claude), PRIO_LINK_BUDGET (0.40), PRIO_GUESS_BUDGET
+(0.10).
 """
+import json
 import os
 import re
 import subprocess
 import sys
 import tempfile
 import time
-from datetime import date
+import urllib.request
+from datetime import date, datetime, timezone
 
 CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser(
     '~/.config/jrasmusbm')
@@ -57,22 +85,31 @@ FILE = os.path.join(CONF, 'priorities')
 LOG = FILE + '.log'
 REMOVED = FILE + '.removed'
 PINNED = FILE + '.pinned'
-ROWS = FILE + '.rows'
+CACHE = FILE + '.tickets'
+LINKS = FILE + '.links'
+GUESSES = FILE + '.guesses'
+ERR = FILE + '.err'
 BOARDS = os.path.join(CONF, 'worktrees')
 INBOX = os.path.join(CONF, 'notifications')
+SELF = os.path.realpath(__file__)
 STALL = int(os.environ.get('WT_STALL_MIN', '30')) * 60
+RETRY = 3600
 TICKET = re.compile(r'(?<![A-Za-z0-9])([A-Za-z]{2,5}-[0-9]+)')
-STEP = re.compile(r'^\s+- \[([ xX])\] ?(.*)$')
 SOURCE = re.compile(r'^\s+>\s?(.*)$')
+GROUPING = re.compile(r'^\s+in\s+(\S+)(?:\s+#\s*(.*))?$')
+PROJECT = re.compile(r'/project/[^/\s]*?([0-9a-f]{8,})(?:/|$)')
 HEADING = re.compile(r'^\s*#|:\s*$')
+DONE = ('completed', 'canceled')
 # Post-merge and parking sections: wt owns them, `# P0` leaves them be.
 KEEP = {'PROD REVIEW', 'TO ANNOUNCE', 'BLOCKED', 'NEEDS FOCUS', 'SNOOZED'}
 TEMPLATE = """\
-# Priorities, rank = line order. Each is folded with its steps: dd/p
+# Priorities, rank = line order. Each is folded with its lines: dd/p
 # moves it whole, zo opens it. Delete one to drop it (capture won't add
-# it back). Under each, indented:
+# it back). A new one gets its Linear grouping from an agent. Under
+# each, indented:
 #   > Who YYYY-MM-DD <link|-> "quote"
-#   - [ ] ABC-123 a step   (first unchecked = current step)
+#   in <project URL | ABC-123 parent | label:name>   (its tickets)
+#   anything else: a note
 """
 
 
@@ -123,9 +160,27 @@ def tsv(path):
         return []
 
 
+def clean(s, n=200):
+    return re.sub(r'\s+', ' ', s or '').strip()[:n]
+
+
+def grouping(ref):
+    """(kind, key) of a grouping ref, None when it is none: project
+    (slugId), parent (TICKET), label (name)."""
+    m = PROJECT.search(ref)
+    if m:
+        return 'project', m.group(1)
+    if ref.lower().startswith('label:') and ref[6:].strip():
+        return 'label', ref[6:].strip()
+    if re.fullmatch(r'(https?://\S*/issue/)?[A-Za-z]{2,5}-[0-9]+(/\S*)?',
+                    ref):
+        return 'parent', ticket(ref)
+    return None
+
+
 def parse(text):
-    """[{outcome, rank, start, end, sources, steps}], lines; start/end
-    index the block's lines (end exclusive)."""
+    """[{outcome, rank, start, end, sources, groupings, notes}], lines;
+    start/end index the block's lines (end exclusive)."""
     lines = text.split('\n')
     if lines and lines[-1] == '':
         lines.pop()
@@ -135,21 +190,22 @@ def parse(text):
             continue
         if not ln[0].isspace():
             ps.append(dict(outcome=ln.strip(), rank=len(ps) + 1, start=i,
-                           end=i + 1, sources=[], steps=[]))
+                           end=i + 1, sources=[], groupings=[], notes=[]))
             continue
         if not ps:
             continue
         p = ps[-1]
         p['end'] = i + 1
-        m = STEP.match(ln)
-        if m:
-            p['steps'].append(dict(done=m.group(1) != ' ',
-                                   text=m.group(2).strip(),
-                                   ticket=ticket(m.group(2))))
-            continue
         m = SOURCE.match(ln)
         if m:
             p['sources'].append(m.group(1).strip())
+            continue
+        m = GROUPING.match(ln)
+        if m:
+            p['groupings'].append(dict(ref=m.group(1), note=m.group(2) or '',
+                                       kind=grouping(m.group(1))))
+            continue
+        p['notes'].append(ln.strip())
     return ps, lines
 
 
@@ -157,23 +213,22 @@ def load():
     return parse(read())[0]
 
 
-def current(p):
-    return next((s for s in p['steps'] if not s['done']), None)
+def cached():
+    """{outcome.casefold(): [(TICKET, open|done, title)]}"""
+    out = {}
+    for r in tsv(CACHE):
+        if len(r) >= 3:
+            out.setdefault(r[0].casefold(), []).append(
+                (r[1], r[2], r[3] if len(r) > 3 else ''))
+    return out
 
 
-def step_id(s):
-    return s['ticket'].upper() if s['ticket'] else s['text'].casefold()
-
-
-def row_key(p, s):
-    return 'prio:%s:%s' % (slug(p['outcome']),
-                           s['ticket'].lower() or slug(s['text']))
-
-
-def tickets(ps):
-    """[(rank, TICKET, outcome)] of unchecked steps."""
-    return [(p['rank'], s['ticket'], p['outcome'])
-            for p in ps for s in p['steps'] if s['ticket'] and not s['done']]
+def tickets(ps, cache=None):
+    """[(rank, TICKET, outcome)] of open tickets."""
+    cache = cached() if cache is None else cache
+    return [(p['rank'], t, p['outcome']) for p in ps
+            for t, st, _ in cache.get(p['outcome'].casefold(), [])
+            if st == 'open']
 
 
 def rank_of(name, ts):
@@ -186,21 +241,16 @@ def snapshot(actor, ps=None):
     now = int(time.time())
     if not ps:
         append(LOG, (now, actor, 0, '', ''))
+    ts = tickets(ps)
     for p in ps:
         append(LOG, (now, actor, p['rank'], p['outcome'],
-                     ' '.join(s['ticket'] for s in p['steps'] if s['ticket'])))
+                     ' '.join(t for r, t, _ in ts if r == p['rank'])))
 
 
 def removed():
-    """{outcome.casefold(): set of step ids, '' = the whole outcome}"""
-    out = {}
-    for r in tsv(REMOVED):
-        if len(r) < 2:
-            continue
-        st = r[2] if len(r) > 2 else ''
-        out.setdefault(r[1].casefold(), set()).add(
-            (ticket(st) or st.casefold()) if st else '')
-    return out
+    """Outcomes (casefolded) a hand edit dropped."""
+    return {r[1].casefold() for r in tsv(REMOVED)
+            if len(r) > 1 and (len(r) < 3 or not r[2])}
 
 
 def pinned():
@@ -247,14 +297,8 @@ def after_edit(old_text, new_text, actor='hand'):
     newk = {p['outcome'].casefold(): p for p in new}
     oldk = {p['outcome'].casefold(): p for p in old}
     for p in old:
-        q = newk.get(p['outcome'].casefold())
-        if q is None:
+        if p['outcome'].casefold() not in newk:
             append(REMOVED, (now, p['outcome'], ''))
-            continue
-        kept = {step_id(s) for s in q['steps']}
-        for s in p['steps']:
-            if step_id(s) not in kept:
-                append(REMOVED, (now, p['outcome'], s['text']))
     a = [p['outcome'].casefold() for p in old if p['outcome'].casefold() in newk]
     b = [p['outcome'].casefold() for p in new if p['outcome'].casefold() in oldk]
     stay = lcs(a, b)
@@ -267,29 +311,63 @@ def after_edit(old_text, new_text, actor='hand'):
     snapshot(actor, new)
 
 
+def link_state(outcome):
+    """The linking agent's last (epoch, status, detail) for outcome."""
+    last = None
+    for r in tsv(LINKS):
+        if len(r) > 2 and r[1].casefold() == outcome.casefold():
+            last = (int(r[0]), r[2], r[3] if len(r) > 3 else '')
+    return last
+
+
 def cmd_ls(_args):
     ps = load()
     if not ps:
         print('No priorities (prio e)')
         return 0
-    at = step_status({ticket(x['text']) for q in ps for x in q['steps']}
-                     - {''}, board_files())
+    cache = cached()
+    err = read(ERR).strip()
+    if err:
+        print(f'Linear: last read failed ({err}); tickets as last read')
+    boards = board_files()
+    at = ticket_status({t for v in cache.values() for t, _, _ in v},
+                       boards)
+    need = needs_me(ps, boards)
     for p in ps:
-        print(f"{p['rank']}. {p['outcome']}")
+        print(f"{p['rank']}. {p['outcome']}"
+              + (f"   [needs you: {', '.join(need[p['rank']])}]"
+                 if need.get(p['rank']) else ''))
         for s in p['sources']:
             print(f'   > {s}')
-        cur = current(p)
-        for s in p['steps']:
-            mark = 'x' if s['done'] else ' '
-            where = at.get(ticket(s['text']) or '', '')
-            print(f"   [{mark}] {s['text']}" + (f'   [{where}]' if where else '')
-                  + ('   <- now' if s is cur else ''))
+        for g in p['groupings']:
+            print(f"   in {g['ref']}" + (f"   # {g['note']}" if g['note']
+                                         else '')
+                  + ('' if g['kind'] else '   (not a grouping)'))
+        if not p['groupings']:
+            ls = link_state(p['outcome'])
+            print('   (no grouping: an agent links one within a minute)'
+                  if not ls else
+                  f'   (no grouping: linking since '
+                  f'{time.strftime("%H:%M", time.localtime(ls[0]))})'
+                  if ls[1] == 'started' else
+                  f'   (no grouping: the agent found none: {ls[2]})'
+                  if ls[1] == 'none' else
+                  f'   (no grouping: linking failed: {ls[2]})')
+        for n in p['notes']:
+            print(f'   {n}')
+        rows = cache.get(p['outcome'].casefold(), [])
+        for t, st, title in sorted(rows, key=lambda r: r[1] != 'done'):
+            mark = 'x' if st == 'done' else ' '
+            where = at.get(t, '') if st == 'open' else ''
+            print(f'   [{mark}] {t} {title}'
+                  + (f'   [{where}]' if where else
+                     '   [no worktree]' if st == 'open' else ''))
     return 0
 
 
-def step_status(ts, boards):
-    """{ticket: 'section: state'} for each step ticket with a worktree on
-    a board, so ls shows where each step stands without a second command."""
+def ticket_status(ts, boards):
+    """{ticket: 'section: state'} for each ticket with a worktree on a
+    board, so ls shows where each one stands without a second command."""
     ag, st = agents(), stalled()
     rows = [(e, sec) for bd in boards for _, e, sec in entries(bd)]
     out = {}
@@ -304,12 +382,34 @@ def step_status(ts, boards):
     return out
 
 
+def pinged():
+    """Slugs of worktrees with a pending inbox row for me."""
+    out = set()
+    for r in tsv(INBOX):
+        if len(r) > 7 and r[7] != 'fyi' and '/.worktrees/' in r[4]:
+            out.add(r[4].split('/.worktrees/', 1)[1].split('/')[0])
+    return out
+
+
+def needs_me(ps, boards):
+    """{rank: [slug]}: a priority's worktrees that wait on me (a
+    pending inbox row, or parked under NEEDS FOCUS)."""
+    ts, pend, out = tickets(ps), pinged(), {}
+    for bd in boards:
+        for _, e, sec in entries(bd):
+            r = rank_of(e, ts)
+            s = e.rsplit('/', 1)[-1]
+            if r and (s in pend or sec.upper() == 'NEEDS FOCUS'):
+                out.setdefault(r, []).append(s)
+    return out
+
+
 def cmd_edit(_args):
     old = read()
     if not os.path.exists(FILE):
         write(FILE, TEMPLATE)
     editor = os.environ.get('EDITOR') or 'vim'
-    # Each priority is one closed fold with its sources and steps, so
+    # Each priority is one closed fold with its indented lines, so
     # dd/p moves the whole block; zo opens one to edit it.
     # No backslashes: the -c string passes through a double-quoted vim
     # string, which ate them and made every line its own fold.
@@ -342,6 +442,11 @@ def source_line(o):
                                   o['link'] or '-', q)
 
 
+def note_line(s):
+    s = re.sub(r'^-\s*(\[[ xX]\]\s*)?', '', s.strip())
+    return '  - ' + s
+
+
 def cmd_add(args):
     o = dict(top=False, by='', date='', link='', quote='')
     pos = []
@@ -355,12 +460,11 @@ def cmd_add(args):
             pos.append(a)
     if not pos:
         print('usage: prio add [--top] [--by WHO] [--date D] [--link URL] '
-              '[--quote Q] "<outcome>" [step ...]', file=sys.stderr)
+              '[--quote Q] "<outcome>" [note ...]', file=sys.stderr)
         return 2
-    outcome, steps = pos[0].strip(), [s.strip() for s in pos[1:] if s.strip()]
-    rm = removed()
-    gone = rm.get(outcome.casefold(), set())
-    if '' in gone:
+    outcome = pos[0].strip()
+    notes = [note_line(s) for s in pos[1:] if s.strip()]
+    if outcome.casefold() in removed():
         print(f'prio: "{outcome}" was removed by hand; not adding it back',
               file=sys.stderr)
         return 3
@@ -371,17 +475,14 @@ def cmd_add(args):
              None)
     said = []
     if p:
-        have = {step_id(s) for s in p['steps']}
+        have = {ln.strip().casefold() for ln in lines[p['start']:p['end']]}
         add = []
-        for s in steps:
-            sid = ticket(s) or s.casefold()
-            if sid in have or sid in gone:
-                continue
-            have.add(sid)
-            add.append('  - [ ] ' + s)
+        for n in notes:
+            if n.strip().casefold() not in have:
+                have.add(n.strip().casefold())
+                add.append(n)
         new = []
-        if src and src.strip() not in (ln.strip() for ln in
-                                       lines[p['start']:p['end']]):
+        if src and src.strip().casefold() not in have:
             at = p['start'] + 1
             for i in range(p['start'] + 1, p['end']):
                 if SOURCE.match(lines[i]):
@@ -390,7 +491,7 @@ def cmd_add(args):
             said.append('source')
         if add:
             new.append((p['end'], add))
-            said.append(f'{len(add)} step(s)')
+            said.append(f'{len(add)} note(s)')
         for at, ls in sorted(new, reverse=True):
             lines[at:at] = ls
         if not said:
@@ -398,9 +499,7 @@ def cmd_add(args):
             return 0
         msg = f"prio: #{p['rank']} {p['outcome']}: added {', '.join(said)}"
     else:
-        block = [outcome] + ([src] if src else []) + \
-            ['  - [ ] ' + s for s in steps
-             if (ticket(s) or s.casefold()) not in gone]
+        block = [outcome] + ([src] if src else []) + notes
         at, r = len(lines), len(ps) + 1
         if o['top']:
             pins = {n.casefold() for n in pinned()}
@@ -433,6 +532,43 @@ def cmd_done(args):
     set_pinned(pinned(), ps)
     snapshot('hand', ps)
     print(f"prio: done: {p['outcome']}")
+    return 0
+
+
+def add_grouping(outcome, ref, note=''):
+    """Write `in ref` under outcome; False when there is no such
+    priority or ref is no grouping."""
+    if not grouping(ref):
+        return False
+    ps, lines = parse(read())
+    p = next((p for p in ps if p['outcome'].casefold() ==
+              outcome.casefold()), None)
+    if not p:
+        return False
+    if any(g['ref'] == ref for g in p['groupings']):
+        return True
+    at = p['start'] + 1
+    for i in range(p['start'] + 1, p['end']):
+        if SOURCE.match(lines[i]) or GROUPING.match(lines[i]):
+            at = i + 1
+    lines[at:at] = ['  in ' + ref + (f'   # {clean(note, 80)}' if note
+                                     else '')]
+    write(FILE, '\n'.join(lines) + '\n')
+    return True
+
+
+def cmd_in(args):
+    if len(args) < 2:
+        print('usage: prio in "<outcome>" <grouping>', file=sys.stderr)
+        return 2
+    if not grouping(args[1]):
+        print(f'prio: not a grouping: {args[1]} (a project URL, ABC-123 '
+              'or label:<name>)', file=sys.stderr)
+        return 2
+    if not add_grouping(args[0], args[1], ' '.join(args[2:])):
+        print(f'prio: no priority "{args[0]}"', file=sys.stderr)
+        return 1
+    print(f'prio: {args[0]}: in {args[1]}')
     return 0
 
 
@@ -517,7 +653,6 @@ def agents():
 
 def stalled():
     """{slug: why} of STALLED items in wt-cold's last run."""
-    import json
     try:
         d = json.load(open(os.path.join(CONF, 'wt-cold-last')))
     except (OSError, ValueError):
@@ -545,17 +680,25 @@ def cmd_brief(_args):
     if not ps:
         print("No priority is set: what's today's P0?")
         return 0
-    rows = states(on_board(tickets(ps), board_files()))
+    boards = board_files()
+    ts = tickets(ps)
+    rows = states(on_board(ts, boards))
+    need = needs_me(ps, boards)
     print("Today's priorities:")
     for p in ps:
-        cur = current(p)
         print(f"{p['rank']}. {p['outcome']}")
-        print(f"   now: {cur['text'] if cur else 'every step checked'}")
+        if need.get(p['rank']):
+            print(f"   needs you: {', '.join(need[p['rank']])}")
         mine = [x for x in rows if x[0] == p['rank']]
         for _, s, _, st in mine:
             print(f'   {s}: {st}')
-        if not mine:
-            print('   no worktree on it')
+        idle = [t for r, t, _ in ts if r == p['rank']
+                and not any(on(b, t) for _, _, b, _ in mine)]
+        if idle:
+            print(f"   no worktree: {' '.join(idle)}")
+        if not mine and not idle:
+            print('   no open ticket' if p['groupings']
+                  else '   no grouping yet')
     return 0
 
 
@@ -639,55 +782,546 @@ def sync_board(path, ts):
             os.remove(side_path)
 
 
+# Linear
+
+
+def linear_key():
+    k = os.environ.get('LINEAR_API_KEY')
+    if k:
+        return k
+    try:
+        for ln in open(os.path.expanduser('~/.config/linear.env')):
+            m = re.match(r'\s*(?:export\s+)?LINEAR_API_KEY=(.*)', ln)
+            if m:
+                return m.group(1).strip().strip('"\'')
+    except OSError:
+        pass
+    return None
+
+
+def gql(query, variables=None):
+    """The response's data; raises RuntimeError on any failure but a
+    partial one (an alias nulled, the rest answered)."""
+    body = json.dumps({'query': query, 'variables': variables or {}})
+    cmd = os.environ.get('PRIO_LINEAR_CMD')
+    try:
+        if cmd:
+            out = json.loads(subprocess.run(
+                cmd, shell=True, input=body, capture_output=True, text=True,
+                timeout=20).stdout)
+        else:
+            key = linear_key()
+            if not key:
+                raise RuntimeError('no LINEAR_API_KEY')
+            req = urllib.request.Request(
+                'https://api.linear.app/graphql', data=body.encode(),
+                headers={'Authorization': key,
+                         'Content-Type': 'application/json'})
+            with urllib.request.urlopen(req, timeout=20) as r:
+                out = json.load(r)
+    except RuntimeError:
+        raise
+    except Exception as e:
+        raise RuntimeError(f'{type(e).__name__}: {clean(str(e), 120)}')
+    if not out.get('data'):
+        raise RuntimeError(clean(json.dumps(out.get('errors') or out), 200))
+    return out['data']
+
+
+FIELDS = 'identifier title state{type} completedAt assignee{isMe}'
+RECENT = ('or:[{state:{type:{nin:["completed","canceled"]}}},'
+          '{completedAt:{gt:"-P7D"}}]')
+
+
+def grouping_query(n, kind, key):
+    k = json.dumps(key)
+    if kind == 'project':
+        f = f'project:{{slugId:{{eq:{k}}}}}'
+    elif kind == 'label':
+        f = f'labels:{{name:{{eqIgnoreCase:{k}}}}}'
+    else:
+        return (f'g{n}: issue(id:{k}){{children(first:250){{nodes{{{FIELDS}'
+                f' children(first:100){{nodes{{{FIELDS}}}}}}}}}}}')
+    return (f'g{n}: issues(first:250, filter:{{{f}, '
+            f'assignee:{{isMe:{{eq:true}}}}, {RECENT}}}){{nodes{{{FIELDS}}}}}')
+
+
+def members(kind, d):
+    """[(TICKET, open|done, title)] of a grouping's answer."""
+    if kind == 'parent':
+        nodes, todo = [], list((d.get('children') or {}).get('nodes') or [])
+        while todo:
+            x = todo.pop(0)
+            nodes.append(x)
+            todo += (x.get('children') or {}).get('nodes') or []
+    else:
+        nodes = d.get('nodes') or []
+    week = time.time() - 7 * 86400
+    out = []
+    for x in nodes:
+        if not (x.get('assignee') or {}).get('isMe'):
+            continue
+        st = (x.get('state') or {}).get('type')
+        if st in DONE:
+            c = x.get('completedAt')
+            if st == 'canceled' or not c or iso(c) < week:
+                continue
+        out.append((x['identifier'].upper(), 'done' if st in DONE
+                    else 'open', clean(x.get('title'), 120)))
+    return out
+
+
+def iso(s):
+    return datetime.fromisoformat(s.replace('Z', '+00:00')).timestamp()
+
+
+def read_linear(ps, since):
+    """({outcome.casefold(): rows or None (its read failed)}, [(TICKET,
+    title)] of my open tickets created after since)."""
+    gs = [(p, g) for p in ps for g in p['groupings'] if g['kind']]
+    parts = [grouping_query(n, *g['kind']) for n, (_, g) in enumerate(gs)]
+    stamp = datetime.fromtimestamp(since, timezone.utc).strftime(
+        '%Y-%m-%dT%H:%M:%SZ')
+    parts.append('new: issues(first:50, orderBy:createdAt, filter:{'
+                  'assignee:{isMe:{eq:true}}, createdAt:{gt:%s}, '
+                  'state:{type:{nin:["completed","canceled"]}}})'
+                  '{nodes{identifier title}}' % json.dumps(stamp))
+    d = gql('{' + ' '.join(parts) + '}')
+    out = {p['outcome'].casefold(): [] for p in ps}
+    for n, (p, g) in enumerate(gs):
+        k = p['outcome'].casefold()
+        a = d.get(f'g{n}')
+        if a is None or out[k] is None:
+            out[k] = None
+            continue
+        have = {t for t, _, _ in out[k]}
+        out[k] += [m for m in members(g['kind'][0], a) if m[0] not in have]
+    new = [(x['identifier'].upper(), clean(x.get('title'), 120))
+           for x in (d.get('new') or {}).get('nodes') or []]
+    return out, new
+
+
+def sync_cache(ps):
+    """Read Linear into the cache; [(TICKET, title)] new and in no
+    grouping, or [] when the read failed."""
+    since = guess_cursor()
+    try:
+        got, new = read_linear(ps, since)
+    except RuntimeError as e:
+        write(ERR, str(e) + '\n')
+        return []
+    if os.path.exists(ERR):
+        os.remove(ERR)
+    old = cached()
+    rows = []
+    for p in ps:
+        k = p['outcome'].casefold()
+        for t, st, title in (got[k] if got[k] is not None
+                             else old.get(k, [])):
+            rows.append((p['outcome'], t, st, title))
+    text = ''.join('\t'.join(r) + '\n' for r in rows)
+    if text != read(CACHE):
+        before = tickets(ps, old)
+        write(CACHE, text)
+        if before != tickets(ps):
+            snapshot('linear', ps)
+    known = {r[1] for r in rows}
+    return [(t, title) for t, title in new if t not in known]
+
+
+def search_issues(words):
+    q = ('query($q: String!) { searchIssues(term: $q, first: 10) { nodes {'
+         ' identifier title state{type} assignee{isMe}'
+         ' project{name url} parent{identifier title} team{key} } } }')
+    for x in gql(q, {'q': words})['searchIssues']['nodes']:
+        print('\t'.join([
+            x['identifier'], (x.get('state') or {}).get('type') or '',
+            'mine' if (x.get('assignee') or {}).get('isMe') else '-',
+            'project: ' + ((x.get('project') or {}).get('url') or '-'),
+            'parent: ' + ((x.get('parent') or {}).get('identifier') or '-'),
+            clean(x.get('title'), 120)]))
+
+
+def search_projects(words):
+    q = ('query($q: String!) { projects(first: 10, filter: {name: '
+         '{containsIgnoreCase: $q}}) { nodes { name url state } } }')
+    for x in gql(q, {'q': words})['projects']['nodes']:
+        print('\t'.join([x['url'], x.get('state') or '',
+                         clean(x['name'], 120)]))
+
+
+def cmd_linear(args):
+    if len(args) < 2 or args[0] not in ('search', 'projects'):
+        print('usage: prio linear search|projects <words>', file=sys.stderr)
+        return 2
+    try:
+        (search_issues if args[0] == 'search' else search_projects)(
+            ' '.join(args[1:]))
+    except RuntimeError as e:
+        print(f'prio linear: {e}', file=sys.stderr)
+        return 1
+    return 0
+
+
+def issue_id(tid):
+    d = gql('query($id: String!) { issue(id: $id) { id team{id}'
+            ' parent{id} project{id} assignee{isMe} } }', {'id': tid})
+    if not d.get('issue'):
+        raise RuntimeError(f'no issue {tid}')
+    return d['issue']
+
+
+def join(tid, ref):
+    """Put ticket tid into grouping ref, in Linear."""
+    kind, key = grouping(ref)
+    i = issue_id(tid)
+    if kind == 'parent':
+        inp = {'parentId': issue_id(key)['id']}
+    elif kind == 'project':
+        p = gql('query($s: String!) { projects(filter: {slugId: {eq: $s}})'
+                ' { nodes { id } } }', {'s': key})['projects']['nodes']
+        if not p:
+            raise RuntimeError(f'no project {key}')
+        inp = {'projectId': p[0]['id']}
+    else:
+        lb = gql('query($n: String!) { issueLabels(filter: {name: '
+                 '{eqIgnoreCase: $n}}) { nodes { id } } }',
+                 {'n': key})['issueLabels']['nodes']
+        if not lb:
+            raise RuntimeError(f'no label {key}')
+        gql('mutation($i: String!, $l: String!) { issueAddLabel(id: $i,'
+            ' labelId: $l) { success } }', {'i': i['id'], 'l': lb[0]['id']})
+        return
+    gql('mutation($i: String!, $in: IssueUpdateInput!) { issueUpdate('
+        'id: $i, input: $in) { success } }', {'i': i['id'], 'in': inp})
+
+
+def create_parent(team, title):
+    t = gql('query($k: String!) { teams(filter: {key: {eq: $k}}) { nodes'
+            ' { id } } }', {'k': team})['teams']['nodes']
+    if not t:
+        raise RuntimeError(f'no team {team}')
+    me = gql('{ viewer { id } }')['viewer']['id']
+    d = gql('mutation($in: IssueCreateInput!) { issueCreate(input: $in)'
+            ' { issue { identifier } } }',
+            {'in': {'teamId': t[0]['id'], 'title': title,
+                    'assigneeId': me}})
+    return d['issueCreate']['issue']['identifier']
+
+
+# Agents
+
+
+LINK_SCHEMA = {
+    'type': 'object',
+    'properties': {
+        'grouping': {'type': 'string'},
+        'create': {'type': 'object', 'properties': {
+            'team': {'type': 'string'}, 'title': {'type': 'string'}}},
+        'adopt': {'type': 'array', 'items': {'type': 'string'}},
+        'reason': {'type': 'string'},
+    },
+    'required': ['reason'],
+}
+LINK_SYSTEM = """You link one of the user's ranked work priorities to \
+the Linear grouping that holds its tickets. A ticket assigned to the \
+user that is open and in the grouping counts toward the priority, so \
+the grouping should hold this outcome's work and little else.
+
+Look it up with `%s linear search <words>` (issues: id, state, mine, \
+project URL, parent, title) and `%s linear projects <words>` \
+(projects: URL, state, name); 2-4 distinctive words a search, at most \
+6 searches. Ticket ids in the priority's lines are hints: look them \
+up and see what they share.
+
+Answer with one of:
+- grouping: an existing project URL whose work is this outcome (not a \
+broad area it is a small part of), or an existing parent issue id \
+(ABC-123) whose sub-issues are this outcome's steps.
+- create: {team, title}: no grouping fits, but the user has open \
+tickets that are this outcome's work. A parent issue is made in that \
+team (the key of the team most of them are in), titled with the \
+outcome in its own words.
+- neither: no grouping fits and nothing to group yet; say why.
+adopt: with a parent issue (found or created), the user's open \
+tickets (mine, not completed or canceled) with no parent that are \
+clearly this outcome's work; they become its sub-issues. Else [].
+reason: one sentence why. Answer with the JSON object only."""
+GUESS_SCHEMA = {
+    'type': 'object',
+    'properties': {'guesses': {'type': 'array', 'items': {
+        'type': 'object', 'properties': {
+            'ticket': {'type': 'string'}, 'rank': {'type': 'integer'}},
+        'required': ['ticket', 'rank']}}},
+    'required': ['guesses'],
+}
+GUESS_SYSTEM = """You get the user's ranked work priorities and new \
+tickets assigned to them that sit in none of the priorities' \
+groupings. For each ticket, guess the rank of the priority whose \
+outcome it clearly serves, or 0 when it serves none or you are \
+unsure: a wrong guess costs the user a decision, a 0 costs nothing. \
+Answer with the JSON object only."""
+
+
+def claude(prompt, system, schema, model, budget, tools=None):
+    """The structured answer of a headless Claude, or raise."""
+    env = {k: v for k, v in os.environ.items() if k != 'ANTHROPIC_API_KEY'}
+    cmd = [os.environ.get('PRIO_CLAUDE', 'claude'), '-p', prompt,
+           '--model', model, '--output-format', 'json',
+           '--no-session-persistence', '--max-budget-usd', budget,
+           '--permission-mode', 'dontAsk', '--strict-mcp-config',
+           '--json-schema', json.dumps(schema), '--system-prompt', system]
+    cmd += ['--tools', 'Bash', '--allowedTools', tools] if tools \
+        else ['--tools', '']
+    try:
+        # A neutral cwd: no repo CLAUDE.md to sway it.
+        r = subprocess.run(cmd, cwd=tempfile.gettempdir(), env=env,
+                           capture_output=True, text=True, timeout=600)
+        out = json.loads(r.stdout)
+    except (OSError, subprocess.SubprocessError, ValueError) as e:
+        raise RuntimeError(f'model call failed: {type(e).__name__}')
+    if out.get('is_error'):
+        raise RuntimeError('model error: ' + clean(str(out.get('result')),
+                                                   120))
+    d = out.get('structured_output')
+    if not isinstance(d, dict):
+        raise RuntimeError('model answered ' +
+                           clean(str(out.get('result'))[-80:], 80))
+    return d
+
+
+def block(p):
+    lines = parse(read())[1]
+    return '\n'.join(lines[p['start']:p['end']])
+
+
+def cmd_link(args):
+    dry = bool(args) and args[0] == '-n'
+    args = args[1:] if dry else args
+    if not args:
+        print('usage: prio link [-n] "<outcome>"', file=sys.stderr)
+        return 2
+    p = next((p for p in load() if p['outcome'].casefold() ==
+              args[0].strip().casefold()), None)
+    if not p:
+        print(f'prio: no priority "{args[0]}"', file=sys.stderr)
+        return 1
+    outcome = p['outcome']
+    if not dry:
+        append(LINKS, (int(time.time()), outcome, 'started', ''))
+    try:
+        d = claude('The priority, as its lines stand:\n```\n%s\n```'
+                   % block(p), LINK_SYSTEM % (SELF, SELF), LINK_SCHEMA,
+                   'sonnet', os.environ.get('PRIO_LINK_BUDGET', '0.40'),
+                   'Bash(%s linear *)' % SELF)
+        if dry:
+            print(json.dumps(d, ensure_ascii=False))
+            return 0
+        ref, note = (d.get('grouping') or '').strip(), ''
+        c = d.get('create') or {}
+        if not grouping(ref) and c.get('team') and c.get('title'):
+            ref, note = create_parent(c['team'].strip().upper(),
+                                      clean(c['title'], 200)), 'created'
+        if not grouping(ref):
+            append(LINKS, (int(time.time()), outcome, 'none',
+                           clean(d.get('reason'), 200)))
+            print(f"prio: {outcome}: no grouping: {d.get('reason')}")
+            return 0
+        add_grouping(outcome, ref, note)
+        adopted = []
+        for t in (d.get('adopt') or []) if grouping(ref)[0] == 'parent' \
+                else []:
+            try:
+                i = issue_id(ticket(t))
+                if (i['assignee'] or {}).get('isMe') and not i['parent']:
+                    join(ticket(t), ref)
+                    adopted.append(ticket(t))
+            except RuntimeError:
+                pass
+        detail = ref + (f' adopted {" ".join(adopted)}' if adopted else '')
+        append(LINKS, (int(time.time()), outcome, 'linked', detail))
+        print(f'prio: {outcome}: in {detail}')
+        return 0
+    except (RuntimeError, KeyError, TypeError) as e:
+        if not dry:
+            append(LINKS, (int(time.time()), outcome, 'failed',
+                           clean(str(e), 200)))
+        print(f'prio link: {e}', file=sys.stderr)
+        return 1
+
+
+def guesses():
+    """{TICKET: (status, rank)}, cursor epoch or None."""
+    out, cur = {}, None
+    for r in tsv(GUESSES):
+        if len(r) < 4:
+            continue
+        if r[0] == '-':
+            cur = int(r[3])
+        else:
+            out[r[0]] = (r[1], int(r[2] or 0))
+    return out, cur
+
+
+def guess_cursor():
+    _, cur = guesses()
+    if cur is None:
+        cur = int(time.time())
+        append(GUESSES, ('-', 'cursor', '', cur))
+    return cur
+
+
+def cmd_guess_new(args):
+    """Guess a priority for each TICKET<TAB>title argument; one inbox
+    row per guess."""
+    ps = load()
+    new = [a.split('\t', 1) for a in args if '\t' in a]
+    if not ps or not new:
+        return 0
+    try:
+        d = claude('Priorities, ranked:\n%s\n\nNew tickets:\n%s' % (
+            '\n'.join(f"{p['rank']}. {p['outcome']}" for p in ps),
+            '\n'.join(f'{t} {title}' for t, title in new)),
+            GUESS_SYSTEM, GUESS_SCHEMA, 'haiku',
+            os.environ.get('PRIO_GUESS_BUDGET', '0.10'))
+    except RuntimeError as e:
+        print(f'prio guess: {e}', file=sys.stderr)
+        return 1
+    got = {ticket(g.get('ticket', '')): g.get('rank', 0)
+           for g in d.get('guesses') or []}
+    titles = dict((t.upper(), title) for t, title in new)
+    now = int(time.time())
+    for t in titles:
+        r = got.get(t, 0)
+        p = ps[r - 1] if 0 < r <= len(ps) else None
+        append(GUESSES, (t, 'asked' if p else 'none', r if p else 0, now))
+        if p:
+            notify_guess(t, titles[t], p)
+    return 0
+
+
+def guess_ref(outcome, t):
+    return 'prio:%s:%s' % (slug(outcome), t.lower())
+
+
+def notify_guess(t, title, p):
+    k = guess_ref(p['outcome'], t)
+    env = dict(os.environ, NOTIFY_CLASS='step', NOTIFY_CTX=k,
+               NOTIFY_REF=k, NOTIFY_MODE='sticky')
+    env.pop('TMUX_PANE', None)
+    subprocess.call(['notify', f'P{p["rank"] - 1}?',
+                     f"{t} {title} -> {p['outcome']}"], env=env,
+                    cwd=os.path.expanduser('~'), stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL)
+
+
+def cmd_guess(args):
+    """The popup a guess row opens: y joins the ticket to the guessed
+    priority's first grouping, a digit to that priority's, n rejects;
+    anything else leaves the row."""
+    if not args:
+        print('usage: prio guess <TICKET>', file=sys.stderr)
+        return 2
+    t = ticket(args[0])
+    g, _ = guesses()
+    ps = load()
+    st, r = g.get(t, ('', 0))
+    if st != 'asked':
+        print(f'{t}: no open guess')
+        return 1
+    print(f'{t} is in no priority. Guess: #{r} '
+          f"{ps[r - 1]['outcome'] if 0 < r <= len(ps) else '?'}\n")
+    for p in ps:
+        print(f"  {p['rank']}. {p['outcome']}")
+    a = input('\ny: yes, 1-9: that one, n: none of them, '
+              'Enter: later > ').strip().lower()
+    to = r if a == 'y' else int(a) if a.isdigit() else None
+    if a == 'n':
+        append(GUESSES, (t, 'rejected', r, int(time.time())))
+        print(f'{t}: on no priority')
+    elif to and 0 < to <= len(ps):
+        p = ps[to - 1]
+        gs = [x for x in p['groupings'] if x['kind']]
+        if not gs:
+            print(f"#{to} has no grouping yet; try again once it has one")
+            input('Enter > ')
+            return 1
+        try:
+            join(t, gs[0]['ref'])
+        except RuntimeError as e:
+            print(f'prio: {e}')
+            input('Enter > ')
+            return 1
+        append(GUESSES, (t, 'accepted', to, int(time.time())))
+        print(f"{t}: in {gs[0]['ref']} (#{to})")
+    else:
+        return 0
+    for p in ps:
+        subprocess.call(['notif', 'seen-ref', guess_ref(p['outcome'], t)],
+                        stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return 0
+
+
+def spawn(*args):
+    log = open(os.path.join(CONF, 'prio-agents.log'), 'a')
+    subprocess.Popen([SELF, *args], stdin=subprocess.DEVNULL, stdout=log,
+                     stderr=log, start_new_session=True)
+
+
+def sync_links(ps):
+    now = int(time.time())
+    for p in ps:
+        if p['groupings']:
+            continue
+        ls = link_state(p['outcome'])
+        if ls is None or now - ls[0] > RETRY:
+            append(LINKS, (now, p['outcome'], 'started', 'queued'))
+            spawn('link', p['outcome'])
+
+
+def sync_guesses(ps, new):
+    g, _ = guesses()
+    ask = [f'{t}\t{title}' for t, title in new if t not in g]
+    if ps and ask:
+        for a in ask:
+            append(GUESSES, (a.split('\t')[0], 'pending', 0,
+                             int(time.time())))
+        spawn('guess-new', *ask)
+
+
 def inbox_refs():
     return {r[9] for r in tsv(INBOX) if len(r) > 9 and r[9].startswith('prio:')}
 
 
-def sync_steps(ps, boards):
-    every = [e for b in boards for _, e, _ in entries(b)]
-    want = {}
-    for p in ps:
-        s = current(p)
-        if s and not (s['ticket'] and any(on(e, s['ticket']) for e in every)):
-            want[row_key(p, s)] = (p, s)
-    pending = inbox_refs()
-    for k in pending - set(want):
+def sync_rows(ps):
+    """Drop inbox rows that are no open guess (old step rows, a
+    guess settled elsewhere)."""
+    g, _ = guesses()
+    want = {guess_ref(p['outcome'], t) for t, (st, r) in g.items()
+            for p in ps if st == 'asked' and p['rank'] == r}
+    for k in inbox_refs() - want:
         subprocess.call(['notif', 'seen-ref', k], stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
-    seen = {r[0]: int(r[1]) for r in tsv(ROWS) if len(r) > 1}
-    now = int(time.time())
-    out = {}
-    for k, (p, s) in want.items():
-        if k in pending:
-            out[k] = now
-            continue
-        if now - seen.get(k, 0) < STALL:
-            out[k] = seen[k]
-            continue
-        env = dict(os.environ, NOTIFY_CLASS='step', NOTIFY_CTX=k,
-                   NOTIFY_REF=k, NOTIFY_MODE='sticky')
-        env.pop('TMUX_PANE', None)
-        subprocess.call(['notify', 'P0 step',
-                         f"{p['outcome']}: {s['text']}"], env=env,
-                        cwd=os.path.expanduser('~'), stdout=subprocess.DEVNULL,
-                        stderr=subprocess.DEVNULL)
-        out[k] = now
-    write(ROWS, ''.join(f'{k}\t{t}\n' for k, t in out.items()))
 
 
 def cmd_sync(_args):
     ps = load()
+    new = sync_cache(ps)
     ts = tickets(ps)
-    boards = board_files()
-    for b in boards:
+    for b in board_files():
         sync_board(b, ts)
-    sync_steps(ps, boards)
+    sync_links(ps)
+    sync_guesses(ps, new)
+    sync_rows(ps)
     return 0
 
 
-CMDS = dict(ls=cmd_ls, e=cmd_e, edit=cmd_edit, add=cmd_add, done=cmd_done,
-            tickets=cmd_tickets, slugs=cmd_slugs, rank=cmd_rank,
-            brief=cmd_brief, warn=cmd_warn, sync=cmd_sync)
+CMDS = {'ls': cmd_ls, 'e': cmd_e, 'edit': cmd_edit, 'add': cmd_add,
+        'done': cmd_done, 'in': cmd_in, 'link': cmd_link,
+        'guess': cmd_guess, 'guess-new': cmd_guess_new,
+        'linear': cmd_linear, 'tickets': cmd_tickets, 'slugs': cmd_slugs,
+        'rank': cmd_rank, 'brief': cmd_brief, 'warn': cmd_warn,
+        'sync': cmd_sync}
 
 
 def main():

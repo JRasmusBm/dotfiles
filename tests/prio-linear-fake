@@ -1,0 +1,90 @@
+#!/usr/bin/env python3
+"""A fake Linear for the prio tests (PRIO_LINEAR_CMD): reads the
+GraphQL request on stdin, answers from the JSON fixture $PRIO_FAKE,
+and appends each mutation to $PRIO_FAKE.calls.
+
+Fixture keys: "project:<slugId>", "label:<name>" -> [issue];
+"parent:<ID>" -> [issue], an issue's "kids" its own sub-issues;
+"new" -> [issue]; "fail" -> [key] answered null. An issue is a string
+"<ID> <state type> <me|-> [old] <title>": completed issues finished a
+day ago, or 30 days with `old`.
+"""
+import json
+import os
+import re
+import sys
+import time
+
+req = json.load(sys.stdin)
+q, var = req['query'], req.get('variables') or {}
+fx = json.load(open(os.environ['PRIO_FAKE']))
+
+
+def node(s, kids=None):
+    i, st, who, rest = (s.split(' ', 3) + ['', '', ''])[:4]
+    old = rest.startswith('old ')
+    title = rest[4:] if old else rest
+    ago = 30 if old else 1
+    n = {'identifier': i, 'title': title, 'state': {'type': st},
+         'assignee': {'isMe': who == 'me'},
+         'completedAt': time.strftime(
+             '%Y-%m-%dT%H:%M:%SZ', time.gmtime(time.time() - ago * 86400))
+         if st in ('completed', 'canceled') else None}
+    if kids is not None:
+        n['children'] = {'nodes': kids}
+    return n
+
+
+def tree(xs):
+    return [node(x['id'], tree(x.get('kids', []))) if isinstance(x, dict)
+            else node(x, []) for x in xs]
+
+
+def log(what):
+    with open(os.environ['PRIO_FAKE'] + '.calls', 'a') as f:
+        f.write(what + '\n')
+
+
+data = {}
+if q.lstrip().startswith('mutation'):
+    if 'issueCreate' in q:
+        log('create %s %s' % (var['in']['teamId'], var['in']['title']))
+        data['issueCreate'] = {'issue': {'identifier': 'ABC-900'}}
+    elif 'issueAddLabel' in q:
+        log('label %s %s' % (var['i'], var['l']))
+        data['issueAddLabel'] = {'success': True}
+    else:
+        log('update %s %s' % (var['i'], json.dumps(var['in'],
+                                                   sort_keys=True)))
+        data['issueUpdate'] = {'success': True}
+elif 'issue(id: $id)' in q:
+    i = fx.get('issues', {}).get(var['id'])
+    data['issue'] = i and dict(id='id-' + var['id'], team={'id': 't'},
+                               project=None, **i)
+elif 'teams(' in q:
+    data['teams'] = {'nodes': [{'id': 'team-' + var['k']}]}
+elif 'viewer' in q:
+    data['viewer'] = {'id': 'me'}
+elif 'projects(filter: {slugId' in q:
+    data['projects'] = {'nodes': [{'id': 'proj-' + var['s']}]}
+elif 'issueLabels(' in q:
+    data['issueLabels'] = {'nodes': [{'id': 'label-' + var['n']}]}
+else:
+    for part in re.split(r' (?=g\d+: |new: )', q.strip()[1:-1]):
+        a, body = part.split(': ', 1)
+        if a == 'new':
+            data[a] = {'nodes': tree(fx.get('new', []))}
+            continue
+        m = re.search(r'slugId:\{eq:"([^"]*)"', body)
+        k = 'project:' + m.group(1) if m else None
+        m = re.search(r'name:\{eqIgnoreCase:"([^"]*)"', body)
+        k = 'label:' + m.group(1) if m else k
+        m = re.match(r'issue\(id:"([^"]*)"', body)
+        k = 'parent:' + m.group(1) if m else k
+        if k in fx.get('fail', []) or k not in fx:
+            data[a] = None
+        elif k.startswith('parent:'):
+            data[a] = {'children': {'nodes': tree(fx[k])}}
+        else:
+            data[a] = {'nodes': tree(fx[k])}
+print(json.dumps({'data': data}))
