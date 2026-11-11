@@ -135,7 +135,10 @@ sleep 0.5
 printf 'later\n' | claude-fresh hand "$_p" >/dev/null
 sleep 1
 check "nothing is typed while its turn runs" '! grep -q /clear "$GOT"'
-sleep 5
+_i=0
+while test "$_i" -lt 75 && ! grep -q /clear "$GOT"; do
+  sleep 0.2; _i=$((_i + 1))
+done
 check "then it hands off" 'grep -q /clear "$GOT"'
 
 test "$_fail" = 0 && echo "all passed" || { echo "FAILED"; exit 1; }
