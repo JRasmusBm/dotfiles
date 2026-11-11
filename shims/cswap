@@ -63,7 +63,10 @@ _refuse() { echo "cswap shim: $*" >&2; exit 1; }
 _switch_borrowed() {
   _to="$1"; shift
   echo "$$" > "$HOME/.config/cswap-rc-hold"
-  trap 'rm -f "$HOME/.config/cswap-rc-hold"' EXIT INT TERM
+  # A trap on INT replaces the default exit: exit explicitly, or
+  # ctrl-c only drops the hold and the wait goes on.
+  trap 'rm -f "$HOME/.config/cswap-rc-hold"' EXIT
+  trap 'exit 130' INT TERM
   _end=$(($(date +%s) + ${CSWAP_RC_WAIT:-600}))
   until claude-rc-off; do
     [ "$(date +%s)" -lt "$_end" ] || _refuse "Remote Control still on" \
