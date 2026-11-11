@@ -159,7 +159,10 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   1 only, unless it has `/rd` or the `rd` label). Skipped:
   open PRs that are green and wait on me, worktrees with no
   session, busy agents. A finished one replies so and stops: no
-  invented work. Told in the background, paced: at most 3
+  invented work. An agent whose chat is over 150k context is not
+  told: its pane is cleared and a fresh chat gets the tell after an
+  automatic brief (`claude-fresh hand`), so a night's turns don't
+  each re-read it all. Told in the background, paced: at most 3
   busy at once, none while free memory < 8 GB or pressure is
   up (`wt-night.log`). Agents queue follow-up tickets with
   `wt night queue <url>`, started (`wt feat`) under the same
@@ -235,7 +238,12 @@ Worktrees at `${repo}/.worktrees/${branch}`. Managed via `wt`:
   running, no tell on its way, no open `wt w8`, not named in
   `$LOCAL_CONFIG/run-slots/keep`: sessions I drive from my phone
   through Remote Control, which dies with the process. The next
-  tell, a focus on its pane or `run-slot revive` resumes it. A
+  tell, a focus on its pane or `run-slot revive` resumes it, whole
+  while its last turn was under 150k context, else as a fresh chat
+  on an automatic brief (`claude-fresh resume`; tmux-revive and
+  `wt resume` too). The fresh chat is the old sid's successor:
+  tells, inbox jumps and Slack watches naming the old sid reach it
+  (`claude-pane` follows `claude-fresh next`). A
   tell that revives hands itself to `run-slot pend`: the pump
   types it once Claude is ready (up to 3 days), and the chat
   stays open until then. A main checkout's session holds many

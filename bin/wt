@@ -624,7 +624,9 @@ _wt_open_with_claude() {
       || _go="run-slot wait start new:$_session && $_go"
     tmux send-keys -t "$_session:cli" "$_go" Enter 2>/dev/null || true
   elif test -n "${_WT_CONTINUE:-}" && test "$_created" = true; then
-    tmux send-keys -t "$_session:cli" "claude --continue || claude" Enter \
+    # A big chat goes on fresh, from a brief (claude-fresh).
+    _a="$(claude-fresh resume - "$_target" 2>/dev/null)" || _a=--continue
+    tmux send-keys -t "$_session:cli" "claude $_a || claude" Enter \
       2>/dev/null || true
   fi
 

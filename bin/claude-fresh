@@ -1,0 +1,280 @@
+#!/usr/bin/env python3
+"""claude-fresh — keep Claude chats short: a big chat goes on as a
+fresh, briefed one instead of being resumed whole.
+
+Every turn re-reads the whole context. A chat at 150k tokens pays that
+on each turn; a fresh chat with a short brief starts near 57k.
+
+  claude-fresh hand [PANE]
+        Brief on stdin. Once the chat in PANE (default: this pane)
+        ends its turn, type `/clear` there, then a prompt to read the
+        brief (saved in $LOCAL_CONFIG/briefs/). Returns at once (the
+        rest runs detached), so a chat can hand itself off as the last
+        step of its turn. Records the new chat as the old one's
+        successor.
+  claude-fresh resume SID|- [DIR]
+        Print the arguments for `claude` that bring chat SID back (`-`:
+        DIR's latest chat, DIR default .): `--resume SID` while its
+        last turn is under CLAUDE_FRESH_CTX (150000) tokens of context,
+        else `--session-id NEW <prompt>`, a fresh chat reading an
+        automatic brief (`brief`), recorded as SID's successor. No chat
+        found for `-`: `--continue`.
+  claude-fresh brief SID
+        Print the automatic brief for SID: where it ran, its last
+        prompt and message, where the durable state lives.
+  claude-fresh ctx SID
+        Print the context tokens of SID's last turn (0: unknown).
+  claude-fresh next SID
+        Print SID's latest successor (SID itself when it has none).
+        claude-pane follows it, so the inbox, Slack watches and tells
+        that keep the old id reach the fresh chat.
+
+Successors: $LOCAL_CONFIG/claude-successors, `epoch<TAB>old<TAB>new`.
+Tests: CLAUDE_CONFIG_DIR, LOCAL_CONFIG, CLAUDE_FRESH_POLL (seconds).
+"""
+import glob
+import json
+import os
+import re
+import shlex
+import subprocess
+import sys
+import time
+import uuid
+
+CLAUDE = os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser(
+    '~/.claude')
+CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser('~/.config')
+SUCC = os.path.join(CONF, 'claude-successors')
+BRIEFS = os.path.join(CONF, 'briefs')
+LIMIT = int(os.environ.get('CLAUDE_FRESH_CTX') or 150000)
+POLL = float(os.environ.get('CLAUDE_FRESH_POLL') or 2)
+QUOTE = 3000
+
+
+def sh(*args):
+    r = subprocess.run(args, capture_output=True, text=True)
+    return r.stdout.strip() if r.returncode == 0 else None
+
+
+def transcript(sid):
+    f = glob.glob(os.path.join(CLAUDE, 'projects', '*', sid + '.jsonl'))
+    return f[0] if f else None
+
+
+def latest(d):
+    """DIR's most recent top-level chat, as `claude --continue` picks."""
+    real = os.path.realpath(d)
+    fs = glob.glob(os.path.join(CLAUDE, 'projects',
+                                re.sub('[^A-Za-z0-9]', '-', real), '*.jsonl'))
+    if not fs:
+        return None
+    return os.path.basename(max(fs, key=os.path.getmtime))[:-6]
+
+
+def records(path):
+    with open(path, encoding='utf-8', errors='replace') as f:
+        for ln in f:
+            try:
+                yield json.loads(ln)
+            except ValueError:
+                pass
+
+
+def text_of(m):
+    c = (m or {}).get('content')
+    if isinstance(c, str):
+        return c
+    return '\n'.join(b.get('text', '') for b in c or []
+                     if isinstance(b, dict) and b.get('type') == 'text')
+
+
+def last_turn(sid):
+    """(context tokens, cwd, last prompt, last message) of sid."""
+    p = transcript(sid)
+    ctx, cwd, prompt, msg = 0, '', '', ''
+    if not p:
+        return ctx, cwd, prompt, msg
+    for r in records(p):
+        if r.get('isSidechain'):
+            continue
+        cwd = r.get('cwd') or cwd
+        m = r.get('message') or {}
+        if r.get('type') == 'assistant':
+            u = m.get('usage') or {}
+            c = (u.get('input_tokens', 0) + u.get('cache_read_input_tokens', 0)
+                 + u.get('cache_creation_input_tokens', 0))
+            ctx = c or ctx
+            msg = text_of(m) or msg
+        elif r.get('type') == 'user' and not r.get('isMeta'):
+            t = text_of(m)
+            if t and not t.startswith('<'):
+                prompt = t
+    return ctx, cwd, prompt, msg
+
+
+def quote(t):
+    t = t.strip()
+    if len(t) > QUOTE:
+        t = '…' + t[-QUOTE:]
+    return '\n'.join('> ' + ln for ln in t.splitlines()) or '> (none)'
+
+
+def brief(sid):
+    ctx, cwd, prompt, msg = last_turn(sid)
+    return f"""# Brief: carry on from chat {sid}
+
+That chat ran in {cwd or 'an unknown directory'} and reached {ctx // 1000}k
+tokens of context, so it goes on here, fresh, instead of being resumed:
+each turn there re-read all of it.
+
+Rebuild what you need from the durable state, not the old chat: the
+branch, its ticket and PR (the PR body is the current state), `git log`,
+`git status`, the board row and any open `wt w8`. The whole old chat,
+if a detail is missing: `claude-log -p {sid}`.
+
+Its last prompt (mine, or a tell):
+
+{quote(prompt)}
+
+Its last message:
+
+{quote(msg)}
+"""
+
+
+def save(name, text):
+    os.makedirs(BRIEFS, mode=0o700, exist_ok=True)
+    path = os.path.join(BRIEFS, name + '.md')
+    with open(path, 'w') as f:
+        f.write(text)
+    return path
+
+
+def read_prompt(path):
+    return (f'Read {path}: it is your brief, from the chat this one '
+            'replaces. Carry on from it.')
+
+
+def succeed(old, new):
+    if old and new and old != new:
+        with open(SUCC, 'a') as f:
+            f.write(f'{int(time.time())}\t{old}\t{new}\n')
+
+
+def nxt(sid):
+    edges = {}
+    try:
+        with open(SUCC) as f:
+            for ln in f:
+                p = ln.rstrip('\n').split('\t')
+                if len(p) == 3:
+                    edges[p[1]] = p[2]
+    except FileNotFoundError:
+        pass
+    seen = {sid}
+    while sid in edges and edges[sid] not in seen:
+        sid = edges[sid]
+        seen.add(sid)
+    return sid
+
+
+def resume(sid, d):
+    if sid == '-':
+        sid = latest(d or '.')
+        if not sid:
+            return '--continue'
+    sid = nxt(sid)
+    if last_turn(sid)[0] <= LIMIT:
+        return f'--resume {sid}'
+    new = str(uuid.uuid4())
+    path = save(new, brief(sid))
+    succeed(sid, new)
+    return f'--session-id {new} {shlex.quote(read_prompt(path))}'
+
+
+def sid_of(pane):
+    return sh('claude-pane', 'of', pane) or ''
+
+
+def idle(pane):
+    return subprocess.run(['claude-pane-idle', pane]).returncode == 0
+
+
+def wait(cond, secs):
+    end = time.time() + secs
+    while time.time() < end:
+        if cond():
+            return True
+        time.sleep(POLL)
+    return False
+
+
+def keys(pane, text):
+    sh('tmux', 'send-keys', '-t', pane, '-l', text)
+    time.sleep(0.5)
+    sh('tmux', 'send-keys', '-t', pane, 'Enter')
+
+
+def hand(pane, text):
+    old = sid_of(pane) or os.environ.get('CLAUDE_CODE_SESSION_ID', '')
+    path = save(old or str(uuid.uuid4()), text)
+    if os.fork():
+        print(f'handing off after this turn: {path}')
+        return 0
+    os.setsid()
+    if os.fork():
+        os._exit(0)
+    log = open(os.path.join(BRIEFS, 'hand.log'), 'a')
+    os.dup2(log.fileno(), 1)
+    os.dup2(log.fileno(), 2)
+    os.dup2(os.open(os.devnull, os.O_RDONLY), 0)
+
+    def say(what):
+        print(f'{time.strftime("%F %T")} {pane} {old}: {what}', flush=True)
+
+    # Its turn ends with this command's reply: give it up to an hour.
+    if not wait(lambda: idle(pane), 3600):
+        say('never idle, left alone')
+        os._exit(1)
+    if old and sid_of(pane) != old:
+        say('another chat runs there now, left alone')
+        os._exit(1)
+    keys(pane, '/clear')
+    wait(lambda: sid_of(pane) not in ('', old), 30)
+    if not wait(lambda: idle(pane), 60):
+        say('no prompt after /clear')
+        os._exit(1)
+    new = sid_of(pane)
+    succeed(old, new)
+    keys(pane, read_prompt(path))
+    say(f'handed to {new or "?"}: {path}')
+    os._exit(0)
+
+
+def main(a):
+    cmd = a[0] if a else ''
+    if cmd == 'hand' and len(a) <= 2:
+        pane = a[1] if len(a) == 2 else os.environ.get('TMUX_PANE', '')
+        text = sys.stdin.read()
+        if not pane or not text.strip():
+            sys.exit('claude-fresh hand: needs a pane and a brief on stdin')
+        return hand(pane, text)
+    if cmd == 'resume' and len(a) in (2, 3):
+        print(resume(a[1], a[2] if len(a) == 3 else '.'))
+        return 0
+    if cmd == 'brief' and len(a) == 2:
+        print(brief(nxt(a[1])), end='')
+        return 0
+    if cmd == 'ctx' and len(a) == 2:
+        print(last_turn(nxt(a[1]))[0])
+        return 0
+    if cmd == 'next' and len(a) == 2:
+        print(nxt(a[1]))
+        return 0
+    print(__doc__, file=sys.stderr)
+    return 2
+
+
+if __name__ == '__main__':
+    sys.exit(main(sys.argv[1:]))
