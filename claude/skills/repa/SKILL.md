@@ -7,7 +7,9 @@ description: Republish an artifact under the active Claude login — '/repa', 'r
 
 A session sees only its active login's artifacts (see `wt` skill,
 Claude accounts). After a swap, the old link can't be read or updated
-from here, so the fix is a new copy, never a share request.
+from here, so the fix is a new copy, never a share request. A
+"Stopped watching … (artifact not found)" notice alone is no reason to
+run this: see `wt`, Claude accounts.
 
 ## Check the active login first
 

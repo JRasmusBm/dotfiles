@@ -525,9 +525,15 @@ so the phone sees it under the new account (log:
 `$LOCAL_CONFIG/cswap-auto.log`; `cswap-auto -n` lists targets). `cswap list` shows usage; add an
 account with `/login` then `cswap add --alias <name>`.
 An artifact published before a swap reads "not found" after it
-unless I shared it with my other login. Don't report that or ask
-me to share: republish it under the active login (`/repa`) and
-from then on update that copy, never the one you can't reach.
+unless I shared it with my other login. When the work needs that
+artifact (to update it, or a link I'll open), don't report that or ask
+me to share: republish it under the active login (`/repa`) and from
+then on update that copy, never the one you can't reach. A "Stopped
+watching Artifact … (artifact not found)" notice is not that need:
+every swap ends each old watch, and the notice wakes the idle session
+for a full context re-read. End the turn at once with no tool call and
+no text, and don't republish or watch it again: each extra call
+re-reads the whole context again.
 A session sees only its active login's artifacts; the
 `artifact-ledger.sh` hook logs every publish with its login, and
 `artifacts` (this dir; `all`; or a query) lists them across logins,
