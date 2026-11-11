@@ -6,7 +6,8 @@
 # landed while cswap-auto was reconnecting 39 panes, one push each).
 #
 # - `switch <borrowed>`: holds cswap-auto's reconnects
-#   ($LOCAL_CONFIG/cswap-rc-hold), switches Remote Control off in every
+#   (~/.config/cswap-rc-hold: launchd has no LOCAL_CONFIG), switches
+#   Remote Control off in every
 #   pane (claude-rc-off), waiting up to CSWAP_RC_WAIT seconds (600)
 #   for busy panes to go idle, then switches, then sweeps once more.
 #   Still connected after the wait: refused, nothing switched.
@@ -61,8 +62,8 @@ _refuse() { echo "cswap shim: $*" >&2; exit 1; }
 # _switch_borrowed <email> <real cswap args…>
 _switch_borrowed() {
   _to="$1"; shift
-  echo "$$" > "$_state/cswap-rc-hold"
-  trap 'rm -f "$_state/cswap-rc-hold"' EXIT INT TERM
+  echo "$$" > "$HOME/.config/cswap-rc-hold"
+  trap 'rm -f "$HOME/.config/cswap-rc-hold"' EXIT INT TERM
   _end=$(($(date +%s) + ${CSWAP_RC_WAIT:-600}))
   until claude-rc-off; do
     [ "$(date +%s)" -lt "$_end" ] || _refuse "Remote Control still on" \

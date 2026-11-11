@@ -69,9 +69,9 @@ _tried() {
 # The cswap shim is switching to a borrowed login: it turns Remote
 # Control off everywhere first, so reconnecting now would undo that.
 _held() {
-  _h=$(cat "$_state/cswap-rc-hold" 2>/dev/null) || return 1
+  _h=$(cat "$HOME/.config/cswap-rc-hold" 2>/dev/null) || return 1
   kill -0 "$_h" 2>/dev/null && return 0
-  rm -f "$_state/cswap-rc-hold"; return 1
+  rm -f "$HOME/.config/cswap-rc-hold"; return 1
 }
 
 _reconnect() {
