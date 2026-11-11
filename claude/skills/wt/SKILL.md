@@ -519,7 +519,7 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   moves on and names it ("Could not switch to …").
 - A counter badge (`#(notif count)` → green `(N)`, distinct
   pending panes) sits in `status-right` before the date.
-- `M-y` / `notif seen <pane>` — mark this pane done: drop
+- `M-y` (left hand: `M-r`) / `notif seen <pane>` — mark this pane done: drop
   its rows (also what the reply hooks run). `notif seen-path
   <dir>` drops every row at or under a dir; `wt rm`/`done`/
   `clean`/`rb`/`rt`/`rd`/`rp` run it for the worktree (not
