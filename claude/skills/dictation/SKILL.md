@@ -39,4 +39,13 @@ To adjust how many dictation entries to keep, change `MAX_DICTATION_ITEMS` in th
   SIGTERM); `CopyQ eval 'size()'` answering confirms. App Nap is
   disabled via
   `defaults write io.github.hluk.CopyQ NSAppSleepDisabled -bool YES`.
+  Hung servers recurred on 9.1.0 (2024); upgraded to 17.0.0 on
+  2026-11-11. If it still hangs, `sample <pid>` the server before
+  killing it: the log never shows the hang.
+- **Upgrading CopyQ:** the Homebrew cask is disabled (fails Gatekeeper,
+  so `brew upgrade` never updates it). Install the GitHub release dmg
+  (`-m1` on Apple Silicon) and check its sha256 against the release
+  asset digest. Then run `codesign --force --deep --sign -` on the app:
+  without it macOS kills it on launch ("Code Signature Invalid" in a
+  `.ips` report, `open -a` says "Unable to find application").
 - **Changes not taking effect:** Reload Hammerspoon after editing the spoon.
