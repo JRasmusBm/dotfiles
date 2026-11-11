@@ -38,6 +38,13 @@ vim.opt_local.wrap = true
 vim.b.is_markdown_file = true
 vim.opt_local.textwidth = 80
 
+-- Snippets cost ~25ms to build; a buffer opened only to read never
+-- needs them, so build them on its first insert. Body left unindented:
+-- the [[ ]] templates are whitespace-exact.
+vim.api.nvim_create_autocmd("InsertEnter", {
+  buffer = 0,
+  once = true,
+  callback = function()
 require("plenary").reload.reload_module "jrasmusbm.snippets.utils.init"
 
 local ls = require "luasnip"
@@ -158,3 +165,5 @@ Long term remediation:
 })
 
 ls_utils.load_shared { filetype = "markdown", shared = "markdown" }
+  end,
+})

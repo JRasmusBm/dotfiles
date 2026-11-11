@@ -73,6 +73,5 @@ if ((print)); then
 else
   out=$(mktemp -t claude-log).md
   render >"$out"
-  # --clean: the full config takes ~1s to load, a reader needs none of it
-  nvim --clean -R -c 'set ic scs lbr nonu' +'$' "$out"
+  nvim -R +'$' "$out"
 fi
