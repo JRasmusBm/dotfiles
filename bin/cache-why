@@ -1,0 +1,164 @@
+#!/usr/bin/env python3
+#
+# cache-why — why Claude Code rewrote the prompt cache mid-session,
+# read from the local transcripts (~/.claude/projects/*/**/*.jsonl,
+# subagents included). Zero tokens.
+#
+# A rewrite is one API request writing more than --min cache tokens
+# within --gap seconds of the request before it (so not an expired
+# cache, not a session's first request). Each is named from the
+# `api-request` row Claude Code logs before it (shape hash of system +
+# tools, the request it builds on, how many messages it keeps):
+#
+#   compaction (auto|manual)  a compact_boundary came first
+#   process restart           no base request: resumed or revived
+#   system/tools changed      shape hash differs from the base's
+#   history edited            keeps fewer messages than the base had
+#   server miss               prefix intact, cache gone anyway
+#   +org switch               the login's organization changed too
+#
+# One API response counts once: Claude Code logs one assistant row per
+# content block, each repeating the response's usage, so summing rows
+# counts writes about twice.
+#
+#   cache-why               last 7 days
+#   cache-why --since 24h   Nd|Nh
+#   cache-why -v            plus up to 3 example requests per cause
+#   cache-why --min N --gap S
+import argparse, collections, glob, json, os, sys, time
+from datetime import datetime
+
+W = dict(input_tokens=1, output_tokens=5,
+         cache_creation_input_tokens=1.25, cache_read_input_tokens=0.1)
+
+
+def since(s):
+    if s[-1:] in "dh" and s[:-1].isdigit():
+        return time.time() - int(s[:-1]) * (86400 if s[-1] == "d" else 3600)
+    sys.exit("cache-why: --since Nd|Nh")
+
+
+def stamp(s):
+    try:
+        return datetime.fromisoformat(s.replace("Z", "+00:00")).timestamp()
+    except (AttributeError, ValueError):
+        return None
+
+
+def server(tool):
+    return "mcp:" + tool.split("__")[1] if tool.startswith("mcp__") else tool
+
+
+def shape_diff(old, new):
+    if not old or not new:
+        return "?"
+    out = []
+    add = sorted({server(t) for t in set(new[1]) - set(old[1])})
+    rem = sorted({server(t) for t in set(old[1]) - set(new[1])})
+    if add:
+        out.append("+" + ",".join(add))
+    if rem:
+        out.append("-" + ",".join(rem))
+    if old[0] != new[0]:
+        out.append("system prompt")
+    return " ".join(out)[:60] or "tool definitions"
+
+
+def cause(req, reqs, shapes, compact):
+    if compact:
+        return f"compaction ({compact})"
+    if req is None:
+        return "unknown (no api-request row)"
+    base = reqs.get(req.get("base"))
+    if base is None:
+        return "process restart (resume/revive)"
+    if req.get("shapeHash") != base.get("shapeHash"):
+        return "system/tools changed: " + shape_diff(
+            shapes.get(base.get("shapeHash")), shapes.get(req.get("shapeHash")))
+    if req.get("keep", 0) < base.get("keep", 0) + len(base.get("tail") or []):
+        return "history edited"
+    return "server miss"
+
+
+def scan(path, lo, a, acc):
+    sub = "/subagents/" in path
+    reqs, seen = {}, set()
+    req = prev = compact = org = None
+    switched = False
+    first = True
+    for line in open(path, errors="replace"):
+        try:
+            d = json.loads(line)
+        except ValueError:
+            continue
+        t = d.get("type")
+        if t == "api-request-shape":
+            sh = d.get("shape") or {}
+            acc["shapes"][d.get("shapeHash")] = (
+                [b.get("text", "") for b in sh.get("system") or []],
+                sorted(x.get("name", "?") for x in sh.get("tools") or []))
+        elif t == "api-request":
+            reqs[d.get("id")] = req = d
+        elif t == "system" and d.get("subtype") == "compact_boundary":
+            compact = (d.get("compactMetadata") or {}).get("trigger", "?")
+        elif t == "attachment" and \
+                (d.get("attachment") or {}).get("type") == "credential_org":
+            o = d["attachment"].get("organizationUuid")
+            switched = switched or bool(org and o != org)
+            org = o
+        elif t == "assistant":
+            m = d.get("message") or {}
+            u = m.get("usage")
+            mid = m.get("id") or d.get("requestId")
+            if not u or mid in seen:
+                continue
+            seen.add(mid)
+            now = stamp(d.get("timestamp"))
+            if now and now >= lo:
+                cw = u.get("cache_creation_input_tokens") or 0
+                acc["write"] += cw
+                acc["weighted"] += sum((u.get(k) or 0) * v
+                                       for k, v in W.items())
+                if cw > a.min and not first and prev and now - prev <= a.gap:
+                    k = ("sub: " if sub else "main: ") + \
+                        cause(req, reqs, acc["shapes"], compact) + \
+                        (" +org switch" if switched else "")
+                    acc["by"][k] += cw
+                    acc["n"][k] += 1
+                    if len(acc["ex"][k]) < 3:
+                        acc["ex"][k].append(f"{d.get('timestamp')} {cw} {path}")
+            first = False
+            prev = now or prev
+            compact, switched = None, False
+
+
+def main():
+    p = argparse.ArgumentParser(prog="cache-why")
+    p.add_argument("--since", default="7d")
+    p.add_argument("--min", type=int, default=40000)
+    p.add_argument("--gap", type=int, default=300)
+    p.add_argument("-v", action="store_true")
+    a = p.parse_args()
+    lo = since(a.since)
+    acc = dict(write=0, weighted=0, shapes={}, by=collections.Counter(),
+               n=collections.Counter(), ex=collections.defaultdict(list))
+    root = os.path.expanduser("~/.claude/projects")
+    files = [f for f in glob.glob(root + "/*/**/*.jsonl", recursive=True)
+             if os.path.getmtime(f) >= lo]
+    for f in files:
+        scan(f, lo, a, acc)
+    tot = sum(acc["by"].values())
+    print(f"{len(files)} transcripts since {a.since}: "
+          f"{acc['weighted']/1e6:.0f}M weighted, "
+          f"cache writes {acc['write']/1e6:.0f}M raw")
+    print(f"rewrites (>{a.min} written, <={a.gap}s after the last request):"
+          f" {tot/1e6:.1f}M raw, {sum(acc['n'].values())} requests")
+    for k, v in acc["by"].most_common():
+        print(f"{v/1e6:7.1f}M {acc['n'][k]:5d}  {k}")
+        if a.v:
+            for e in acc["ex"][k]:
+                print("           " + e)
+
+
+if __name__ == "__main__":
+    main()
