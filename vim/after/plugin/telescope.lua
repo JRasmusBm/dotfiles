@@ -1,3 +1,18 @@
+-- Keymaps call into telescope lazily: requiring it here cost ~25ms of
+-- every nvim start.
+local function lazy(mod, fn)
+  return function(...)
+    return require(mod)[fn](...)
+  end
+end
+
+-- ui-select replaces vim.ui.select when telescope loads; load it on the
+-- first select instead of at start.
+vim.ui.select = function(...)
+  require "telescope"
+  return vim.ui.select(...)
+end
+
 vim.api.nvim_create_user_command("THL", function()
   vim.cmd [[ Telescope highlights ]]
 end, { nargs = "*" })
@@ -28,42 +43,42 @@ end, { noremap = true })
 vim.keymap.set(
   { "n" },
   "<leader>fq",
-  require("telescope.builtin").quickfix,
+  lazy("telescope.builtin", "quickfix"),
   { noremap = true }
 )
 
 vim.keymap.set(
   { "n" },
   "<leader>fl",
-  require("telescope.builtin").live_grep,
+  lazy("telescope.builtin", "live_grep"),
   { noremap = true }
 )
 
 vim.keymap.set(
   { "n" },
   "<leader>fb",
-  require("telescope.builtin").buffers,
+  lazy("telescope.builtin", "buffers"),
   { noremap = true }
 )
 
 vim.keymap.set(
   { "n" },
   "<leader>f:",
-  require("telescope.builtin").command_history,
+  lazy("telescope.builtin", "command_history"),
   { noremap = true }
 )
 
 vim.keymap.set(
   { "n" },
   "<leader>f/",
-  require("telescope.builtin").search_history,
+  lazy("telescope.builtin", "search_history"),
   { noremap = true }
 )
 
 vim.keymap.set(
   { "n" },
   "<leader>fh",
-  require("telescope.builtin").help_tags,
+  lazy("telescope.builtin", "help_tags"),
   { noremap = true }
 )
 
@@ -75,19 +90,19 @@ end, { nargs = "*" })
 vim.keymap.set(
   { "n" },
   "<localleader>fc",
-  require("jrasmusbm.telescope.git_commits").git_commits
+  lazy("jrasmusbm.telescope.git_commits", "git_commits")
 )
 
 vim.keymap.set(
   { "n" },
   "<localleader>fi",
-  require("jrasmusbm.telescope.git_issues").git_issues
+  lazy("jrasmusbm.telescope.git_issues", "git_issues")
 )
 
 vim.keymap.set(
   { "n" },
   "<localleader>fp",
-  require("jrasmusbm.telescope.git_pull_requests").git_pull_requests
+  lazy("jrasmusbm.telescope.git_pull_requests", "git_pull_requests")
 )
 
 vim.keymap.set({ "n" }, "<localleader>fb", function()
@@ -100,7 +115,7 @@ end
 vim.keymap.set(
   { "n" },
   "<localleader>fs",
-  require("telescope.builtin").git_status
+  lazy("telescope.builtin", "git_status")
 )
 
 -- Config files
@@ -150,7 +165,7 @@ end, { noremap = true })
 vim.keymap.set(
   { "n" },
   "<leader>em",
-  require("telescope.builtin").keymaps,
+  lazy("telescope.builtin", "keymaps"),
   { noremap = true }
 )
 
@@ -192,21 +207,21 @@ end, { noremap = true })
 vim.keymap.set(
   { "n" },
   "<leader>eh",
-  require("jrasmusbm.telescope.hammerspoon").find_spoons,
+  lazy("jrasmusbm.telescope.hammerspoon", "find_spoons"),
   { noremap = true }
 )
 
 vim.keymap.set(
   { "i" },
   "<C-\\><C-I>",
-  require("jrasmusbm.telescope.git_issues").git_issues,
+  lazy("jrasmusbm.telescope.git_issues", "git_issues"),
   {}
 )
 
 vim.keymap.set(
   { "i" },
   "<C-\\><C-P>",
-  require("jrasmusbm.telescope.git_pull_requests").git_pull_requests,
+  lazy("jrasmusbm.telescope.git_pull_requests", "git_pull_requests"),
   {}
 )
 
@@ -227,6 +242,6 @@ end, {})
 vim.keymap.set(
   { "i" },
   "<C-\\><C-H>",
-  require("telescope.builtin").help_tags,
+  lazy("telescope.builtin", "help_tags"),
   {}
 )

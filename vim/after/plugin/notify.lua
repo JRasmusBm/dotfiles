@@ -1,7 +1,11 @@
-vim.keymap.set({ "n" }, "<leader><esc>", require("notify").dismiss, {})
+vim.keymap.set({ "n" }, "<leader><esc>", function(...)
+  return require("notify").dismiss(...)
+end, {})
 vim.keymap.set(
   { "n" },
   "<leader>fm",
-  require("telescope").extensions.notify.notify,
+  function()
+    require("telescope").extensions.notify.notify()
+  end,
   {}
 )

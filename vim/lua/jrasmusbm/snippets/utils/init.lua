@@ -1,6 +1,5 @@
 local M = {}
 
-local utils = require "telescope.utils"
 local ls = require "luasnip"
 local sn = ls.snippet_node
 local d = ls.dynamic_node
@@ -63,7 +62,7 @@ M.fill_command = function(cmd)
 ]],
     {
       f(function(_args, _parent, cmd)
-        return utils.get_os_command_output(cmd)
+        return require("telescope.utils").get_os_command_output(cmd)
       end, {}, { user_args = { cmd } }),
     }
   )
