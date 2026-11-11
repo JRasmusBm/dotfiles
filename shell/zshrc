@@ -229,15 +229,20 @@ function claude() {
   # overlay outside dotfiles); --settings merges, it doesn't replace.
   # On a borrowed login (~/.config/borrowed-logins, overlay) Remote
   # Control at startup would list my sessions in its owner's claude.ai
-  # (11-05: a dozen showed up there), so it's off for those launches.
+  # (11-05: a dozen showed up there), so it's off for those launches,
+  # and while the cswap shim is switching to one (its hold file names
+  # a live pid): a session started then would carry over.
   local -a extra
-  local s='{}' login
+  local s='{}' login hold
   [[ -r "$CLAUDE_EXTRA_SETTINGS" ]] && s="$(<"$CLAUDE_EXTRA_SETTINGS")"
   login="$(jq -r '.oauthAccount.emailAddress // ""' ~/.claude.json \
     2>/dev/null)"
-  [[ -n "$login" ]] && grep -qixF -- "$login" \
-      "$HOME/.config/borrowed-logins" 2>/dev/null \
-    && s="$(jq -c '. + {remoteControlAtStartup: false}' <<<"$s")"
+  hold="$(cat "${LOCAL_CONFIG:-$HOME/.config}/cswap-rc-hold" 2>/dev/null)"
+  if { [[ -n "$hold" ]] && kill -0 "$hold" 2>/dev/null; } \
+    || { [[ -n "$login" ]] && grep -qixF -- "$login" \
+      "$HOME/.config/borrowed-logins" 2>/dev/null; }; then
+    s="$(jq -c '. + {remoteControlAtStartup: false}' <<<"$s")"
+  fi
   [[ "$s" != '{}' ]] && extra=(--settings "$s")
   for a in "$@"; do
     case "$a" in
