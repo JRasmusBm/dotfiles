@@ -421,7 +421,7 @@ M-/, Slack watches) keeps the sid and asks `claude-pane`.
   Everything else clears on **arrival** at the pane: the
   focus/nav hooks (`pane-focus-in`, `client-session-changed`,
   `after-select-window`) run `notif arrive "#{pane_id}"`.
-- `M-i` / `notif next <pane>` — jump to the pending pane
+- `M-i` (left hand: `M-e`) / `notif next <pane>` — jump to the pending pane
   queued after the current one (oldest if here isn't
   pending), so repeated `M-i` rotates through them. Pings of
   worktrees on priority 1 come first, then 2, …, then the rest;
