@@ -211,14 +211,13 @@ DISABLE_AUTO_TITLE="true" # Don't rename tmux windows
 # names pass through untouched.
 function claude() {
   local a
-  # Every session compacts at 120k, not ~967k: re-reading context
+  # Every session compacts at 200k, not ~967k: re-reading context
   # is most of the bill (10-19..22: turns over 200k burned 59% of
-  # tokens, both weekly caps out by Thursday; 11-03..10 at a 200k
-  # window: cache reads 59%, median context 125k). Trial from 11-10:
-  # median context per turn under 90k without fewer PRs shipped or
-  # more corrections (my-impact context_k, correction_pct).
+  # tokens, both weekly caps out by Thursday). A 120k trial (11-10)
+  # made chats thrash, compacting mid-task and redoing work (11-11),
+  # so big chats now go on fresh from a brief (claude-fresh) instead.
   [[ -z "$CLAUDE_CODE_AUTO_COMPACT_WINDOW" ]] \
-    && local -x CLAUDE_CODE_AUTO_COMPACT_WINDOW=120000
+    && local -x CLAUDE_CODE_AUTO_COMPACT_WINDOW=200000
   # Artifacts open from the chat link, /artifacts or ctrl+], not as a
   # new browser tab on every publish: with ~20 agents that left 304
   # tabs, 142 of them artifact pages (11-04).
