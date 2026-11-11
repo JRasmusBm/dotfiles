@@ -7,9 +7,9 @@
 #
 # - `switch <borrowed>`: holds cswap-auto's reconnects
 #   (~/.config/cswap-rc-hold: launchd has no LOCAL_CONFIG), switches
-#   Remote Control off in every
-#   pane (claude-rc-off), waiting up to CSWAP_RC_WAIT seconds (600)
-#   for busy panes to go idle, then switches, then sweeps once more.
+#   Remote Control off in every pane (claude-rc-off), waiting up to
+#   CSWAP_RC_WAIT seconds (600) for busy panes to go idle, then
+#   switches, then sweeps once more.
 #   Still connected after the wait: refused, nothing switched.
 # - bare `switch` (rotate) while a borrowed account is enabled, and
 #   `run <borrowed>` (starts Claude with Remote Control at startup):
