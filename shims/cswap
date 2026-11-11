@@ -1,0 +1,104 @@
+#!/bin/sh
+# Every `cswap` goes through here (shims/ is first on PATH): a guard so
+# a borrowed login (~/.config/borrowed-logins, overlay) never gets a
+# Remote Control session. Each session connected under it pushes a
+# notice to its owner's phone (11-10: a manual `cswap switch` to one
+# landed while cswap-auto was reconnecting 39 panes, one push each).
+#
+# - `switch <borrowed>`: holds cswap-auto's reconnects
+#   ($LOCAL_CONFIG/cswap-rc-hold), switches Remote Control off in every
+#   pane (claude-rc-off), waiting up to CSWAP_RC_WAIT seconds (600)
+#   for busy panes to go idle, then switches, then sweeps once more.
+#   Still connected after the wait: refused, nothing switched.
+# - bare `switch` (rotate) while a borrowed account is enabled, and
+#   `run <borrowed>` (starts Claude with Remote Control at startup):
+#   refused. `enable <borrowed>` too: auto-rotation switches inside
+#   cswap, past this guard.
+# CSWAP_REAL names the real binary (default: the next cswap on PATH).
+
+_real="${CSWAP_REAL:-}"
+if [ -z "$_real" ]; then
+  _ifs="$IFS"; IFS=:
+  for _d in $PATH; do
+    case "$_d" in */shims) continue ;; esac
+    [ -x "$_d/cswap" ] && { _real="$_d/cswap"; break; }
+  done
+  IFS="$_ifs"
+fi
+[ -n "$_real" ] || { echo "cswap shim: no real cswap on PATH" >&2; exit 127; }
+
+_borrowed="$HOME/.config/borrowed-logins"
+_state="${LOCAL_CONFIG:-$HOME/.config}"
+
+# Email of account <num|alias|email>, from `cswap list`.
+_email_of() {
+  "$_real" list 2>/dev/null | LC_ALL=C awk -v t="$1" '
+    /^  [0-9]+:/ {
+      n = $1; sub(/:$/, "", n)
+      e = ""; a = ""
+      for (i = 2; i <= NF; i++) if ($i ~ /@/) { e = $i; break }
+      gsub(/[()]/, "", e)
+      if ($2 !~ /@/) a = $2
+      if (t == n || t == a || tolower(t) == tolower(e)) { print e; exit }
+    }'
+}
+
+_is_borrowed() {
+  [ -n "$1" ] && grep -qixF -- "$1" "$_borrowed" 2>/dev/null
+}
+
+# A borrowed account is listed without `(disabled)`.
+_borrowed_enabled() {
+  "$_real" list 2>/dev/null | LC_ALL=C awk '
+    /^  [0-9]+:/ && !/\(disabled\)/ {
+      for (i = 2; i <= NF; i++) if ($i ~ /@/) { e = $i; gsub(/[()]/, "", e)
+        print e } }' \
+  | while read -r _e; do _is_borrowed "$_e" && { echo "$_e"; break; }; done
+}
+
+_refuse() { echo "cswap shim: $*" >&2; exit 1; }
+
+# _switch_borrowed <email> <real cswap args…>
+_switch_borrowed() {
+  _to="$1"; shift
+  echo "$$" > "$_state/cswap-rc-hold"
+  trap 'rm -f "$_state/cswap-rc-hold"' EXIT INT TERM
+  _end=$(($(date +%s) + ${CSWAP_RC_WAIT:-600}))
+  until claude-rc-off; do
+    [ "$(date +%s)" -lt "$_end" ] || _refuse "Remote Control still on" \
+      "in a busy pane after ${CSWAP_RC_WAIT:-600}s; not switching to $_to"
+    echo "waiting for busy panes to go idle…"
+    sleep 5
+  done
+  "$_real" "$@" || exit
+  # A session that connected in the last seconds, under the old login.
+  claude-rc-off
+  return 0
+}
+
+case "${1:-}" in
+  switch)
+    if [ -z "${2:-}" ]; then
+      _b=$(_borrowed_enabled)
+      [ -z "$_b" ] || _refuse "$_b is enabled, so a rotate could land" \
+        "on it: name the account (cswap switch <num|email>)"
+    else
+      _e=$(_email_of "$2")
+      if _is_borrowed "$_e"; then
+        _switch_borrowed "$_e" "$@"
+        exit
+      fi
+    fi
+    ;;
+  run)
+    _e=$(_email_of "${2:-}")
+    _is_borrowed "$_e" && _refuse "run on $_e starts Claude with Remote" \
+      "Control on: use cswap switch $2"
+    ;;
+  enable)
+    _e=$(_email_of "${2:-}")
+    _is_borrowed "$_e" && _refuse "$_e stays out of auto-rotation: cswap" \
+      "switches inside itself, past this guard; use cswap switch $2"
+    ;;
+esac
+exec "$_real" "$@"

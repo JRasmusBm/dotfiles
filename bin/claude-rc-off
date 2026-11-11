@@ -1,0 +1,52 @@
+#!/bin/sh
+#
+# claude-rc-off [-n] — switch Remote Control off in every Claude pane
+# whose status line shows it connected (`/rc`, not `/rc failed`):
+# /remote-control → Disconnect, Enter only with the cursor on it. Only
+# idle panes (claude-pane-idle) are touched, so nothing typed is lost;
+# busy ones are printed as `busy <pane>`. Exit 0 when no pane is left
+# connected, 1 otherwise. -n only lists the connected panes.
+#
+# Before a borrowed login is active (cswap shim, cswap-auto): every
+# session connected under it pushes a notice to its owner's phone.
+
+_on() {
+  tmux list-panes -a -F '#{pane_id}' 2>/dev/null \
+  | while read -r _p; do
+      tmux capture-pane -p -t "$_p" 2>/dev/null \
+        | grep -q '⠀.* /rc[[:space:]]*$' && echo "$_p"
+    done
+}
+
+_off() {
+  _p="$1"
+  tmux send-keys -t "$_p" -l '/remote-control'
+  sleep 0.5
+  tmux send-keys -t "$_p" Enter
+  sleep 3
+  if tmux capture-pane -p -t "$_p" | grep -q 'Disconnect this session'
+  then
+    tmux send-keys -t "$_p" Up Up
+    sleep 0.5
+    if tmux capture-pane -p -t "$_p" \
+      | grep -q '❯ Disconnect this session'; then
+      tmux send-keys -t "$_p" Enter
+      echo "$(date +%H:%M:%S)  disconnected Remote Control in $_p"
+      return 0
+    fi
+  fi
+  tmux send-keys -t "$_p" Escape
+  echo "$(date +%H:%M:%S)  couldn't disconnect Remote Control in $_p"
+}
+
+case "${1:-}" in
+  -n) _on; exit 0 ;;
+  '') ;;
+  *) sed -n '3,9s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
+esac
+
+for _p in $(_on); do
+  if claude-pane-idle "$_p"; then _off "$_p"; else echo "busy $_p"; fi
+done
+sleep 1
+[ -z "$(_on)" ]

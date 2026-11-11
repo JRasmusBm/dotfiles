@@ -52,41 +52,9 @@ _own_login() {
   return 1
 }
 
-# Idle Claude panes whose status line shows Remote Control connected
-# (`/rc`, not `/rc failed`).
-_live_panes() {
-  tmux list-panes -a -F '#{pane_id}' 2>/dev/null \
-  | while read -r _p; do
-      claude-pane-idle "$_p" || continue
-      tmux capture-pane -p -t "$_p" | grep -q '⠀.* /rc[[:space:]]*$' \
-        && echo "$_p"
-    done
-}
-
 # On a borrowed login, a connected session is listed in its owner's
-# claude.ai (11-05: archived ones kept coming back), so switch it off:
-# /remote-control → Disconnect, Enter only with the cursor on it.
-_disconnect() {
-  for _p in $(_live_panes); do
-    tmux send-keys -t "$_p" -l '/remote-control'
-    sleep 0.5
-    tmux send-keys -t "$_p" Enter
-    sleep 3
-    if tmux capture-pane -p -t "$_p" | grep -q 'Disconnect this session'
-    then
-      tmux send-keys -t "$_p" Up Up
-      sleep 0.5
-      if tmux capture-pane -p -t "$_p" \
-        | grep -q '❯ Disconnect this session'; then
-        tmux send-keys -t "$_p" Enter
-        echo "$(date +%H:%M:%S)  disconnected Remote Control in $_p"
-        continue
-      fi
-    fi
-    tmux send-keys -t "$_p" Escape
-    echo "$(date +%H:%M:%S)  couldn't disconnect Remote Control in $_p"
-  done
-}
+# claude.ai (11-05: archived ones kept coming back), so switch it off.
+_disconnect() { claude-rc-off | grep -v '^busy '; }
 
 _state="${LOCAL_CONFIG:-$HOME/.config}"
 
@@ -98,7 +66,17 @@ _tried() {
     "$_state/cswap-rc-tries" 2>/dev/null
 }
 
+# The cswap shim is switching to a borrowed login: it turns Remote
+# Control off everywhere first, so reconnecting now would undo that.
+_held() {
+  _h=$(cat "$_state/cswap-rc-hold" 2>/dev/null) || return 1
+  kill -0 "$_h" 2>/dev/null && return 0
+  rm -f "$_state/cswap-rc-hold"; return 1
+}
+
 _reconnect() {
+  _held && { echo "$(date +%H:%M:%S)  hold: cswap shim switching"; \
+    return 0; }
   _own_login; _mine=$?
   # A login new since the last tick may be mid-switch (11-10: 45
   # sessions reconnected onto a borrowed login): wait a tick.

@@ -537,7 +537,11 @@ else's, `~/.config/borrowed-logins`, overlay) never publish:
 it as a `file://` row; report that path and SendUserFile it. They
 never write to Slack either (`slack-borrowed.sh` denies the
 connector's send/react/canvas tools, which act as that person): hand
-`slack-post` (overlay) posts as me instead, else I paste. Listing artifacts =
+`slack-post` (overlay) posts as me instead, else I paste. Nor do they
+get Remote Control: each connected session pushes to the owner's
+phone. The `cswap` shim switches to one only after `claude-rc-off`
+has it off in every pane (waits for busy ones, holds cswap-auto),
+and refuses `run`/`enable` on it. Listing artifacts =
 Artifact `list` plus `artifacts`. Every artifact link you report
 names its login (`artifacts` shows it) unless it's shared, and
 when copies exist on both logins, say which is current.
