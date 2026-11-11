@@ -17,11 +17,16 @@ print=0
 pick() {
   case "${1:-}" in
     .)
-      local pane sid
-      pane=$(tmux display-message -p "#{pane_id}")
-      sid=$(claude-pane of "$pane" 2>/dev/null) \
-        && pick "$sid" \
-        || (cd "$(tmux display-message -p "#{pane_current_path}")" && pick) ;;
+      # Claude runs as a child of the pane's shell and records itself
+      # in sessions/<pid>.json: one lookup, not claude-pane's full scan
+      local c sid=
+      for c in $(pgrep -P "$(tmux display-message -p '#{pane_pid}')"); do
+        f=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/sessions/$c.json
+        [[ -f $f ]] && { sid=$(jq -r .sessionId "$f"); break; }
+      done
+      if [[ -n $sid ]]; then pick "$sid"
+      else cd "$(tmux display-message -p '#{pane_current_path}')" && pick
+      fi ;;
     '')
       local dir=$projects/$(pwd -P | sed 's|[^A-Za-z0-9]|-|g')
       ls -t "$dir"/*.jsonl 2>/dev/null | sed -n 1p ;;
@@ -68,5 +73,6 @@ if ((print)); then
 else
   out=$(mktemp -t claude-log).md
   render >"$out"
-  nvim -R +'$' "$out"
+  # --clean: the full config takes ~1s to load, a reader needs none of it
+  nvim --clean -R -c 'set ic scs lbr nonu' +'$' "$out"
 fi
