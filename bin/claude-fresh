@@ -16,8 +16,11 @@ on each turn; a fresh chat with a short brief starts near 57k.
         Print the arguments for `claude` that bring chat SID back (`-`:
         DIR's latest chat, DIR default .): `--resume SID` while its
         last turn is under CLAUDE_FRESH_CTX (150000) tokens of context,
-        else `--session-id NEW <prompt>`, a fresh chat reading an
-        automatic brief (`brief`), recorded as SID's successor. No chat
+        else `--session-id NEW --append-system-prompt-file BRIEF`: a
+        fresh chat holding an automatic brief (`brief`), recorded as
+        SID's successor. It sends no prompt of its own: the first turn
+        is what brought SID back (my answer, a tell), not a recap. A
+        successor never prompted yet comes back the same way. No chat
         found for `-`: `--continue`.
   claude-fresh brief SID
         Print the automatic brief for SID: where it ran, its last
@@ -50,6 +53,14 @@ BRIEFS = os.path.join(CONF, 'briefs')
 LIMIT = int(os.environ.get('CLAUDE_FRESH_CTX') or 150000)
 POLL = float(os.environ.get('CLAUDE_FRESH_POLL') or 2)
 QUOTE = 3000
+WAIT = """
+## The first message
+
+This chat started with no prompt of its own. The first message is what
+came next: often my answer to that last message, or a tell. Act on it
+with this brief as context; don't recap the old chat or ask its
+question again.
+"""
 
 
 def sh(*args):
@@ -185,12 +196,20 @@ def resume(sid, d):
         if not sid:
             return '--continue'
     sid = nxt(sid)
+    path = os.path.join(BRIEFS, sid + '.md')
+    if not transcript(sid) and os.path.exists(path):
+        return fresh(sid, path)
     if last_turn(sid)[0] <= LIMIT:
         return f'--resume {sid}'
     new = str(uuid.uuid4())
-    path = save(new, brief(sid))
+    path = save(new, brief(sid) + WAIT)
     succeed(sid, new)
-    return f'--session-id {new} {shlex.quote(read_prompt(path))}'
+    return fresh(new, path)
+
+
+def fresh(sid, path):
+    return (f'--session-id {sid} '
+            f'--append-system-prompt-file {shlex.quote(path)}')
 
 
 def sid_of(pane):

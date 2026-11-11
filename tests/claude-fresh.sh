@@ -51,11 +51,15 @@ _a="$(claude-fresh resume - "$_t")"
 check "- with no chat there continues as before" 'test "$_a" = --continue'
 _a="$(claude-fresh resume 22222222-0000-0000-0000-000000000000)"
 _new="$(printf '%s' "$_a" | awk '{ print $2 }')"
-check "a big chat starts fresh with its own session id" \
-  'case "$_a" in "--session-id $_new '"'"'Read "*) true ;; *) false ;; esac'
+_f="$LOCAL_CONFIG/briefs/$_new.md"
+check "a big chat starts fresh, the brief as system prompt, no prompt" \
+  'test "$_a" = "--session-id $_new --append-system-prompt-file $_f"'
+check "its brief says the first message is what came next" \
+  'grep -q "The first message is what" "$_f"'
+check "a successor never prompted comes back the same way" \
+  'test "$(claude-fresh resume 22222222-0000-0000-0000-000000000000)" = "$_a"'
 check "the fresh chat is the big one's successor" \
   'test "$(claude-fresh next 22222222-0000-0000-0000-000000000000)" = "$_new"'
-_f="$LOCAL_CONFIG/briefs/$_new.md"
 check "its brief names the old chat, quotes its last prompt and message" \
   'grep -q "claude-log -p 22222222" "$_f" && grep -q "> please fix the thing" "$_f" \
      && grep -q "> Fixed it. Is the design right?" "$_f"'
