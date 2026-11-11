@@ -191,7 +191,9 @@ never stop what you didn't.
 Stacks, devtools browsers and type-aware tsc/eslint share one
 weighted pool (`pool ls`): hooks queue agents first in first
 out, and a queued tsc command waits ("pool: queued …" on
-stderr), so give it a long `timeout`.
+stderr), so give it a long `timeout`. Repos listed in
+`~/.config/pool-no-local-tsc` refuse local tsc/check-ts (4-8 GB
+each): push to the draft PR and read CI's typecheck.
 
 ## Shared slots
 

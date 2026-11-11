@@ -104,6 +104,26 @@ BUILD_RE = re.compile(
     CMD + r'((npx|yarn|pnpm|exec|time)\s+)*(\S*/)?(eslint|tsc)' + END
     + '|' + CMD + r'(yarn|pnpm|npm run)\s+([^;&|)`]*\s)?'
     r'(lint|check-ts)(:[a-z:-]+)?' + END)
+TSC_RE = re.compile(
+    CMD + r'((npx|yarn|pnpm|exec|time)\s+)*(\S*/)?tsc' + END
+    + '|' + CMD + r'(yarn|pnpm|npm run)\s+([^;&|)`]*\s)?'
+    r'check-ts(:[a-z:-]+)?' + END)
+NO_TSC_FILE = os.path.expanduser('~/.config/pool-no-local-tsc')
+
+
+def no_tsc_dirs():
+    """Repos (and their worktrees) where agents may not typecheck
+    locally: $POOL_NO_LOCAL_TSC (`:`-separated) plus one dir per line of
+    ~/.config/pool-no-local-tsc, read per call so running sessions see
+    an edit at once."""
+    dirs = os.environ.get('POOL_NO_LOCAL_TSC', '').split(':')
+    try:
+        with open(NO_TSC_FILE) as f:
+            dirs += f.read().split('\n')
+    except OSError:
+        pass
+    return [os.path.realpath(os.path.expanduser(d.strip()))
+            for d in dirs if d.strip() and not d.startswith('#')]
 SUITE_RE = re.compile(
     CMD + r'((yarn|pnpm|npm( run)?)\s+test|((exec|time|node)\s+)*'
     r'(\S*/)?run-tests(\.[cm]?[jt]s)?)' + END)
@@ -723,12 +743,23 @@ def unquoted(c):
 
 def hook_bash():
     try:
-        inp = json.load(sys.stdin).get('tool_input', {})
+        raw = json.load(sys.stdin)
     except ValueError:
         return 0
+    inp = raw.get('tool_input', {})
+    json_cwd = raw.get('cwd')
     c = inp.get('command') or ''
     if re.match(r'\s*(pool|heavy-slot) take ', c):
         return 0
+    cwd = os.path.realpath(json_cwd or os.getcwd())
+    if TSC_RE.search(unquoted(c)) and any(
+            cwd == d or cwd.startswith(d.rstrip('/') + '/')
+            for d in no_tsc_dirs()):
+        print('pool: no local typecheck in this repo (tsc/check-ts take '
+              '4-8 GB each and parallel ones ran the Mac out of memory). '
+              'Push to your draft PR and read the CI typecheck instead.',
+              file=sys.stderr)
+        return 2
     if HEAVY_RE.search(unquoted(c)):
         o = owner()
         with Pool() as p:
@@ -945,6 +976,20 @@ def cmd_test():
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: still gated ({cmd[:12]!r})',
               'pool take heavy' in r.stdout)
+    repo = tempfile.mkdtemp(prefix='pool-notsc.')
+    os.makedirs(os.path.join(repo, 'sub'))
+    for cmd, cwd, refused in (
+            ('yarn check-ts', repo, True),
+            ('cd services && yarn tsc --noEmit', repo + '/sub', True),
+            ('yarn workspace x check-ts:fast', repo, True),
+            ('yarn lint:changed', repo, False),
+            ('yarn test:mocha a.test.ts', repo, False),
+            ('git commit -m "tsc passes"', repo, False),
+            ('yarn check-ts', tmp, False)):
+        r = run(c, 'hook', 'bash', POOL_NO_LOCAL_TSC=repo, stdin=json.dumps(
+            {'cwd': cwd, 'tool_input': {'command': cmd}}))
+        check(f'hook bash: no local tsc {cmd[:14]!r} -> {refused}',
+              (r.returncode == 2 and 'CI typecheck' in r.stderr) == refused)
     for cmd, u in (('yarn test:mocha a.test.ts', 2), ('npx mocha x', 2),
                    ('node_modules/.bin/mocha x', 2), ('yarn test', 4),
                    ('npm test', 4), ('node scripts/run-tests', 4),
