@@ -4,8 +4,9 @@
 # whose status line shows it connected (`/rc`, not `/rc failed`):
 # /remote-control → Disconnect, Enter only with the cursor on it. Only
 # idle panes (claude-pane-idle) are touched, all at once, so nothing
-# typed is lost; busy ones are printed as `busy <pane>`. Exit 0 when
-# no pane is left connected, 1 otherwise. -n only lists them.
+# typed is lost; busy ones are printed as `busy <pane> (<session>)`.
+# Exit 0 when no pane is left connected, 1 otherwise. -n only lists
+# them.
 #
 # Before a borrowed login is active (cswap shim, cswap-auto): every
 # session connected under it pushes a notice to its owner's phone.
@@ -42,12 +43,15 @@ _off() {
 case "${1:-}" in
   -n) _on; exit 0 ;;
   '') ;;
-  *) sed -n '3,9s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
+  *) sed -n '3,10s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
 esac
 
 # All panes at once: each waits ~4 s on its own menu.
 for _p in $(_on); do
-  if claude-pane-idle "$_p"; then _off "$_p" & else echo "busy $_p"; fi
+  if claude-pane-idle "$_p"; then _off "$_p" &
+  else echo "busy $_p ($(tmux display -p -t "$_p" \
+    '#{session_name}:#{window_name}'): a turn or a draft in its prompt)"
+  fi
 done
 wait
 sleep 1

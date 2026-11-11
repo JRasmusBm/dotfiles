@@ -71,7 +71,7 @@ _switch_borrowed() {
   until claude-rc-off; do
     [ "$(date +%s)" -lt "$_end" ] || _refuse "Remote Control still on" \
       "in a busy pane after ${CSWAP_RC_WAIT:-600}s; not switching to $_to"
-    echo "waiting for busy panes to go idle…"
+    echo "waiting: let the turn end, or send or clear the draft…"
     sleep 5
   done
   "$_real" "$@" || exit
