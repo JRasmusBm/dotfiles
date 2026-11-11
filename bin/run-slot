@@ -842,8 +842,11 @@ def revive(key, focus=False):
                    '#{session_name}\t#{pane_current_command}') or '\t')
         sess, cmd = at.split('\t', 1)
         if sess == name and cmd in ('zsh', 'bash', 'sh', 'fish'):
-            tmux('send-keys', '-t', pane, f'claude --resume {sid}',
-                 'Enter')
+            # hash -r: a shell that ran claude before shims/claude
+            # existed has it cached past the shim (Remote Control off
+            # on a borrowed login).
+            tmux('send-keys', '-t', pane,
+                 f'hash -r; claude --resume {sid}', 'Enter')
             where = pane
         elif focus:
             return 1

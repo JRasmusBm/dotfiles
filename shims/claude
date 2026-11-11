@@ -1,0 +1,55 @@
+#!/bin/zsh -f
+# Every `claude` launch goes through here (shims/ is first on PATH, and
+# the zsh `claude` wrapper ends in `command claude`): on a borrowed
+# login (~/.config/borrowed-logins, overlay), and while the cswap shim
+# switches to one (~/.config/cswap-rc-hold names a live pid), Claude
+# starts with `disableRemoteControl: true`. Each session connected
+# under a borrowed login pushes a notice to its owner's phone.
+#
+# `remoteControlAtStartup: false` is not enough: `--resume` of a
+# session that had Remote Control on connects it again regardless
+# (11-11: four sessions revived on a borrowed login connected, 2.1.322).
+# A shim, not the zsh function: shells keep the function they started
+# with, so a fix there misses every pane opened before it.
+# CLAUDE_REAL names the real binary (default: the next claude on PATH).
+
+real="${CLAUDE_REAL:-}"
+if [[ -z "$real" ]]; then
+  for d in ${(s.:.)PATH}; do
+    [[ "$d" == */shims ]] && continue
+    [[ -x "$d/claude" ]] && { real="$d/claude"; break; }
+  done
+fi
+[[ -n "$real" ]] || { print -u2 "claude shim: no real claude on PATH"; exit 127; }
+
+off=0 hold=
+[[ -r "$HOME/.config/cswap-rc-hold" ]] \
+  && hold="$(<"$HOME/.config/cswap-rc-hold")"
+if [[ -n "$hold" ]] && kill -0 "$hold" 2>/dev/null; then
+  off=1
+else
+  login="$(jq -r '.oauthAccount.emailAddress // ""' ~/.claude.json \
+    2>/dev/null)"
+  [[ -n "$login" ]] && grep -qixF -- "$login" \
+    "$HOME/.config/borrowed-logins" 2>/dev/null && off=1
+fi
+(( off )) || exec "$real" "$@"
+
+# Merge into the first --settings (JSON or file) when there is one:
+# a second --settings flag isn't documented to merge.
+add='{"disableRemoteControl":true,"remoteControlAtStartup":false}'
+args=() done=0
+while (( $# )); do
+  a="$1"; shift
+  if (( ! done )) && [[ "$a" == --settings || "$a" == --settings=* ]]; then
+    if [[ "$a" == --settings=* ]]; then v="${a#--settings=}"
+    else v="$1"; shift; fi
+    [[ "$v" == \{* ]] || v="$(<"$v")"
+    args+=(--settings "$(jq -c --argjson a "$add" '. + $a' <<<"$v")")
+    done=1
+  else
+    args+=("$a")
+  fi
+done
+(( done )) || args=(--settings "$add" "${args[@]}")
+exec "$real" "${args[@]}"

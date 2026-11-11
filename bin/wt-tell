@@ -132,7 +132,8 @@ if { test -z "$_pane" || test -n "$_shell"; } \
   if _gate "revive:$(basename "$_root")"; then
     if test -n "$_pane"; then
       run-slot revive "$_pane" >/dev/null \
-        || tmux send-keys -t "$_pane" "claude --continue || claude" Enter
+        || tmux send-keys -t "$_pane" \
+          "hash -r; claude --continue || claude" Enter
     else
       ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
         wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true
