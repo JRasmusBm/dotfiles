@@ -355,23 +355,32 @@ active `wt w8` shows instead as `w8 15:40 <what…>` (red
 `P0 #N` before it.
 
 Priorities (P0s): `$LOCAL_CONFIG/priorities`, one outcome per line
-in rank order, indented sources (`> Who date link "quote"`) and steps
-(`- [ ] ABC-123 …`; first unchecked = current). `prio` lists, `M-,` /
-`prio e` edits in a popup (moving or deleting a line is the re-rank;
-a hand-deleted outcome or step is never re-added by capture, and an
-outcome moved up by hand stays above `prio add --top`). Capture:
-`prio add [--top] [--by] [--date] [--link] [--quote] "<outcome>"
-[step…]` (exit 3: removed by hand). A worktree is on priority N when
-its branch names the ticket of an unchecked step of N. Every minute
-`prio sync` (from `wt-sync`) moves such board rows into a `# P0`
-section at the top (back to their old section, kept in
+in rank order; indented under it sources (`> Who date link
+"quote"`), groupings (`in <Linear project URL | ABC-123 parent |
+label:name>`) and free notes. Its tickets come from Linear, not the
+file: my open tickets in one of its groupings (sub-issues two levels
+deep), the higher priority winning. `prio` lists them with their
+board state and what needs me; `M-,` / `prio e` edits in a popup
+(moving or deleting an outcome is the re-rank; a hand-deleted
+outcome is never re-added by capture, and one moved up by hand
+stays above `prio add --top`). Capture: `prio add [--top] [--by]
+[--date] [--link] [--quote] "<outcome>" [note…]` (exit 3: removed by
+hand); `prio in "<outcome>" <grouping>` adds a grouping. Every
+minute `prio sync` (from `wt-sync`) reads Linear into
+`priorities.tickets`, moves board rows naming such a ticket into a
+`# P0` section at the top (back to their old section, kept in
 `<repo>.p0`, when the priority goes; PROD REVIEW, TO ANNOUNCE,
-BLOCKED, NEEDS FOCUS and SNOOZED rows stay put), and gives each
-priority whose current step no worktree carries a silent `step`
-inbox row; jumping to it opens the popup. `wt feat|fix` warns (never
-blocks) when the new branch is on no priority while a P0 worktree is
-stalled or has no agent. `prio brief` is the morning text; the side
-files and the rest are in `bin/prio`'s header.
+BLOCKED, NEEDS FOCUS and SNOOZED rows stay put), sends an outcome
+with no grouping to a linking agent (`prio link`: it finds or
+creates the grouping and writes the `in` line), and asks a guessing
+agent about my new tickets in no grouping: a confident guess is a
+silent `step` inbox row whose popup (`prio guess`) accepts (joins
+the ticket to that grouping in Linear) or rejects it; nothing joins
+without me. Agents filing a ticket for a priority's work put it in
+that priority's grouping. `wt feat|fix` warns (never blocks) when
+the new branch is on no priority while a P0 worktree is stalled or
+has no agent. `prio brief` is the morning text; the side files and
+the rest are in `bin/prio`'s header.
 
 Alt-N speed-dial is separate: line N of the current ts
 profile (`tsp`, `$LOCAL_CONFIG/ts-profiles/…`; Alt-0 = line

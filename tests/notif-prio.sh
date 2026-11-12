@@ -1,12 +1,12 @@
 #!/bin/sh
 #
 # tests/notif-prio.sh [NOTIF] — `notif next` (M-i) orders by priority
-# (bin/prio's file) before class: rank 1 before rank 2 before
+# (bin/prio's file and its tickets cache) before class: rank 1 before rank 2 before
 # unranked, re-ranked by editing the file; a focused worktree still
 # first; a blocked ranked worktree after the other rows of its rank.
 # Every place is gone and tmux is a fake that switches nowhere, so one
 # `notif next` drops each row in turn and says so: the order of those
-# messages is the jump order (a step row's popup shows as `popup`).
+# messages is the jump order (a guess row's popup shows as `popup`).
 # NOTIF defaults to this checkout's bin/notif.
 
 set -u
@@ -53,34 +53,34 @@ _order() {
   "$_notif" next "" >/dev/null 2>&1 || true
   sed -n 's/^Cleared \(.*\): gone$/\1/p' "$_t/shown" | tr '\n' ' '
 }
+# prios "<outcome> <TICKET>..." ...: the file and its tickets cache.
+prios() {
+  _f="$LOCAL_CONFIG/priorities"; : > "$_f"; : > "$_f.tickets"
+  for _p in "$@"; do
+    set -- $_p
+    printf '%s\n  in label:%s\n' "$1" "$1" >> "$_f"
+    _o="$1"; shift
+    for _k in "$@"; do
+      printf '%s\t%s\topen\tt\n' "$_o" "$_k" >> "$_f.tickets"
+    done
+  done
+}
 _expect() {
   _got="$(_order)"
   test "$_got" = "$2" && ok "$1" || no "$1" "$_got"
 }
 
 _rows
-: > "$LOCAL_CONFIG/priorities"
+prios
 _expect "no priorities: class order" \
   "env-one env-plain merge-plain popup fyi-two fyi-one "
 
-cat > "$LOCAL_CONFIG/priorities" <<'X'
-One
-  - [ ] ABC-1 first
-Two
-  - [ ] ABC-2 second
-  - [ ] ABC-5 another
-X
+prios "One ABC-1" "Two ABC-2 ABC-5"
 _rows
 _expect "ranked before unranked, rank 1 before rank 2" \
   "env-one fyi-one popup fyi-two env-plain merge-plain "
 
-cat > "$LOCAL_CONFIG/priorities" <<'X'
-Two
-  - [ ] ABC-2 second
-  - [ ] ABC-5 another
-One
-  - [ ] ABC-1 first
-X
+prios "Two ABC-2 ABC-5" "One ABC-1"
 _rows
 _expect "re-ranked by editing the file" \
   "popup fyi-two env-one fyi-one env-plain merge-plain "
@@ -96,12 +96,7 @@ printf 'abc-2-two\tfeat/abc-2-two\tabc-1-one\n' \
 _rows
 _expect "blocked ranked row after the rest of its rank" \
   "popup fyi-two env-one fyi-one env-plain merge-plain "
-cat > "$LOCAL_CONFIG/priorities" <<'X'
-Two
-  - [ ] ABC-2 second
-One
-  - [ ] ABC-1 first
-X
+prios "Two ABC-2" "One ABC-1"
 {
   _row 100 env-two "$_w/abc-2-two" env ""
   _row 101 fyi-two-b "$_w/abc-2-two-b" fyi ""

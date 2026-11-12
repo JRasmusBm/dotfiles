@@ -44,8 +44,8 @@ set -e
 #                       wherever a jump re-keyed them
 #   notif arrive <key>  drop its non-sticky rows (focus hooks)
 #   notif go <pane> <ctx> <path> [sid]  jump like the picker does;
-#                       a `prio:` step row opens the priorities
-#                       popup (`prio edit`) and clears
+#                       a `prio:` guess row opens its popup
+#                       (`prio guess`), which clears it once settled
 #   notif count         status-bar badge
 #   notif clear         empty the inbox
 
@@ -90,23 +90,21 @@ function p0slug(s) {
   sub(/^-+/, "", s); sub(/-+$/, "", s)
   return substr(s, 1, 40)
 }
-function p0load(  l, n, t) {
+function p0load(  l, n, t, f) {
   p0ok = 1
   if (pf == "") return
   while ((getline l < pf) > 0) {
-    if (l ~ /^[ \t]*$/ || l ~ /^#/) continue
-    if (l !~ /^[ \t]/) {
-      n++; t = p0slug(l); if (!(t in p0o)) p0o[t] = n
-      continue
-    }
-    if (!n || l !~ /^[ \t]+- \[ \]/) continue
-    t = " " substr(l, index(l, "]") + 1)
-    if (!match(t, /[^A-Za-z0-9][A-Za-z][A-Za-z][A-Za-z]?[A-Za-z]?[A-Za-z]?-[0-9]+/))
-      continue
-    t = tolower(substr(t, RSTART + 1, RLENGTH - 1))
-    if (!(t in p0t)) p0t[t] = n
+    if (l ~ /^[ \t]*$/ || l ~ /^#/ || l ~ /^[ \t]/) continue
+    n++; t = p0slug(l); if (!(t in p0o)) p0o[t] = n
   }
   close(pf)
+  while ((getline l < (pf ".tickets")) > 0) {
+    split(l, f, "\t")
+    if (f[3] != "open" || !((t = p0slug(f[1])) in p0o)) continue
+    n = p0o[t]; t = tolower(f[2])
+    if (!(t in p0t) || n < p0t[t]) p0t[t] = n
+  }
+  close(pf ".tickets")
 }
 function prank(k, p,  s, t, r, a) {
   if (!p0ok) p0load()
@@ -306,9 +304,9 @@ _notif_jump() {
   _j_sid="${4:-}"
   case "$_j_key" in
     prio:*)
-      tmux display-popup -E -w 90% -h 80% "prio edit" 2>/dev/null \
-        || tmux new-window "prio edit" 2>/dev/null || return 2
-      _notif_drop "$_j_key"
+      _j_t="${_j_key##*:}"
+      tmux display-popup -E -w 90% -h 80% "prio guess $_j_t" 2>/dev/null \
+        || tmux new-window "prio guess $_j_t" 2>/dev/null || return 2
       return 0
       ;;
   esac

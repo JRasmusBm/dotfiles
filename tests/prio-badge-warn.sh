@@ -38,8 +38,10 @@ git -C "$_r" worktree add -q -b feat/jrb/other "$_r/.worktrees/other"
 _b="$LOCAL_CONFIG/worktrees/repo"
 printf '# P0\nfeat/jrb/abc-2-two\n# IN PROGRESS\nfeat/jrb/other\n' > "$_b"
 printf 'feat/jrb/abc-2-two\tTEAM REVIEW\n' > "$_b.p0"
-printf 'One\n  - [ ] ABC-1 a\nTwo\n  - [ ] ABC-2 b\n' \
+printf 'One\n  in label:one\nTwo\n  in label:two\n' \
   > "$LOCAL_CONFIG/priorities"
+printf 'One\tABC-1\topen\ta\nTwo\tABC-2\topen\tb\n' \
+  > "$LOCAL_CONFIG/priorities.tickets"
 
 is "badge: P1 for rank 2, then the section it came from" \
   "$(wt-badge "$_r/.worktrees/abc-2-two")" \
