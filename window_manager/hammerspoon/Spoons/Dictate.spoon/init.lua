@@ -15,10 +15,9 @@ local MODEL = MODELS .. "ggml-large-v3-turbo-q5_0.bin"
 local VAD_MODEL = MODELS .. "ggml-silero-v5.1.2.bin"
 local DIR = (os.getenv("TMPDIR") or "/tmp/") .. "dictation/"
 local WAV = DIR .. "full.wav"
+-- A chunk takes ~0.9s, so 2s chunks keep up. Don't shrink Whisper's
+-- audio window (-ac) to speed it up: chunks then repeat and garble.
 local CHUNK_SECONDS = 2
--- Whisper encodes a fixed 30s window (1500 frames); a chunk needs ~100,
--- so a smaller window halves its time (~0.5s on an M-series GPU).
-local CHUNK_AUDIO_CTX = "256"
 local POLL_SECONDS = 0.25
 local PREVIEW_CHARS = 400
 local MAX_DICTATION_ITEMS = 2
@@ -76,14 +75,11 @@ local function trim(s)
 end
 
 -- Greedy decoding (-bs 1 -bo 1): beam search costs ~0.5s per call.
-local function whisper(file, prompt, callback, audioCtx)
+local function whisper(file, prompt, callback)
   local args = {
     "-m", MODEL, "--vad", "-vm", VAD_MODEL, "-bs", "1", "-bo", "1",
     "-l", "en", "-nt", "-np", "-f", file,
   }
-  if audioCtx then
-    hs.fnutils.concat(args, { "-ac", audioCtx })
-  end
   if prompt ~= "" then
     hs.fnutils.concat(args, { "--prompt", prompt })
   end
@@ -205,7 +201,7 @@ local function pollChunks()
       showPanel(RECORDING, preview)
     end
     pollChunks()
-  end, CHUNK_AUDIO_CTX)
+  end)
 end
 
 local function submit()
