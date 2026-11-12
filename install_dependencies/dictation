@@ -1,0 +1,19 @@
+#!/bin/sh
+
+set -e
+
+# Local speech-to-text for the Dictate Hammerspoon spoon.
+install_dictation() {
+  brew install ffmpeg whisper-cpp
+  dir="$HOME/.local/share/whisper"
+  mkdir -p "$dir"
+  hf=https://huggingface.co
+  [ -f "$dir/ggml-large-v3-turbo-q5_0.bin" ] ||
+    curl -fL -o "$dir/ggml-large-v3-turbo-q5_0.bin" \
+      "$hf/ggerganov/whisper.cpp/resolve/main/ggml-large-v3-turbo-q5_0.bin"
+  [ -f "$dir/ggml-silero-v5.1.2.bin" ] ||
+    curl -fL -o "$dir/ggml-silero-v5.1.2.bin" \
+      "$hf/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin"
+}
+
+install_dictation

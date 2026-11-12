@@ -9,18 +9,26 @@ Reference this skill when the user mentions dictation, voice input, or the Dicta
 
 ## How It Works
 
-Dictation is triggered by `Cmd+Shift+D` via Hammerspoon. The flow:
+`Cmd+Shift+D` starts recording; the user decides when they're done:
 
-1. Hammerspoon runs the macOS Shortcut "Dictate to Clipboard"
-2. The shortcut captures speech and places text in the clipboard
-3. Hammerspoon marks the clipboard item with a custom MIME type (`application/x-dictation`)
-4. Hammerspoon pastes the text with `Cmd+V`
-5. Old dictation entries are cleaned up from CopyQ (keeps last 2)
+- `Esc` submits: ffmpeg stops, whisper.cpp transcribes locally, the
+  text is pasted (`Cmd+V`) and marked in CopyQ
+  (`application/x-dictation`); old entries are cleaned (keeps last 2).
+- `Cmd+Shift+D` while recording or transcribing aborts.
+- No speech (Silero VAD finds none) aborts with "Nothing recorded".
+  VAD is why: without it Whisper hallucinates ("Thank you.") on silence.
+
+Esc is bound only while recording, so it works normally otherwise.
+Replaced the macOS Shortcut "Dictate to Clipboard" (2026-11), which
+stopped on its own after a pause.
 
 ## Key Files
 
 - **Spoon:** `~/projects/dotfiles/window_manager/hammerspoon/Spoons/Dictate.spoon/init.lua`
-- **macOS Shortcut:** "Dictate to Clipboard" (managed in Shortcuts.app)
+- **Deps + models:** `install_dependencies/dictation` (ffmpeg,
+  whisper-cpp, models in `~/.local/share/whisper`)
+- Records from the default input device; Hammerspoon needs
+  microphone permission.
 
 ## CopyQ Integration
 
@@ -30,7 +38,8 @@ To adjust how many dictation entries to keep, change `MAX_DICTATION_ITEMS` in th
 
 ## Troubleshooting
 
-- **"Dictation failed" alert:** The macOS Shortcut failed. Check Shortcuts.app.
+- **"Dictation failed" alert:** ffmpeg or whisper-cli failed to run;
+  check paths and models (`install_dependencies/dictation`).
 - **Clipboard not cleaned up:** CopyQ may not be running, or the path `/Applications/CopyQ.app/Contents/MacOS/CopyQ` is wrong.
 - **"CopyQ not responding" alert / CopyQ seems crashed:** usually a hung
   server, not a crash (no `.ips` report; `open -a CopyQ` fails with
