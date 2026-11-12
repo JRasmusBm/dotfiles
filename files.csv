@@ -37,6 +37,7 @@ False,claude/statusline.sh,.claude/statusline.sh
 False,games/wc3/CustomKeys.txt,Library/Application Support/Blizzard/Warcraft III/CustomKeyBindings/CustomKeys.txt
 False,yarn/yarnrc.yml,.yarnrc.yml
 False,claude/accretion-check.sh,.claude/accretion-check.sh
+False,claude/handback-check.sh,.claude/handback-check.sh
 False,claude/read-size-nudge.sh,.claude/read-size-nudge.sh
 False,claude/artifact-ledger.sh,.claude/artifact-ledger.sh
 False,claude/artifact-local.sh,.claude/artifact-local.sh

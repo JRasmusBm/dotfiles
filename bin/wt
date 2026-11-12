@@ -209,7 +209,9 @@ _unblock_dependents() {
       _ud_msg="$1 $_ud_why, which unblocks this worktree. Before you \
 carry on, double-check your assumptions: look for what changed in this \
 PR and ticket since the work began (new comments, scope, reviews, \
-commits on the base), and how that affects what you planned."
+commits on the base), and how that affects what you planned. Then \
+ship, wt cancel or carry on, saying why in one line; never ask whether \
+the work still matters."
       # Not delivered now (busy, or its session just started): wt-sync
       # keeps trying (wt-unblocked), like any other tell.
       wt-tell "$_ud_root" "unblocked:$1" "$_ud_ping" "$_ud_msg" \
@@ -258,7 +260,8 @@ back in $_wk_sec)"
       _wk_msg="You were snoozed${_wk_when:+ on $_wk_when} and woke \
 $_wk_woke. Before you carry on, double-check your assumptions: look for \
 what changed in this PR and ticket since you were snoozed, and how that \
-affects what you planned."
+affects what you planned. Then ship, wt cancel or carry on, saying \
+why in one line; never ask whether the work still matters."
       # Retried by wt-sync (wt-unblocked) when not delivered right away.
       wt-tell "$_wk_root" "awake:$_wk_slug:${_wk_from:-$(date +%s)}" \
         "$_wk_ping" "$_wk_msg" >/dev/null 2>&1 \
