@@ -114,7 +114,11 @@ TEMPLATE = """\
 #   > Who YYYY-MM-DD <link|-> "quote"
 #   in <project URL | ABC-123 parent | label:name>   (its tickets)
 #   anything else: a note
+#   │ [ ] ABC-123 its tickets from Linear: read-only, never saved
 """
+# A line the popup shows but never saves: a ticket from the cache.
+VIEW = re.compile(r'^\s+│')
+STEP = re.compile(r'^-\s*\[[ xX]\]')
 
 
 def slug(s):
@@ -408,10 +412,48 @@ def needs_me(ps, boards):
     return out
 
 
+def migrate(text, cache):
+    """The file as edit saves it: the current header instead of the
+    one it was made with, and no `- [ ] TICKET` step note whose ticket
+    its priority's groupings now hold (the popup lists those)."""
+    ps, lines = parse(text)
+    drop = {i for p in ps
+            for i in range(p['start'] + 1, p['end'])
+            if STEP.match(lines[i].strip()) and ticket(lines[i]) in
+            {t for t, _, _ in cache.get(p['outcome'].casefold(), [])}}
+    n = 0
+    while n < len(lines) and lines[n].startswith('#'):
+        n += 1
+    body = [ln for i, ln in enumerate(lines) if i >= n and i not in drop]
+    return TEMPLATE + ''.join(ln + '\n' for ln in body)
+
+
+def view(text, cache):
+    """text with each priority's tickets under it, as read-only
+    `│` lines, done first like ls."""
+    ps, lines = parse(text)
+    after = {}
+    for p in ps:
+        rows = sorted(cache.get(p['outcome'].casefold(), []),
+                      key=lambda r: r[1] != 'done')
+        after[p['end'] - 1] = [
+            f"  │ [{'x' if st == 'done' else ' '}] {t} {title}".rstrip()
+            for t, st, title in rows]
+    out = []
+    for i, ln in enumerate(lines):
+        out.append(ln)
+        out += after.get(i, [])
+    return ''.join(ln + '\n' for ln in out)
+
+
+def unview(text):
+    return ''.join(ln for ln in text.splitlines(True) if not VIEW.match(ln))
+
+
 def cmd_edit(_args):
     old = read()
-    if not os.path.exists(FILE):
-        write(FILE, TEMPLATE)
+    cache = cached()
+    base = migrate(old, cache)
     editor = os.environ.get('EDITOR') or 'vim'
     # Each priority is one closed fold with its indented lines, so
     # dd/p moves the whole block; zo opens one to edit it.
@@ -422,9 +464,21 @@ def cmd_edit(_args):
             ' : getline(v:lnum) =~ \'^#\' || getline(v:lnum) ==# \'\''
             ' ? 0 : \'>1\'"'] \
         if os.path.basename(editor) in ('v', 'vi', 'vim', 'nvim') else []
-    subprocess.call([editor, *fold, FILE])
-    new = read()
-    if new != (old or TEMPLATE):
+    # The editor gets a copy: the ticket lines never touch the file,
+    # even when the editor dies mid-edit.
+    os.makedirs(CONF, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix='priorities.', suffix='.edit',
+                               dir=CONF)
+    try:
+        with os.fdopen(fd, 'w') as f:
+            f.write(view(base, cache))
+        subprocess.call([editor, *fold, tmp])
+        new = unview(read(tmp))
+    finally:
+        os.unlink(tmp)
+    if new != old:
+        write(FILE, new)
+    if new != base:
         after_edit(old, new)
     return 0
 
