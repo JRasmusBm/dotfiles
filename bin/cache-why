@@ -24,6 +24,11 @@
 #   cache-why               last 7 days
 #   cache-why --since 24h   Nd|Nh
 #   cache-why -v            plus up to 3 example requests per cause
+#
+# Then the skills Claude Code re-sends after each compaction (each one
+# invoked earlier in the session, its head up to ~5k tokens): tokens
+# per compaction by skill, at 4 characters a token, and each user
+# skill's size now, so a cut shows before new sessions reload it.
 #   cache-why --min N --gap S
 import argparse, collections, glob, json, os, sys, time
 from datetime import datetime
@@ -102,6 +107,15 @@ def scan(path, lo, a, acc):
         elif t == "system" and d.get("subtype") == "compact_boundary":
             compact = (d.get("compactMetadata") or {}).get("trigger", "?")
         elif t == "attachment" and \
+                (d.get("attachment") or {}).get("type") == "invoked_skills":
+            if d.get("uuid") in acc["seen"] or \
+                    (stamp(d.get("timestamp")) or 0) < lo:
+                continue
+            acc["seen"].add(d.get("uuid"))
+            acc["reloads"] += 1
+            for s in d["attachment"].get("skills") or []:
+                acc["skills"][s.get("name", "?")] += len(s.get("content", ""))
+        elif t == "attachment" and \
                 (d.get("attachment") or {}).get("type") == "credential_org":
             o = d["attachment"].get("organizationUuid")
             switched = switched or bool(org and o != org)
@@ -141,7 +155,8 @@ def main():
     a = p.parse_args()
     lo = since(a.since)
     acc = dict(write=0, weighted=0, shapes={}, by=collections.Counter(),
-               n=collections.Counter(), ex=collections.defaultdict(list))
+               n=collections.Counter(), ex=collections.defaultdict(list),
+               seen=set(), reloads=0, skills=collections.Counter())
     root = os.path.expanduser("~/.claude/projects")
     files = [f for f in glob.glob(root + "/*/**/*.jsonl", recursive=True)
              if os.path.getmtime(f) >= lo]
@@ -158,6 +173,16 @@ def main():
         if a.v:
             for e in acc["ex"][k]:
                 print("           " + e)
+    r = acc["reloads"]
+    if not r:
+        return
+    print(f"skills reloaded after compaction: {r} times, "
+          f"{sum(acc['skills'].values()) / 4 / r / 1e3:.1f}k tokens each")
+    for k, v in acc["skills"].most_common(12):
+        f = os.path.expanduser(f"~/.claude/skills/{k}/SKILL.md")
+        now = f"{os.path.getsize(f) / 4 / 1e3:5.1f}k now" \
+            if os.path.exists(f) else ""
+        print(f"{v / 4 / r / 1e3:7.2f}k  {k:24} {now}")
 
 
 if __name__ == "__main__":
