@@ -5,7 +5,8 @@
 # take the most valuable stop first (see NOTIFY_CLASS in notify):
 #   merge    its PR is open, not draft, CLEAN, green and based on dev
 #            (a stacked PR is fyi until its base merges; wins over
-#            a question: the agent's offer rides along in the text)
+#            a question: the agent's offer rides along in the text);
+#            once per head sha unless it asks something
 #   blocked  a permission prompt, its last message asks me, or this
 #            turn it ran `ping-me "<what>"` (wants my eyes now) or
 #            parked for my decision (wt ra: send or skip the post;
@@ -20,6 +21,8 @@
 #            ends and that stop is classified afresh
 #   (none)   it ran wt done/cancel/rm since my last prompt and asks
 #            nothing: finished, so no ping
+#   (none)   the same class and text is already pending for this
+#            pane: the old row stays (RAS-21)
 
 INPUT=$(cat)
 TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
@@ -69,7 +72,7 @@ _bg_pending() {
 }
 
 _pr_class() {
-  timeout 5 gh pr view --json number,state,isDraft,mergeStateStatus,statusCheckRollup,body,baseRefName \
+  timeout 5 gh pr view --json number,state,isDraft,mergeStateStatus,statusCheckRollup,body,baseRefName,headRefOid \
     2>/dev/null | jq -r '
       ([.statusCheckRollup[]? | (.conclusion // .state // "")]) as $c
       | if .state == "MERGED"
@@ -83,7 +86,7 @@ _pr_class() {
           then "fyi\tstacked on \(.baseRefName)"
         elif (.isDraft | not) and .mergeStateStatus == "CLEAN"
           and ((.body // "") | test("do not merge"; "i") | not)
-          then "merge\tREADY TO MERGE #\(.number)"
+          then "merge\tREADY TO MERGE #\(.number)\t\(.headRefOid)"
         else empty end' 2>/dev/null
 }
 
@@ -174,24 +177,42 @@ esac
 # pinged READY TO MERGE while its subagent reworked it). Older
 # rows stay (a question, a park for my decision).
 [ -z "$_q" ] && _bg_pending && exit 0
-# Any newer ping supersedes this pane's old merge ping.
-case "$_pr" in
-  merge*) ;;
-  *) [ -z "$TMUX_PANE" ] || notif seen "$TMUX_PANE" all >/dev/null 2>&1 || true ;;
-esac
 case "$_pr" in
   merge*)
-    NOTIFY_CLASS=merge notify "Claude: $CONTEXT" \
-      "${_pr#*	}${_q:+ (asks: $_q)}"
+    _class=merge _rest="${_pr#*	}"
+    _sha="${_rest##*	}" _rest="${_rest%%	*}"
+    _msg="$_rest${_q:+ (asks: $_q)}"
     ;;
   *)
-    if [ -n "$_q" ]; then
-      NOTIFY_CLASS=blocked notify "Claude: $CONTEXT" "asks: $_q" \
-        /System/Library/Sounds/Funk.aiff
-    elif [ -n "$_pr" ]; then
-      NOTIFY_CLASS="${_pr%%	*}" notify "Claude: $CONTEXT" "${_pr#*	}"
-    else
-      NOTIFY_CLASS=fyi notify "Claude: $CONTEXT" "done"
+    if [ -n "$_q" ]; then _class=blocked _msg="asks: $_q"
+    elif [ -n "$_pr" ]; then _class="${_pr%%	*}" _msg="${_pr#*	}"
+    else _class=fyi _msg=done
     fi
     ;;
+esac
+# This pane already has the same ping pending: keep that row, no
+# second row or toast (a stop re-sent "done" or the same question).
+if [ -n "$TMUX_PANE" ] && awk -F'\t' -v p="$TMUX_PANE" -v c="$_class" \
+  -v m="$_msg" '$6 == p && $8 == c && $4 == m { f = 1 } END { exit !f }' \
+  "${LOCAL_CONFIG:?}/notifications" 2>/dev/null; then
+  exit 0
+fi
+# READY TO MERGE once per head sha: every later stop on the same
+# green commit pinged it again. A question still pings. Own key, not
+# wt-pr-watch's merge-ping: that one resurfaces a PR `wt rd` parked.
+if [ "$_class" = merge ]; then
+  _key="$(git rev-parse --show-toplevel 2>/dev/null)	merge-hook:${_rest##*#}:$_sha"
+  if grep -qxF "$_key" "$LOCAL_CONFIG/wt-told" 2>/dev/null; then
+    [ -n "$_q" ] || exit 0
+  else
+    echo "$_key" >> "$LOCAL_CONFIG/wt-told"
+  fi
+else
+  # Any newer ping supersedes this pane's old merge ping.
+  [ -z "$TMUX_PANE" ] || notif seen "$TMUX_PANE" all >/dev/null 2>&1 || true
+fi
+case "$_class" in
+  blocked) NOTIFY_CLASS=blocked notify "Claude: $CONTEXT" "$_msg" \
+    /System/Library/Sounds/Funk.aiff ;;
+  *) NOTIFY_CLASS="$_class" notify "Claude: $CONTEXT" "$_msg" ;;
 esac
