@@ -232,7 +232,8 @@ _hot=""
     && test "${_pane:--}" != -; then
     if claude-pane-idle "$_pane"; then
       tmux send-keys -t "$_pane" -l "tmux restarted at $_tell while you \
-were working. Check git status and your last step, then carry on."
+were working. Check git status, your last step and this ticket's and \
+PR's state, then carry on; never ask whether the work still matters."
       sleep 0.5
       tmux send-keys -t "$_pane" Enter
       _st=told
