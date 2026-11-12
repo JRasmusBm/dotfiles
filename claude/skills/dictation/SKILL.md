@@ -15,6 +15,12 @@ Reference this skill when the user mentions dictation, voice input, or the Dicta
   text is pasted (`Cmd+V`) and marked in CopyQ
   (`application/x-dictation`); old entries are cleaned (keeps last 2).
 - `Cmd+Shift+D` while recording or transcribing aborts.
+- Live preview: ffmpeg also cuts 2s chunks; each finished chunk is
+  transcribed (small audio context, greedy: ~0.5s) into a panel at the
+  bottom of the screen. The paste comes from one pass over the whole
+  recording, since chunk cuts split words.
+- Speed: Whisper's encode of its fixed 30s window dominates (~0.6s a
+  call); model load is ~0.2s, so a resident whisper-server buys little.
 - No speech (Silero VAD finds none) aborts with "Nothing recorded".
   VAD is why: without it Whisper hallucinates ("Thank you.") on silence.
 
