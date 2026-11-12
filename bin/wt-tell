@@ -20,7 +20,8 @@
 # that it is overdue), and to `wt w8 done` if this was it. A w8:* tell
 # (wt-sync, at the deadline) ends the w8 and drops the worktree's
 # overdue inbox row: its agent checks now, sets a new w8 or pings me if
-# it needs me.
+# it needs me. WT_TELL_CAN_WAIT=1 marks an information-only tell: to a
+# parked worktree it is held, not told (see _parked below).
 
 _root="$1" _key="$2" _msg="$3" _prompt="$4"
 test -n "$_root" && test -n "$_key" && test -n "$_prompt" \
@@ -78,11 +79,57 @@ case "$_key" in
       "$LOCAL_CONFIG/run-slots/pending" 2>/dev/null || exit 0 ;;
   *) ! _told_k "$_key" || exit 0 ;;
 esac
+
+# Parked: its tmux session not attached (nor started) for WT_PARK_HOURS
+# (6) and none attached now, no open `wt w8` (its agent waits on something, maybe
+# this), not in run-slots/keep (driven over Remote Control), and its
+# board row not in # P0, # TEAM REVIEW or # READY TO DEPLOY.
+_parked() {
+  case "$_root" in */.worktrees/*) ;; *) return 1 ;; esac
+  test -d "$_root" || return 1
+  # A session never attached has no last attach: its start counts.
+  _f='#{session_name}	#{session_attached}	'
+  tmux list-sessions -F "$_f#{session_last_attached}	#{session_created}" \
+    2>/dev/null | awk -F '\t' -v s="$_slug" \
+      -v t="$(( $(date +%s) - ${WT_PARK_HOURS:-6} * 3600 ))" '
+    $1 == s { f = $2 > 0 || $3 + 0 > t || ($3 == "" && $4 + 0 > t) }
+    END { exit f }' || return 1
+  ! awk -F '\t' -v s="$_slug" '$1 == s { f = 1 } END { exit !f }' \
+    "$_wf" 2>/dev/null || return 1
+  ! grep -qxF "$_slug" "$LOCAL_CONFIG/run-slots/keep" 2>/dev/null \
+    || return 1
+  _br="$(git -C "$_root" branch --show-current 2>/dev/null)"
+  ! awk -v b="$_br" -v s="$_slug" '
+    /^[[:space:]]*#/ || /:[[:space:]]*$/ {
+      h = toupper($0)
+      sub(/^[[:space:]]*#+[[:space:]]*/, "", h)
+      sub(/:[[:space:]]*$/, "", h)
+      next
+    }
+    { e = $0; gsub(/^[[:space:]]+|[[:space:]]+$/, "", e) }
+    e != "" && (e == b || e == s) {
+      f = h ~ /^(P0|TEAM REVIEW|READY TO DEPLOY)$/
+      exit
+    }
+    END { exit !f }' "$LOCAL_CONFIG/worktrees/$_repo" 2>/dev/null
+}
+# WT_TELL_CAN_WAIT: the caller says this tell is information the agent
+# can act on later (a staging deploy, red CI on a PR nobody reviews).
+# To a parked worktree it is held in <repo>.held instead of waking its
+# Claude, which re-reads the whole chat for it, and counts as told so
+# the caller stops retrying. `wt-held` hands it over when I'm back.
+if test -n "${WT_TELL_CAN_WAIT:-}" && _parked; then
+  printf '%s\t%s\t%s\t%s\n' "$_slug" "$(date +%s)" "$_key" \
+    "$(printf '%s' "$_prompt" | tr '\t\n' '  ')" \
+    >> "$LOCAL_CONFIG/worktrees/$_repo.held"
+  echo "$_root	$_key" >> "$_told"
+  exit 0
+fi
 # $1: a run-slot id, revive per worktree (two tells, one revive) or
 # tell per key. A pumped rerun keeps WT_TELL_NO_REVIVE.
 _rerun() {
   "$@" env WT_TELL_NO_REVIVE="${WT_TELL_NO_REVIVE:-}" \
-    WT_TELL_SID="${_sid:-}" \
+    WT_TELL_SID="${_sid:-}" WT_TELL_CAN_WAIT="${WT_TELL_CAN_WAIT:-}" \
     wt-tell "$_root" "$_key" "$_msg" "$_prompt" >/dev/null
 }
 _gate() { _rerun run-slot gate tell "$1" --; }

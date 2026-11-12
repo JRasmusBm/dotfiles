@@ -47,7 +47,7 @@ git worktree list --porcelain | awk '
     printf '%s\n' "$_prs" | awk -F'\t' -v b="$_branch" '$2 == b' \
       | while IFS="$(printf '\t')" read -r _pr _ _sha _fail _pend _fb _stale; do
         if test "$_fail" != - && test "$_pend" = 0; then
-          wt-tell "$_wt" "ci:$_pr:$_sha" \
+          WT_TELL_CAN_WAIT=1 wt-tell "$_wt" "ci:$_pr:$_sha" \
             "#$_pr CI failed ($_fail), no agent session" \
             "CI failed on PR #$_pr ($_fail). Please look at the failure, \
 fix it, push, and tell me what it was."
@@ -64,7 +64,7 @@ fix it, push, and tell me what it was."
 threads."
         fi
         if test "$_stale" = stale; then
-          wt-tell "$_wt" "stale:$_pr:$_sha" \
+          WT_TELL_CAN_WAIT=1 wt-tell "$_wt" "stale:$_pr:$_sha" \
             "#$_pr marked stale, closes in 7 days, no agent session" \
             "The stale bot marked PR #$_pr stale; it closes the PR 7 days \
 later. Move it forward (CI, reviews, what is left to the \

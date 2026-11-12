@@ -59,6 +59,11 @@ few sentences; it picks the how. No file lists, steps or "every X":
 it follows them literally. One tell per key; a correction is a new
 key. Exit 1 with no output = busy, nothing delivered: retry later.
 Idle chats get closed after an hour; a tell resumes them.
+`WT_TELL_CAN_WAIT=1` marks a tell as information that can wait (a
+staging deploy, red CI): to a parked worktree (no tmux client for 6h,
+no `wt w8`, not kept, not P0/TEAM REVIEW/READY TO DEPLOY) it is held
+in `<repo>.held`, not told. Back in it, the prompt says so: load
+`catch-up`, which reads `wt-held` and hands the rows over.
 
 ## Inbox
 
@@ -77,9 +82,10 @@ you file for a priority's work goes in that priority's grouping.
 `cswap` switches logins (auto near the usage limit). After a swap,
 artifacts from the other login read "not found": when the work needs
 one, republish it under the active login (`/repa`) and update that
-copy from then on; don't report it or ask me to share. A "Stopped
-watching Artifact … (not found)" notice needs nothing: end the turn
-at once, no tool call, no text. Listing artifacts = Artifact `list`
+copy from then on; don't report it or ask me to share. The
+`quiet-wakes` hook drops "Stopped watching Artifact" notices before
+they wake you; one that slips through needs nothing: end the turn at
+once, no tool call, no text. Listing artifacts = Artifact `list`
 plus `artifacts` (across logins); name the login on each link you
 report unless it's shared.
 Borrowed logins (someone else's) never publish artifacts, post to

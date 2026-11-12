@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# wt-held [list|count|done] [dir] — the tells wt-tell held for a parked
+# worktree (WT_TELL_CAN_WAIT: a staging deploy, red CI, …) instead of
+# waking its Claude. dir defaults to the current one.
+#   list   (default) age, key and prompt of each, oldest first
+#   count  how many
+#   done   handed over: moved to <repo>.held.log
+# Rows live in $LOCAL_CONFIG/worktrees/<repo>.held:
+# slug<TAB>epoch<TAB>key<TAB>prompt. The catch-up skill reads them.
+
+case "${1:-}" in
+  list|count|done) _cmd="$1"; shift ;;
+  -h|--help) sed -n '3,10s/^# \{0,1\}//p' "$0"; exit 0 ;;
+  *) _cmd=list ;;
+esac
+_top="$(git -C "${1:-.}" rev-parse --show-toplevel 2>/dev/null)" || exit 0
+case "$_top" in */.worktrees/?*) ;; *) test "$_cmd" != count || echo 0
+  exit 0 ;; esac
+_slug="${_top##*/}"
+_f="${LOCAL_CONFIG:?}/worktrees/$(basename "${_top%%/.worktrees/*}").held"
+
+case "$_cmd" in
+  count)
+    awk -F '\t' -v s="$_slug" '$1 == s { n++ } END { print n + 0 }' \
+      "$_f" 2>/dev/null || echo 0 ;;
+  list)
+    awk -F '\t' -v s="$_slug" -v now="$(date +%s)" '$1 == s {
+      a = now - $2
+      a = a < 3600 ? int(a / 60) "m" : a < 86400 ? int(a / 3600) "h" \
+        : int(a / 86400) "d"
+      printf "%s ago\t%s\t%s\n", a, $3, $4
+    }' "$_f" 2>/dev/null ;;
+  done)
+    test -s "$_f" || exit 0
+    awk -F '\t' -v s="$_slug" -v now="$(date +%s)" \
+      '$1 == s { print $0 "\t" now }' "$_f" >> "$_f.log"
+    awk -F '\t' -v s="$_slug" '$1 != s' "$_f" | sponge "$_f" ;;
+esac
