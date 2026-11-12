@@ -1,5 +1,7 @@
 return {
   "nvim-telescope/telescope.nvim",
+  -- Loaded by require from the after/plugin maps and commands. No
+  -- keys/cmd here: lazy.nvim deletes those on load, taking our maps.
   lazy = true,
   config = function()
     local actions = require "telescope.actions"
@@ -49,45 +51,5 @@ return {
     "nvim-lua/popup.nvim",
     "nvim-telescope/telescope-fzy-native.nvim",
     "nvim-telescope/telescope-ui-select.nvim",
-  },
-  cmd = {
-    "THL",
-    "GFiles",
-  },
-  keys = {
-    "<leader>ff",
-    "<leader>fg",
-    "<leader>fq",
-    "<leader>fl",
-    "<leader>fb",
-    "<leader>f:",
-    "<leader>f/",
-    "<leader>fh",
-    "<localleader>fc",
-    "<localleader>fi",
-    "<localleader>fp",
-    "<localleader>fb",
-    "<localleader>fs",
-    "<leader>ea",
-    "<leader>eu",
-    "<leader>el",
-    "<leader>ey",
-    "<leader>e.",
-    "<leader>es",
-    "<leader>eb",
-    "<leader>er",
-    "<leader>em",
-    "<leader>ec",
-    "<leader>ei",
-    "<leader>ef",
-    "<leader>ep",
-    "<leader>eq",
-    "<leader>eh",
-    "<C-\\><C-I>",
-    "<C-\\><C-P>",
-    "<C-\\><C-F>",
-    "<C-\\><C-H>",
-    "<leader><esc>",
-    "<leader>fm",
   },
 }
