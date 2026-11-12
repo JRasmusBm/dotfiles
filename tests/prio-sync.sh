@@ -129,6 +129,10 @@ check "link: the agent may only run prio linear" \
 check "link: the grouping is written under the outcome" \
   'test "$(sed -n "/^Three/,\$p" "$_f" | tr "\n" "|")" \
      = "Three|  in ABC-900   # created|  - ABC-20 is a hint|"'
+check "changes: the parent created and the ticket adopted" \
+  'test "$(cut -f2-6 "$_f.changes" | tr "\t\n" ":,")" \
+     = "link:created:ABC-900::Three,link:joined:ABC-20:ABC-900:Three," \
+   && "$_bin/prio" changes | grep -q "link   moved ABC-20 into ABC-900  (Three)"'
 "$_bin/prio" sync
 check "link: next sync reads the new grouping" \
   'grep -q "^Three	ABC-20	open" "$_f.tickets"'
@@ -176,6 +180,8 @@ printf 'y\n' | "$_bin/prio" guess abc-30 >/dev/null
 check "guess: y joins the ticket to the guessed priority's grouping" \
   'grep -q "^update id-ABC-30 {\"parentId\": \"id-ABC-10\"}" \
      "$_t/linear.json.calls" && grep -q "^ABC-30	accepted	2" "$_f.guesses"'
+check "changes: an accepted guess is logged" \
+  'tail -1 "$_f.changes" | cut -f2-5 | grep -q "^guess	joined	ABC-30	ABC-10$"'
 check "guess: settled, its row is gone" 'test -z "$(refs)"'
 
 # A stale prio: row (an old step row) goes on the next sync.

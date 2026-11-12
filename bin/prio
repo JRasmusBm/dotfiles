@@ -20,6 +20,7 @@ priority points at the Linear groupings that hold its work.
                         an agent finds the grouping that fits it, or
                         creates one, and links it (-n: print only)
   prio guess <TICKET>   accept or reject a guessed priority (popup)
+  prio changes [N]      the last N (20) changes prio made in Linear
   prio linear search|projects <words>
                         Linear lookups for the agents
   prio tickets          rank<TAB>TICKET<TAB>outcome, open tickets
@@ -60,6 +61,8 @@ Side files, next to it:
                       detail: the linking agent's runs
   priorities.guesses  TICKET, asked|none|accepted|rejected, rank,
                       epoch; a `-` cursor row: new tickets count from
+  priorities.changes  epoch, by (link|guess), created|joined, TICKET,
+                      grouping, outcome: every write prio made in Linear
   priorities.err      the last Linear read's error, if it failed
   worktrees/<repo>.p0 board rows `prio sync` moved into `# P0`: entry,
                       the section it came from
@@ -88,6 +91,7 @@ PINNED = FILE + '.pinned'
 CACHE = FILE + '.tickets'
 LINKS = FILE + '.links'
 GUESSES = FILE + '.guesses'
+CHANGES = FILE + '.changes'
 ERR = FILE + '.err'
 BOARDS = os.path.join(CONF, 'worktrees')
 INBOX = os.path.join(CONF, 'notifications')
@@ -971,8 +975,17 @@ def issue_id(tid):
     return d['issue']
 
 
-def join(tid, ref):
+def changed(by, what, tid, ref, outcome):
+    append(CHANGES, (int(time.time()), by, what, tid, ref, outcome))
+
+
+def join(tid, ref, by, outcome):
     """Put ticket tid into grouping ref, in Linear."""
+    _join(tid, ref)
+    changed(by, 'joined', tid, ref, outcome)
+
+
+def _join(tid, ref):
     kind, key = grouping(ref)
     i = issue_id(tid)
     if kind == 'parent':
@@ -996,7 +1009,7 @@ def join(tid, ref):
         'id: $i, input: $in) { success } }', {'i': i['id'], 'in': inp})
 
 
-def create_parent(team, title):
+def create_parent(team, title, outcome):
     t = gql('query($k: String!) { teams(filter: {key: {eq: $k}}) { nodes'
             ' { id } } }', {'k': team})['teams']['nodes']
     if not t:
@@ -1006,7 +1019,9 @@ def create_parent(team, title):
             ' { issue { identifier } } }',
             {'in': {'teamId': t[0]['id'], 'title': title,
                     'assigneeId': me}})
-    return d['issueCreate']['issue']['identifier']
+    tid = d['issueCreate']['issue']['identifier']
+    changed('link', 'created', tid, '', outcome)
+    return tid
 
 
 # Agents
@@ -1121,7 +1136,7 @@ def cmd_link(args):
         c = d.get('create') or {}
         if not grouping(ref) and c.get('team') and c.get('title'):
             ref, note = create_parent(c['team'].strip().upper(),
-                                      clean(c['title'], 200)), 'created'
+                                      clean(c['title'], 200), outcome), 'created'
         if not grouping(ref):
             append(LINKS, (int(time.time()), outcome, 'none',
                            clean(d.get('reason'), 200)))
@@ -1134,7 +1149,7 @@ def cmd_link(args):
             try:
                 i = issue_id(ticket(t))
                 if (i['assignee'] or {}).get('isMe') and not i['parent']:
-                    join(ticket(t), ref)
+                    join(ticket(t), ref, 'link', outcome)
                     adopted.append(ticket(t))
             except RuntimeError:
                 pass
@@ -1247,7 +1262,7 @@ def cmd_guess(args):
             input('Enter > ')
             return 1
         try:
-            join(t, gs[0]['ref'])
+            join(t, gs[0]['ref'], 'guess', p['outcome'])
         except RuntimeError as e:
             print(f'prio: {e}')
             input('Enter > ')
@@ -1316,12 +1331,26 @@ def cmd_sync(_args):
     return 0
 
 
+def cmd_changes(args):
+    n = int(args[0]) if args and args[0].isdigit() else 20
+    rows = tsv(CHANGES)[-n:]
+    if not rows:
+        print('prio has made no change in Linear')
+    for r in rows:
+        r += [''] * (6 - len(r))
+        when = time.strftime('%Y-%m-%d %H:%M', time.localtime(int(r[0])))
+        what = (f'created {r[3]}' if r[2] == 'created'
+                else f'moved {r[3]} into {r[4]}')
+        print(f'{when}  {r[1]:5}  {what}  ({r[5]})')
+    return 0
+
+
 CMDS = {'ls': cmd_ls, 'e': cmd_e, 'edit': cmd_edit, 'add': cmd_add,
         'done': cmd_done, 'in': cmd_in, 'link': cmd_link,
         'guess': cmd_guess, 'guess-new': cmd_guess_new,
         'linear': cmd_linear, 'tickets': cmd_tickets, 'slugs': cmd_slugs,
         'rank': cmd_rank, 'brief': cmd_brief, 'warn': cmd_warn,
-        'sync': cmd_sync}
+        'sync': cmd_sync, 'changes': cmd_changes}
 
 
 def main():
