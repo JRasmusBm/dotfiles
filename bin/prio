@@ -983,7 +983,11 @@ def sync_cache(ps):
         write(CACHE, text)
         if before != tickets(ps):
             snapshot('linear', ps)
-    known = {r[1] for r in rows}
+    # A parent grouping's own issue (often made by `prio link`) is the
+    # priority itself, not a ticket to guess: joining it is self-parenting.
+    known = {r[1] for r in rows} | {g['kind'][1] for p in ps
+                                    for g in p['groupings']
+                                    if g['kind'] and g['kind'][0] == 'parent'}
     return [(t, title) for t, title in new if t not in known]
 
 
@@ -1043,6 +1047,8 @@ def _join(tid, ref):
     kind, key = grouping(ref)
     i = issue_id(tid)
     if kind == 'parent':
+        if key == tid:
+            raise RuntimeError(f'{tid} is this grouping\'s parent already')
         inp = {'parentId': issue_id(key)['id']}
     elif kind == 'project':
         p = gql('query($s: String!) { projects(filter: {slugId: {eq: $s}})'
