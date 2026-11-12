@@ -164,19 +164,54 @@ p edit
 check "edit: swap of two pins the one moved up" \
   'test "$(tr "\n" "," < "$_f.pinned")" = "Fix the login,Another,"'
 
+# A file from before the tickets came from Linear: its old header and
+# hand-kept step notes. The popup shows each priority's tickets as
+# read-only lines; a save drops them again, takes the current header,
+# and drops the step notes whose ticket a grouping now holds.
+{ printf '# old header\n#   - [ ] ABC-123 a step   (first unchecked)\n'
+  sed '/^#/d' "$_f" | awk '{ print }
+    /^Fix the login/ { print "  - [x] ABC-7 the fix"; print "  - [ ] ABC-99 elsewhere"
+                       print "  - [ ] call them" }'; } > "$_t/old"
+cp "$_t/old" "$_f"
+printf '#!/bin/sh\ncp "$1" "%s/seen"\n' "$_t" > "$_t/bin/look"
+chmod +x "$_t/bin/look"
+_hand=$(grep -c "	hand	" "$_f.log")
+EDITOR="$_t/bin/look" p edit
+check "edit: shows each priority's tickets read-only, done first" \
+  'test "$(sed -n "/^Ship the export/,\$p" "$_t/seen" | grep "^  │" | tr "\n" ,)" \
+     = "  │ [x] ABC-1 spike,  │ [ ] ABC-2 build it,  │ [ ] ABC-3 docs,"'
+check "edit: the save keeps no ticket line" '! grep -q "^  │" "$_f"'
+check "edit: the old header becomes the current one" \
+  '! grep -q "old header\|first unchecked" "$_f" \
+   && grep -q "^# Priorities, rank = line order" "$_f"'
+check "edit: drops step notes its groupings hold, keeps the rest" \
+  '! grep -q "ABC-7 the fix" "$_f" && grep -q "  - \[ \] ABC-99 elsewhere" "$_f" \
+   && grep -q "  - \[ \] call them" "$_f"'
+check "edit: a cleanup alone is no hand edit" \
+  'test "$(grep -c "	hand	" "$_f.log")" = "$_hand"'
+printf '#!/bin/sh\nsed "s/^\\(Fix the login\\)/\\1!/" "$1" > "$1.n"; mv "$1.n" "$1"\n' \
+  > "$_t/bin/bang"; chmod +x "$_t/bin/bang"
+EDITOR="$_t/bin/bang" p edit
+check "edit: a real edit saves, still without ticket lines" \
+  'grep -q "^Fix the login!" "$_f" && ! grep -q "^  │" "$_f"'
+sed -i.b 's/^Fix the login!/Fix the login/' "$_f" && rm "$_f.b"
+
 # A vim-like editor opens each priority as one closed fold, its lines
-# included: real nvim records where each line's fold starts.
+# (and its ticket lines) included: real nvim records where each line's
+# fold starts.
 if command -v nvim >/dev/null; then
-  printf '#!/bin/sh\nexec %s --headless -u NONE -i NONE "$@" -c %s -c "qa!"\n' \
+  printf '#!/bin/sh\nexec %s --headless -u NONE -i NONE "$@" -c %s -c %s -c "qa!"\n' \
     "$(command -v nvim)" \
     "'call writefile(map(range(1, line(\"\$\")), \"foldclosed(v:val)\"), \"$_t/folds\")'" \
+    "'w! $_t/seen'" \
     > "$_t/bin/nvim"
   chmod +x "$_t/bin/nvim"
   EDITOR=nvim p edit </dev/null >/dev/null 2>&1
   check "edit: nvim folds each priority with its lines" \
-    'test "$(grep -n "^[^ #]" "$_f" | cut -d: -f1 | tr "\n" ,)" \
+    'grep -q "^  │" "$_t/seen" \
+     && test "$(grep -n "^[^ #]" "$_t/seen" | cut -d: -f1 | tr "\n" ,)" \
        = "$(sort -un "$_t/folds" | grep -v "^-1" | tr "\n" ,)" \
-     && test "$(grep -c "^-1" "$_t/folds")" = "$(grep -c "^#\|^$" "$_f")"'
+     && test "$(grep -c "^-1" "$_t/folds")" = "$(grep -c "^#\|^$" "$_t/seen")"'
 fi
 
 p done "Another" >/dev/null
