@@ -80,6 +80,12 @@ pr bbb
 say 'Done.'
 check 'a new sha pings again' 'test "$(rows merge)" = 1'
 check 'keyed per repo, PR and sha in wt-told' \
-  'grep -c "merge-hook:5:" "$LOCAL_CONFIG/wt-told" | grep -qx 2'
+  'grep -c "merge-ping:5:" "$LOCAL_CONFIG/wt-told" | grep -qx 2'
+: > "$_inbox"
+pr ccc
+printf '%s\tmerge-ping:5:ccc\n' "$(pwd -P)" >> "$LOCAL_CONFIG/wt-told"
+say 'Done.'
+check 'a sha wt-pr-watch already pinged: no second ping' \
+  'test "$(rows merge)" = 0'
 test "$_fail" = 0 || { cat "$_inbox"; cat "$FAKE/calls"; }
 exit "$_fail"
