@@ -21,17 +21,20 @@ local CHUNK_SECONDS = 2
 local POLL_SECONDS = 0.25
 local PREVIEW_CHARS = 400
 local MAX_DICTATION_ITEMS = 2
+-- CopyQ picks up the clipboard on its own schedule: retry the tag
+-- until the dictated text shows up in its history.
 local MARK_DELAY = 0.3
+local MARK_ATTEMPTS = 20
 local EVAL_TIMEOUT = 5
 
-local function copyqEval(script, callback)
+local function copyqEval(script, callback, ...)
   local timer
-  local task = hs.task.new(COPYQ, function()
+  local task = hs.task.new(COPYQ, function(_, stdout)
     timer:stop()
     if callback then
-      callback()
+      callback(stdout)
     end
-  end, { "eval", script })
+  end, { "eval", "--", script, ... })
   timer = hs.timer.doAfter(EVAL_TIMEOUT, function()
     if task:isRunning() then
       task:terminate()
@@ -63,11 +66,30 @@ if (dictationRows.length > maxToKeep) {
   copyqEval(script)
 end
 
-local function markAsDictation()
-  local script = [[
-change(0, "application/x-dictation", "1");
+-- Tags the row holding the dictated text, not row 0: CopyQ may not
+-- have added it yet, and row 0 is then something the user copied.
+local MARK_SCRIPT = [[
+var text = str(arguments[1]);
+for (var i = 0; i < Math.min(count(), 10); i++) {
+  if (str(read(i)) === text) {
+    change(i, "application/x-dictation", "1");
+    print("marked");
+    break;
+  }
+}
 ]]
-  copyqEval(script, cleanupDictationHistory)
+
+local function markAsDictation(text, attempt)
+  attempt = attempt or 1
+  copyqEval(MARK_SCRIPT, function(stdout)
+    if stdout == "marked" then
+      cleanupDictationHistory()
+    elseif attempt < MARK_ATTEMPTS then
+      hs.timer.doAfter(MARK_DELAY, function()
+        markAsDictation(text, attempt + 1)
+      end)
+    end
+  end, text)
 end
 
 local function trim(s)
@@ -178,7 +200,9 @@ end
 local function paste(text)
   hs.pasteboard.setContents(text)
   hs.eventtap.keyStroke({ "cmd" }, "v")
-  hs.timer.doAfter(MARK_DELAY, markAsDictation)
+  hs.timer.doAfter(MARK_DELAY, function()
+    markAsDictation(text)
+  end)
 end
 
 -- A chunk is finished once ffmpeg has started the next one.
