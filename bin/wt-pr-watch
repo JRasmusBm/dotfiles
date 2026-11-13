@@ -12,9 +12,10 @@
 # Conflicts with dev get no tell: a rebase goes stale as dev moves and
 # each force-push reruns CI, so the agent rebases only when it ships.
 # Checks done, CLEAN, not draft, based on dev, no "do not merge": pings
-# me as `merge` from its cli pane (once per head sha, not while a merge
-# row is pending there, not when blocked or snoozed). `wt rd` clears
-# the inbox, so without this a parked PR never comes back to me.
+# me as `merge` from its cli pane (once per head sha, a key shared with
+# claude-notify's stop ping; not while a merge row is pending there, not
+# when blocked or snoozed): a green PR whose agent sits idle still
+# reaches me.
 # Called by wt-sync every 5th minute. A tell that finds Claude busy
 # or not up yet isn't recorded, so the next run retries it.
 

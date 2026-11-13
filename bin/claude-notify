@@ -198,10 +198,10 @@ if [ -n "$TMUX_PANE" ] && awk -F'\t' -v p="$TMUX_PANE" -v c="$_class" \
   exit 0
 fi
 # READY TO MERGE once per head sha: every later stop on the same
-# green commit pinged it again. A question still pings. Own key, not
-# wt-pr-watch's merge-ping: that one resurfaces a PR `wt rd` parked.
+# green commit pinged it again. A question still pings. The key is
+# wt-pr-watch's too: one key per sha, or both pinged it (RAS-21).
 if [ "$_class" = merge ]; then
-  _key="$(git rev-parse --show-toplevel 2>/dev/null)	merge-hook:${_rest##*#}:$_sha"
+  _key="$(git rev-parse --show-toplevel 2>/dev/null)	merge-ping:${_rest##*#}:$_sha"
   if grep -qxF "$_key" "$LOCAL_CONFIG/wt-told" 2>/dev/null; then
     [ -n "$_q" ] || exit 0
   else
