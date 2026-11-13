@@ -23,3 +23,5 @@ debug.test
 .ignore
 .DS_Store
 dump.rdb
+
+**/.claude/settings.local.json
