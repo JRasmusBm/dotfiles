@@ -83,6 +83,7 @@ watching Artifact … (not found)" notice needs nothing: end the turn
 at once, no tool call, no text. Listing artifacts = Artifact `list`
 plus `artifacts` (across logins); name the login on each link you
 report unless it's shared.
-Borrowed logins (someone else's) never publish artifacts, post to
+Borrowed logins (any not in `$CSWAP_RC_ACCOUNTS`: an email naming
+someone else can still be mine) never publish artifacts, post to
 Slack or use Remote Control; hooks refuse. Report the local file path
 and SendUserFile it instead.
