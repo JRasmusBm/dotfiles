@@ -84,6 +84,7 @@ at once, no tool call, no text. Listing artifacts = Artifact `list`
 plus `artifacts` (across logins); name the login on each link you
 report unless it's shared.
 Borrowed logins (any not in `$CSWAP_RC_ACCOUNTS`: an email naming
-someone else can still be mine) never publish artifacts, post to
-Slack or use Remote Control; hooks refuse. Report the local file path
-and SendUserFile it instead.
+someone else can still be mine) never publish artifacts, use the
+Slack connector (it acts as them) or Remote Control; hooks refuse. An
+artifact: report the local path, SendUserFile it. A Slack post (on my
+word, as always): `slack-post`, which posts as me and watches replies.
