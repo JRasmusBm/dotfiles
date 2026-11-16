@@ -10,10 +10,3 @@
 - Is it breaking anything else? Who else runs this code (shared
   code, other tenants, other jobs)? What do the logs, alerts,
   metrics and costs say since it went out? Read-only.
-- Broken for users? A stable state comes first (CLAUDE.md says
-  how). Back or forward: is rolling back safe (migrations, data
-  written, a contract the old build can't read), or is the fix
-  smaller and proven? Then: what broke, for whom, since when, what
-  did I do?
-- Works: who should know (announce node)? Anything left before I
-  call it done?
