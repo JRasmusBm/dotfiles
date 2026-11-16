@@ -272,3 +272,11 @@ for.
   it blocks something already in flight.
 - If I interrupt with a question, answer it and carry on. The loop
   survives a conversation; only `stop: true` ends it.
+- I'm away ("off for the weekend"): never block on me; questions go
+  in the PR body. Spend spare tokens: on a 5h limit, wake at the
+  reset; stop only at the weekly limit. Keep the Mac awake (detached
+  `caffeinate`). Saved-for-later Slack and my ticket Todos are one
+  queue. Prod or staging infra, purchases and date-gated steps stay
+  with me.
+- Nudge an idle agent with `tmux send-keys "<text>"`, then a separate
+  `send-keys C-m` (in one call Enter lands as a newline).

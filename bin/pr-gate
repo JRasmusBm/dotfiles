@@ -17,7 +17,7 @@
 
 set -e
 
-_board='A PR needs its own ticket and wt worktree: `wt fix|feat <ticket url>` from the main checkout (work-management). Port the commits there, then open the PR.'
+_board='A PR needs its own ticket and wt worktree: `wt fix|feat <ticket url>` from the main checkout (wt skill). Port the commits there, then open the PR.'
 
 _parse='
   (.tool_input.command // "") as $raw

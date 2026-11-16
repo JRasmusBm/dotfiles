@@ -1691,7 +1691,7 @@ case "${1:-}" in
       && ! echo "${1:-}" | $_grep -Eiq '[a-z]+-[0-9]+'; then
       echo "wt: agents don't run 'wt add' with free text. New work is" \
         "a ticket: claim-work, then 'WT_NO_ATTACH=1 wt fix|feat <url>'" \
-        "with WT_PROMPT_EXTRA (work-management skill). A shared" \
+        "with WT_PROMPT_EXTRA (wt skill). A shared" \
         "blocker (red dev CI): check 'gh pr list' for a fix in" \
         "flight first and wait on it ('wt rb')." >&2
       exit 1

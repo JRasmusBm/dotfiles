@@ -164,8 +164,8 @@ Worktrees live at `${repo}/.worktrees/${branch}`, sessions are named
 by worktree slug, and work moves only through `wt` (never raw `git
 worktree add`). Load the `wt` skill before any `wt`, `notif` or
 `cswap` command, a question about the board, the inbox or where
-work runs, listing artifacts or one that reads "not found";
-`work-management` for starting, parking or finishing work.
+work runs, listing artifacts or one that reads "not found", and
+for starting, parking, splitting or finishing work.
 
 ## Dev stack
 
