@@ -6,8 +6,8 @@ Before ending a turn, consider the following.
 - What exactly am I waiting on: CI, a deploy, another PR, a
   person, a date? Who or what tells me it's over?
 - Waiting on something that isn't Rasmus? Then `wt w8 <deadline>
-  "<what>"`, so the
-  wait has an end someone checks.
+  "<what>"`, so the wait has an
+  end someone checks.
 - Is it a person? Have I asked them, where they will see it?
 - If it never arrives, when do I notice, and what then?
 - Is this finished: merged, verified live, announced? Then close
