@@ -13,9 +13,9 @@ Inventory drains while cost drops. Baseline W46, from my-impact:
 
 | | W46 | Target direction |
 |---|---|---|
-| Inventory (started, not live) | 68, 30 older than 7 d | down |
+| Inventory (started, not live) | 68, 30 older than 7 d | way down |
 | Deployed per week | 93 | way up |
-| Tokens per deploy | 13.6M (budget 105%) | down |
+| Tokens per deploy | 13.6M (budget 105%) | way down |
 
 Lead time follows inventory (Little's law), so it isn't a separate
 target.
