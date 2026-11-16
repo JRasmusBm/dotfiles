@@ -57,7 +57,7 @@
           },
           {
             "type": "command",
-            "command": "echo 'Flow: which step is this, per the Nodes index of the flow skill? Read that node from disk before acting: nodes change, so a copy loaded earlier in this session may be stale.'",
+            "command": "echo 'Flow: which step is this? Give it to a subagent as the flow skill says, so it answers the current node fresh.'",
             "timeout": 5
           }
         ]
