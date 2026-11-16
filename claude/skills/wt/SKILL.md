@@ -23,15 +23,10 @@ agent. One tmux server, `default`, holds every session: never
 
 - Start: `wt fix|feat <linear url|text>`, `wt review <pr>` (someone
   else's work: review only, no code changes), `wt add <branch>`.
-- Blocked by another ticket's PR: `wt rb <worktree|ticket>`. Never a
-  free-text reason: nothing lifts it, so it stalls. Waiting on a person
-  isn't a block: ask them, then `wt w8`.
-- Waiting on an event (CI, deploy, review, a reply, a scheduled run):
-  `wt w8 <estimate> "<what>"` before you start waiting, never on me and
-  never ask whether to wait; `wt w8 done` when it arrives. Other tells
-  (merged, deploy stage) don't end it: only you know if that was it.
-- Know when to look again: `wt sz <when>`. Nothing else schedules a
-  wake-up; sleep loops and timers are denied.
+- Which wait: the flow skill's waiting node. `wt rb
+  <worktree|ticket>` (never free text: nothing lifts it), `wt w8
+  <estimate> "<what>"` (`wt w8 done` when it arrives; other tells
+  don't end it), `wt sz <when>` (nothing else schedules a wake-up).
 - My next step needs real focus (manual setup, a direction check):
   `wt fx "<what I must do>"`.
 - Park: `wt rt` team review, `wt rd` ready to deploy, `wt rp` prod
