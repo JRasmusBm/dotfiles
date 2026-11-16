@@ -28,8 +28,9 @@ Agents merge their own PRs here and verify the result
 live (installed scripts, launchd jobs, a real run) without
 asking: the repo is my personal tooling, the merge is the
 release, and waiting on me only stalls it. No CI runs on
-PRs and `/iterate-review` doesn't exist in this setup, so
-the hand-back bar is local tests plus that live check.
+PRs and `/iterate-review` doesn't exist in this setup: for
+the flow skill's is-it-good node, local tests plus that live
+check stand in for CI.
 
 ## Git Hooks
 

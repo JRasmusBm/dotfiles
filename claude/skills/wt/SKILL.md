@@ -39,10 +39,8 @@ agent. One tmux server, `default`, holds every session: never
   waits in `wt ra` for my send. `wt done` /
   `wt cancel` are reversible (`wt resume`): run them yourself, never
   ask. `wt forget` is the only destroy.
-- `wt night`: told to work alone to the hand-back bar on your own
-  recommended answers (stop on the draft PR where a design choice
-  is open, unless `/rd` or the `rd` label).
-  Finished: say so and stop, no invented work. Follow-up tickets:
+- `wt night`: told to work alone on your own recommended answers,
+  as far as the flow skill takes you. Finished: say so and stop, no invented work. Follow-up tickets:
   `wt night queue <url>`.
 - An isolated subagent's worktree is swept after a day: cherry-pick
   what you keep into your branch right away.
