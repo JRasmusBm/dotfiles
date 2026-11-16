@@ -34,11 +34,8 @@ files), resolving review threads the code already answers (reply
 with the commit that fixed it, then resolve), and cancelling your
 own stuck ship request: do them yourself, then ship again; then end
 the turn:
-`wt-sync` tells you what happens next), and "is it
-released/deployed?":
-confirm it is live, then run read-only checks that it behaves as
-intended (logs, replica, the UI opened in a browser: a bundle grep
-proves it shipped, not that it renders). Long pipelines, polls and
+`wt-sync` tells you what happens next). Merged, deployed, or
+"is it released?": the flow skill's live node. Long pipelines, polls and
 browser loops run in a background agent; the main thread stays free
 to talk. A stop while your own background work runs doesn't
 ping me, so tell me when you need me, even mid-wait: a decision
