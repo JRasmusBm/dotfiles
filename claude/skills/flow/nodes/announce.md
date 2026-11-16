@@ -1,9 +1,8 @@
 # Needs announcement
 
 The purpose of announcing tickets is clear communication and coordination.
-Answer each question below fresh, then send or don't. A draft
-written before this step is not an answer: re-decide its channel
-and audience too.
+Then send or don't. A draft written before this step is not an
+answer: re-decide its channel and audience too.
 
 - Is it still unsettled? Is the ticket still in Needs announcement
   (Rasmus moving it on, e.g. to Done, means he decided it needed no
