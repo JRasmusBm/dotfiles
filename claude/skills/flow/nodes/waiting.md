@@ -6,11 +6,10 @@ Before ending a turn, consider the following.
 - What exactly am I waiting on: CI, a deploy, another PR, a
   person, a date? Who or what tells me it's over?
 - Waiting on something that isn't Rasmus? Then `wt w8 <deadline>
-  "<what>"`, so the wait has an
-  end someone checks.
+  "<what>"`, so the wait has an end someone checks.
 - Is it a person? Have I asked them, where they will see it?
-- If it never arrives, when do I notice, and what then?
 - Is this finished: merged, verified live, announced? Then close
   it, don't leave it open.
-- Is it Rasmus's? Only what the other nodes say is his. Does my last
-  line say what I need from him?
+- Am I waiting for Rasmus? If so, will he be able to tell from the last section
+  in the thread exactly what I need from him so he can unblock me quickly
+  and effectively?
