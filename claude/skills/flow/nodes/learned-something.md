@@ -4,11 +4,16 @@ A rule, a follow-up, a better instruction. Before asking Rasmus
 "should I add this?", consider the following.
 
 - Would it have prevented what happened, and will a future agent hit
-  it again? A one-off doesn't need a rule. Could a test, lint or CI
-  check catch this class of bug instead, so it can't come back?
+  it again? A one-off doesn't need a rule.
+- Would an agent really apply it at that moment, or would it only
+  make us feel covered? An instruction gets skipped deep in a long
+  session and costs tokens in every short one. What would catch it
+  for sure: a test, lint or CI check, or a script that measures it
+  and pings past a threshold?
 - Does a skill, CLAUDE.md or this flow already say it? Then why
   didn't it work: sharpen that line instead of adding a new one.
-- Where does it belong? Facts about a repo go in that repo's skills,
+- Where does it belong? Only where it bites: global context loads
+  for every task, and teammates' work differs. Facts about a repo go in that repo's skills,
   shipped like any change (is-it-good). How Rasmus works goes in his
   tooling repos (load private-overlay). Can I make that change safely
   without him?

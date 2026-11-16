@@ -27,6 +27,9 @@ Before asking Rasmus "is it good?", consider the following.
   incidents/breaking things). How (fast) can we recover? Too worrying
   to ship plainly: can it go out behind a feature flag and be tested
   in prod first?
+- Could it run up a bill (warehouse queries, AI calls, something on
+  a schedule)? What measures that cost for this project and pings
+  past a threshold, before it runs without anyone watching?
 - Is a high-stakes period close (e.g. BFCM for e-commerce)? Then
   nothing may break, freeze or not: how would this fail during it,
   and could I undo it in minutes? Is there a freeze? Check the team's
