@@ -13,18 +13,16 @@ answer: re-decide its channel and audience too.
   so it has. A customer feature still hidden from customers by a
   release flag, an experiment, a pending run or a missing entry point
   hasn't, even if staff can see it.
-- Is it one step of a feature rolling out in stages? Then is this the
-  batch the post belongs to, and is this ticket the one to write it?
 - Is it a game-changer for customers/staff, and which channel does that
   make it?
 - Who reads it: customers or the team? Is it sensitive enough to warrant
   Rasmus' attention?
 - Who is waiting to hear about this, and where? (The thread it came
   from, an earlier post that promised it.) Read the room there
-  first: what did we promise them, and what are they waiting on now?
-  Can they try this one themselves? If it's the one piece they can't
-  see or test, does a cross-post only draw attention to what's still
-  missing? Would the post land better with the batch they can use?
+  first: what did we promise? Is this a useful notification? Would
+  it be more helpful to merge it with other changes, and is this the
+  last item in the batch that should post, or should we skip in
+  favor of a later one?
 - Would Rasmus send it as written: clear, to the point, in his voice?
 - Check the date: is it still worth sending, or would it come across as old news?
 - Does it require numbers? (For example improved error percentages)
