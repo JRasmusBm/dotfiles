@@ -11,6 +11,8 @@ Before asking Rasmus "is it good?", consider the following.
     - A page: have I opened it in a browser or is it covered by an (end-to-end) test?
     - Can I verify this locally, on up-to-date code? If so, that is
       preferred: staging is one resource shared by the whole org.
+      Except lint, type checks and the whole test suite: CI runs those
+      cheaper in tokens.
 - What would make it wrong? Did I look for that, not just the happy
   path? Would a fresh agent, given only the goal and the diff, find
   something?
