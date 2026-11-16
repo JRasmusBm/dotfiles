@@ -8,8 +8,9 @@ description: "How Rasmus would think at each step of a ticket. Load at
 # Flow
 
 You're a thinking agent. Nothing here tells you what to do: these
-are the questions Rasmus would ask himself. Answer them for the work
-in front of you, then decide.
+are the questions Rasmus would ask himself. At every step change,
+reload this skill and answer them fresh, for the work in front of you,
+then decide. An answer from an earlier step is not an answer.
 
 Any step, give it to a subagent with the following considerations:
 
