@@ -9,8 +9,8 @@
 # (git-w8, bw8, ...), stalled (`wt-cold`: a work item stopped moving;
 # inbox only, no toast, sound or bell), step (`prio sync`: a
 # priority's current step that no worktree carries; inbox only, and
-# ranked by that priority in `notif`), fyi (nothing needed: inbox
-# only too). NOTIFY_CTX names the row's place when not called from a
+# ranked by that priority in `notif`), fyi (nothing needed: straight
+# to the recent list, never a pending row or a toast). NOTIFY_CTX names the row's place when not called from a
 # pane (default: the cwd's basename). NOTIFY_REF tags the row with an
 # id that survives a jump re-keying it to another pane, so its sender
 # can drop it later (`notif seen-ref`; `wt-cold` does).
@@ -79,11 +79,20 @@ if [ -n "$LOCAL_CONFIG" ]; then
   # [ref]. NOTIFY_SID (a Claude session id) finds the chat again once
   # its pane is gone (`claude-pane`); the path is the anchor `notif`
   # reopens from otherwise (e.g. after `wt rt`/`rm`).
-  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s\n' \
+  _row="$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s' \
     "$(date +%s)" "$_ctx" "$(_flat "$_title")" "$(_flat "$_msg")" \
     "$_path" \
     "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" "${NOTIFY_SID:-}" \
-    "${NOTIFY_REF:+	$NOTIFY_REF}" >> "$_inbox"
+    "${NOTIFY_REF:+	$NOTIFY_REF}")"
+  if [ "$_class" = fyi ]; then
+    # Needs nothing from me: cleared on arrival, so it shows in the
+    # recent list and the log but never waits in the inbox (RAS-21:
+    # half the pending rows were a "done" that needed nothing).
+    printf '%s\t%s\n' "$(date +%s)" "$_row" \
+      | tee -a "$_inbox.log" >> "$_inbox.recent"
+    exit 0
+  fi
+  printf '%s\n' "$_row" >> "$_inbox"
   focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
   # Update the status-bar counter (`notif count`) right away.
   if [ -n "$TMUX_PANE" ]; then

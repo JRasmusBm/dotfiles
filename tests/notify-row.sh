@@ -33,7 +33,7 @@ no() { echo "FAIL $1"; _fail=1; }
 check() { if eval "$2"; then ok "$1"; else no "$1"; fi; }
 
 echo '# notify'
-(cd "$_t" && NOTIFY_CLASS=fyi notify "P0	brief" "$(printf \
+(cd "$_t" && NOTIFY_CLASS=stalled notify "P0	brief" "$(printf \
   'line one\n\n12\nline	three\n')")
 check 'a multi-line message is one row' \
   'test "$(wc -l < "$_inbox")" -eq 1'
@@ -42,7 +42,7 @@ check 'with all nine fields' \
 check 'title tab became a space' 'test "$(cut -f3 "$_inbox")" = "P0 brief"'
 check 'lines joined by a separator, blank ones dropped' \
   'test "$(cut -f4 "$_inbox")" = "line one · 12 · line three"'
-NOTIFY_CLASS=fyi notify t 'plain' >/dev/null
+NOTIFY_CLASS=stalled notify t 'plain' >/dev/null
 check 'a one-line message is unchanged' \
   'test "$(sed -n 2p "$_inbox" | cut -f4)" = plain'
 
