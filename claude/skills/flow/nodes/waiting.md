@@ -18,4 +18,5 @@ Before ending a turn, consider the following.
   it, don't leave it open.
 - Am I waiting for Rasmus? If so, will he be able to tell from the last section
   in the thread exactly what I need from him so he can unblock me quickly
-  and effectively?
+  and effectively? A direction or testing check: can he do it in two
+  minutes from an artifact (screenshots, the one or two decisions)?

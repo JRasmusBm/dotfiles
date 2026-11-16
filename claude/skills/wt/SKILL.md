@@ -37,9 +37,7 @@ agent. One tmux server, `default`, holds every session: never
   <estimate> "<what>"` (`wt w8 done` when it arrives; other tells
   don't end it), `wt sz <when>` (nothing else schedules a wake-up).
 - My next step needs real focus (manual setup, a direction check):
-  `wt fx "<what I must do>"`. For a direction or testing check,
-  publish an artifact first (screenshots, the 1-2 decisions), so my
-  check takes 2 minutes.
+  `wt fx "<what I must do>"`.
 - Park: `wt rt` team review, `wt rd` ready to deploy, `wt rp` prod
   review, `wt ra` to announce, `wt ip` back in progress.
 - PR merged: you get told; run what `jrb-hook merged-hint` says.
@@ -47,55 +45,32 @@ agent. One tmux server, `default`, holds every session: never
   saying so, stop. Where
   the merge is the release (a tooling repo), not READY TO DEPLOY: `wt
   rp`, `wt w8` until it should show, check it live, `wt done`.
-- Finished = merged, verified live, and announced if users or the team
-  see it. Announcing: the flow skill's announce node; a customer post
-  waits in `wt ra` for my send. `wt done` /
+- Finished and announcing: the flow skill's waiting and announce
+  nodes; a customer post waits in `wt ra` for my send. `wt done` /
   `wt cancel` are reversible (`wt resume`): run them yourself, never
   ask. `wt forget` is the only destroy.
 - `wt night`: told to work alone on your own recommended answers,
-  as far as the flow skill takes you. Finished: say so and stop, no invented work. Follow-up tickets:
-  `wt night queue <url>`.
+  as far as the flow skill takes you. Finished: say so and stop, no
+  invented work. Follow-up tickets: `wt night queue <url>`.
 - An isolated subagent's worktree is swept after a day: cherry-pick
   what you keep into your branch right away.
 - `wt id` prints the slug, to point another agent at you.
 
 ## Start new work
 
-New work = a worktree agent, started in the same turn, before any
-edit or subagent (whether it is new work: flow skill,
-asked-for-a-change node). That agent investigates, not this session.
-Never: a branch switched or created in an old worktree, `wt add` with
-free text, a subagent standing in for the agent, two worktrees on one
-ticket id.
-
-1. Ticket and claim: the repo's own claim step, if it has one (where
-   the ticket goes and who owns it: flow skill, picking-up and
-   drafting-a-ticket nodes).
-2. `WT_NO_ATTACH=1 wt fix|feat <url>`, with `WT_PROMPT_EXTRA` for
-   what's known; the branch starts at current HEAD.
-3. Brief: `ListAgents`, the `interactive` row, `SendMessage` what the
-   ticket lacks: decided and rejected with why, prior PRs/branches to
-   port (never push to someone else's PR), file pointers, a rebase if
-   HEAD wasn't the base.
-4. Report ticket link, slug, brief gist, then stop: its notifications
-   reach my inbox.
-
-A follow-up (whether to split: asked-for-a-change node) gets its own
-worktree and agent the same way, never a branch on the parent's id.
-Needs this PR's code: run `wt feat` from this worktree, base the
-draft PR on this branch, retarget once it merges. Then `wt rb
-<this-slug>` in the new session. Report the PR, both tickets, the slug.
-
-Staged rollout (one sub-issue per surface): the parent owns the post.
-A sub-issue with open siblings comments "Live: <what>, <PR>" on the
-parent and `wt-tell`s the parent's agent; the parent redrafts and `wt
-ra`.
+What to ask: the flow skill's starting-new-work node. Mechanics:
+`WT_NO_ATTACH=1 wt fix|feat <url>`, with `WT_PROMPT_EXTRA` for what's
+known; the branch starts at current HEAD, so a follow-up that needs
+this PR's code runs it from this worktree, then `wt rb <this-slug>`
+in the new session. Brief the new agent: `ListAgents`, its
+`interactive` row, `SendMessage`. A branch switched in an old
+worktree or `wt add` with free text leaves the board out of sync.
 
 ## Telling another agent
 
-`wt-tell <worktree path> <key> <ping> <prompt>`: the goal and why in a
-few sentences; it picks the how. No file lists, steps or "every X":
-it follows them literally. One tell per key; a correction is a new
+`wt-tell <worktree path> <key> <ping> <prompt>` (what to say:
+starting-new-work node, the brief questions). One tell per key; a
+correction is a new
 key. Exit 1 with no output = busy, nothing delivered: retry later.
 Idle chats get closed after an hour; a tell resumes them.
 
@@ -108,8 +83,7 @@ me for every stalled item, so an empty inbox means nothing waits on
 me: never add a state that lets work go quiet.
 
 Priorities: `$LOCAL_CONFIG/priorities` (`prio`, `prio add`). Their
-tickets come from Linear groupings (project, parent, label): a ticket
-you file for a priority's work goes in that priority's grouping.
+tickets come from Linear groupings (project, parent, label).
 
 ## Claude accounts
 

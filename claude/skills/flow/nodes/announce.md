@@ -22,7 +22,8 @@ answer: re-decide its channel and audience too.
   first: what did we promise? Is this a useful notification? Would
   it be more helpful to merge it with other changes, and is this the
   last item in the batch that should post, or should we skip in
-  favor of a later one?
+  favor of a later one? A sub-issue with open siblings: the parent
+  owns the post, so tell its agent what went live instead.
 - Would Rasmus send it as written: clear, to the point, in his voice?
 - Check the date: is it still worth sending, or would it come across as old news?
 - Does it require numbers? (For example improved error percentages)
