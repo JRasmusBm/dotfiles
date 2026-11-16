@@ -13,6 +13,11 @@ Before asking Rasmus "is it good?", consider the following.
       preferred: staging is one resource shared by the whole org.
       Except lint, type checks and the whole test suite: CI runs those
       cheaper in tokens.
+- When does it reach users? Does merging release it, or does
+  something else ship it (a shared image, a scheduled build, another
+  person's deploy)? If merged means live whenever anyone builds, it
+  is tested the way it will run before merge, not in a rollout I
+  plan to do later.
 - What would make it wrong? Did I look for that, not just the happy
   path? Would a fresh agent, given only the goal and the diff, find
   something?
