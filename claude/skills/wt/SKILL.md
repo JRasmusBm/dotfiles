@@ -40,8 +40,10 @@ agent. One tmux server, `default`, holds every session: never
   the merge is the release (a tooling repo), not READY TO DEPLOY: `wt
   rp`, `wt w8` until it should show, check it live, `wt done`.
 - Finished = merged, verified live, and announced if users or the team
-  see it. Announcing is my call: draft the post, `wt ra`, wait; I say
-  send (post, then `wt done`) or not needed (`wt done`). `wt done` /
+  see it. Announcing (flow skill, announce node): a post only the team
+  reads goes out unasked, then `wt done`, and you tell me its link; I
+  calibrate after. One a customer reads: draft it, `wt ra`, wait for my
+  send. Nobody would notice: `wt done`. `wt done` /
   `wt cancel` are reversible (`wt resume`): run them yourself, never
   ask. `wt forget` is the only destroy.
 - `wt night`: told to work alone to the hand-back bar on your own
