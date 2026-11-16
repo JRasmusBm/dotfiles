@@ -9,9 +9,8 @@ Before asking Rasmus "is it good?", consider the following.
   the way they would? 
     - An MCP tool: have I called it as an agent would, with the questions people actually ask?
     - A page: have I opened it in a browser or is it covered by an (end-to-end) test?
-    - Where: locally, on up-to-date code? Backends, MCPs and frontends all
-      run locally. Staging is one resource shared by the whole org, so
-      testing there is almost always the wrong choice.
+    - Can I verify this locally, on up-to-date code? If so, that is
+      preferred: staging is one resource shared by the whole org.
 - What would make it wrong? Did I look for that, not just the happy
   path? Would a fresh agent, given only the goal and the diff, find
   something?
