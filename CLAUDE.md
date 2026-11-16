@@ -26,8 +26,11 @@ Existing non-symlink files are backed up to `~/.backup_dotfiles/` before being r
 
 Agents merge their own PRs here and verify the result
 live (installed scripts, launchd jobs, a real run) without
-asking: the repo is my personal tooling, the merge is the
-release, and waiting on me only stalls it. No CI runs on
+asking, design included: I judge tooling by using it, so
+build your recommendation and I adjust after. The repo is my
+personal tooling, the merge is the release, and waiting on
+me only stalls it. Exception: the flow skill, where I sign
+off every change. No CI runs on
 PRs and `/iterate-review` doesn't exist in this setup, so
 the hand-back bar is local tests plus that live check.
 
