@@ -23,8 +23,7 @@ Don't ask "Want me to do X?" — just do it. Includes UI and visual
 changes (build it and show me, don't post a mockup and wait),
 committing what you fixed once verified (only your hunks), and my
 PRs: push to the branch and keep the title/body in sync without
-asking, then report the head sha (watch CI only in `/iterate-review`
-or when asked; ship when the flow skill's is-it-good node gives you
+asking, then report the head sha (ship when the flow skill's is-it-good node gives you
 confidence, through the repo's ship queue where it has one, else on
 my word. Prod broken for
 users (a crashing page) needs no word: unless someone's open
@@ -56,10 +55,8 @@ context a turn, a fresh one ~57k. A branch I cite as prior work is the starting 
 show` it, port and extend, and say what came from it.
 
 When unsure, take the option that's cheap to
-undo, do the work, and ask only about that cheap change. Example:
-fix in this PR whatever would break prod. For a fix that might
-belong in a follow-up, build it as a follow-up PR and ask whether
-to pull it back in, so my answer is a quick git move, not a build.
+undo, do the work, and ask only about that cheap change. In this
+PR or a follow-up: the flow skill's asked-for-a-change node.
 
 Replace, don't accrete. Rewrite what's there, don't append beside it.
 Adding lines? Name what they replace. A narrow ask gets a narrow
@@ -115,12 +112,12 @@ Before asking approval: load the skills, read the files to change,
 and turn every risk you can check now into a fact. A stakeholder's
 spec is the source of truth; an unspec'd case takes the closest
 spec'd state. Multi-piece work: orthogonal agent-ready briefs
-(goal, deps, settled context, files to read, skills, grill-on,
+(goal, deps, settled context, files to read, skills,
 acceptance, boundaries), a shared settled section, a task graph.
 Settled = what I or a stakeholder said, or what base already does;
 your own requirements (undo, recovery, extra modes) are proposals,
-marked so, and never settled: briefed agents build the smallest
-version and ask, so they don't build what nobody asked for.
+marked so, and never settled. What a briefed agent builds: the
+flow skill's picking-up node.
 
 ## Line Length — HARD LIMIT
 
