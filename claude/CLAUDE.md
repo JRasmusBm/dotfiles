@@ -84,9 +84,7 @@ truly risky tradeoff: writes to prod data, infra applies,
 a ship you lack confidence in, posting as me
 (bar announcements to the team) or to customers, deleting
 what can't be resumed. Everything else is reversible: act.
-How to test is never a question: you run it (local stack, your
-own browser, a test login); my login, a token or a staging deploy
-is never the first ask. A question whose recommended answer is
+How to test: the flow skill's is-it-good node. A question whose recommended answer is
 reversible isn't one: do it. When a question is unavoidable, ask
 it in plain text, once, at the end, with your recommended answer.
 No AskUserQuestion dialogs unless I ask to pick between options.
