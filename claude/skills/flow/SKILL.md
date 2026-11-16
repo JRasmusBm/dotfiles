@@ -17,3 +17,5 @@ Any step, give it to a subagent with the following considerations:
 - What step am I at, and is there a node for it in `nodes/`?
 - Does this step need what I've built up in context?
 - What do I want the agent to report back? How would I know a report is wrong?
+- Nothing here fits: what would Rasmus do, and how will he learn I
+  had to guess?
