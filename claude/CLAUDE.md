@@ -1,14 +1,14 @@
 # Personal Preferences
 
-At conversation end, propose CLAUDE.md/skill updates if patterns
-discovered. Before that reflection, and before editing any skill or
+At conversation end, or when you learned something, run the flow
+skill's learned-something node. Before that reflection, and before editing any skill or
 CLAUDE.md, load the repo's `save-learnings` skill if it has one,
 and `private-overlay` (public dotfiles vs private, see Dotfiles).
 Only write to auto memory for cross-project notes.
 Per-project knowledge goes in repo CLAUDE.md or related skills/docs where it
-can be committed and shared. A rule states what to do and why, not the
-commands, tools or steps an agent can work out: those go stale as agents
-and tooling improve.
+can be committed and shared. Agents think: write instructions as
+questions to ask and problems to spot, not prescribed solutions.
+Solutions, and even rules, change fast.
 
 ## Identity
 
