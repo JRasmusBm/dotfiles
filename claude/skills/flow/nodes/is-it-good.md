@@ -16,7 +16,9 @@ Before asking Rasmus "is it good?", consider the following.
   path? Would a fresh agent, given only the goal and the diff, find
   something?
 - If it breaks, how badly? What would the impact be? (Do not accept
-  incidents/breaking things). How (fast) can we recover?
+  incidents/breaking things). How (fast) can we recover? Too worrying
+  to ship plainly: can it go out behind a feature flag and be tested
+  in prod first?
 - Will the things I don't know be easy to change? (For example be wary of a big
   UX change that I'm not sure about)
 - Am I highly confident it's an improvement (a step in the right direction is
