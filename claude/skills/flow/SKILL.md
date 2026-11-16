@@ -36,6 +36,8 @@ Any step, give it to a subagent with the following considerations:
 - Asked for a change, or found one → `nodes/asked-for-a-change.md`
 - Writing a ticket → `nodes/drafting-a-ticket.md`
 - Picking up a ticket → `nodes/picking-up.md`
+- Starting new work or a follow-up, briefing an agent →
+  `nodes/starting-new-work.md`
 - Built, checking it works → `nodes/does-it-work.md`
 - Tested, deciding whether to ship → `nodes/is-it-good.md`
 - Merged or deployed, checking it works in prod → `nodes/live.md`

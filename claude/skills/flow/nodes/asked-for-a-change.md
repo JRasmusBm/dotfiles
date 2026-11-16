@@ -8,4 +8,4 @@
 - Otherwise, would it make more sense in another PR?
   - Create the ticket (see the drafting-a-ticket node) if it doesn't
     exist.
-  - Start the agent with `wt feat/fix <ticket-url>`.
+  - Start its agent (starting-new-work node).
