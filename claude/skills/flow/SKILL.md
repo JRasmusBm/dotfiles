@@ -1,15 +1,16 @@
 ---
 name: flow
-description: "How Rasmus would think at each step of a ticket. Load at
-  every step change (built, merged, live, needs announcement…) and read
-  only that step's node."
+description: "How Rasmus would think whenever deciding what to do
+  next: picking up a ticket, finding a change, judging whether it's
+  good, telling people, waiting or ending a turn, learning something.
+  Give that moment to a subagent, which reads only its node."
 ---
 
 # Flow
 
 You're a thinking agent. Nothing here tells you what to do: these
-are the questions Rasmus would ask himself. At every step change,
-reload this skill and answer them fresh, for the work in front of you,
+are the questions Rasmus would ask himself. Whenever deciding what
+to do next, reload this skill and answer them fresh, for the work in front of you,
 then decide. An answer from an earlier step is not an answer.
 
 Any step, give it to a subagent with the following considerations:
