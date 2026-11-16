@@ -4,6 +4,8 @@ Before asking Rasmus "is it good?", consider the following.
 
 - Can I find out (and thus make the change) safely without asking Rasmus? Include him if sensitive!
 - Have I understood the problem to be solved? Or just acting on instructions?
+  How sure am I it's the root cause, and what couldn't I verify? Does
+  the hand-back say so?
 - Have I considered the change holistically, including side effects and/or UX?
 - Who uses this, and for what? Do I have confidence that it will work when used
   the way they would? 
