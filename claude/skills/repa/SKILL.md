@@ -46,8 +46,11 @@ just write.
 
 ## Publish and switch over
 
-- Publish with no `url` (a new artifact on this login, or the local
-  copy on a borrowed one), same title,
+- Does this login already hold a copy (`artifacts` lists one under
+  it)? Then publish to that copy's `url` and bring it up to date: a
+  swap back and forth should not leave one more copy per swap.
+- Otherwise publish with no `url` (a new artifact on this login, or
+  the local copy on a borrowed one), same title,
   same supporting `files`. Uploaded assets and an artifact database
   don't travel: re-upload the assets, and say if db rows were lost.
 - Replace the old link wherever it was handed out (PR body, ticket
