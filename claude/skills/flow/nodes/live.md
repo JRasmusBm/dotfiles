@@ -3,7 +3,7 @@
 - Is it live? Where does it run, and how do I know the version
   running is this one (deploy status, installed file, version)?
   Does something still need to be applied or enabled (infra, a
-  flag, config), and by whom?
+  flag, config), and by whom (applying-infra node)?
 - How can I verify that it's working as intended? When should its
   effect show: now, the next scheduled run, the next time someone
   uses it? Check it the way they use it: the page in a browser, the
