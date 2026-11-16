@@ -49,8 +49,10 @@ After adding a skill or a `jrb/home` file, run `~/.private/jrb/link`.
 ## Before committing to dotfiles
 
 `leak-check` runs in the global pre-commit and pre-push hooks against
-the overlay's denylist. `--no-verify` (needed on main for the confirm
-prompt) skips it, so then run `leak-check --staged` yourself first.
+the overlay's denylist. On main the pre-commit hook asks for a
+confirm on a tty, which an agent doesn't have: is `--no-verify`
+tempting? It skips leak-check too, and auto mode refuses it. A
+branch, its PR and `gh pr merge` keep the hooks running.
 A hit means the line belongs in the overlay; never weaken the
 denylist to pass. A new private name the list misses: add it to
 `~/.private/jrb/dotfiles-denylist` in the same change.
