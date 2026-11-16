@@ -30,6 +30,7 @@ Any step, give it to a subagent with the following considerations:
 
 - Asked for a change, or found one → `nodes/asked-for-a-change.md`
 - Writing a ticket → `nodes/drafting-a-ticket.md`
+- Picking up a ticket → `nodes/picking-up.md`
 - Built, deciding whether to ship → `nodes/is-it-good.md`
 - Live, deciding whether to tell people → `nodes/announce.md`
 - About to end a turn or wait → `nodes/waiting.md`
