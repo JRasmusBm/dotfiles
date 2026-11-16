@@ -224,8 +224,7 @@ Execute decided work. Queue judgement calls.
   pins behaviour we agreed on.
 - **Move to blocked instead** — a design choice I have not made, a
   trade-off with real cost both ways, a change to a shape I would
-  want to see first, anything needing a browser, a measurement, or
-  an answer from a person.
+  want to see first, an answer only a person can give.
 
 Moving an item into blocked is a success, not a failure. You are
 explicitly allowed to reclassify anything as blocked at any tick. A
