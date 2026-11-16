@@ -5,7 +5,7 @@ Before ending a turn, consider the following.
 - Is anything left that I could do myself? Then it isn't a wait.
 - What exactly am I waiting on: CI, a deploy, another PR, a
   person, a date? Who or what tells me it's over?
-- Waiting on another ticket that's in progress? Then `wt rb
+- Waiting on another ticket? Check its status, then `wt rb
   <ticket>`: I get told when it reaches prod.
 - Waiting on something else that isn't Rasmus? Then `wt w8 <deadline>
   "<what>"`, so the wait has an end someone checks.
