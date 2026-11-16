@@ -8,9 +8,10 @@ Consider the following and take the action accordingly (send or not to send).
   post), and has nobody announced it yet, in the channel or from a
   related ticket?
 - Is the change in a shared repository where communication even makes sense?
-- Can customers use it today? If a release flag, an experiment, a
-  pending run or a missing entry point still hides it from them, staff
-  seeing it doesn't make it a release.
+- Has it reached the people it's for? An internal fix is for the team,
+  so it has. A customer feature still hidden from customers by a
+  release flag, an experiment, a pending run or a missing entry point
+  hasn't, even if staff can see it.
 - Is it one step of a feature rolling out in stages? Then is this the
   batch the post belongs to, and is this ticket the one to write it?
 - Is it a game-changer for customers/staff, and which channel does that
