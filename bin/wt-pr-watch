@@ -68,8 +68,7 @@ threads."
           wt-tell "$_wt" "stale:$_pr:$_sha" \
             "#$_pr marked stale, closes in 7 days, no agent session" \
             "The stale bot marked PR #$_pr stale; it closes the PR 7 days \
-later. Move it forward (CI, reviews, what is left to the \
-hand-back bar) and push, or if it is no longer wanted, tell me why."
+later. Move it forward (flow skill) and push, or if it is no longer wanted, tell me why."
         fi
         test "$_fail" = - && test "$_pend" = 0 || continue
         # pr list reports mergeStateStatus UNKNOWN until a view computes it.
