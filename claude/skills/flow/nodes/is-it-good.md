@@ -20,9 +20,11 @@ Before asking Rasmus "is it good?", consider the following.
   incidents/breaking things). How (fast) can we recover? Too worrying
   to ship plainly: can it go out behind a feature flag and be tested
   in prod first?
-- Is a code freeze or a high-stakes period close (e.g. BFCM for e-commerce)?
-  Check the team's channels for its current status. Then be extra
-  careful: nothing may break.
+- Is a high-stakes period close (e.g. BFCM for e-commerce)? Then
+  nothing may break, freeze or not: how would this fail during it,
+  and could I undo it in minutes? Is there a freeze? Check the team's
+  channels. Holding it adds to what ships at once afterwards: is
+  that safer?
 - Will the things I don't know be easy to change? (For example be wary of a big
   UX change that I'm not sure about)
 - Am I highly confident it's an improvement (a step in the right direction is
