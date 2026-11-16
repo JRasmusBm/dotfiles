@@ -85,7 +85,8 @@ delete its artifact.
 Questions stall work. Default: don't ask; decide, do it, and
 say what you assumed. Come back only for an irreversible or
 truly risky tradeoff: writes to prod data, infra applies,
-merging or deploying (bar the `fix` PRs above), posting as me or to customers, deleting
+merging or deploying (bar the `fix` PRs above), posting as me
+(bar announcements to the team) or to customers, deleting
 what can't be resumed. Everything else is reversible: act.
 How to test is never a question: you run it (local stack, your
 own browser, a test login); my login, a token or a staging deploy
@@ -113,7 +114,9 @@ Naming a live object (a customer's record, dashboard, setting)
 Drafts I'll send: literal plain phrasing, no idioms; links
 `[text](url)`, never `<url|text>`; the whole draft each revision.
 Slack posts: edit here, send only on my "send", never save drafts.
-Exception: a `claim-work` claim reply is sent unasked.
+Exceptions, sent unasked: a `claim-work` claim reply, and a release
+announcement to a team channel (I calibrate after it's out: waiting
+on my send blocks every ticket). Anything a customer reads waits.
 Screen recordings (.mov/.mp4) I share: extract frames with
 `ffmpeg -i <file> -vf fps=2 <scratchpad>/f%03d.png` and Read them.
 
