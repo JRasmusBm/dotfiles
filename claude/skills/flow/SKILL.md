@@ -19,6 +19,5 @@ Any step, give it to a subagent with the following considerations:
 - What do I want the agent to report back? How would I know a report is wrong?
 - Have I been at this step before for this work? What's different
   this time, and if nothing is, why would the result be?
-- Have I been at this step before for this work? What's different this time, and if nothing is, why would the result be?
 
 - Nothing here fits: What went wrong? How could the instructions be better? Let Rasmus know!
