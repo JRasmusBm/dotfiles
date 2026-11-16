@@ -1,6 +1,7 @@
 # Needs announcement
 
-The purpose of announcing tickets is clear communication and coordiation. 
+The purpose of announcing tickets is clear communication and coordiation.
+Consider the following and take the action accordingly (send or not to send).
 
 - Is the change in a shared repository where communication even makes sense?
 - Is this a release or just a deploy? (We do not need to communicate stuff we're deploying behind a release flag).
