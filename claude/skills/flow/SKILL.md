@@ -17,6 +17,9 @@ Any step, give it to a subagent with the following considerations:
 - What step am I at, and is there a node for it in `nodes/`?
 - Does this step need what I've built up in context?
 - What do I want the agent to report back? How would I know a report is wrong?
+- Have my assumptions changed since I started? (Another PR taking it
+  in a different direction, the ticket changed, it stalled long
+  enough that it no longer matters.)
 - Have I been at this step before for this work? What's different
   this time, and if nothing is, why would the result be?
 
