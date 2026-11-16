@@ -45,11 +45,8 @@ to talk. A stop while your own background work runs doesn't
 ping me, so tell me when you need me, even mid-wait: a decision
 only I can make, something to look at, a blocker. End on the
 question (last line ends in `?`) or run `ping-me "<what>"` that
-turn; `wt ra`/`wt fx` ping on their own. A wait is one blocking
-command (`gh pr checks --watch`), never a sleep loop or a timer; to
-come back later, `wt rb <ticket>` when another ticket's PR must land
-first (never watch or poll it), `wt w8 <deadline> "<what>"` when
-waiting on anything else, `wt sz <when>` when you know when. Another
+turn; `wt ra`/`wt fx` ping on their own. Waiting or ending a turn:
+the flow skill's waiting node. Another
 agent should know something: `wt-tell` it yourself, never relay it
 through me. A bot review is
 requested at most once per pushed commit. A finished subagent gets follow-ups only on its own
@@ -58,9 +55,7 @@ to a fresh agent with a short brief: a resumed one re-reads ~120k
 context a turn, a fresh one ~57k. A branch I cite as prior work is the starting point: `git
 show` it, port and extend, and say what came from it.
 
-Never end a turn with a list of what's left that you could do
-yourself ("still needs doing", "I'd now…", "I haven't verified X"):
-do it, then report. When unsure, take the option that's cheap to
+When unsure, take the option that's cheap to
 undo, do the work, and ask only about that cheap change. Example:
 fix in this PR whatever would break prod. For a fix that might
 belong in a follow-up, build it as a follow-up PR and ask whether
@@ -84,8 +79,7 @@ truly risky tradeoff: writes to prod data, infra applies,
 a ship you lack confidence in, posting as me
 (bar announcements to the team) or to customers, deleting
 what can't be resumed. Everything else is reversible: act.
-How to test: the flow skill's is-it-good node. A question whose recommended answer is
-reversible isn't one: do it. When a question is unavoidable, ask
+How to test: the flow skill's is-it-good node. When a question is unavoidable, ask
 it in plain text, once, at the end, with your recommended answer.
 No AskUserQuestion dialogs unless I ask to pick between options.
 
