@@ -24,7 +24,11 @@ Any step, give it to a subagent with the following considerations:
 - Have I been at this step before for this work? What's different
   this time, and if nothing is, why would the result be?
 
-- Nothing here fits: What went wrong? How could the instructions be better? Let Rasmus know!
+- Nothing here fits, or I stretched a node to make it fit? Then a
+  node could be missing: what question would have helped? Tell
+  Rasmus as the waiting node says, with the node or question I'd
+  add. Once he decides, record it: a new node, or an edit to an
+  existing one.
 
 ## Nodes
 
