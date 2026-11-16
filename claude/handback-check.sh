@@ -56,7 +56,7 @@ handback() {
     return 0
   fi
 
-  block "$phrase" "You ended with work left (\"$phrase\") and no real question for Rasmus. Do the items you can do yourself now, then report. Where unsure, take the cheap-to-undo option (e.g. a follow-up PR) and ask only about that. Never merge, deploy or post to get there. If something truly needs his decision, end with that one plain-text question and your recommended answer."
+  block "$phrase" "You ended with work left (\"$phrase\") and no real question for Rasmus. Give this moment to a subagent (flow skill, waiting node) and act on its answer."
 }
 
 # --- promise with no wait -----------------------------------------
