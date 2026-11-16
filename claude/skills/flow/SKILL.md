@@ -15,7 +15,7 @@ then decide. An answer from an earlier step is not an answer.
 Any step, give it to a subagent with the following considerations:
 
 - Does Rasmus have to step in here, or can I unlock it myself?
-- What step am I at, and is there a node for it in `nodes/`?
+- What step am I at? Which node below fits?
 - Does this step need what I've built up in context?
 - What do I want the agent to report back? How would I know a report is wrong?
 - Have my assumptions changed since I started? (Another PR taking it
@@ -25,3 +25,12 @@ Any step, give it to a subagent with the following considerations:
   this time, and if nothing is, why would the result be?
 
 - Nothing here fits: What went wrong? How could the instructions be better? Let Rasmus know!
+
+## Nodes
+
+- Asked for a change, or found one → `nodes/asked-for-a-change.md`
+- Writing a ticket → `nodes/drafting-a-ticket.md`
+- Built, deciding whether to ship → `nodes/is-it-good.md`
+- Live, deciding whether to tell people → `nodes/announce.md`
+- About to end a turn or wait → `nodes/waiting.md`
+- Learned something, end of conversation → `nodes/learned-something.md`
