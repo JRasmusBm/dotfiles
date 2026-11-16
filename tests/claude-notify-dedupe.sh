@@ -2,7 +2,8 @@
 #
 # tests/claude-notify-dedupe.sh [BIN] — RAS-21: the Claude Notification
 # hook adds no row its pane already has pending (same class and text),
-# and pings READY TO MERGE once per head sha unless the agent asks
+# a finish that needs nothing (fyi) goes to the recent list only, and
+# pings READY TO MERGE once per head sha unless the agent asks
 # something. Nothing real is touched: LOCAL_CONFIG and the repo are a
 # temp dir, and tmux, gh, the toast and the logs are fakes first on
 # PATH. BIN defaults to this checkout's bin/.
@@ -54,9 +55,9 @@ rows() { awk -F'\t' -v c="$1" '$8 == c' "$_inbox" 2>/dev/null | wc -l \
 
 echo '# same ping pending'
 say 'Done.'
-check 'a stop pings fyi done' 'test "$(rows fyi)" = 1'
-say 'Done.'
-check 'the same stop again adds no row' 'test "$(rows fyi)" = 1'
+check 'a finish needing nothing adds no inbox row' 'test "$(rows fyi)" = 0'
+check '... but lands in the recent list, cleared' \
+  'awk -F"\t" "\$9 == \"fyi\" && \$5 == \"done\"" "$_inbox.recent" | grep -q .'
 say 'Shall I also do X?'
 check 'a question pings' 'test "$(rows blocked)" = 1'
 say 'Shall I also do X?'
