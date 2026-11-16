@@ -7,16 +7,26 @@ description: "How Rasmus would think at each step of a ticket. Load at
 
 # Flow
 
-You're a thinking agent: nothing here prescribes what to do. Each
-step has a node, a few questions Rasmus would ask himself there.
-Answer them for this ticket, then decide and act.
+You're a thinking agent. Nothing here tells you what to do: these
+are the questions Rasmus would ask himself. Answer them for the work
+in front of you, then decide.
 
-1. Name your step.
-2. Read its node in `nodes/`, only that one.
-3. Answer its questions, then act on your answers.
-4. No node, or a question you can't answer: use your judgment, act,
-   and log one line (step, what you saw, what you did) to the gaps
-   log.
+Any step:
 
-Rasmus reads the gaps log. Where he'd have thought differently, he
-adds a question to that node.
+- What step am I at, and is there a node for it in `nodes/`?
+- Does this step need what I've built up in context, or only facts
+  someone else could read in the ticket or PR?
+- If someone else picks this up next, what will they need, and where
+  will they find it?
+- Am I telling another agent what to do, or what I'm after and why?
+- Would Rasmus have to step in here, or could I answer it myself?
+- Nothing here fits: what would Rasmus do, and how will he learn I
+  had to guess?
+
+Running steps through others:
+
+- What does my context hold that the next step needs, and is it
+  written down outside me?
+- How much of a subagent's report do I need to keep?
+- How would I know a report is wrong?
+- Am I passing on Rasmus's words, or my retelling of them?
