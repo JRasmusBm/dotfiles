@@ -24,14 +24,10 @@ changes (build it and show me, don't post a mockup and wait),
 committing what you fixed once verified (only your hunks), and my
 PRs: push to the branch and keep the title/body in sync without
 asking, then report the head sha (watch CI only in `/iterate-review`
-or when asked; merge or deploy only on my word, through the repo's
-ship queue where it has one, except a `fix` PR you may ship yourself
-once CI and the PR reviewer are green and your own testing gives
-high confidence: the user's path run on real data, through devtools
-or the product's MCP where it applies, evidence in the PR body, and
-a PR in my tooling repos (dotfiles, the private overlay), which you
-merge yourself, unasked, once your own test passes. Prod broken for
-users (a crashing page) needs no word either: unless someone's open
+or when asked; ship when the flow skill's is-it-good node gives you
+confidence, through the repo's ship queue where it has one, else on
+my word. Prod broken for
+users (a crashing page) needs no word: unless someone's open
 PR already fixes it, roll back or roll forward to a stable state at
 once, then tell me. My
 word to ship also covers the merge the queue refuses (workflow
@@ -85,7 +81,7 @@ delete its artifact.
 Questions stall work. Default: don't ask; decide, do it, and
 say what you assumed. Come back only for an irreversible or
 truly risky tradeoff: writes to prod data, infra applies,
-merging or deploying (bar the `fix` PRs above), posting as me
+a ship you lack confidence in, posting as me
 (bar announcements to the team) or to customers, deleting
 what can't be resumed. Everything else is reversible: act.
 How to test is never a question: you run it (local stack, your
