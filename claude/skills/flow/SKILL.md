@@ -38,10 +38,12 @@ Any step, give it to a subagent with the following considerations:
 - Picking up a ticket → `nodes/picking-up.md`
 - Starting new work or a follow-up, briefing an agent →
   `nodes/starting-new-work.md`
+- Handing off, or another agent should know something →
+  `nodes/telling-another-agent.md`
 - Built, checking it works → `nodes/does-it-work.md`
 - Tested, deciding whether to ship → `nodes/is-it-good.md`
 - Merged or deployed, checking it works in prod → `nodes/live.md`
 - Infra to apply by hand → `nodes/applying-infra.md`
 - Live, deciding whether to tell people → `nodes/announce.md`
 - About to end a turn or wait → `nodes/waiting.md`
-- Learned something, end of conversation → `nodes/learned-something.md`
+- Learned something worth remembering → `nodes/learned-something.md`

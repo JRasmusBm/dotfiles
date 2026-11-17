@@ -68,13 +68,8 @@ worktree or `wt add` with free text leaves the board out of sync.
 
 ## Telling another agent
 
-A live Claude session (a `ListAgents` row): `SendMessage` to its
-name. It queues while the session is busy, so no retry. A worktree
-whose chat is closed: `wt-tell <worktree path> <key> <ping>
-<prompt>`, which resumes it (exit 1 with no output = busy, nothing
-delivered: `SendMessage` instead). What to say: starting-new-work
-node, the brief questions. One message per key; a correction is a
-new one.
+When and what: the flow skill's telling-another-agent node.
+`wt-tell` mechanics (keys, revive, busy): the script's header.
 
 ## Inbox
 
