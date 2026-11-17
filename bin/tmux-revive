@@ -121,7 +121,8 @@ if test -n "$_prev" && test "$_prev" != "$_server" \
   done >> "$_q"
 fi
 
-if test -n "$_server"; then
+if test -n "$_server" && test "$_server" = \
+  "$(tmux display-message -p '#{pid} #{start_time}' 2>/dev/null)"; then
   _tmp="$(mktemp)"
   { echo "server $_server"; printf '%s\n' "$_live" | cut -f2-; } \
     | grep . > "$_tmp" && mv "$_tmp" "$_snap"
