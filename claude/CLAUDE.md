@@ -1,14 +1,9 @@
 # Personal Preferences
 
-At conversation end, or when you learned something, run the flow
-skill's learned-something node. Before that reflection, and before editing any skill or
-CLAUDE.md, load the repo's `save-learnings` skill if it has one,
-and `private-overlay` (public dotfiles vs private, see Dotfiles).
-Only write to auto memory for cross-project notes.
-Per-project knowledge goes in repo CLAUDE.md or related skills/docs where it
-can be committed and shared. Agents think: write instructions as
-questions to ask and problems to spot, not prescribed solutions.
-Solutions, and even rules, change fast.
+To empower my agents, I've created /flow, a collection of common situations
+agents encounter and how I would reason about them. Refer to it frequently
+as the main reference for how I would do things. When you learn something
+worth remembering, read flow's learned-something node.
 
 ## Identity
 
@@ -43,8 +38,8 @@ only I can make, something to look at, a blocker. End on the
 question (last line ends in `?`) or run `ping-me "<what>"` that
 turn; `wt ra`/`wt fx` ping on their own. Waiting or ending a turn:
 the flow skill's waiting node. Another
-agent should know something: `wt-tell` it yourself, never relay it
-through me. A bot review is
+agent should know something: the flow skill's
+telling-another-agent node. A bot review is
 requested at most once per pushed commit. A finished subagent gets follow-ups only on its own
 result; a new task (review round, rebase, re-test, browser pass) goes
 to a fresh agent with a short brief: a resumed one re-reads ~120k

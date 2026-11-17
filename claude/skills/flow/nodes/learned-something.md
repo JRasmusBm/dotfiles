@@ -12,11 +12,14 @@ A rule, a follow-up, a better instruction. Before asking Rasmus
   and pings past a threshold?
 - Does a skill, CLAUDE.md or this flow already say it? Then why
   didn't it work: sharpen that line instead of adding a new one.
+- Only write to auto memory for cross-project notes.
+- Before editing any skill, CLAUDE.md or script, load the repo's
+  `save-learnings` skill if it has one, and `private-overlay`.
 - Where does it belong? Only where it bites: global context loads
-  for every task, and teammates' work differs. Facts about a repo go in that repo's skills,
-  shipped like any change (is-it-good). How Rasmus works goes in his
-  tooling repos (load private-overlay). Can I make that change safely
-  without him?
+  for every task, and teammates' work differs. Facts about a repo go
+  in that repo's CLAUDE.md or skills/docs, shipped like any change
+  (is-it-good). How Rasmus works goes in his tooling repos. Can I make
+  that change safely without him?
 - Is it a question for the flow itself (a node, a missing step)?
   That one is Rasmus's: tell him what went wrong and what you'd ask
   instead.
