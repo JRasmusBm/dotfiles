@@ -68,11 +68,13 @@ worktree or `wt add` with free text leaves the board out of sync.
 
 ## Telling another agent
 
-`wt-tell <worktree path> <key> <ping> <prompt>` (what to say:
-starting-new-work node, the brief questions). One tell per key; a
-correction is a new
-key. Exit 1 with no output = busy, nothing delivered: retry later.
-Idle chats get closed after an hour; a tell resumes them.
+A live Claude session (a `ListAgents` row): `SendMessage` to its
+name. It queues while the session is busy, so no retry. A worktree
+whose chat is closed: `wt-tell <worktree path> <key> <ping>
+<prompt>`, which resumes it (exit 1 with no output = busy, nothing
+delivered: `SendMessage` instead). What to say: starting-new-work
+node, the brief questions. One message per key; a correction is a
+new one.
 
 ## Inbox
 
