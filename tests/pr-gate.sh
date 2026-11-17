@@ -104,6 +104,11 @@ _case allow tooling 'gh pr create --fill'
 _case allow tooling/.worktrees/off 'gh pr create --fill'
 _case allow plain 'gh pr create --fill'
 
+echo '# cd into a variable: refused with its own message; literal passes'
+_case deny managed/.worktrees/on 'W=x; cd $W && gh pr create --fill'
+_says 'literal path'
+_case allow managed "cd '$_t/managed/.worktrees/on' && gh pr create --fill"
+
 echo '# not a PR create: allowed'
 _case allow managed/.claude/worktrees/agent-a1 'gh pr view 12'
 _case allow managed/.claude/worktrees/agent-a1 'gh pr list --state open'

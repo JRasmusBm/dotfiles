@@ -9,9 +9,10 @@
 #     or wt doesn't manage it (no board);
 #   - from a branch whose ticket id (`<type>/<initials>/abc-123-…`,
 #     `abc-123-…`) already has an open PR from another branch.
-# The checkout is the tool call's cwd, or a `cd <dir>` before the
-# `gh pr create`; the branch is its `--head`, else the checked-out
-# one. If `gh pr list` fails, the ticket-id check is skipped.
+# The checkout is the tool call's cwd, or a literal `cd <dir>` before
+# the `gh pr create` (`cd $VAR` is refused); the branch is its
+# `--head`, else the checked-out one. If `gh pr list` fails, the
+# ticket-id check is skipped.
 #
 #   pr-gate hook   PreToolUse hook for Bash: deny or pass (no output)
 
@@ -62,6 +63,8 @@ $_p
 EOF
   _cwd="${_cwd:-$PWD}"
   case "$_cd" in
+    *'$'*|*'`'*) _deny "pr-gate can't resolve \`cd $_cd\` (a variable or \
+substitution): \`cd\` a literal path before \`gh pr create\`." ;;
     '') _dir="$_cwd" ;;
     '~'|'~/'*) _dir="$HOME${_cd#\~}" ;;
     /*) _dir="$_cd" ;;
@@ -104,5 +107,5 @@ has an open PR from another branch: $_other. $_board"
 
 case "${1:-}" in
   hook) _hook ;;
-  *) sed -n '3,17p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac
