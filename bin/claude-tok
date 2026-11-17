@@ -1,0 +1,231 @@
+#!/usr/bin/env python3
+#
+# claude-tok — where one Claude chat's tokens went, read from its
+# local transcript (subagents included). Zero tokens. Takes the same
+# session args as claude-log:
+#
+#   claude-tok            latest session of this directory, in nvim
+#   claude-tok .          the chat in the active tmux pane (prefix T)
+#   claude-tok <id>       that session (id or prefix)
+#   claude-tok : [query]  fuzzy pick a session
+#   claude-tok -p ...     print to stdout instead of opening
+#
+# Sections: totals; per prompt (your messages, what each cost);
+# per API call (context size, growth, cache writes, output, tools);
+# biggest tool results (what bloated the context, ~4 chars/token);
+# subagents; compactions.
+#
+# Weighted as in tok-top: input x1, output x5, cache write x1.25,
+# cache read x0.1. One API response counts once (Claude Code logs a
+# row per content block, each repeating the usage).
+import glob, json, os, subprocess, sys, tempfile
+from datetime import datetime
+
+W = dict(input_tokens=1, output_tokens=5,
+         cache_creation_input_tokens=1.25, cache_read_input_tokens=0.1)
+KEYS = list(W)
+
+args = sys.argv[1:]
+to_stdout = args[:1] == ["-p"]
+if to_stdout:
+    args = args[1:]
+r = subprocess.run(["claude-log", "--path", *args],
+                   stdout=subprocess.PIPE, text=True)
+if r.returncode:
+    sys.exit(r.returncode)
+path = r.stdout.strip()
+
+
+def k(n):
+    return f"{n / 1000:.1f}k" if n < 1e6 else f"{n / 1e6:.2f}M"
+
+
+def wt(u):
+    return sum(u.get(x, 0) * W[x] for x in KEYS)
+
+
+def rows(f):
+    with open(f) as fh:
+        for line in fh:
+            try:
+                yield json.loads(line)
+            except ValueError:
+                pass
+
+
+def text_of(c):
+    if isinstance(c, str):
+        return c
+    return "\n".join(b.get("text", "") for b in c or []
+                     if isinstance(b, dict) and b.get("type") == "text")
+
+
+def tool_label(b):
+    i = b.get("input") or {}
+    a = (i.get("command") or i.get("file_path") or i.get("pattern")
+         or i.get("description") or i.get("skill") or i.get("query")
+         or i.get("url") or "")
+    a = " ".join(str(a).split())
+    return f"{b.get('name')} {a}"[:70]
+
+
+def load(f):
+    """API calls (deduped), prompts, tool results, compactions."""
+    calls, order, prompts, results, compacts = {}, [], [], [], []
+    tools = {}
+    for r in rows(f):
+        t = r.get("type")
+        m = r.get("message") or {}
+        if t == "assistant" and m.get("usage"):
+            mid = m.get("id") or r.get("uuid")
+            if mid not in calls:
+                calls[mid] = dict(ts=r.get("timestamp", ""),
+                                  u=m["usage"], blocks=[], tool_ids=[],
+                                  prompt=len(prompts) - 1)
+                order.append(mid)
+            for b in m.get("content") or []:
+                if b.get("type") == "tool_use":
+                    tools[b.get("id")] = tool_label(b)
+                    calls[mid]["blocks"].append(b.get("name"))
+                    calls[mid]["tool_ids"].append(b.get("id"))
+                elif b.get("type") == "thinking":
+                    calls[mid]["blocks"].append("think")
+        elif t == "user" and not r.get("isMeta"):
+            c = m.get("content")
+            if isinstance(c, list) and any(
+                    isinstance(b, dict) and b.get("type") == "tool_result"
+                    for b in c):
+                for b in c:
+                    if b.get("type") == "tool_result":
+                        n = len(json.dumps(b.get("content")))
+                        results.append((n // 4, b.get("tool_use_id"),
+                                        len(order)))
+            elif r.get("isCompactSummary"):
+                pass
+            else:
+                s = " ".join(text_of(c).split())
+                if s and not s.startswith("<"):
+                    prompts.append((r.get("timestamp", ""), s))
+        elif r.get("subtype") == "compact_boundary":
+            md = r.get("compactMetadata") or {}
+            compacts.append((r.get("timestamp", ""), md.get("trigger"),
+                             md.get("preTokens", 0),
+                             md.get("postTokens", 0)))
+    return [calls[i] for i in order], prompts, results, tools, compacts
+
+
+calls, prompts, results, tools, compacts = load(path)
+subs = []
+for f in sorted(glob.glob(path[:-6] + "/subagents/agent-*.jsonl")):
+    c, *_ = load(f)
+    meta = {}
+    try:
+        meta = json.load(open(f[:-6] + ".meta.json"))
+    except (OSError, ValueError):
+        pass
+    subs.append((sum(wt(x["u"]) for x in c), len(c), meta,
+                 max((sum(x["u"].get(y, 0) for y in KEYS[:1] + KEYS[2:])
+                      for x in c), default=0), c))
+
+out = []
+p = out.append
+
+
+def totals(cs):
+    return {x: sum(c["u"].get(x, 0) for c in cs) for x in KEYS}
+
+
+main_w = sum(wt(c["u"]) for c in calls)
+sub_w = sum(s[0] for s in subs)
+tt = totals(calls)
+p(f"# Tokens: {os.path.basename(path)[:8]}  "
+  f"({os.path.basename(os.path.dirname(path))})\n")
+p(f"weighted  {k(main_w + sub_w)}  = main {k(main_w)}"
+  f" + {len(subs)} subagents {k(sub_w)}")
+p(f"main: {len(calls)} API calls, {len(prompts)} prompts, "
+  f"{len(compacts)} compactions")
+p(f"  input {k(tt['input_tokens'])}   "
+  f"cache write {k(tt['cache_creation_input_tokens'])} "
+  f"(={k(tt['cache_creation_input_tokens'] * 1.25)})   "
+  f"cache read {k(tt['cache_read_input_tokens'])} "
+  f"(={k(tt['cache_read_input_tokens'] * 0.1)})   "
+  f"output {k(tt['output_tokens'])} "
+  f"(={k(tt['output_tokens'] * 5)})")
+
+p("\n## Per prompt (weighted, main + subagents it spawned)\n")
+p(f"{'#':>3} {'time':5} {'calls':>5} {'main':>7} {'subs':>7} "
+  f"{'ctx end':>7}  prompt")
+by_prompt = {}
+for c in calls:
+    by_prompt.setdefault(c["prompt"], []).append(c)
+prompt_of_tool = {t: c["prompt"] for c in calls for t in c["tool_ids"]}
+sub_w_by_prompt = {}
+for w, _, meta, _, _ in subs:
+    pi = prompt_of_tool.get(meta.get("toolUseId"), -1)
+    sub_w_by_prompt[pi] = sub_w_by_prompt.get(pi, 0) + w
+for pi in sorted(set(by_prompt) | set(sub_w_by_prompt)):
+    cs = by_prompt.get(pi, [])
+    ts, txt = prompts[pi] if 0 <= pi < len(prompts) else ("", "(start)")
+    ctx = 0
+    if cs:
+        u = cs[-1]["u"]
+        ctx = (u.get("input_tokens", 0)
+               + u.get("cache_creation_input_tokens", 0)
+               + u.get("cache_read_input_tokens", 0))
+    p(f"{pi + 1:>3} {ts[11:16]:5} {len(cs):>5} "
+      f"{k(sum(wt(c['u']) for c in cs)):>7} "
+      f"{k(sub_w_by_prompt.get(pi, 0)):>7} {k(ctx):>7}  {txt[:60]}")
+
+p("\n## Per API call\n")
+p("ctx = context sent (input + cache write + cache read); "
+  "Δ = growth since last call")
+p(f"{'time':8} {'ctx':>7} {'Δ':>7} {'cwrite':>7} {'out':>6} "
+  f"{'wtd':>6}  blocks")
+prev, last_p, prev_ts = 0, None, None
+for c in calls:
+    if c["prompt"] != last_p:
+        last_p = c["prompt"]
+        txt = prompts[last_p][1] if last_p >= 0 else "(start)"
+        p(f"-- prompt {last_p + 1}: {txt[:64]}")
+    u = c["u"]
+    cw = u.get("cache_creation_input_tokens", 0)
+    ctx = u.get("input_tokens", 0) + cw + u.get(
+        "cache_read_input_tokens", 0)
+    ts = datetime.fromisoformat(c["ts"].replace("Z", "+00:00")) \
+        if c["ts"] else None
+    idle = (ts - prev_ts).total_seconds() / 60 if ts and prev_ts else 0
+    prev_ts = ts or prev_ts
+    flag = ""
+    if cw > 20000 and ctx - prev < cw / 2:
+        flag = (f"  << cache expired ({idle:.0f}m idle)" if idle > 5
+                else "  << cache rebuilt (see cache-why)")
+    p(f"{c['ts'][11:19]:8} {k(ctx):>7} {k(ctx - prev):>7} {k(cw):>7} "
+      f"{k(u.get('output_tokens', 0)):>6} {k(wt(u)):>6}  "
+      f"{','.join(c['blocks']) or 'text'}{flag}")
+    prev = ctx
+
+p("\n## Biggest tool results (~tokens, stay in context until compacted)\n")
+for n, tid, _ in sorted(results, reverse=True)[:20]:
+    p(f"{k(n):>7}  {tools.get(tid, tid)}")
+
+if subs:
+    p("\n## Subagents (weighted, heaviest first)\n")
+    p(f"{'wtd':>7} {'calls':>5} {'peak ctx':>8}  type: description")
+    for w, n, meta, peak, _ in sorted(subs, key=lambda s: -s[0]):
+        p(f"{k(w):>7} {n:>5} {k(peak):>8}  "
+          f"{meta.get('agentType', '?')}: {meta.get('description', '')}"
+          [:100])
+
+if compacts:
+    p("\n## Compactions\n")
+    for ts, trig, pre, post in compacts:
+        p(f"{ts[11:16]}  {trig:6} {k(pre)} -> {k(post)}")
+
+text = "\n".join(out) + "\n"
+if to_stdout:
+    sys.stdout.write(text)
+else:
+    fd, f = tempfile.mkstemp(prefix="claude-tok-", suffix=".md")
+    os.write(fd, text.encode())
+    os.close(fd)
+    os.execvp("nvim", ["nvim", "-R", f])

@@ -8,11 +8,13 @@
 #   claude-log .          the chat in the active tmux pane (prefix h)
 #   claude-log : [query]  fuzzy pick a session
 #   claude-log -p ...     print to stdout instead of opening
+#   claude-log --path ... print the session's .jsonl path only
 set -euo pipefail
 
 projects=~/.claude/projects
 print=0
 [[ ${1:-} == -p ]] && { print=1; shift; }
+[[ ${1:-} == --path ]] && { print=2; shift; }
 
 pick() {
   case "${1:-}" in
@@ -22,7 +24,7 @@ pick() {
       local c sid=
       for c in $(pgrep -P "$(tmux display-message -p '#{pane_pid}')"); do
         f=${CLAUDE_CONFIG_DIR:-$HOME/.claude}/sessions/$c.json
-        [[ -f $f ]] && { sid=$(jq -r .sessionId "$f"); break; }
+        if [[ -f $f ]]; then sid=$(jq -r .sessionId "$f"); break; fi
       done
       if [[ -n $sid ]]; then pick "$sid"
       else cd "$(tmux display-message -p '#{pane_current_path}')" && pick
@@ -48,6 +50,7 @@ pick() {
 
 file=$(pick "$@")
 [[ -n $file ]] || { echo "claude-log: no session found" >&2; exit 1; }
+((print == 2)) && { echo "$file"; exit; }
 
 render() {
   jq -r '
