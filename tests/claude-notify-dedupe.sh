@@ -65,6 +65,41 @@ check 'the same question again adds no row' 'test "$(rows blocked)" = 1'
 say 'Or Y instead?'
 check 'a new question pings' 'test "$(rows blocked)" = 2'
 
+echo '# a question followed by a recommendation (RAS-72)'
+: > "$_inbox"
+say 'Built and tested, PR #9.
+
+Is the design right, one config on
+every host? My recommendation is yes, then `rd`.'
+check 'a wrapped question then a recommendation pings blocked' \
+  'test "$(cut -f4 "$_inbox")" = "asks: Is the design right, one config on every host?"'
+: > "$_inbox"
+say 'Two calls:
+- keep the flag
+- Drop the banner?'
+check 'a list item question pings alone' \
+  'test "$(cut -f4 "$_inbox")" = "asks: Drop the banner?"'
+: > "$_inbox"
+say 'Should I call `make_pr` myself? I recommend yes.'
+check 'a code span keeps its sentence whole' \
+  'test "$(cut -f4 "$_inbox")" = "asks: Should I call \`make_pr\` myself?"'
+: > "$_inbox"
+say 'Is it right (I recommend yes, then rd)?'
+check 'a recommendation inside the question pings' 'test "$(rows blocked)" = 1'
+: > "$_inbox"
+say 'Done. Ran `test -f x?` and `a ? b : c`.'
+check 'a "?" only inside code stays fyi' 'test "$(rows blocked)" = 0'
+say 'Anything else?
+
+Done, merged.'
+check 'a question in an earlier paragraph stays fyi' \
+  'test "$(rows blocked)" = 0'
+say 'Fixed it.
+```sh
+[ -n "$x" ] && echo why?
+```'
+check 'a "?" in a closing code block stays fyi' 'test "$(rows blocked)" = 0'
+
 echo '# merge once per head sha'
 : > "$_inbox"
 pr aaa

@@ -148,11 +148,19 @@ case "$TYPE" in
     ;;
 esac
 
-_text="$(_last_text | sed -e 's/[[:space:]]*$//')"
-_q=""
-case "$_text" in
-  *\?) _q="$(printf '%s\n' "$_text" | tail -1 | cut -c1-80)" ;;
-esac
+# The question in the last paragraph: its last sentence ending in
+# "?", a recommendation after it or not (RAS-72). A "?" inside a
+# code span asks nothing.
+_q="$(_last_text | perl -0777 -ne '
+  my @p = grep { /\S/ } split /\n[ \t]*\n/;
+  my $p = $p[-1] // "";
+  $p =~ s{(`+)(.+?)\1}{ my $c = $&; $c =~ tr/.!?/\x01\x02\x03/; $c }gse;
+  my @q = grep { /\?["\x27)\]*_]*$/ }
+    map { s/^\s*(?:(?:[-*+]|\d+[.)])\s+)?|\s+$//gr =~ s/\s*\n\s*/ /gr }
+    split /(?<=[.!?])\s+|\n(?=\s*(?:[-*+]|\d+[.)])\s)/, $p;
+  my $q = $q[-1] // "";
+  $q =~ tr/\x01\x02\x03/.!?/;
+  print $q' 2>/dev/null | cut -c1-80)"
 [ -n "$_q" ] || _q="$(_ping_me | cut -c1-80)"
 
 if [ -z "$_q" ] && _closed_worktree; then
