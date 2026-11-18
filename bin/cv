@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+_claude_new() {
+  claude "$@"
+}
+
+_claude_new "$@"

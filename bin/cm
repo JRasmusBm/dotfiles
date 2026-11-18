@@ -1,0 +1,9 @@
+#!/bin/bash
+
+set -e
+
+_claude_model() {
+  claude --model "$1"
+}
+
+_claude_model "$@"

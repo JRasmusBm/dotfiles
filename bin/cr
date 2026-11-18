@@ -6,12 +6,12 @@ _claude_resume() {
   (
     if test -n "$1"; then
       (
-        claude --resume "$1"
+        claude --resume "$@"
         return 0
       )
     fi
 
-    claude --continue || claude
+    claude --continue "$@" || claude "$@"
   )
 }
 
