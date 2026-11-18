@@ -8,7 +8,8 @@ description: Where a learning, rule, script or skill goes when it touches my per
 dotfiles is a **public** GitHub repo. Everything committed there is
 published. Work specifics live in the **private overlay**: a private
 GitHub repo reached only through the `~/.private` symlink (its
-`jrb/link` makes it; read `~/.private/CLAUDE.md` for its layout).
+`jrb/link` makes it). Edit it in place on its main checkout and
+commit there: a sync job pushes, no branch or PR.
 dotfiles never names the overlay's employer, products or people.
 
 ## Which side
@@ -27,8 +28,9 @@ generic rule in dotfiles and drop or neutralise the example (`ABC-123`,
 ## Seams (how generic tools reach private specifics)
 
 - `.jrb/` in a repo's main checkout (symlinks into the overlay's
-  `jrb/<repo>/`, trusted with `dev trust`): `dev`, `wt-prompt`,
-  `wt-hook <event>` via `jrb-hook` (events listed in `bin/jrb-hook`:
+  `jrb/<repo>/`, trusted with `dev trust`, which needs a tty: after
+  editing one, append `openssl sha256 <file> >> ~/..dev.digests`):
+  `dev`, `wt-prompt`, `wt-hook <event>` via `jrb-hook` (events listed in `bin/jrb-hook`:
   add/rm/forget, preview, shipping, nodeploy, merged-hint, sync). New
   repo-specific behaviour in wt & co = a new event, not an `if` on a
   repo name.
