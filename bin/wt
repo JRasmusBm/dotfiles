@@ -209,7 +209,7 @@ _unblock_dependents() {
       _ud_msg="$1 $_ud_why, which unblocks this worktree. What changed \
 in this PR and ticket since the work began, and what is the next step? \
 The flow skill has the questions."
-      # Not delivered now (busy, or its session just started): wt-sync
+      # Not delivered now (its session just started, say): wt-sync
       # keeps trying (wt-unblocked), like any other tell.
       wt-tell "$_ud_root" "unblocked:$1" "$_ud_ping" "$_ud_msg" \
         >/dev/null 2>&1 \

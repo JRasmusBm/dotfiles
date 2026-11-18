@@ -1,9 +1,9 @@
 #!/bin/sh
 #
-# wt-tell <worktree> <key> <ping> <prompt> — tell the worktree's idle
-# Claude (its `cli` pane) <prompt>, once per worktree and key
-# ($LOCAL_CONFIG/wt-told). No session (or tmux down, as after a
-# reboot) or no Claude in its cli window: starts it with
+# wt-tell <worktree> <key> <ping> <prompt> — tell the worktree's
+# Claude (its `cli` pane), busy or not, <prompt>, once per worktree
+# and key ($LOCAL_CONFIG/wt-told). No session (or tmux down, as
+# after a reboot) or no Claude in its cli window: starts it with
 # `claude --continue` there (plain `claude` when the worktree has
 # no conversation yet; the session `run-slot close` closed there,
 # if it did; a big chat as a fresh, briefed one: claude-fresh resume) and hands the tell to `run-slot pend`, which delivers it
@@ -14,7 +14,9 @@
 # telling both wait their turn in `run-slot` (room on the Mac, tells
 # first); a queued one is run from there once there is room. A
 # worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check)
-# with <ping> once instead. Claude busy: fails too. Only the agent
+# with <ping> once instead. A busy Claude gets it as a
+# Claude Code message, queued till its next turn (claude-msg); exit 1
+# only when nothing took it. Only the agent
 # knows whether a tell is what its `wt w8` waits on, so any other tell
 # leaves the w8 open and ends with what it waits on, until when (or
 # that it is overdue), and to `wt w8 done` if this was it. A w8:* tell
@@ -155,12 +157,25 @@ if test -z "$_pane"; then
   test -n "$_pending"
   exit
 fi
-claude-pane-idle "$_pane" || exit 1
-_gate "tell:$(basename "$_root"):$_key" || exit 1
-
+# The chat in the pane takes the tell as a Claude Code message
+# (claude-msg): Claude Code queues it while the agent works, a dialog
+# or a draft is open, and hands it over at the agent's next turn. A
+# busy agent holds its run-slot already; an idle one starts a turn, so
+# it waits for room, and run-slot runs it then (queued: the caller
+# stops retrying).
+_chat="${_sid:-$(claude-pane of "$_pane" 2>/dev/null)}" || _chat=""
+test -n "$_chat" || exit 1
+if ! jq -e --arg s "$_chat" \
+  'select(.sessionId == $s and .status == "busy")' \
+  "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/sessions/*.json >/dev/null 2>&1
+then
+  _gate "tell:$(basename "$_root"):$_key" || {
+    echo "queued: run-slot tells $_slug once there is room"
+    exit 0
+  }
+fi
+claude-msg "$_chat" "$_prompt$(_w8_open)" || exit 1
 echo "$_root	$_key" >> "$_told"
 _w8_done
 notif seen "$_pane" all >/dev/null 2>&1 || true
-tmux send-keys -t "$_pane" -l "$_prompt$(_w8_open)"
-sleep 0.5
-tmux send-keys -t "$_pane" Enter
+echo "told $_slug (queued in its chat if busy)"

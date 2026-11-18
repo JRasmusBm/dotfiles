@@ -16,8 +16,8 @@
 # claude-notify's stop ping; not while a merge row is pending there, not
 # when blocked or snoozed): a green PR whose agent sits idle still
 # reaches me.
-# Called by wt-sync every 5th minute. A tell that finds Claude busy
-# or not up yet isn't recorded, so the next run retries it.
+# Called by wt-sync every 5th minute. A tell that no Claude took
+# (not up yet, say) isn't recorded, so the next run retries it.
 
 _repo="${1:-$PWD}"
 cd "$_repo" || exit 0

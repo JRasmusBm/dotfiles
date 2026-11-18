@@ -101,8 +101,8 @@ done
 _w8_due="$(printf '%s\n' "$_w8_all" | awk -F '\t' '$1 == 1' | cut -f2-)"
 
 # Tells queued by `wt` (unblocked, awake) that couldn't be delivered
-# when sent (busy, or the session had just started), and the overdue w8
-# tells above: retried until told, dropped after 3 days.
+# when sent (no Claude took it, or its session had just started), and
+# the overdue w8 tells above: retried until told, dropped after 3 days.
 _ub="$LOCAL_CONFIG/wt-unblocked"
 # Lines `wt` appends while the loop runs are kept, not overwritten.
 if test -s "$_ub"; then

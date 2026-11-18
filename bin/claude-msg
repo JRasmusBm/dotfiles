@@ -1,0 +1,81 @@
+#!/usr/bin/env python3
+"""claude-msg <sid> <text> — hand <text> to the running Claude chat
+<sid> as a Claude Code message: its messaging socket queues it, busy
+or not, and the agent reads it at its next turn (SendMessage's path
+between local sessions, the peer protocol of Claude Code 2.1.3xx).
+Exit 0 once its socket took it; 1 when <sid> runs nowhere or its
+socket refused.
+
+The message goes out as a <cross-session-message from="wt-tell">, the
+envelope Claude Code labels as from another agent: input, not
+authority. CLAUDE_MSG_FROM names another sender.
+"""
+import glob
+import hashlib
+import json
+import os
+import socket
+import sys
+import uuid
+
+CD = os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser('~/.claude')
+END = '</cross-session-message>'
+
+
+def session(sid):
+    for f in glob.glob(os.path.join(CD, 'sessions', '*.json')):
+        try:
+            d = json.load(open(f))
+            pid = int(os.path.basename(f)[:-5])
+        except (OSError, ValueError):
+            continue
+        if d.get('sessionId') != sid or not d.get('messagingSocketPath'):
+            continue
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            continue
+        return pid, d
+    return None, None
+
+
+def main():
+    if len(sys.argv) != 3 or not sys.argv[1] or not sys.argv[2]:
+        sys.stderr.write(__doc__.split('\n\n')[0] + '\n')
+        return 2
+    sid, text = sys.argv[1], sys.argv[2]
+    pid, d = session(sid)
+    if not pid:
+        return 1
+    sp = d['messagingSocketPath']
+    key = os.path.join(CD, 'sessions', '%d.%s.key' % (
+        pid, hashlib.sha256(sp.encode()).hexdigest()))
+    lines = []
+    try:
+        lines.append({'type': 'auth',
+                      'token': json.load(open(key))['peerToken']})
+    except (OSError, ValueError, KeyError):
+        pass  # macOS takes it without; send it when there is one
+    who = os.environ.get('CLAUDE_MSG_FROM') or 'wt-tell'
+    body = text.replace(END, '')
+    lines.append({
+        'msgV': 1, 'msg_id': str(uuid.uuid4()), 'type': 'user',
+        'message': {'role': 'user', 'content':
+                    '<cross-session-message from="%s">\n%s\n%s'
+                    % (who, body, END)},
+        'priority': 'next', 'session_id': sid})
+    try:
+        s = socket.socket(socket.AF_UNIX)
+        s.settimeout(5)
+        s.connect(sp)
+        s.sendall(''.join(json.dumps(m) + '\n' for m in lines).encode())
+        s.shutdown(socket.SHUT_WR)
+        s.recv(4096)  # its close: it read the lines
+        s.close()
+    except OSError:
+        return 1
+    return 0
+
+
+if __name__ == '__main__':
+    sys.exit(main())
