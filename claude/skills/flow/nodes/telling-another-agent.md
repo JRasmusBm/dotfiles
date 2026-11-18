@@ -9,6 +9,8 @@ already runs.
 - Is its session live? A live one gets the message now, queued if
   it's busy. A closed chat needs reviving first (`wt-tell`). A busy
   answer is not a no: is there a way that queues instead of a retry?
+- Is what I pass on settled, and by whom? Rasmus asking or
+  thinking aloud is not a decision to relay.
 - Does the first line say what this is, for the human who sees only
   that line?
 - What does it need that it can't see: what I changed (commit),

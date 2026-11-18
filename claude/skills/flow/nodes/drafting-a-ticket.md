@@ -11,4 +11,5 @@
   even partly? Searched wider than the obvious?
 - Whose is it: a team change (their team, where they see it), or
   only Rasmus's machine (RAS)? Which of his priorities does it serve,
-  and is it in that priority's grouping (`prio`)?
+  and is it in that priority's grouping (`prio`)? Who starts it, and
+  when (asked-for-a-change node)?
