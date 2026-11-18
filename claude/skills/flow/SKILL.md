@@ -39,6 +39,10 @@ Any step, give it to a subagent with the following considerations:
 
 ## Nodes
 
+Each node can have a private half at `~/.private/jrb/flow/nodes/`
+under the same name: the work specifics (tools, repos, teams) that
+can't be public. Read it with the node when it exists.
+
 - Asked for a change, or found one → `nodes/asked-for-a-change.md`
 - Writing a ticket → `nodes/drafting-a-ticket.md`
 - Picking up a ticket → `nodes/picking-up.md`
