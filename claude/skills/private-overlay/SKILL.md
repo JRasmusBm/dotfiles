@@ -37,6 +37,8 @@ generic rule in dotfiles and drop or neutralise the example (`ABC-123`,
 - Claude settings: overlay `jrb/claude/settings.json`, layered by the
   `claude` zsh wrapper through `$CLAUDE_EXTRA_SETTINGS` (`--settings`
   merges permissions, hooks, MCP servers and `autoMode`).
+- Flow nodes: overlay `jrb/flow/nodes/<node>.md`, the private half
+  of the dotfiles node with the same name.
 - Skills: overlay `jrb/skills/<name>`, symlinked into
   `claude/skills/` and git-excluded by `jrb/link`.
 - Global agent rules for work repos: the overlay's root `CLAUDE.md`
