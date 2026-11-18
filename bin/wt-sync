@@ -8,7 +8,8 @@
 #     killed at 120 s; the 3rd kill in a row runs its `stalled` event;
 #   - every 5th minute, wt-pr-watch tells the agent of a worktree whose
 #     open PR has failing CI or a review newer than its last push, once
-#     per head sha / review.
+#     per head sha / review; `wt pr-gone` lifts a `wt rb` whose PR
+#     merged, closed or got carried by another PR.
 # First, offline too: tmux-revive snapshots the Claude panes and, once
 # the tmux server died or restarted, brings them back as run-slot
 # makes room; run-slot closes stalled Claude sessions and starts queued agents
@@ -141,8 +142,12 @@ fi
 
 for _repo in $_repos; do
   cd "$_repo" || continue
-  # Every 5th minute: CI failures and reviews on my open PRs.
-  test "$(( $(date +%-M) % 5 ))" != 0 || wt-pr-watch "$_repo"
+  # Every 5th minute: CI failures and reviews on my open PRs, and
+  # `wt rb` waits whose PR merged, closed or got carried.
+  if test "$(( $(date +%-M) % 5 ))" = 0; then
+    wt-pr-watch "$_repo"
+    gtimeout -k 10 120 wt pr-gone >/dev/null 2>&1
+  fi
   # A hung network call must not stall the next minute's run: launchd
   # starts none while this one lives, so revive and tabs would stop.
   gtimeout -k 10 120 jrb-hook "$_repo" sync

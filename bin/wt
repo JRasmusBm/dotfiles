@@ -191,24 +191,28 @@ _linear() {
   return 1
 }
 
-# The blocker went away (or merged, $2): send what it blocked
-# back to # IN PROGRESS and tell its agent (wt-tell: idle Claude, a
-# session that isn't running is started; else wt-sync retries).
+# The blocker $1 went away (or merged, $2; $3 names it in the
+# tell; $4 = keep leaves the blocker's own rb): send what it
+# blocked back to # IN PROGRESS and tell its agent (wt-tell: idle
+# Claude, a session that isn't running is started; else wt-sync
+# retries).
 _unblock_dependents() {
   _ud_why="${2:-is gone}"
+  _ud_name="${3:-$1}"
   _bf="$(_blocked_file)"
   test -f "$_bf" || return 0
   awk -F '\t' -v b="$1" '$3 == b { print $1 "\t" $2 }' "$_bf" \
     | while IFS="$(printf '\t')" read -r _ud_slug _ud_branch; do
-      echo "wt: $1 $_ud_why, unblocking $_ud_slug" >&2
+      echo "wt: $_ud_name $_ud_why, unblocking $_ud_slug" >&2
       _snooze_drop "$_ud_slug"
       _board_move "$_ud_branch" "$_ud_slug" 'IN PROGRESS'
       _linear 'In Progress' "$_ud_branch" || true
       _ud_root="$(_main_root)/.worktrees/$_ud_slug"
-      _ud_ping="Unblocked: $_ud_slug ($1 $_ud_why; back in progress)"
-      _ud_msg="Flow skill, picking-up node. $1 $_ud_why, which unblocks \
-this worktree. What changed in this PR and ticket since the work began, \
-and what is the next step?"
+      _ud_ping="Unblocked: $_ud_slug ($_ud_name $_ud_why; back in \
+progress)"
+      _ud_msg="Flow skill, picking-up node. $_ud_name $_ud_why, which \
+unblocks this worktree. What changed in this PR and ticket since the \
+work began, and what is the next step?"
       # Not delivered now (its session just started, say): wt-sync
       # keeps trying (wt-unblocked), like any other tell.
       wt-tell "$_ud_root" "unblocked:$1" "$_ud_ping" "$_ud_msg" \
@@ -217,7 +221,75 @@ and what is the next step?"
           "$_ud_ping" "$_ud_msg" "$(date +%s)" \
           >> "${LOCAL_CONFIG:?}/wt-unblocked"
     done
-  awk -F '\t' -v b="$1" '$3 != b && $1 != b' "$_bf" | sponge "$_bf"
+  awk -F '\t' -v b="$1" -v k="${4:-}" '$3 != b && (k == "keep" || $1 != b)' \
+    "$_bf" | sponge "$_bf"
+}
+
+# Why the PR $1 (number, URL or branch) no longer needs waiting on:
+# merged, closed, or open but carried (its head commit is in its base,
+# or a PR merged since it opened names it in its body). Prints
+# nothing while it is open and uncarried; fails when gh can't tell.
+_pr_gone() {
+  _pg="$(timeout 20 gh pr view "$1" \
+    --json number,state,headRefOid,baseRefName,url,createdAt --jq \
+    '[.number, .state, .headRefOid, .baseRefName, .url, .createdAt]
+      | @tsv' 2>/dev/null)" || return 1
+  IFS="$(printf '\t')" read -r _pg_n _pg_st _pg_sha _pg_base _pg_url \
+    _pg_at <<EOF
+$_pg
+EOF
+  _pg_repo="$(echo "$_pg_url" | sed -E 's#^https://github.com/##;
+    s#/pull/.*##')"
+  case "$_pg_st" in
+    MERGED) echo "merged"; return 0 ;;
+    CLOSED) echo "closed without merging (did another PR carry it?)"
+      return 0 ;;
+  esac
+  case "$(timeout 20 gh api \
+    "repos/$_pg_repo/compare/$_pg_base...$_pg_sha" --jq .status \
+    2>/dev/null)" in
+    behind|identical)
+      echo "is open, but its commits are in $_pg_base already"
+      return 0 ;;
+  esac
+  _pg_by="$(timeout 20 gh pr list -R "$_pg_repo" --state merged \
+    --search "$_pg_n in:body merged:>=${_pg_at%%T*}" --limit 20 \
+    --json number,body --jq \
+    "[.[] | select(.body // \"\" | test(\"#$_pg_n([^0-9]|\$)\"))
+      | .number] | first // empty" 2>/dev/null)"
+  test -z "$_pg_by" \
+    || echo "is open, but #$_pg_by merged naming it: check whether" \
+      "it carried the work"
+}
+
+# Lift a `wt rb` on a PR, or on a worktree whose PR, once that PR
+# merged, closed or got carried (_pr_gone): a wait that fired only on
+# `wt merged` slept 17.7h on a PR that was closed for another (RAS-84).
+# Each blocker and reason once (wt-pr-gone), so a re-block after a
+# false carry isn't lifted again. wt-sync runs it every 5th minute.
+_wt_pr_gone() {
+  _bf="$(_blocked_file)"
+  test -s "$_bf" || return 0
+  _pgd="${LOCAL_CONFIG:?}/wt-pr-gone"
+  _pg_all="$(cut -f3 "$_bf" | sort -u)"
+  printf '%s\n' "$_pg_all" | while IFS= read -r _pb; do
+    test -n "$_pb" || continue
+    case "$_pb" in
+      '#'*|https://*) _pb_ref="${_pb#\#}"; _pb_name="PR $_pb" ;;
+      *)
+        _pb_m="$(_wt_match "$_pb")"
+        test -n "$_pb_m" || continue
+        _pb_ref="${_pb_m#*$(printf '\t')}"
+        _pb_name="$_pb's PR" ;;
+    esac
+    _pb_why="$(_pr_gone "$_pb_ref")" || continue
+    test -n "$_pb_why" || continue
+    _pb_key="$(_main_root)	$_pb	$_pb_why"
+    grep -qxF "$_pb_key" "$_pgd" 2>/dev/null && continue
+    # A worktree blocker is still there: keep its own rb.
+    _unblock_dependents "$_pb" "$_pb_why" "$_pb_name" keep || continue
+    printf '%s\n' "$_pb_key" >> "$_pgd"
+  done
 }
 
 # A snoozed worktree whose date or time has arrived goes back to the
@@ -1199,8 +1271,9 @@ _wt_focus() {
 }
 
 # Park the current worktree under # BLOCKED until the blocker
-# (a branch or dir; `:`/none = fzf) is removed, which sends it
-# back to # IN PROGRESS.
+# (a branch or dir; `:`/none = fzf; or a PR: #N, N or its URL) is
+# removed, merged or closed (`wt pr-gone`), which sends it back to
+# # IN PROGRESS.
 _wt_block() {
   _require_worktree
   _self="$(basename "$(git rev-parse --show-toplevel)")"
@@ -1215,6 +1288,30 @@ _wt_block() {
     test -n "$_arg" || exit 0
   fi
   _m="$(_wt_match "$_arg")"
+  # Not a worktree but a PR: `wt pr-gone` lifts it when the PR
+  # merges, closes or another PR carries it.
+  _pr_n="${_arg#\#}"
+  case "$_pr_n" in *[!0-9]*|'') _pr_n="" ;; esac
+  case "$_m:$_arg:$_pr_n" in
+    :*:?*|:https://github.com/*/pull/[0-9]*:)
+      _pr_ref="${_arg#\#}"
+      if ! timeout 20 gh pr view "$_pr_ref" --json number >/dev/null 2>&1
+      then
+        echo "wt: no PR $_arg in this repo" >&2
+        exit 1
+      fi
+      case "$_arg" in https://*) ;; *) _arg="#$_pr_ref" ;; esac
+      _block_drop "$_self"
+      printf '%s\t%s\t%s\n' "$_self" "$_branch" "$_arg" \
+        >> "$(_blocked_file)"
+      _board_move "$_branch" "$_self" 'BLOCKED'
+      _notif_clear "$(git rev-parse --show-toplevel)"
+      echo "wt: blocked by PR $_arg (lifted when it merges, closes" \
+        "or another PR carries it)" >&2
+      _linear Blocked "$_branch" || true
+      return 0
+      ;;
+  esac
   if test -z "$_m"; then
     # Not a worktree: a reason ("design review with Marina", "risks
     # to settle with Pascal"). Nothing unblocks it but `wt ip`.
@@ -1704,6 +1801,7 @@ case "${1:-}" in
   pin) shift; _wt_pin "$@" ;;
   unpin) shift; _wt_unpin "$@" ;;
   rb) shift; _wt_block "$@" ;;
+  pr-gone) _wt_pr_gone ;;
   fx|focus) shift; _wt_focus "$@" ;;
   sz|snooze) shift; _wt_snooze "$@" ;;
   w8|wait) shift; _wt_w8 "$@" ;;

@@ -6,7 +6,10 @@
 #  - promises later work ("once it's live I'll…", "CI will tell me")
 #    from a worktree whose board row has no `wt w8`, `wt sz` or
 #    `wt rb`, with no background agent or shell still running: nothing
-#    would bring it back, so I end up asking "status?".
+#    would bring it back, so I end up asking "status?", or
+#  - waits on a PR ("waiting for #123") with no `wt rb` on it (or a
+#    `wt w8` naming it): only rb wakes on merge, close and carry. One
+#    such turn slept 17.7h on a PR closed for another (RAS-84).
 # Each block is logged to $LOCAL_CONFIG/handback-blocks.log so the
 # my-impact daily review can tell whether it overcorrects (same list
 # re-stopped, scope corrections right after a block).
@@ -72,6 +75,16 @@ live_background() {
   [ -n "$(comm -23 <(echo "$launched") <(echo "$ended"))" ]
 }
 
+# Only a wt worktree has a board row to carry the wait: sets $slug
+# and $board, fails elsewhere.
+board_of() {
+  top=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || return 1
+  case "$top" in */.worktrees/*) ;; *) return 1 ;; esac
+  common=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)
+  slug=$(basename "$top")
+  board="${LOCAL_CONFIG:-$HOME/.config}/worktrees/$(basename "$(dirname "$common")")"
+}
+
 promise() {
   # A clause that waits on me ("when you say send, I'll…") is a
   # question, not a promise: my reply brings the agent back.
@@ -79,12 +92,7 @@ promise() {
     <<<"$text" | grep -Eiv '\byou' | head -1)
   [ -n "$phrase" ] || return 0
 
-  # Only a wt worktree has a board row to carry the wait.
-  top=$(git -C "$cwd" rev-parse --show-toplevel 2>/dev/null) || return 0
-  case "$top" in */.worktrees/*) ;; *) return 0 ;; esac
-  common=$(git -C "$cwd" rev-parse --path-format=absolute --git-common-dir)
-  slug=$(basename "$top")
-  board="${LOCAL_CONFIG:-$HOME/.config}/worktrees/$(basename "$(dirname "$common")")"
+  board_of || return 0
   for f in "$board.waiting" "$board.snoozed" "$board.blocked"; do
     [ -f "$f" ] && awk -F '\t' -v s="$slug" '$1 == s { f = 1 } END { exit !f }' "$f" \
       && return 0
@@ -94,5 +102,31 @@ promise() {
   block "promise: $phrase" "You promised later work (\"$phrase\") but nothing brings you back: no wt w8, wt sz or wt rb on this worktree and no background agent or shell running. Do it now if you can. Otherwise set what wakes you (wt w8 <estimate> \"<what>\" for an event, wt sz <when> for a time, wt rb <ticket> for another PR), then end the turn."
 }
 
+# --- wait on a PR with no rb ---------------------------------------
+
+pr_wait() {
+  phrase=$(grep -Eio "\b(wait(ing|s)?|blocked|parked)\b (for|on|by|until)\b([^.?!]|\.[^[:space:]]){0,80}(#[0-9]+|/pull/[0-9]+)" \
+    <<<"$text" | head -1)
+  [ -n "$phrase" ] || return 0
+  board_of || return 0
+  # A background agent or shell re-invokes this turn anyway.
+  live_background && return 0
+  prs=$(grep -Eo '#[0-9]+|/pull/[0-9]+' <<<"$phrase" | grep -Eo '[0-9]+')
+  for n in $prs; do
+    # rb on that PR, or on a worktree (its PR is polled too).
+    [ -f "$board.blocked" ] && awk -F '\t' -v s="$slug" -v n="$n" '
+      $1 == s && ($3 == "#" n || $3 ~ "/pull/" n "$" \
+        || ($3 != "" && $3 !~ /^(#|https:)/)) { f = 1 }
+      END { exit !f }' "$board.blocked" && return 0
+    # A w8 that names it (its own CI, say): a deadline someone checks.
+    [ -f "$board.waiting" ] && awk -F '\t' -v s="$slug" -v n="$n" '
+      $1 == s && $4 ~ "#" n "([^0-9]|$)" { f = 1 } END { exit !f }' \
+      "$board.waiting" && return 0
+  done
+  n=$(head -1 <<<"$prs")
+  block "pr-wait: $phrase" "You wait on a PR (\"$phrase\") but no wt rb is set on it. A w8 only fires at its deadline and wt merged only on merge: run wt rb #$n, which wakes you when it merges, closes, or another PR carries it (a wt w8 naming #$n for your own PR's CI). Then end the turn."
+}
+
 handback
+pr_wait
 promise

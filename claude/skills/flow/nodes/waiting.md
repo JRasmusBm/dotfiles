@@ -9,7 +9,8 @@ nobody ends: which one did I set?
   background agent, a person, a date? Who or what tells me it's
   over?
 - Waiting on another ticket or PR? Check its status, then `wt rb
-  <ticket>`: I get told when it reaches prod.
+  <ticket|#pr>`: I get told when it ships, closes, or another PR
+  carries it.
 - Waiting on something else that isn't Rasmus? Then `wt w8 <deadline>
   "<what>"`, so the wait has an end someone checks. `<what>` names
   the event, not the step after it: that step gets decided fresh
