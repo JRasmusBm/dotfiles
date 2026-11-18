@@ -12,7 +12,9 @@ already runs.
 - Is what I pass on settled, and by whom? Rasmus asking or
   thinking aloud is not a decision to relay.
 - Does the first line say what this is, for the human who sees only
-  that line?
+  that line? Does it then name the flow node the receiver is at
+  ("Flow skill, waiting node."), with my plan framed as input to
+  that node? A plan alone gets followed literally, flow unread.
 - What does it need that it can't see: what I changed (commit),
   what I checked and what I didn't, the sources (paths, links), who
   owns the work from now?

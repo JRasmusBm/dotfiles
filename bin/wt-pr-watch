@@ -50,8 +50,10 @@ git worktree list --porcelain | awk '
         if test "$_fail" != - && test "$_pend" = 0; then
           wt-tell "$_wt" "ci:$_pr:$_sha" \
             "#$_pr CI failed ($_fail), no agent session" \
-            "CI failed on PR #$_pr ($_fail). Please look at the failure, \
-fix it, push, and tell me what it was."
+            "Flow skill, is-it-good node. CI failed on PR #$_pr ($_fail). \
+Read the failure, then send the code fix to a fresh builder subagent \
+briefed with it: this thread writes no code. Push, and tell me what it \
+was."
         fi
         _push=""
         test "$_fb" = - || _push="$(timeout 20 gh api \
@@ -60,15 +62,15 @@ fix it, push, and tell me what it was."
         if test "$_fb" != - && test -n "$_push" && test "$_fb" \> "$_push"; then
           wt-tell "$_wt" "feedback:$_pr:$_fb" \
             "#$_pr has new review comments, no agent session" \
-            "PR #$_pr has review feedback newer than your last push \
-($_fb). Please read it, address what is right, push, and reply on the \
+            "Flow skill, is-it-good node. PR #$_pr has review feedback \
+newer than your last push ($_fb). Please read it, address what is right, push, and reply on the \
 threads."
         fi
         if test "$_stale" = stale; then
           wt-tell "$_wt" "stale:$_pr:$_sha" \
             "#$_pr marked stale, closes in 7 days, no agent session" \
-            "The stale bot marked PR #$_pr stale; it closes the PR 7 days \
-later. Move it forward (flow skill) and push, or if it is no longer wanted, tell me why."
+            "Flow skill, waiting node. The stale bot marked PR #$_pr stale; \
+it closes the PR 7 days later. Move it forward and push, or if it is no longer wanted, tell me why."
         fi
         test "$_fail" = - && test "$_pend" = 0 || continue
         # pr list reports mergeStateStatus UNKNOWN until a view computes it.
