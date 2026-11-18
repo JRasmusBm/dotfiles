@@ -225,17 +225,13 @@ function claude() {
     && local -x CLAUDE_CODE_ARTIFACT_AUTO_OPEN=0
   [[ $# -eq 0 || "$1" == -* || "$1" == *" "* ]] \
     || { command claude "$@"; return; }
-  # Private settings layered on ~/.claude/settings.json (set by an
-  # overlay outside dotfiles); --settings merges, it doesn't replace.
-  # Remote Control off on a borrowed login: shims/claude.
-  local -a extra
-  [[ -r "$CLAUDE_EXTRA_SETTINGS" ]] \
-    && extra=(--settings "$(<"$CLAUDE_EXTRA_SETTINGS")")
+  # Private settings ($CLAUDE_EXTRA_SETTINGS) and Remote Control off
+  # on a borrowed login: shims/claude, which every launch goes through.
   for a in "$@"; do
     case "$a" in
       -n|--name|--name=*|-r|--resume|--resume=*|-c|--continue|\
       -p|--print|--remote-control|--remote-control=*)
-        command claude "${extra[@]}" "$@"; return ;;
+        command claude "$@"; return ;;
     esac
   done
 
@@ -264,7 +260,7 @@ function claude() {
     name="$name:$(tmux display -p -t "$TMUX_PANE" '#{window_index}')"
   fi
 
-  command claude "${extra[@]}" --name "$name" "$@"
+  command claude --name "$name" "$@"
 }
 
 [ -f $HOME/.config/broot/launcher/bash/br ] && source $HOME/.config/broot/launcher/bash/br

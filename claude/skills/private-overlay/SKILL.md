@@ -34,9 +34,10 @@ generic rule in dotfiles and drop or neutralise the example (`ABC-123`,
   add/rm/forget, preview, shipping, nodeploy, merged-hint, sync). New
   repo-specific behaviour in wt & co = a new event, not an `if` on a
   repo name.
-- Claude settings: overlay `jrb/claude/settings.json`, layered by the
-  `claude` zsh wrapper through `$CLAUDE_EXTRA_SETTINGS` (`--settings`
-  merges permissions, hooks, MCP servers and `autoMode`).
+- Claude settings: overlay `jrb/claude/settings.json`, layered by
+  `shims/claude` (every launch) through `$CLAUDE_EXTRA_SETTINGS`
+  (`--settings` merges permissions, hooks, MCP servers and
+  `autoMode`).
 - Flow nodes: overlay `jrb/flow/nodes/<node>.md`, the private half
   of the dotfiles node with the same name.
 - Skills: overlay `jrb/skills/<name>`, symlinked into
