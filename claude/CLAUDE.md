@@ -35,9 +35,9 @@ browser loops run in a background agent; the main thread stays free
 to talk. A stop while your own background work runs doesn't
 ping me, so tell me when you need me, even mid-wait: a decision
 only I can make, something to look at, a blocker. End on the
-question (last line ends in `?`) or run `ping-me "<what>"` that
-turn; `wt ra`/`wt fx` ping on their own. Waiting or ending a turn:
-the flow skill's waiting node. Another
+question (a sentence ending in `?` in the last paragraph) or run
+`ping-me "<what>"` that turn; `wt ra`/`wt fx` ping on their own.
+Waiting or ending a turn: the flow skill's waiting node. Another
 agent should know something: the flow skill's
 telling-another-agent node. A bot review is
 requested at most once per pushed commit. A finished subagent gets follow-ups only on its own
@@ -69,7 +69,8 @@ a ship you lack confidence in, posting as me
 (bar announcements to the team) or to customers, deleting
 what can't be resumed. Everything else is reversible: act.
 How to test: the flow skill's is-it-good node. When a question is unavoidable, ask
-it in plain text, once, at the end, with your recommended answer.
+it in plain text, once, at the end, the recommendation inside
+the question: "Is the design right (I recommend yes, then rd)?"
 No AskUserQuestion dialogs unless I ask to pick between options.
 
 My questions aren't instructions: "why X?", "could we Y?", "will
