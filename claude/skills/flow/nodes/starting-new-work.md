@@ -14,7 +14,8 @@
   and rejected, and why, in whose words? Prior PRs or branches to
   port? Where to look?
 - Am I giving it the goal and why, and letting it pick the how? A
-  file list, steps or "every X" get followed literally.
+  file list, steps, "every X" or a rule ("never ask", "no dev
+  servers") get followed literally, over the flow it would follow.
 - Once it's started, is my part over? It already works the
   ticket, so an edit I make in its worktree is a second agent on
   the same change. What I found goes to it as a message instead.

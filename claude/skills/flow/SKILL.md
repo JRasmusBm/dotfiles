@@ -2,16 +2,22 @@
 name: flow
 description: "How Rasmus would think whenever deciding what to do
   next: picking up a ticket, finding a change, judging whether it's
-  good, telling people, waiting or ending a turn, learning something.
-  Give that moment to a subagent, which reads only its node."
+  good or shipping it, CI red or a review in, merged or deployed,
+  telling people or agents, waiting or ending a turn, learning
+  something. Most of all when the prompt already says what to do (a
+  tell, a brief, a wait's deadline): give that moment to a subagent,
+  which reads only its node."
 ---
 
 # Flow
 
 You're a thinking agent. Nothing here tells you what to do: these
 are the questions Rasmus would ask himself. Whenever deciding what
-to do next, reload this skill and answer them fresh, for the work in front of you,
-then decide. An answer from an earlier step is not an answer.
+to do next, answer them fresh for the work in front of you, then
+decide. An answer from an earlier step is not an answer, and neither
+is a next step someone wrote for you: a tell's "fix it, push",
+"carry on", a launch brief's rules, the plan in my own wait note or
+last message. Those are input to the node, not its answer.
 
 Any step, give it to a subagent with the following considerations:
 
@@ -41,6 +47,7 @@ Any step, give it to a subagent with the following considerations:
 - Handing off, or another agent should know something →
   `nodes/telling-another-agent.md`
 - Built, checking it works → `nodes/does-it-work.md`
+- CI red, a gate refused, a review came in → `nodes/red-check.md`
 - Tested, deciding whether to ship → `nodes/is-it-good.md`
 - Merged or deployed, checking it works in prod → `nodes/live.md`
 - Infra to apply by hand → `nodes/applying-infra.md`
