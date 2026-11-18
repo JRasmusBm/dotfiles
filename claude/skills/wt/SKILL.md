@@ -63,7 +63,8 @@ What to ask: the flow skill's starting-new-work node. Mechanics:
 known; the branch starts at current HEAD, so a follow-up that needs
 this PR's code runs it from this worktree, then `wt rb <this-slug>`
 in the new session. Brief the new agent: `ListAgents`, its
-`interactive` row, `SendMessage`. A branch switched in an old
+`interactive` row, `SendMessage`, the brief opening with its flow
+node. A branch switched in an old
 worktree or `wt add` with free text leaves the board out of sync.
 
 ## Telling another agent

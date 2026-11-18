@@ -139,6 +139,10 @@ That chat ran in {cwd or 'an unknown directory'} and reached {ctx // 1000}k
 tokens of context, so it goes on here, fresh, instead of being resumed:
 each turn there re-read all of it.
 
+Start from the flow skill: which node fits this moment? Answer it
+fresh. The old chat's plan below is input to that node, not steps to
+follow.
+
 Rebuild what you need from the durable state, not the old chat: the
 branch, its ticket and PR (the PR body is the current state), `git log`,
 `git status`, the board row and any open `wt w8`. The whole old chat,

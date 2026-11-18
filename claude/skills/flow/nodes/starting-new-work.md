@@ -16,6 +16,8 @@
 - Am I giving it the goal and why, and letting it pick the how? A
   file list, steps, "every X" or a rule ("never ask", "no dev
   servers") get followed literally, over the flow it would follow.
+  Does the brief open with the flow node it starts at, my plan as
+  input to that node?
 - Once it's started, is my part over? It already works the
   ticket, so an edit I make in its worktree is a second agent on
   the same change. What I found goes to it as a message instead.

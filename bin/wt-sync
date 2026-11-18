@@ -85,7 +85,7 @@ _w8_all="$(awk -F '\t' -v a="$_w8_last" -v b="$_now" -v repos="$_repos" \
       if (m == "") next
       dl = $3; sub(/T/, " ", dl)
       printf "%d\t%s/.worktrees/%s\tw8:%s:%s\tOverdue: %s waited on %s " \
-        "(expected %s)\tYour wt w8 deadline passed: you waited on %s, " \
+        "(expected %s)\tFlow skill, waiting node. Your wt w8 deadline passed: you waited on %s, " \
         "expected by %s. Check on it now. If it arrived, carry on " \
         "(wt ip). If not, find out why, then wt w8 a new estimate, or " \
         "tell me what blocks it.\t%s\n", (a != "" && $3 > a), m, $1, $1,
