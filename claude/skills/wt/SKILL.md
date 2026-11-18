@@ -33,7 +33,9 @@ agent. One tmux server, `default`, holds every session: never
 - `wt` acts on the pane's own worktree; for another session,
   `tmux send-keys -t <slug>:1 'wt …' Enter`.
 - Which wait: the flow skill's waiting node. `wt rb
-  <worktree|ticket>` (never free text: nothing lifts it), `wt w8
+  <worktree|ticket|#pr>` (never free text: nothing lifts it; a PR or
+  a worktree's PR lifts it when it merges, closes or another PR
+  carries it), `wt w8
   <estimate> "<what>"` (`wt w8 done` when it arrives; other tells
   don't end it), `wt sz <when>` (nothing else schedules a wake-up).
 - My next step needs real focus (manual setup, a direction check):

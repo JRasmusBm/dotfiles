@@ -78,12 +78,38 @@ _run 'promise, subagent finished: blocked' block "$_wt" "$_promise" \
 _run 'promise, live background shell: passes' pass "$_wt" "$_promise" \
   "$_shell"
 
+_prwait='Ending here, waiting for #10585 and #10563 to land.'
+_run 'PR wait, no wait set: blocked' block "$_wt" "$_prwait"
+_run 'PR wait outside a worktree: passes' pass "$_t/repo" "$_prwait"
+printf 'abc-1\tfeat/jrb/abc-1\t2099-01-01T10:00\tmerge\t0\t%s\n' \
+  "$_t/repo" > "$LOCAL_CONFIG/worktrees/repo.waiting"
+_run 'PR wait, w8 not naming it: blocked' block "$_wt" "$_prwait"
+printf 'abc-1\tfeat/jrb/abc-1\t2099-01-01T10:00\tCI on #10563\t0\t%s\n' \
+  "$_t/repo" > "$LOCAL_CONFIG/worktrees/repo.waiting"
+_run 'PR wait, w8 naming it: passes' pass "$_wt" "$_prwait"
+rm "$LOCAL_CONFIG/worktrees/repo.waiting"
+printf 'abc-1\tfeat/jrb/abc-1\t#10585\n' > "$LOCAL_CONFIG/worktrees/repo.blocked"
+_run 'PR wait, rb on it: passes' pass "$_wt" "$_prwait"
+printf 'abc-1\tfeat/jrb/abc-1\t#999\n' > "$LOCAL_CONFIG/worktrees/repo.blocked"
+_run 'PR wait, rb on another PR: blocked' block "$_wt" "$_prwait"
+printf 'abc-1\tfeat/jrb/abc-1\t\tdesign review\n' \
+  > "$LOCAL_CONFIG/worktrees/repo.blocked"
+_run 'PR wait, free-text rb: blocked' block "$_wt" "$_prwait"
+printf 'abc-1\tfeat/jrb/abc-1\tabc-2\n' > "$LOCAL_CONFIG/worktrees/repo.blocked"
+_run 'PR wait, rb on a worktree: passes' pass "$_wt" \
+  "Blocked on https://github.com/o/r/pull/10585 merging first."
+rm "$LOCAL_CONFIG/worktrees/repo.blocked"
+_run 'PR URL wait, no rb: blocked' block "$_wt" \
+  "Waiting for https://github.com/o/r/pull/12 to land."
+_run 'PR wait, live subagent: passes' pass "$_wt" "$_prwait" "$_agent"
+
 _run 'hand-back list: blocked' block "$_t/repo" \
   "Done with A. Still needs doing: B and C."
 
 _log="$LOCAL_CONFIG/handback-blocks.log"
-if test "$(wc -l < "$_log")" -eq 4 \
-  && test "$(grep -c "	promise: " "$_log")" -eq 3; then
+if test "$(wc -l < "$_log")" -eq 9 \
+  && test "$(grep -c "	promise: " "$_log")" -eq 3 \
+  && test "$(grep -c "	pr-wait: " "$_log")" -eq 5; then
   echo "ok   every block logged"
 else
   echo "FAIL block log:"; cat "$_log"; _fail=1
