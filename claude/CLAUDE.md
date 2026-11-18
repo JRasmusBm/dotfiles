@@ -5,6 +5,8 @@ agents encounter and how I would reason about them. Refer to it frequently
 as the main reference for how I would do things. When you learn something
 worth remembering, read flow's learned-something node.
 
+Prefer working with subagents to reduce context and to avoid blocking in the main thread - it should always be responsive.
+
 ## Identity
 
 Initials: jrb.
@@ -13,104 +15,26 @@ Tools: Neovim, Zsh, Alacritty, macOS, Hammerspoon.
 
 ## Working Style
 
-Be proactive, not permission-seeking. Make changes first, ask later.
-Don't ask "Want me to do X?" — just do it. Includes UI and visual
-changes (build it and show me, don't post a mockup and wait),
-committing what you fixed once verified (only your hunks), and my
-PRs: push to the branch and keep the title/body in sync without
-asking, then report the head sha (ship when the flow skill's is-it-good node gives you
-confidence, through the repo's ship queue where it has one, else on
-my word. Prod broken for
-users (a crashing page) needs no word: unless someone's open
-PR already fixes it, roll back or roll forward to a stable state at
-once, then tell me. My
-word to ship also covers the merge the queue refuses (workflow
-files), resolving review threads the code already answers (reply
-with the commit that fixed it, then resolve), and cancelling your
-own stuck ship request: do them yourself, then ship again; then end
-the turn:
-`wt-sync` tells you what happens next). Merged, deployed, or
-"is it released?": the flow skill's live node. Long pipelines, polls and
-browser loops run in a background agent; the main thread stays free
-to talk. A stop while your own background work runs doesn't
-ping me, so tell me when you need me, even mid-wait: a decision
-only I can make, something to look at, a blocker. End on the
-question (a sentence ending in `?` in the last paragraph) or run
-`ping-me "<what>"` that turn; `wt ra`/`wt fx` ping on their own.
-Waiting or ending a turn: the flow skill's waiting node. Another
-agent should know something: the flow skill's
-telling-another-agent node. A bot review is
-requested at most once per pushed commit. A finished subagent gets follow-ups only on its own
-result; a new task (review round, rebase, re-test, browser pass) goes
-to a fresh agent with a short brief: a resumed one re-reads ~120k
-context a turn, a fresh one ~57k. A branch I cite as prior work is the starting point: `git
-show` it, port and extend, and say what came from it.
-
-When unsure, take the option that's cheap to
-undo, do the work, and ask only about that cheap change. In this
-PR or a follow-up: the flow skill's asked-for-a-change node.
+Be proactive, not permission-seeking. Make changes first, ask later. Don't ask "Want me to do X?" — just do it.
 
 Replace, don't accrete. Rewrite what's there, don't append beside it.
 Adding lines? Name what they replace. A narrow ask gets a narrow
 diff: "add logs" = log lines only, no refactor feeding them; "X
 overstates" = change X, no added caveats, owners or follow-ups.
 
-Shared infra: a question ("you didn't clobber staging?") is
-read-only, report and ask before any write. Follow a rollback plan
-you announced, or say "I said X, doing Y because Z" first; never
-delete its artifact.
-
 ## Questions
 
-Questions stall work. Default: don't ask; decide, do it, and
-say what you assumed. Come back only for an irreversible or
-truly risky tradeoff: writes to prod data, infra applies,
-a ship you lack confidence in, posting as me
-(bar announcements to the team) or to customers, deleting
-what can't be resumed. Everything else is reversible: act.
-How to test: the flow skill's is-it-good node. When a question is unavoidable, ask
-it in plain text, once, at the end, the recommendation inside
-the question: "Is the design right (I recommend yes, then rd)?"
-No AskUserQuestion dialogs unless I ask to pick between options.
-
-My questions aren't instructions: "why X?", "could we Y?", "will
-that work if Z?" get an answer with the trade-off, then stop. Build
-only on "do it"; proactive means doing agreed work unasked. A question
-that points out a flaw in your own work ("could we not have used X?")
-is a correction: if the answer is yes, fix it, then report.
+Avoid AskUserQuestion etc. dialogs, as they block the thread.
 
 ## Communication
 
-Extremely concise. Sacrifice grammar for concision.
-When explaining: provide context + doc links.
-When investigating: explain approach.
+Be extremely concise when communicating with me. Sacrifice grammar for concision.
+
+Avoid writing [text](url) to me in Claude Code, it gets interpolated and
+I cannot follow the link.
+
 Voice typing: interpret phonetic errors from context
 (cloud MD → CLAUDE.md, sim link → symlink, get hub → GitHub).
-Link to open → bare URL on its own line, not only [text](url).
-Naming a live object (a customer's record, dashboard, setting)
-→ deep-link it in the product, so I click instead of searching.
-Drafts I'll send: literal plain phrasing, no idioms; links
-`[text](url)`, never `<url|text>`; the whole draft each revision.
-Slack posts: edit here, send only on my "send", never save drafts.
-Exceptions, sent unasked: a `claim-work` claim reply, and a release
-announcement to a team channel (I calibrate after it's out: waiting
-on my send blocks every ticket). Anything a customer reads waits.
-Screen recordings (.mov/.mp4) I share: extract frames with
-`ffmpeg -i <file> -vf fps=2 <scratchpad>/f%03d.png` and Read them.
-
-## Plans
-
-Extremely concise. End with unresolved questions if any.
-Before asking approval: load the skills, read the files to change,
-and turn every risk you can check now into a fact. A stakeholder's
-spec is the source of truth; an unspec'd case takes the closest
-spec'd state. Multi-piece work: orthogonal agent-ready briefs
-(goal, deps, settled context, files to read, skills,
-acceptance, boundaries), a shared settled section, a task graph.
-Settled = what I or a stakeholder said, or what base already does;
-your own requirements (undo, recovery, extra modes) are proposals,
-marked so, and never settled. What a briefed agent builds: the
-flow skill's picking-up node.
 
 ## Line Length — HARD LIMIT
 
@@ -127,20 +51,6 @@ Managed in ~/projects/dotfiles. Symlinked via scripts/symlink +
 files.csv. Repo skills: .claude/skills/. Global skills:
 ~/projects/dotfiles/claude/skills/ (→ ~/.claude/skills/).
 Never create config directly in target locations.
-
-dotfiles is PUBLIC. Work specifics (employer, products, repos,
-infra, tools, people, emails, URLs) go to the private overlay
-(`~/.private`, a private GitHub repo) through its seams, never into
-dotfiles: load the `private-overlay` skill before writing to either,
-from any repo (alongside that repo's own `save-learnings`).
-`leak-check` guards commits.
-
-In my tooling repos (dotfiles, the private overlay), commit
-each change as soon as it works, staging explicit paths (never
-`commit -a`: secrets live nearby). I edit none of it by hand, so an
-uncommitted change you find is another agent's: read it, commit it
-if it holds up (secrets go to an ignored file instead), and never
-call it mine.
 
 ## Platform Quirks
 
@@ -192,19 +102,14 @@ fix it once and say so, so others don't too.
 
 ## Git
 
-Use `g s <branch>` to switch branches (not raw
-`git switch`). The `git-s` wrapper refreshes the
-tmux status bar after switching. Rebase onto dev only when
-shipping, and only the PR being shipped: a rebase goes stale as
-dev moves and every force-push reruns CI (on a whole stack
-when restacked), so catching up earlier burns tokens and CI for
-nothing. Rebasing on dev: fetch, reset
-local `dev` to `origin/dev` (main checkout: `reset --hard` only if
-`status --short` shows no tracked changes, else stop and say so),
-then `git rebase dev`, then `git push --force-with-lease`
-unasked: rewriting your own branch's remote is part of a rebase.
-Never force a shared branch (base branches, someone else's or
-a branch another PR stacks on).
+Use `g s <branch>` to switch branches - it refreshes the
+tmux status bar. Be smart about rebases, avoid issues caused by stale code while
+minimizing useless time spent in CI (I.e. continually rebasing when not
+actively) preparing to ship.
+
+Rebasing on main is always allowed for own branches: fetch, reset main to origin,
+rebase branch on it - then `git push --force-with-lease`. Never force a shared
+branch (base branches, someone else's or a branch another PR stacks on).
 
 ## Branch code isn't released code
 
