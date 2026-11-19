@@ -176,8 +176,10 @@ check "guess: asked once" \
 printf '\n' | "$_bin/prio" guess ABC-30 >/dev/null
 check "guess: Enter leaves it for later" \
   'test "$(refs)" = "prio:two:abc-30 "'
-printf 'y\n' | "$_bin/prio" guess abc-30 >/dev/null
-check "guess: y joins the ticket to the guessed priority's grouping" \
+printf 'x\n#2\n' | "$_bin/prio" guess abc-30 >"$_t/guess.out"
+check "guess: an unreadable answer asks again" \
+  'grep -q "\"x\"? answer y, 1-" "$_t/guess.out"'
+check "guess: #2 joins the ticket to priority 2's grouping" \
   'grep -q "^update id-ABC-30 {\"parentId\": \"id-ABC-10\"}" \
      "$_t/linear.json.calls" && grep -q "^ABC-30	accepted	2" "$_f.guesses"'
 check "changes: an accepted guess is logged" \
