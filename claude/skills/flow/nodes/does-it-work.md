@@ -15,8 +15,10 @@
       (a service I didn't start locally, a shared deploy)?
     - A long click-through: does it go to a fresh, smaller subagent,
       with me judging its screenshots, not its verdict?
-    - Can I verify this locally, on up-to-date code? If so, that is
-      preferred: staging is one resource shared by the whole org.
+    - Local first, always, when feasible: a shared environment is
+      one resource for the whole org. Ruled local out? On evidence
+      checked now (the repo's dev-stack docs: what runs my branch
+      locally against shared data), not a conclusion from earlier.
       Except lint, type checks and the whole test suite: CI runs
       those cheaper in tokens.
 - What would make it wrong? Did I look for that, not just the happy
