@@ -23,7 +23,8 @@
       those cheaper in tokens.
 - What would make it wrong? Did I look for that, not just the happy
   path? Would a fresh agent, given only the goal and the diff, find
-  something?
+  something? What would come back after I hand it off that I could
+  find now?
 - Will this check be needed again on every change? What is the
   cheapest test that covers it, and what does that test cost in CI
   time and flakiness?
