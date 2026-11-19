@@ -28,7 +28,11 @@ check() { if eval "$2"; then ok "$1"; else no "$1"; fi; }
 _sid=aaaaaaaa-0000-0000-0000-000000000000
 cat > "$FAKE/claude-pane" <<EOF
 #!/bin/sh
-test "\$1" = of && echo $_sid
+echo "\$*" >> "\$FAKE/pane"
+case "\$1" in
+  of) echo $_sid ;;
+  cwd) test -n "\$FAKE_CWD" && echo "\$FAKE_CWD" ;;
+esac
 EOF
 cat > "$FAKE/claude-msg" <<'EOF'
 #!/bin/sh
@@ -42,8 +46,9 @@ test "$1" = gate && exit "${FAKE_GATE_RC:-0}"
 exit 0
 EOF
 printf '#!/bin/sh\n' > "$FAKE/notif"
+printf '#!/bin/sh\necho "$*" >> "$FAKE/pinged"\n' > "$FAKE/notify"
 chmod +x "$FAKE/claude-pane" "$FAKE/claude-msg" "$FAKE/run-slot" \
-  "$FAKE/notif"
+  "$FAKE/notif" "$FAKE/notify"
 
 # A pane whose command reads as `claude`: a tiny binary of that name
 # running a sleeping script under sh (a copied binary won't start on
@@ -67,7 +72,10 @@ status() {
   printf '{"sessionId":"%s","status":"%s"}\n' "$_sid" "$1" \
     > "$CLAUDE_CONFIG_DIR/sessions/4242.json"
 }
-fresh() { rm -f "$LOCAL_CONFIG/wt-told" "$FAKE/msg" "$FAKE/slot"; }
+fresh() {
+  rm -f "$LOCAL_CONFIG/wt-told" "$FAKE/msg" "$FAKE/slot" "$FAKE/pinged" \
+    "$FAKE/pane"
+}
 # tell KEY [PROMPT]: runs wt-tell, sets _rc and _out.
 tell() {
   _out="$(wt-tell "$_w" "$1" "ping $1" "${2:-hello $1}" 2>"$_t/err")"
@@ -123,5 +131,40 @@ check "the prompt names the open w8" \
   'grep -q "^$_sid|hello k6 Your wt w8 is still open: waiting on CI, until $(echo "$_until" | tr T " ")\." "$FAKE/msg"'
 check "and how to end it" 'grep -q "run wt w8 done" "$FAKE/msg"'
 rm -f "$LOCAL_CONFIG/worktrees/repo.waiting"
+
+# RAS-100: a pending tell (run-slot pump) to a chat by sid that runs
+# nowhere. Its checkout gone, it pings once and settles; there, it is
+# revived and stays pending.
+_gone=bbbbbbbb-0000-0000-0000-000000000000
+echo "== 7. sid's chat cwd gone, pending run"
+fresh; export WT_TELL_SID="$_gone" RUN_SLOT_PENDING=1 FAKE_CWD="$_t/gone"
+tell k7
+check "exits 0 (settled)" 'test "$_rc" = 0'
+check "pinged once" 'test "$(grep -c . "$FAKE/pinged")" = 1'
+check "no revive gated" '! grep -q "^gate" "$FAKE/slot" 2>/dev/null'
+check "no claude-pane open" '! grep -q "^open" "$FAKE/pane"'
+check "ping recorded" 'told ping:k7'
+tell k7
+check "retry exits 0" 'test "$_rc" = 0'
+check "still one ping" 'test "$(grep -c . "$FAKE/pinged")" = 1'
+
+echo "== 8. sid's chat cwd unknown, pending run"
+fresh; FAKE_CWD=""; tell k8
+check "exits 0 (settled)" 'test "$_rc" = 0'
+check "pinged" 'test -s "$FAKE/pinged"'
+
+echo "== 9. worktree gone, sid's cwd there, pending run"
+fresh; FAKE_CWD="$_t"
+_w0="$_w"; _w="$_t/repo/.worktrees/gone"; tell k9; _w="$_w0"
+check "exits 0 (settled)" 'test "$_rc" = 0'
+check "pinged" 'test -s "$FAKE/pinged"'
+check "no revive gated" '! grep -q "^gate" "$FAKE/slot" 2>/dev/null'
+
+echo "== 10. sid's chat cwd there, pending run"
+fresh; FAKE_CWD="$_w"; tell k10
+check "exits 1 (still pending)" 'test "$_rc" = 1'
+check "revive gated" 'grep -q "^gate tell revive:$_gone -- " "$FAKE/slot"'
+check "not pinged" 'test ! -s "$FAKE/pinged"'
+unset WT_TELL_SID RUN_SLOT_PENDING FAKE_CWD
 
 exit "$_fail"
