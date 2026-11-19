@@ -8,6 +8,8 @@
   node, now in prod)? When should its effect show: now, the next
   scheduled run, the next time someone uses it? A grep of the bundle
   proves it shipped, not that it works.
+- Does it touch an MCP? Then my session's tool descriptions are
+  stale: how can I work around that to verify it?
 - Is it breaking anything else? Who else runs this code (shared
   code, other tenants, other jobs)? What do the logs, alerts,
   metrics and costs say since it went out? Read-only.
