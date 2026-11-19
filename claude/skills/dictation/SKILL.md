@@ -27,6 +27,30 @@ Reference this skill when the user mentions dictation, voice input, or the Dicta
   VAD is why: without it Whisper hallucinates ("Thank you.") on silence.
 
 Esc is bound only while recording, so it works normally otherwise.
+
+## Voice trigger
+
+Hands-free: say "okay Tundra" to start (as `Cmd+Shift+D`), "Zephyr
+go" to submit (as Esc; the phrase is cut from the pasted text) and
+"Tundra abort" to cancel. A phrase only counts in its state (start
+when idle, submit/cancel while recording), so a stray hit costs at
+most a cancelled recording, never a paste.
+
+- `Dictate.spoon/wakeword/listen.py` runs as an `hs.task` of the
+  spoon (it inherits Hammerspoon's mic permission; muting stops it,
+  freeing the mic). openWakeWord, local only: no audio on disk, no
+  network. It shares the default input with ffmpeg fine.
+- `Cmd+Alt+Shift+D` mutes/unmutes. It mutes itself while a Zoom
+  meeting runs (`CptHost` process) or a browser window's title
+  starts with "Meet - " (polled every 5s).
+- Models: `wakeword/models/*.onnx`, custom-trained by
+  `wakeword/train.sh` (synthetic TTS clips; hours on CPU). Thresholds
+  in `WAKE` in the spoon start strict.
+- Log: `~/.local/state/dictation/wakeword.log`, hits only (`name
+  score state acted|ignored`), plus listener on/off and mute events.
+  Count false triggers: `grep -c ignored` and acted starts you didn't
+  say.
+- Venv: `~/.local/share/wakeword/venv` (`install_dependencies/dictation`).
 Replaced the macOS Shortcut "Dictate to Clipboard" (2026-11), which
 stopped on its own after a pause.
 
@@ -65,4 +89,6 @@ To adjust how many dictation entries to keep, change `MAX_DICTATION_ITEMS` in th
   asset digest. Then run `codesign --force --deep --sign -` on the app:
   without it macOS kills it on launch ("Code Signature Invalid" in a
   `.ips` report, `open -a` says "Unable to find application").
+- **Voice trigger silent:** check the log for "listener exited"
+  (missing venv or models) and that it isn't muted or in a call.
 - **Changes not taking effect:** Reload Hammerspoon after editing the spoon.

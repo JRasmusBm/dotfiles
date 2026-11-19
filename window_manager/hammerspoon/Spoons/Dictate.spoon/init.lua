@@ -4,6 +4,11 @@
 -- While recording, ffmpeg also cuts CHUNK_SECONDS chunks; each finished
 -- chunk is transcribed into a live preview panel. The pasted text comes
 -- from one pass over the whole recording: chunk cuts split words.
+-- Voice: wakeword/listen.py (openWakeWord, local) runs while unmuted.
+-- Saying START_PHRASE acts like Cmd+Shift+D, SUBMIT_PHRASE like Esc
+-- (the phrase is cut from the pasted text), CANCEL_PHRASE aborts.
+-- Cmd+Alt+Shift+D mutes it; it mutes itself during Zoom or Meet calls.
+-- Hits go to WAKE_LOG. M.start/M.submit/M.cancel drive it from `hs -c`.
 -- Models: install_dependencies/dictation.
 local M = {}
 
@@ -26,6 +31,23 @@ local MAX_DICTATION_ITEMS = 2
 local MARK_DELAY = 0.3
 local MARK_ATTEMPTS = 20
 local EVAL_TIMEOUT = 5
+
+local WAKE_DIR = os.getenv("HOME") .. "/.local/share/wakeword/"
+local WAKE_PYTHON = WAKE_DIR .. "venv/bin/python"
+local WAKE_LOG = os.getenv("HOME") .. "/.local/state/dictation/wakeword.log"
+local WAKE = {
+  start = { phrase = "okay tundra", model = "okay_tundra", threshold = 0.8 },
+  submit = { phrase = "zephyr go", model = "zephyr_go", threshold = 0.8 },
+  cancel = { phrase = "tundra abort", model = "tundra_abort", threshold = 0.8 },
+}
+local CALL_POLL_SECONDS = 5
+local RESTART_SECONDS = 5
+local MEET_TITLE = "^Meet %- "
+local BROWSERS = {
+  "Google Chrome", "Brave Browser", "Arc", "Safari", "Firefox",
+}
+-- A transcribed phrase may differ from the spelling by this share.
+local PHRASE_TOLERANCE = 0.4
 
 local function copyqEval(script, callback, ...)
   local timer
@@ -165,7 +187,7 @@ end
 
 -- state: nil (idle), "recording" or "transcribing"
 local state, recorder, finalTask, chunkTask, poller
-local preview, nextChunk
+local preview, nextChunk, voiceSubmit
 local escape
 local RECORDING = "🎙 Recording…  Esc submits, ⌘⇧D aborts"
 
@@ -185,6 +207,7 @@ end
 
 local function reset()
   state = nil
+  voiceSubmit = false
   stopTask(recorder)
   stopTask(finalTask)
   stopTask(chunkTask)
@@ -228,6 +251,50 @@ local function pollChunks()
   end)
 end
 
+local function letters(s)
+  return (s:lower():gsub("[^%a]", ""))
+end
+
+local function distance(a, b)
+  local prev = {}
+  for j = 0, #b do
+    prev[j] = j
+  end
+  for i = 1, #a do
+    local cur = { [0] = i }
+    for j = 1, #b do
+      local cost = a:sub(i, i) == b:sub(j, j) and 0 or 1
+      cur[j] = math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
+    end
+    prev = cur
+  end
+  return prev[#b]
+end
+
+-- Whisper spells the phrase its own way ("Zephyr, go." or "Zefir go"):
+-- drop the trailing words closest to it, if close enough.
+local function stripPhrase(text, phrase)
+  local words = {}
+  for w in text:gmatch("%S+") do
+    table.insert(words, w)
+  end
+  local target = letters(phrase)
+  local _, phraseWords = phrase:gsub("%S+", "")
+  local best, bestScore
+  for n = 1, math.min(#words, phraseWords + 1) do
+    local tail = letters(table.concat(words, " ", #words - n + 1))
+    local score = distance(tail, target) / #target
+    if not bestScore or score < bestScore then
+      best, bestScore = n, score
+    end
+  end
+  if not best or bestScore > PHRASE_TOLERANCE then
+    return text
+  end
+  local kept = table.concat(words, " ", 1, #words - best)
+  return (trim(kept):gsub("[,;:%-]+$", ""))
+end
+
 local function submit()
   state = "transcribing"
   escape:disable()
@@ -237,6 +304,9 @@ local function submit()
   finalTask = whisper(WAV, "", function(code, text)
     if state ~= "transcribing" then
       return
+    end
+    if voiceSubmit then
+      text = stripPhrase(text, WAKE.submit.phrase)
     end
     reset()
     if code ~= 0 then
@@ -274,6 +344,7 @@ local function start()
     return
   end
   state = "recording"
+  hs.sound.getByName("Tink"):play()
   escape:enable()
   poller = hs.timer.doEvery(POLL_SECONDS, pollChunks)
   showPanel(RECORDING, "")
@@ -285,11 +356,13 @@ local function abort()
 end
 
 -- ffmpeg finalises the wav on SIGTERM; its exit callback submits.
-escape = hs.hotkey.new({}, "escape", function()
+local function stopRecording()
   if state == "recording" then
     recorder:terminate()
   end
-end)
+end
+
+escape = hs.hotkey.new({}, "escape", stopRecording)
 
 hs.hotkey.bind({ "cmd", "shift" }, "d", function()
   if state then
@@ -298,5 +371,153 @@ hs.hotkey.bind({ "cmd", "shift" }, "d", function()
     start()
   end
 end)
+
+-- Each returns whether it acted: a phrase only counts in its state.
+function M.start()
+  if state then
+    return false
+  end
+  start()
+  return true
+end
+
+function M.submit()
+  if state ~= "recording" then
+    return false
+  end
+  voiceSubmit = true
+  stopRecording()
+  return true
+end
+
+function M.cancel()
+  if not state then
+    return false
+  end
+  abort()
+  return true
+end
+
+-- Voice trigger
+
+local listener, restartTimer
+local muted, inCall = false, false
+
+local function log(line)
+  local f = io.open(WAKE_LOG, "a")
+  if f then
+    f:write(os.date("%Y-%m-%dT%H:%M:%S "), line, "\n")
+    f:close()
+  end
+end
+
+local function onHit(name, score)
+  local was = state or "idle"
+  local acted = M[name]()
+  log(string.format("%s %s %s %s", name, score, was,
+    acted and "acted" or "ignored"))
+end
+
+local startListener
+
+local function stopListener()
+  if restartTimer then
+    restartTimer:stop()
+    restartTimer = nil
+  end
+  if listener then
+    local task = listener
+    listener = nil
+    task:terminate()
+    log("listener off")
+  end
+end
+
+local function wanted()
+  return not muted and not inCall
+end
+
+startListener = function()
+  if listener or not wanted() then
+    return
+  end
+  if not hs.fs.attributes(WAKE_PYTHON) then
+    return
+  end
+  local args = { hs.spoons.resourcePath("wakeword/listen.py") }
+  for name, w in pairs(WAKE) do
+    local model =
+      hs.spoons.resourcePath("wakeword/models/" .. w.model .. ".onnx")
+    if not hs.fs.attributes(model) then
+      return
+    end
+    table.insert(args, string.format("%s=%s:%s", name, model, w.threshold))
+  end
+  local task
+  task = hs.task.new(WAKE_PYTHON, function(code, _, err)
+    if listener ~= task then
+      return
+    end
+    listener = nil
+    log(string.format("listener exited %d: %s", code, trim(err):sub(-200)))
+    restartTimer = hs.timer.doAfter(RESTART_SECONDS, startListener)
+  end, function(_, stdout)
+    for name, score in (stdout or ""):gmatch("(%a+) ([%d.]+)") do
+      if WAKE[name] then
+        onHit(name, score)
+      end
+    end
+    return true
+  end, args)
+  if task:start() then
+    listener = task
+    log("listener on")
+  end
+end
+
+local function refresh()
+  if wanted() then
+    startListener()
+  else
+    stopListener()
+  end
+end
+
+local function callRunning()
+  local _, zoom = hs.execute("pgrep -xq CptHost")
+  if zoom then
+    return true
+  end
+  for _, name in ipairs(BROWSERS) do
+    local app = hs.application.get(name)
+    for _, win in ipairs(app and app:allWindows() or {}) do
+      if (win:title() or ""):match(MEET_TITLE) then
+        return true
+      end
+    end
+  end
+  return false
+end
+
+local function checkCall()
+  local now = callRunning()
+  if now ~= inCall then
+    inCall = now
+    log(inCall and "call: muted" or "call ended")
+    refresh()
+  end
+end
+
+hs.hotkey.bind({ "cmd", "alt", "shift" }, "d", function()
+  muted = not muted
+  log(muted and "muted" or "unmuted")
+  hs.alert.show(muted and "Voice trigger muted" or "Voice trigger on")
+  refresh()
+end)
+
+hs.execute(string.format("mkdir -p '%s'", WAKE_LOG:match("(.*)/")))
+M.callTimer = hs.timer.doEvery(CALL_POLL_SECONDS, checkCall)
+checkCall()
+refresh()
 
 return M

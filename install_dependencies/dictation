@@ -16,4 +16,17 @@ install_dictation() {
       "$hf/ggml-org/whisper-vad/resolve/main/ggml-silero-v5.1.2.bin"
 }
 
+# Voice start/submit: openWakeWord for Dictate.spoon/wakeword/listen.py.
+install_wakeword() {
+  brew install uv
+  dir="$HOME/.local/share/wakeword"
+  mkdir -p "$dir"
+  [ -x "$dir/venv/bin/python" ] || uv venv -p 3.11 "$dir/venv"
+  VIRTUAL_ENV="$dir/venv" uv pip install openwakeword==0.6.0 \
+    sounddevice==0.5.6
+  "$dir/venv/bin/python" -c \
+    'import openwakeword.utils as u; u.download_models(["none"])'
+}
+
 install_dictation
+install_wakeword
