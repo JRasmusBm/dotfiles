@@ -12,9 +12,11 @@
 #     fix push usually replaced that sha by then: one turn, not two.
 #     Or
 #   - a person reviewed after the last push (once per newest review).
-#     Bot reviews (CodeRabbit & co.) get no tell: the agent's review
-#     loop already waits for them, and a tell per bot re-review (one
-#     per push) only re-read the PR mid-fix and burned tokens.
+#     Other bots get no tell.
+#   - CodeRabbit reviewed the head commit and opened new threads: the
+#     tell gives their count and titles, once per review. A re-review
+#     with no new threads sends nothing: a tell per push only re-read
+#     the PR mid-fix and burned tokens.
 #   - the stale bot labelled it (it closes the PR 7 days later; once
 #     per head sha).
 # Conflicts with dev get no tell: a rebase goes stale as dev moves and
@@ -59,7 +61,9 @@ _prs="$(timeout 60 gh pr list --state open --author @me --limit 100 \
         and (.name | test("'"$_fastre"'")))
       | check + "=" + ([(.detailsUrl // "")
         | match("/job/([0-9]+)").captures[0].string][0] // "")]
-      | unique | join(";"))]
+      | unique | join(";")),
+    ([.latestReviews[]? | select(.author.login | test("coderabbit"))
+      | .submittedAt] | max // "")]
     | map(if . == "" then "-" else . end) | @tsv')" || exit 0
 
 # _errors <check>=<job id>;... — each failed job's error lines, the
@@ -83,13 +87,50 @@ _errors() {
   done
 }
 
+# _coderabbit <worktree> <pr> <sha> — tell each CodeRabbit review of
+# <sha> that opened threads, once per review (cr:<pr>:<review id>); one
+# that opened none is marked told here. Fails while a tell was not
+# taken, so the caller retries next run.
+_coderabbit() {
+  _ids="$(timeout 20 gh api --paginate \
+    "repos/{owner}/{repo}/pulls/$2/reviews" --jq '.[]
+    | select((.user.login | test("coderabbit")) and .commit_id == "'"$3"'")
+    | .id' 2>/dev/null)" || return 1
+  _rc=0
+  for _id in $_ids; do
+    ! grep -qxF "$1	cr:$2:$_id" "$_told" 2>/dev/null || continue
+    _threads="$(timeout 20 gh api --paginate \
+      "repos/{owner}/{repo}/pulls/$2/reviews/$_id/comments" --jq '.[]
+      | select(.in_reply_to_id == null)
+      | "- " + ([.body | split("\n")[] | select(test("^\\*\\*[^<*]"))
+          | gsub("\\*\\*"; "")][0] // "(untitled)")
+        + " (" + .path + ")"' 2>/dev/null)" || { _rc=1; continue; }
+    if test -z "$_threads"; then
+      echo "$1	cr:$2:$_id" >> "$_told"
+      continue
+    fi
+    _n="$(printf '%s\n' "$_threads" | wc -l | tr -d ' ') thread"
+    test "$_n" = "1 thread" || _n="${_n}s"
+    wt-tell "$1" "cr:$2:$_id" \
+      "#$2 CodeRabbit opened $_n, no agent session" \
+      "Flow skill, red-check node. CodeRabbit reviewed PR #$2 and opened \
+$_n:
+$_threads
+
+Read them, then send what is right to a fresh builder subagent briefed \
+with it: this thread writes no code. Push, reply on the threads, and \
+tell me what it was." || _rc=1
+  done
+  return "$_rc"
+}
+
 git worktree list --porcelain | awk '
   /^worktree / { w = substr($0, 10) }
   /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }' \
   | while IFS="$(printf '\t')" read -r _wt _branch; do
     printf '%s\n' "$_prs" | awk -F'\t' -v b="$_branch" '$2 == b' \
       | while IFS="$(printf '\t')" read -r _pr _ _sha _fail _pend _fb _stale \
-          _fast; do
+          _fast _cr; do
         _told_early="$(awk -F'\t' -v w="$_wt" -v k="$_pr:$_sha" \
           '$1 == w && $2 == k { print $3; exit }' "$_early" 2>/dev/null)"
         if test "$_fast" != - && test "$_pend" != 0 \
@@ -136,6 +177,11 @@ was."
             "Flow skill, is-it-good node. PR #$_pr has review feedback \
 newer than your last push ($_fb). Please read it, address what is right, push, and reply on the \
 threads."
+        fi
+        if test "$_cr" != - \
+          && ! grep -qxF "$_wt	cr-seen:$_pr:$_cr" "$_told" 2>/dev/null \
+          && _coderabbit "$_wt" "$_pr" "$_sha"; then
+          echo "$_wt	cr-seen:$_pr:$_cr" >> "$_told"
         fi
         if test "$_stale" = stale; then
           wt-tell "$_wt" "stale:$_pr:$_sha" \
