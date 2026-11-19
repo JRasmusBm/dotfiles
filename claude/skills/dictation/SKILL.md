@@ -30,9 +30,9 @@ Esc is bound only while recording, so it works normally otherwise.
 
 ## Voice trigger
 
-Hands-free: say "okay Tundra" to start (as `Cmd+Shift+D`), "Zephyr
-go" to submit (as Esc; the phrase is cut from the pasted text) and
-"Tundra abort" to cancel. A phrase only counts in its state (start
+Hands-free: say "Skalman" to start (as `Cmd+Shift+D`), "Kör hårt"
+to submit (as Esc; `SUBMIT_CUT_SECONDS` of audio is cut from the end
+so the word never reaches Whisper) and "Avbryt" to cancel. A phrase only counts in its state (start
 when idle, submit/cancel while recording), so a stray hit costs at
 most a cancelled recording, never a paste.
 
@@ -44,7 +44,9 @@ most a cancelled recording, never a paste.
   meeting runs (`CptHost` process) or a browser window's title
   starts with "Meet - " (polled every 5s).
 - Models: `wakeword/models/*.onnx`, custom-trained by
-  `wakeword/train.sh` (synthetic TTS clips; hours on CPU). Thresholds
+  `wakeword/train.sh` from Swedish TTS clips plus real takes recorded
+  with `wakeword/record.py` (`~/.local/share/wakeword/recordings`;
+  hours on CPU). Thresholds
   in `WAKE` in the spoon start strict.
 - Log: `~/.local/state/dictation/wakeword.log`, hits only (`name
   score state acted|ignored`), plus listener on/off and mute events.
