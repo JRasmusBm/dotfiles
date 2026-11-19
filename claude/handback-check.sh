@@ -9,7 +9,11 @@
 #    would bring it back, so I end up asking "status?", or
 #  - waits on a PR ("waiting for #123") with no `wt rb` on it (or a
 #    `wt w8` naming it): only rb wakes on merge, close and carry. One
-#    such turn slept 17.7h on a PR closed for another (RAS-84).
+#    such turn slept 17.7h on a PR closed for another (RAS-84), or
+#  - ends on an ask that isn't a decision (RAS-89): permission to
+#    ship or deploy, "reply go"/"OK?" on choices that have a default,
+#    or asking me to test what the agent can test itself. On 11-18
+#    these held 15 PRs about 78h waiting on me.
 # Each block is logged to $LOCAL_CONFIG/handback-blocks.log so the
 # my-impact daily review can tell whether it overcorrects (same list
 # re-stopped, scope corrections right after a block).
@@ -41,17 +45,43 @@ block() {
   exit 0
 }
 
+# Only I can unblock it (my login, MFA, go-ahead on something risky):
+# a real stop, not a hand-back.
+only_me() {
+  grep -Eqi "needs? your (go-ahead|login|MFA|approval)|only you can" \
+    <<<"$text"
+}
+
+# --- ask that isn't a decision ---------------------------------------
+
+nondecision() {
+  only_me && return 0
+  ship=$(grep -Eio "\b(should|shall|can|may) I (ship|merge|deploy|release|land)\b[^?]{0,80}\?|\b(ok|okay|good|fine|safe) to (ship|merge|deploy|release|land)\b[^.?!]{0,60}\?|\bwant me to (ship|merge|deploy|release|land)\b[^?]{0,80}\?|\b(ship|merge|deploy|release|land) (it|this|now)\?|\b(go-ahead|permission|green ?light) to (ship|merge|deploy|release|land)\b" \
+    <<<"$text" | head -1)
+  if [ -n "$ship" ]; then
+    block "ask-ship: $ship" "You asked Rasmus whether to ship (\"$ship\"). That isn't his decision: give this moment to a subagent (flow skill, is-it-good node). Confident and green → ship, then tell him. Not confident → say what's missing and go get it."
+  fi
+  test=$(grep -Eio "\b(can|could|would) you (please )?(test|try|check|verify|click|smoke[- ]?test|give it a (spin|try)|do the browser pass)\b|\bplease (test|try|verify)\b|\b(test|try|verify) it (yourself|out|in (the|your) browser)\b|\b(the|a) browser pass\b[^.?!]{0,60}\byou\b|\byou\b[^.?!]{0,60}\bbrowser pass\b|\bonce you'?ve (tested|tried|checked|verified)\b" \
+    <<<"$text" | head -1)
+  if [ -n "$test" ]; then
+    block "ask-test: $test" "You asked Rasmus to test (\"$test\"). Test it yourself: give this moment to a subagent (flow skill, does-it-work node; the browser through chrome-devtools), then report what you saw."
+  fi
+  dflt=$(grep -Eio "\breply (go|ok|yes)\b|\bsay go\b|\byour go\b|\bI recommend yes\b" <<<"$text" | head -1)
+  if [ -z "$dflt" ] && grep -Eqi "\bdefaults?\b|\brecommend|\bI'?d (go|pick)\b|\bI'?ll go with\b|\bmy pick\b|\bproposed?\b" <<<"$text"; then
+    dflt=$(grep -Eio "\b(ok|okay|sounds? (good|right)|good( with (that|these|you))?|fine|agreed?|objections?|all good)\s*\?" <<<"$text" | head -1)
+  fi
+  if [ -n "$dflt" ]; then
+    block "ask-default: $dflt" "You asked Rasmus to OK choices that already have a default (\"$dflt\"). Act on your defaults now and tell him afterwards what you picked, so he can redirect. Ask only a choice with no default, or one only he can make."
+  fi
+}
+
 # --- hand-back ----------------------------------------------------
 
 handback() {
-  phrase=$(grep -Eio "still needs doing|what'?s left|remaining work|next steps?|not done yet|I'?d now|I haven'?t (verified|tested|checked|confirmed)|not (checked|verified|tested) yet|say go|your go\b|waiting for you to say|when you say|say the word|I recommend yes" \
+  phrase=$(grep -Eio "still needs doing|what'?s left|remaining work|next steps?|not done yet|I'?d now|I haven'?t (verified|tested|checked|confirmed)|not (checked|verified|tested) yet|waiting for you to say|when you say|say the word" \
     <<<"$text" | head -1)
   [ -n "$phrase" ] || return 0
-
-  # Only I can unblock it (my login, MFA, go-ahead on something risky):
-  # a real stop, not a hand-back.
-  grep -Eqi "needs? your (go-ahead|login|MFA|approval)|only you can" \
-    <<<"$text" && return 0
+  only_me && return 0
 
   # A real question for me (not "Shall I / Want me to …?") lets it stop.
   if grep -Eo '[^.?!]*\?' <<<"$text" \
@@ -127,6 +157,7 @@ pr_wait() {
   block "pr-wait: $phrase" "You wait on a PR (\"$phrase\") but no wt rb is set on it. A w8 only fires at its deadline and wt merged only on merge: run wt rb #$n, which wakes you when it merges, closes, or another PR carries it (a wt w8 naming #$n for your own PR's CI). Then end the turn."
 }
 
+nondecision
 handback
 pr_wait
 promise

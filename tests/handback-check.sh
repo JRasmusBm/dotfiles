@@ -106,10 +106,33 @@ _run 'PR wait, live subagent: passes' pass "$_wt" "$_prwait" "$_agent"
 _run 'hand-back list: blocked' block "$_t/repo" \
   "Done with A. Still needs doing: B and C."
 
+# Asks that aren't decisions (RAS-89), from the 11-18 study.
+_run 'should I ship: blocked' block "$_t/repo" \
+  "CI is green and the preview matches. Should I ship it?"
+_run 'ok to merge: blocked' block "$_t/repo" \
+  "Tests pass locally. OK to merge?"
+_run 'browser pass handed over: blocked' block "$_t/repo" \
+  "PR is up. Could you do the browser pass on staging?"
+_run 'can you test: blocked' block "$_t/repo" \
+  "Built it. Can you test the onboarding page?"
+_run 'reply go on defaults: blocked' block "$_t/repo" \
+  "Five choices, my default first in each. Reply go and I'll build."
+_run 'OK? on a recommendation: blocked' block "$_t/repo" \
+  "I recommend option A (cheaper, same result). OK?"
+_run 'design with no default: passes' pass "$_t/repo" \
+  "Should goals live on the overview or in their own tab? Both fit."
+_run 'ship ask, only Rasmus can: passes' pass "$_t/repo" \
+  "The migration drops a prod table; it needs your go-ahead. Ship it?"
+_run 'label and third party, not asks: passes' pass "$_t/repo" \
+  "It sits in READY TO DEPLOY. The owner still has to say yes in a preview."
+_run 'shipped and reported: passes' pass "$_t/repo" \
+  "Shipped #12 and checked it live: the page loads in 1.2s."
+
 _log="$LOCAL_CONFIG/handback-blocks.log"
-if test "$(wc -l < "$_log")" -eq 9 \
+if test "$(wc -l < "$_log")" -eq 15 \
   && test "$(grep -c "	promise: " "$_log")" -eq 3 \
-  && test "$(grep -c "	pr-wait: " "$_log")" -eq 5; then
+  && test "$(grep -c "	pr-wait: " "$_log")" -eq 5 \
+  && test "$(grep -c "	ask-" "$_log")" -eq 6; then
   echo "ok   every block logged"
 else
   echo "FAIL block log:"; cat "$_log"; _fail=1
