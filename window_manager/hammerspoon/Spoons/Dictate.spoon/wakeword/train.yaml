@@ -1,0 +1,42 @@
+n_samples: 12000
+n_samples_val: 1000
+libritts_share: 0.5
+tts_batch_size: 64
+max_speakers: 800
+voices: [sv_SE-nst-medium, sv_SE-lisa-medium, sv_SE-alma-medium]
+real_copies: 60
+real_neg_copies: 20
+talk_copies: 8
+clip_length: 32000
+steps: 100000
+layer_size: 32
+max_negative_weight: 5000
+target_false_positives_per_hour: 0.1
+batch_n_per_class:
+  ACAV100M: 1024
+  swedish: 256
+  talk: 64
+  negative: 100
+  real_neg: 20
+  positive: 60
+  real: 20
+models:
+  skalman:
+    phrase: Skalman
+    ipa: [skˈɑːlman, skˈɑːlman, skˈalman]
+    max_fa: 0
+    negatives: [skal, skalle, kalla, kal, man, skallig, Bamse,
+                skalbagge, skala, skalet, Kalle man, Stalin,
+                sjal, skolan, skam, Hallman, Karlman, Salman]
+  kor_hart:
+    phrase: Kör hårt
+    max_fa: 0.2
+    negatives: [kör, hårt, kort, körhår, kör hit, kör på, kör nu, kör vi,
+                kör bort, går hårt, hört, kör snart, för hårt, mer hårt,
+                körde hårt, kör fort, hjort, kör ut]
+  avbryt:
+    phrase: Avbryt
+    max_fa: 0.2
+    negatives: [bryt, avbrott, av, avbryter, avbröt, bryta, avbryta, abort,
+                bryt av, avgjort, avbild, avvakta, arbete, avbetala, ta bort,
+                stopp, avsluta, brytt]
