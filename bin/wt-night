@@ -131,8 +131,8 @@ if test "${1:-}" = feed; then
           echo "would start $_next"
         else
           _before="$(_worktrees | cut -f1)"
-          WT_NO_ATTACH=1 WT_PROMPT_EXTRA="Flow skill, picking-up node. I'm away until \
-$_until. Please take your recommended option where you'd normally ask \
+          WT_NO_ATTACH=1 WT_PROMPT_EXTRA="I'm away until $_until. Please \
+take your recommended option where you'd normally ask \
 me, as far as the flow skill takes you. Don't start or queue follow-ups \
 tonight: list them in a short summary for the morning." wt feat "$_next" </dev/null >/dev/null 2>&1 \
             || { echo "failed to start $_next"; continue; }
@@ -155,7 +155,7 @@ if test "${1:-}" = morning; then
     test -n "$_wt" || continue
     grep -qxF "$_wt	night:$_night" "$LOCAL_CONFIG/wt-told" 2>/dev/null \
       || continue
-    _tell "$_wt" "morning:$_day" "Flow skill, is-it-good node. I'm back \
+    _tell "$_wt" "morning:$_day" "$(flow-lead is-it-good) I'm back \
 soon, and this PR is failing checks. Please get it green (the code fix \
 goes to a fresh builder subagent briefed with the failure) and hand \
 back in one line." || true
@@ -190,7 +190,7 @@ awk '
     echo "$_wt"
   done > "$LOCAL_CONFIG/wt-night.queue"
 
-_prompt="Flow skill, waiting node, then the node for your next \
+_prompt="$(flow-lead waiting) Then the node for your next \
 step. I'm away until $_until. Please keep working until then, taking \
 your recommended option where you'd normally ask me, as far as the flow \
 skill takes you. If you're finished or need me, say so in one line and stop. \

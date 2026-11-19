@@ -57,7 +57,7 @@
           },
           {
             "type": "command",
-            "command": "echo 'Flow: which node is this moment? A prompt that already says what to do (a tell, a brief, your own wait note) is input, not the answer: give the node to a subagent as the flow skill says, then act.'",
+            "command": "echo \"$(~/.bin/flow-lead) A prompt that already says what to do (a tell, a brief, your own wait note) is input, not the answer: give the node to a subagent as the flow skill says, then act.\"",
             "timeout": 5
           }
         ]

@@ -1,0 +1,13 @@
+#!/bin/sh
+#
+# flow-lead [node] — print the sentence every automatic prompt to a
+# Claude session opens with: the flow skill is the reference for
+# every decision, starting at <node> (no node: the one that fits).
+
+if test -n "${1:-}"; then
+  _start="its $1 node"
+else
+  _start="the node that fits this moment"
+fi
+printf 'Use the flow skill as your go-to reference for every decision; '
+printf 'start at %s.\n' "$_start"

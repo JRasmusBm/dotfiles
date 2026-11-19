@@ -113,7 +113,7 @@ _coderabbit() {
     test "$_n" = "1 thread" || _n="${_n}s"
     wt-tell "$1" "cr:$2:$_id" \
       "#$2 CodeRabbit opened $_n, no agent session" \
-      "Flow skill, red-check node. CodeRabbit reviewed PR #$2 and opened \
+      "$(flow-lead red-check) CodeRabbit reviewed PR #$2 and opened \
 $_n:
 $_threads
 
@@ -139,7 +139,7 @@ git worktree list --porcelain | awk '
             | sed 's/=[0-9]*$//' | sort -u | paste -sd, -)"
           wt-tell "$_wt" "ci-early:$_pr:$_sha" \
             "#$_pr CI failed ($_names), no agent session" \
-            "Flow skill, is-it-good node. CI on PR #$_pr: $_names failed; \
+            "$(flow-lead is-it-good) CI on PR #$_pr: $_names failed; \
 the other checks still run. Their failures come in a later tell only \
 if this commit is still the head when they finish. Errors:
 $(_errors "$_fast")
@@ -160,7 +160,7 @@ thread writes no code. Push, and tell me what it was." \
             || _also=", besides the $_told_early I told you about"
           wt-tell "$_wt" "ci:$_pr:$_sha" \
             "#$_pr CI failed ($_new), no agent session" \
-            "Flow skill, is-it-good node. CI failed on PR #$_pr ($_new$_also). \
+            "$(flow-lead is-it-good) CI failed on PR #$_pr ($_new$_also). \
 Read the failure, then send the code fix to a fresh builder subagent \
 briefed with it: this thread writes no code. Push, and tell me what it \
 was."
@@ -174,7 +174,7 @@ was."
         if test "$_fb" != - && test -n "$_push" && test "$_fb" \> "$_push"; then
           wt-tell "$_wt" "feedback:$_pr:$_fb" \
             "#$_pr has new review comments, no agent session" \
-            "Flow skill, is-it-good node. PR #$_pr has review feedback \
+            "$(flow-lead is-it-good) PR #$_pr has review feedback \
 newer than your last push ($_fb). Please read it, address what is right, push, and reply on the \
 threads."
         fi
@@ -186,7 +186,7 @@ threads."
         if test "$_stale" = stale; then
           wt-tell "$_wt" "stale:$_pr:$_sha" \
             "#$_pr marked stale, closes in 7 days, no agent session" \
-            "Flow skill, waiting node. The stale bot marked PR #$_pr stale; \
+            "$(flow-lead waiting) The stale bot marked PR #$_pr stale; \
 it closes the PR 7 days later. Move it forward and push, or if it is no longer wanted, tell me why."
         fi
         test "$_fail" = - && test "$_pend" = 0 || continue

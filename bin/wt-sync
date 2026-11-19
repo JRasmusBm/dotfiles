@@ -76,7 +76,7 @@ _now="$(date +%FT%H:%M)"
 _w8_last="$(cat "$_w8s" 2>/dev/null)"
 test -n "$_w8_last" || echo "$_now" > "$_w8s"
 _w8_all="$(awk -F '\t' -v a="$_w8_last" -v b="$_now" -v repos="$_repos" \
-    -v t="$(date +%s)" '
+    -v t="$(date +%s)" -v lead="$(flow-lead waiting)" '
     BEGIN {
       n = split(repos, r, /[ \n]+/)
       for (i = 1; i <= n; i++) { k = r[i]; sub(/.*\//, "", k); main[k] = r[i] }
@@ -87,11 +87,11 @@ _w8_all="$(awk -F '\t' -v a="$_w8_last" -v b="$_now" -v repos="$_repos" \
       if (m == "") next
       dl = $3; sub(/T/, " ", dl)
       printf "%d\t%s/.worktrees/%s\tw8:%s:%s\tOverdue: %s waited on %s " \
-        "(expected %s)\tFlow skill, waiting node. Your wt w8 deadline passed: you waited on %s, " \
+        "(expected %s)\t%s Your wt w8 deadline passed: you waited on %s, " \
         "expected by %s. Check on it now. If it arrived, carry on " \
         "(wt ip). If not, find out why, then wt w8 a new estimate, or " \
         "tell me what blocks it.\t%s\n", (a != "" && $3 > a), m, $1, $1,
-        $5, $1, $4, dl, $4, dl, t
+        $5, $1, $4, dl, lead, $4, dl, t
     }' "$_boards"/*.waiting 2>/dev/null)"
 # First column: 1 = fresh. The queue line is the rest.
 printf '%s\n' "$_w8_all" | cut -f2- | while IFS= read -r _l; do
