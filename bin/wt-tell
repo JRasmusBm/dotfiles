@@ -10,7 +10,8 @@
 # once Claude is up and keeps the session open until then: exit 0,
 # though not yet told, so the caller stops retrying. WT_TELL_SID names
 # the chat instead (a main checkout's: there `--continue` opens the
-# wrong one, so without a sid it gets the ping below). Reviving and
+# wrong one, so without a sid it gets the ping below; a chat whose
+# checkout is gone gets it too). Reviving and
 # telling both wait their turn in `run-slot` (room on the Mac, tells
 # first); a queued one is run from there once there is room. A
 # worktree that is gone (or WT_TELL_NO_REVIVE set): pings me (check)
@@ -103,12 +104,19 @@ if test -n "$_sid"; then
   _pane="$(claude-pane "$_sid" 2>/dev/null)" || _pane=""
   if test -z "$_pane"; then
     test -z "${WT_TELL_NO_REVIVE:-}" || exit 1
-    if _gate "revive:$_sid"; then
-      run-slot revive "$_sid" >/dev/null 2>&1 \
-        || claude-pane open "$_sid" >/dev/null 2>&1 || true
+    _cwd="$(claude-pane cwd "$_sid" 2>/dev/null)" || _cwd=""
+    if test -d "$_root" && test -n "$_cwd" && test -d "$_cwd"; then
+      if _gate "revive:$_sid"; then
+        run-slot revive "$_sid" >/dev/null 2>&1 \
+          || claude-pane open "$_sid" >/dev/null 2>&1 || true
+      fi
+      _pend
+      exit
     fi
-    _pend
-    exit
+    # The worktree or the chat's checkout is gone (merged, `wt done`):
+    # nothing can resume it, so it gets the ping below, once, and a
+    # pending run settles instead of retrying till the TTL.
+    WT_TELL_NO_REVIVE=1
   fi
 elif case "$_root" in */.worktrees/*) false ;; *) true ;; esac; then
   _pane=""
