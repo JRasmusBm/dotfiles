@@ -3,9 +3,12 @@
 # tests/wt-pr-watch.sh [BIN] — scenarios for bin/wt-pr-watch's CI tells
 # (RAS-23: a failed types or lint job tells at once with its error
 # lines, while other checks still run; once per head sha; the finished
-# run's tell names only failures not told yet). A temp repo with one
-# worktree on branch b; gh and wt-tell are fakes first on PATH (gh
-# answers `pr list` by running its --jq over $FAKE/prs.json with jq).
+# run's tell names only failures not told yet) and CodeRabbit tells
+# (RAS-93: a review of the head that opens threads tells their count
+# and titles, once per review). A temp repo with one worktree on
+# branch b; gh and wt-tell are fakes first on PATH (gh answers `pr
+# list` by running its --jq over $FAKE/prs.json, and `api --paginate
+# .../pulls/<path>` over $FAKE/api/<path, / as _>.json, with jq).
 # Nothing real is touched. BIN defaults to this checkout's bin/.
 
 set -u
@@ -15,7 +18,7 @@ _t="$(mktemp -d /tmp/wpw.XXXX)"
 test -n "${KEEP:-}" || trap 'rm -rf "$_t"' EXIT
 export LOCAL_CONFIG="$_t/cfg" FAKE="$_t/fake"
 mkdir -p "$LOCAL_CONFIG/worktrees" "$FAKE"
-unset WT_CI_FAST
+unset WT_CI_FAST CR TELL_DOWN
 _fail=0
 ok() { echo "ok   $1"; }
 no() { echo "FAIL $1"; _fail=1; }
@@ -44,11 +47,16 @@ case "$1 $2" in
     echo "types${t}Run x${t}2026-11-18T17:20:04.8Z ##[error]src/w.test.ts(5,68): error TS2322: Type mismatch"
     echo "types${t}Run x${t}2026-11-18T17:20:05.1Z ##[error]Process completed with exit code 2." ;;
   "pr view") echo - ;;
+  "api --paginate")
+    f="$FAKE/api/$(echo "$3" | sed 's|.*/pulls/||; s|/|_|g').json"
+    test -f "$f" || f=/dev/null
+    jq -r "$5" "$f" ;;
   "api repos/{owner}/{repo}/commits/"*) echo 2026-01-01T00:00:00Z ;;
 esac
 EOF
 cat > "$FAKE/wt-tell" <<'EOF'
 #!/bin/sh
+test -z "${TELL_DOWN:-}" || exit 1
 grep -qxF "$1	$2" "$LOCAL_CONFIG/wt-told" 2>/dev/null && exit 0
 printf '%s\n%s\n----\n' "$2" "$4" >> "$FAKE/tells"
 printf '%s\t%s\n' "$1" "$2" >> "$LOCAL_CONFIG/wt-told"
@@ -71,7 +79,9 @@ _pr() {
     printf '{"name":"%s","workflowName":"%s",%s,"detailsUrl":"https://x/actions/runs/1/job/%s"}\n' \
       "$_n" "$_w" "$_cs" "$_id"
   done | jq -s --arg s "$_s" '[{number: 7, headRefName: "b",
-    headRefOid: $s, latestReviews: [], labels: [],
+    headRefOid: $s, labels: [],
+    latestReviews: (if env.CR then [{author: {login: "coderabbitai"},
+      submittedAt: env.CR}] else [] end),
     statusCheckRollup: .}]' > "$FAKE/prs.json"
 }
 _run() { : > "$FAKE/tells"; ( cd "$_t/r" && wt-pr-watch ) >/dev/null 2>&1; }
@@ -129,5 +139,64 @@ _pr s4 test:check-services:pass types:check-services:fail
 _run
 check 'no early tell' 'test "$(told ci-early:7:s4)" = 0'
 check 'finished-run tell names it' 'test "$(told ci:7:s4)" = 1'
+
+# _review <id> <sha> — CodeRabbit review <id> of <sha>, added to #7's
+# reviews. _thread <review id> <title> [reply] — a comment it posted.
+mkdir -p "$FAKE/api"
+echo '[]' > "$FAKE/api/7_reviews.json"
+_review() {
+  jq --argjson i "$1" --arg s "$2" \
+    '. + [{id: $i, commit_id: $s, user: {login: "coderabbitai[bot]"}}]' \
+    "$FAKE/api/7_reviews.json" | sponge "$FAKE/api/7_reviews.json"
+  echo '[]' > "$FAKE/api/7_reviews_$1_comments.json"
+}
+_thread() {
+  _f="$FAKE/api/7_reviews_$1_comments.json"
+  jq --arg t "$2" --arg r "${3:-}" '. + [{path: "src/a.ts",
+    in_reply_to_id: (if $r == "" then null else 1 end),
+    body: "<!-- x -->\n\n**<picture></picture> Minor** · **Bug**\n\n**\($t)**\n\nmore"}]' \
+    "$_f" | sponge "$_f"
+}
+
+echo '# CodeRabbit reviews the head and opens two threads'
+export CR=2026-11-19T10:00:00Z
+_pr s5 test:check-services:run
+_review 501 s5; _thread 501 'Await the promise.'
+_thread 501 'Guard the null.'; _thread 501 'Reply text' reply
+_run
+check 'one tell for the review' 'test "$(told cr:7:501)" = 1'
+check 'it counts the new threads' \
+  'grep -q "opened 2 threads:" "$FAKE/tells"'
+check 'it gives their titles' \
+  'grep -qx -- "- Await the promise. (src/a.ts)" "$FAKE/tells" \
+    && grep -qx -- "- Guard the null. (src/a.ts)" "$FAKE/tells"'
+check 'not the badge line' '! grep -q "picture" "$FAKE/tells"'
+_run
+check 'once per review' 'test ! -s "$FAKE/tells"'
+
+echo '# it re-reviews the push: replies only, no new threads'
+export CR=2026-11-19T10:20:00Z
+_pr s6 test:check-services:run
+_review 502 s6; _thread 502 'Thanks' reply
+_run
+check 'no tell' 'test ! -s "$FAKE/tells"'
+
+echo '# a review of an older sha after a push'
+export CR=2026-11-19T10:30:00Z
+_pr s7 test:check-services:run
+_review 503 s6; _thread 503 'Old finding.'
+_run
+check 'no tell' 'test ! -s "$FAKE/tells"'
+
+echo '# a review of the head while no Claude takes the tell'
+export CR=2026-11-19T10:40:00Z TELL_DOWN=1
+_pr s7 test:check-services:run
+_review 504 s7; _thread 504 'One finding.'
+_run
+check 'nothing told yet' 'test ! -s "$FAKE/tells"'
+unset TELL_DOWN
+_run
+check 'retried next run, singular' \
+  'test "$(told cr:7:504)" = 1 && grep -q "opened 1 thread:" "$FAKE/tells"'
 
 exit "$_fail"
