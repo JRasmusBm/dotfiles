@@ -210,7 +210,7 @@ _unblock_dependents() {
       _ud_root="$(_main_root)/.worktrees/$_ud_slug"
       _ud_ping="Unblocked: $_ud_slug ($_ud_name $_ud_why; back in \
 progress)"
-      _ud_msg="Flow skill, picking-up node. $_ud_name $_ud_why, which \
+      _ud_msg="$(flow-lead picking-up) $_ud_name $_ud_why, which \
 unblocks this worktree. What changed in this PR and ticket since the \
 work began, and what is the next step?"
       # Not delivered now (its session just started, say): wt-sync
@@ -326,7 +326,7 @@ _wt_wake() {
       _wk_root="$(_main_root)/.worktrees/$_wk_slug"
       _wk_ping="Awake: $_wk_slug (snoozed${_wk_when:+ $_wk_when}; \
 back in $_wk_sec)"
-      _wk_msg="Flow skill, picking-up node. You were snoozed${_wk_when:+ \
+      _wk_msg="$(flow-lead picking-up) You were snoozed${_wk_when:+ \
 on $_wk_when} and woke $_wk_woke. What changed in this PR and ticket \
 since you were snoozed, and what is the next step?"
       # Retried by wt-sync (wt-unblocked) when not delivered right away.
@@ -744,16 +744,19 @@ _wt_typed() {
   # Only Linear URLs get a Claude kickoff prompt; free text
   # just opens the worktree session.
   _prompt=""
+  _lead="$(flow-lead picking-up)"
   case "$_arg" in
     *linear.app/*issue/*)
       if test "$_type" = feat; then
-        _prompt="Please pick up $_arg (flow skill, picking-up node) and see it through to live."
+        _prompt="$_lead Please pick up $_arg and see it through to live."
       else
-        _prompt="Please pick up $_arg (flow skill, picking-up node), including its video and images, and see it through to live."
+        _prompt="$_lead Please pick up $_arg, including its video and \
+images, and see it through to live."
       fi
       ;;
     *linear.app/*project/*)
-      _prompt="Please pick up the Linear project $_arg (flow skill, picking-up node): its overview, documents, milestones and issues."
+      _prompt="$_lead Please pick up the Linear project $_arg: its \
+overview, documents, milestones and issues."
       ;;
   esac
 
@@ -944,7 +947,7 @@ _wt_review() {
 
   # Kickoff prompt: how to review comes before the findings,
   # since the point is to start MY review, not replace it.
-  _prompt="I am about to review ${_ref}${_by}"
+  _prompt="$(flow-lead) I am about to review ${_ref}${_by}"
   _prompt="$_prompt (branch ${_branch}, base ${_base})."
   _prompt="$_prompt Read the description and the full diff"
   _prompt="$_prompt against ${_base} first. Then give me two"

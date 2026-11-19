@@ -20,7 +20,7 @@ _by="$(cd "$_root" && timeout 10 gh pr view "$_pr" --json mergedBy \
 if jrb-hook "$_root" nodeploy "$_pr" 2>/dev/null; then
   wt-tell "$_root" "merged:$_pr" \
     "#$_pr merged, needs no deploy, no agent session: announce or not?" \
-    "Flow skill, live node. PR #$_pr is merged${_by:+ (merged by \
+    "$(flow-lead live) PR #$_pr is merged${_by:+ (merged by \
 $_by)} and needs no deploy (tests, docs or CI only). Please verify it." \
     && printf '%s\tnodeploy:%s\n' "$_root" "$_pr" \
       >> "${LOCAL_CONFIG:?}/wt-told"
@@ -29,7 +29,7 @@ fi
 _hint="$(jrb-hook "$_root" merged-hint "$_pr" 2>/dev/null)"
 exec wt-tell "$_root" "merged:$_pr" \
   "#$_pr merged, no agent session: check it, wt merged" \
-  "Flow skill, live node. PR #$_pr is merged${_by:+ (merged by \
+  "$(flow-lead live) PR #$_pr is merged${_by:+ (merged by \
 $_by)}. Please \
 ${_hint:-check where it is headed} and update the worktree with wt merged. \
 If the merge already made it live (no deploy step), run wt rp instead, \
