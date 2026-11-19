@@ -24,9 +24,9 @@ Before asking Rasmus "is it good?", consider the following.
 - Will the things I don't know be easy to change? (For example be wary of a big
   UX change that I'm not sure about)
 - Am I highly confident it's an improvement (a step in the right direction is
-  fine), holistically and relative to the problem, with CI green (including AI
-  reviewers)? Then ship it. A minor review comment on a green head: would the
-  push restart CI and reviews while others wait on this (a red base)? Then
-  ship the head, reply "follow-up", resolve, fix on another branch.
+  fine), holistically and relative to the problem, with CI (if present in the
+  repo) green (including AI reviewers)? Then ship it. A minor review comment on
+  a green head: would the push restart CI and reviews while others wait on this
+  (a red base)? Then ship the head, reply "follow-up", resolve, fix on another branch.
 - Not confident: is the design the problem? Back to the drawing board
   may be cheaper than more testing.
