@@ -37,12 +37,12 @@ local WAKE_DIR = os.getenv("HOME") .. "/.local/share/wakeword/"
 local WAKE_PYTHON = WAKE_DIR .. "venv/bin/python"
 local WAKE_LOG = os.getenv("HOME") .. "/.local/state/dictation/wakeword.log"
 local WAKE = {
-  start = { model = "skalman", threshold = 0.8 },
-  submit = { model = "kor_hart", threshold = 0.8 },
-  cancel = { model = "avbryt", threshold = 0.8 },
+  start = { model = "skalman", threshold = 0.99 },
+  submit = { model = "kor_hart", threshold = 0.99 },
+  cancel = { model = "avbryt", threshold = 0.99 },
 }
 -- The submit word plus detection lag, cut from the recording's end.
-local SUBMIT_CUT_SECONDS = 1.2
+local SUBMIT_CUT_SECONDS = 1.0
 local WAV_BYTES_PER_SECOND = 32000
 local CALL_POLL_SECONDS = 5
 local RESTART_SECONDS = 5

@@ -11,14 +11,13 @@ Runs in the venv from install_dependencies/dictation.
 import os
 import sys
 import threading
-import time
 
 import sounddevice as sd
 from openwakeword.model import Model
 
 RATE = 16000
 FRAME = 1280
-COOLDOWN_SECONDS = 2.0
+COOLDOWN_FRAMES = 25
 
 
 def parse(args):
@@ -46,21 +45,21 @@ def main():
     )
     keys = {os.path.splitext(os.path.basename(p))[0]: n
             for n, p in models.items()}
-    quiet_until = 0.0
+    quiet = 0
     with sd.InputStream(samplerate=RATE, channels=1, dtype="int16",
                         blocksize=FRAME) as stream:
         while True:
             audio, _ = stream.read(FRAME)
             scores = model.predict(audio[:, 0])
-            now = time.monotonic()
-            if now < quiet_until:
+            if quiet:
+                quiet -= 1
                 continue
             for key, score in scores.items():
                 name = keys[key]
                 if score >= thresholds[name]:
                     print(f"{name} {score:.3f}", flush=True)
                     model.reset()
-                    quiet_until = now + COOLDOWN_SECONDS
+                    quiet = COOLDOWN_FRAMES
                     break
 
 
