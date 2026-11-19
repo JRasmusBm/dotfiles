@@ -2,7 +2,15 @@
 #
 # wt-pr-watch [repo] — for each open PR of mine with a worktree, tell
 # its agent (wt-tell: idle Claude, else it starts one) once per event:
-#   - CI failed on the head commit (once per head sha), or
+#   - a types or lint job failed on the head commit, at once, while
+#     the other checks still run (they take 10-15 minutes more; the
+#     fix took 3): the tell names the jobs and their error lines.
+#     Once per head sha. $WT_CI_FAST names the jobs (default
+#     types|lint, an ERE).
+#   - CI failed on the head commit, once every check finished (once
+#     per head sha), naming only failures no early tell named. The
+#     fix push usually replaced that sha by then: one turn, not two.
+#     Or
 #   - a person reviewed after the last push (once per newest review).
 #     Bot reviews (CodeRabbit & co.) get no tell: the agent's review
 #     loop already waits for them, and a tell per bot re-review (one
@@ -16,21 +24,29 @@
 # claude-notify's stop ping; not while a merge row is pending there, not
 # when blocked or snoozed): a green PR whose agent sits idle still
 # reaches me.
-# Called by wt-sync every 5th minute. A tell that no Claude took
+# Called by wt-sync every minute. A tell that no Claude took
 # (not up yet, say) isn't recorded, so the next run retries it.
 
 _repo="${1:-$PWD}"
 cd "$_repo" || exit 0
 _told="${LOCAL_CONFIG:?}/wt-told"
+# <worktree> TAB <pr>:<sha> TAB <checks> per early tell: what the
+# finished run's tell leaves out.
+_early="$LOCAL_CONFIG/wt-ci-early"
+_fastre="^(${WT_CI_FAST:-types|lint})$"
 _board="$LOCAL_CONFIG/worktrees/$(basename "$(git rev-parse --show-toplevel)")"
 _me="$(timeout 20 gh api user --jq .login 2>/dev/null)" || exit 0
 # latestReviews, not reviews/comments/commits: those exceed GraphQL's
 # node limit across ~30 PRs. Empty fields are "-": read with a tab IFS
-# collapses consecutive tabs.
+# collapses consecutive tabs. A check reads "<job> (<workflow>)":
+# two workflows each have a types job. Fast failures carry their job
+# id for the log: "<check>=<job id>;...".
 _prs="$(timeout 60 gh pr list --state open --author @me --limit 100 \
   --json number,headRefName,headRefOid,latestReviews,statusCheckRollup,labels \
-  --jq '.[] | [.number, .headRefName, .headRefOid,
-    ([.statusCheckRollup[]? | select(.conclusion == "FAILURE") | .name]
+  --jq 'def check: .name + (if (.workflowName // "") == "" then ""
+      else " (\(.workflowName))" end);
+    .[] | [.number, .headRefName, .headRefOid,
+    ([.statusCheckRollup[]? | select(.conclusion == "FAILURE") | check]
       | unique | join(",")),
     ([.statusCheckRollup[]? | select(.status != null and .status != "COMPLETED")]
       | length),
@@ -38,25 +54,80 @@ _prs="$(timeout 60 gh pr list --state open --author @me --limit 100 \
         and (.author.login | test("coderabbit|bot$|\\[bot\\]$") | not))
       | .submittedAt]
       | max // ""),
-    (if any(.labels[]?; .name == "stale") then "stale" else "" end)]
+    (if any(.labels[]?; .name == "stale") then "stale" else "" end),
+    ([.statusCheckRollup[]? | select(.conclusion == "FAILURE"
+        and (.name | test("'"$_fastre"'")))
+      | check + "=" + ([(.detailsUrl // "")
+        | match("/job/([0-9]+)").captures[0].string][0] // "")]
+      | unique | join(";"))]
     | map(if . == "" then "-" else . end) | @tsv')" || exit 0
+
+# _errors <check>=<job id>;... — each failed job's error lines, the
+# file eslint names above them, at most 20 per job.
+_errors() {
+  printf '%s\n' "$1" | tr ';' '\n' | while IFS='=' read -r _c _j; do
+    test -n "$_j" || continue
+    printf '\n%s:\n' "$_c"
+    timeout 30 gh run view --job "$_j" --log-failed 2>/dev/null | awk '
+      { l = $0; for (i = 0; i < 2; i++) l = substr(l, index(l, "\t") + 1)
+        sub(/^[0-9][0-9T:.Z-]* /, "", l) }
+      l ~ /^\/home\/runner\/work\// {
+        f = l; sub(/^\/home\/runner\/work\/[^\/]*\/[^\/]*\//, "", f) }
+      l ~ /^##\[error\]/ && l !~ /Process completed with exit code/ {
+        sub(/^##\[error\] */, "", l)
+        if (f != shown) { print f; shown = f }
+        print substr(l, 1, 300)
+        if (++n == 20) exit
+      }'
+    echo "(all of it: gh run view --job $_j --log-failed)"
+  done
+}
 
 git worktree list --porcelain | awk '
   /^worktree / { w = substr($0, 10) }
   /^branch / { sub("refs/heads/", "", $2); print w "\t" $2 }' \
   | while IFS="$(printf '\t')" read -r _wt _branch; do
     printf '%s\n' "$_prs" | awk -F'\t' -v b="$_branch" '$2 == b' \
-      | while IFS="$(printf '\t')" read -r _pr _ _sha _fail _pend _fb _stale; do
-        if test "$_fail" != - && test "$_pend" = 0; then
+      | while IFS="$(printf '\t')" read -r _pr _ _sha _fail _pend _fb _stale \
+          _fast; do
+        _told_early="$(awk -F'\t' -v w="$_wt" -v k="$_pr:$_sha" \
+          '$1 == w && $2 == k { print $3; exit }' "$_early" 2>/dev/null)"
+        if test "$_fast" != - && test "$_pend" != 0 \
+          && test -z "$_told_early"; then
+          _names="$(printf '%s\n' "$_fast" | tr ';' '\n' \
+            | sed 's/=[0-9]*$//' | sort -u | paste -sd, -)"
+          wt-tell "$_wt" "ci-early:$_pr:$_sha" \
+            "#$_pr CI failed ($_names), no agent session" \
+            "Flow skill, is-it-good node. CI on PR #$_pr: $_names failed; \
+the other checks still run. Their failures come in a later tell only \
+if this commit is still the head when they finish. Errors:
+$(_errors "$_fast")
+
+Send the code fix to a fresh builder subagent briefed with these: this \
+thread writes no code. Push, and tell me what it was." \
+            && printf '%s\t%s:%s\t%s\n' "$_wt" "$_pr" "$_sha" "$_names" \
+              >> "$_early"
+        fi
+        _new="$(awk -v f="$_fail" -v t="$_told_early" 'BEGIN {
+          split(t, a, ","); for (i in a) told[a[i]]
+          n = split(f, b, ",")
+          for (i = 1; i <= n; i++) if (!(b[i] in told)) o = o "," b[i]
+          print substr(o, 2) }')"
+        if test "$_fail" != - && test "$_pend" = 0 && test -n "$_new"; then
+          _also=""
+          test -z "$_told_early" \
+            || _also=", besides the $_told_early I told you about"
           wt-tell "$_wt" "ci:$_pr:$_sha" \
-            "#$_pr CI failed ($_fail), no agent session" \
-            "Flow skill, is-it-good node. CI failed on PR #$_pr ($_fail). \
+            "#$_pr CI failed ($_new), no agent session" \
+            "Flow skill, is-it-good node. CI failed on PR #$_pr ($_new$_also). \
 Read the failure, then send the code fix to a fresh builder subagent \
 briefed with it: this thread writes no code. Push, and tell me what it \
 was."
         fi
         _push=""
-        test "$_fb" = - || _push="$(timeout 20 gh api \
+        test "$_fb" = - \
+          || grep -qxF "$_wt	feedback:$_pr:$_fb" "$_told" 2>/dev/null \
+          || _push="$(timeout 20 gh api \
           "repos/{owner}/{repo}/commits/$_sha" \
           --jq .commit.committer.date 2>/dev/null)"
         if test "$_fb" != - && test -n "$_push" && test "$_fb" \> "$_push"; then
@@ -73,6 +144,8 @@ threads."
 it closes the PR 7 days later. Move it forward and push, or if it is no longer wanted, tell me why."
         fi
         test "$_fail" = - && test "$_pend" = 0 || continue
+        ! grep -qxF "$_wt	merge-ping:$_pr:$_sha" "$_told" 2>/dev/null \
+          || continue
         # pr list reports mergeStateStatus UNKNOWN until a view computes it.
         _state="$(timeout 20 gh pr view "$_pr" \
           --json mergeStateStatus,isDraft,baseRefName,body --jq '
@@ -84,7 +157,6 @@ it closes the PR 7 days later. Move it forward and push, or if it is no longer w
         if test "$_state" = ready \
           && case "$_wt" in */.worktrees/?*) true ;; *) false ;; esac \
           && ! cut -f1 "$_board.snoozed" 2>/dev/null | grep -qxF "$_slug" \
-          && ! grep -qxF "$_wt	merge-ping:$_pr:$_sha" "$_told" 2>/dev/null \
           && ! cut -f1 "$_board.blocked" 2>/dev/null | grep -qxF "$_slug" \
           && ! awk -F'\t' -v p="$_wt" '$5 == p && $8 == "merge" { f = 1 }
             END { exit !f }' "$LOCAL_CONFIG/notifications" 2>/dev/null; then
