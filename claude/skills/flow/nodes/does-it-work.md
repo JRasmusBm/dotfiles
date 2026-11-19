@@ -28,3 +28,4 @@
   cheapest test that covers it, and what does that test cost in CI
   time and flakiness?
 - Can Rasmus see what I tested without running it himself?
+  (artifacts node)

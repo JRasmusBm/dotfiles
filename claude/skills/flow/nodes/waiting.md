@@ -25,4 +25,4 @@ nobody ends: which one did I set?
 - Am I waiting for Rasmus? If so, will he be able to tell from the last section
   in the thread exactly what I need from him so he can unblock me quickly
   and effectively? A direction or testing check: can he do it in two
-  minutes from an artifact (screenshots, the one or two decisions)?
+  minutes from a local page (artifacts node)?

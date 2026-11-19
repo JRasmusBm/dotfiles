@@ -28,8 +28,8 @@ local copy, unprompted.
 `artifacts` / `artifacts <query>` (on PATH) lists every publish from
 the ledger with its login and source file; an argument to `/repa` is
 that query. No row means nothing was ever published: say so plainly
-and don't invent one (if the work owed an artifact, building it is
-the real task).
+and don't invent one (if the work owed a page, build it locally:
+flow skill, artifacts node).
 
 ## Get its source
 

@@ -52,6 +52,8 @@ can't be public. Read it with the node when it exists.
   `nodes/telling-another-agent.md`
 - Built, checking it works → `nodes/does-it-work.md`
 - CI red, a gate refused, a review came in → `nodes/red-check.md`
+- Showing Rasmus a page (an artifact: what I tested, a decision,
+  a report) → `nodes/artifacts.md`
 - Tested, deciding whether to ship → `nodes/is-it-good.md`
 - Merged or deployed, checking it works in prod → `nodes/live.md`
 - Infra to apply by hand → `nodes/applying-infra.md`
