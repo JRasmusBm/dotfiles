@@ -20,6 +20,7 @@ local MODEL = MODELS .. "ggml-large-v3-turbo-q5_0.bin"
 local VAD_MODEL = MODELS .. "ggml-silero-v5.1.2.bin"
 local DIR = (os.getenv("TMPDIR") or "/tmp/") .. "dictation/"
 local WAV = DIR .. "full.wav"
+local CUT_WAV = DIR .. "cut.wav"
 -- A chunk takes ~0.9s, so 2s chunks keep up. Don't shrink Whisper's
 -- audio window (-ac) to speed it up: chunks then repeat and garble.
 local CHUNK_SECONDS = 2
@@ -120,16 +121,13 @@ local function trim(s)
 end
 
 -- Greedy decoding (-bs 1 -bo 1): beam search costs ~0.5s per call.
-local function whisper(file, prompt, callback, seconds)
+local function whisper(file, prompt, callback)
   local args = {
     "-m", MODEL, "--vad", "-vm", VAD_MODEL, "-bs", "1", "-bo", "1",
     "-l", "en", "-nt", "-np", "-f", file,
   }
   if prompt ~= "" then
     hs.fnutils.concat(args, { "--prompt", prompt })
-  end
-  if seconds then
-    hs.fnutils.concat(args, { "-d", tostring(math.floor(seconds * 1000)) })
   end
   local task = hs.task.new(WHISPER, function(code, out)
     callback(code, trim(out))
@@ -255,18 +253,8 @@ local function pollChunks()
   end)
 end
 
-local function submit()
-  state = "transcribing"
-  escape:disable()
-  poller:stop()
-  stopTask(chunkTask)
-  showPanel("Transcribing…  ⌘⇧D aborts", preview)
-  local seconds
-  if voiceSubmit then
-    local size = hs.fs.attributes(WAV, "size") or 0
-    seconds = size / WAV_BYTES_PER_SECOND - SUBMIT_CUT_SECONDS
-  end
-  finalTask = whisper(WAV, "", function(code, text)
+local function transcribe(file)
+  finalTask = whisper(file, "", function(code, text)
     if state ~= "transcribing" then
       return
     end
@@ -278,7 +266,47 @@ local function submit()
     else
       paste(text)
     end
-  end, seconds)
+  end)
+end
+
+-- Whisper's -d counts audio after VAD drops silence, so the submit
+-- word is cut from the wav itself.
+local function cutSubmitWord()
+  local size = hs.fs.attributes(WAV, "size") or 0
+  local seconds = size / WAV_BYTES_PER_SECOND - SUBMIT_CUT_SECONDS
+  if seconds <= 0 then
+    reset()
+    hs.alert.show("Nothing recorded")
+    return
+  end
+  finalTask = hs.task.new(FFMPEG, function(code)
+    if state ~= "transcribing" then
+      return
+    end
+    if code ~= 0 then
+      reset()
+      hs.alert.show("Dictation failed")
+      return
+    end
+    transcribe(CUT_WAV)
+  end, {
+    "-hide_banner", "-loglevel", "error", "-y", "-i", WAV,
+    "-t", string.format("%.2f", seconds), "-c", "copy", CUT_WAV,
+  })
+  finalTask:start()
+end
+
+local function submit()
+  state = "transcribing"
+  escape:disable()
+  poller:stop()
+  stopTask(chunkTask)
+  showPanel("Transcribing…  ⌘⇧D aborts", preview)
+  if voiceSubmit then
+    cutSubmitWord()
+  else
+    transcribe(WAV)
+  end
 end
 
 local function start()
