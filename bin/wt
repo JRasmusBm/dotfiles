@@ -401,15 +401,24 @@ _wt_match() {
     $2 == a || d == a || d == n { print; exit }'
 }
 
-# Repos `wt :` lists together. $WT_GROUP holds `:`-separated
-# entries, each a repo path or `label=path` (label defaults to the
-# main checkout's dir name). It applies only when the current repo
-# is one of them; else the picker lists this repo alone, unlabelled.
-# One "<main root>\t<label>" row per repo, the current repo first.
+# Repos `wt :` lists together: every repo with worktrees, found as
+# a `.worktrees/` dir up to three levels under $WT_PROJECTS (default
+# ~/projects), plus the current repo and the $WT_GROUP entries.
+# $WT_GROUP holds `:`-separated entries, each a repo path or
+# `label=path`; a label defaults to the main checkout's dir name.
+# Works outside any repo too.
+# One "<main root>\t<label>" row per repo: the current repo first,
+# then $WT_GROUP's order, then the rest by path.
 _wt_group() {
-  _g_here="$(cd "$(_main_root)" && pwd -P)"
-  printf '%s\n' "${WT_GROUP:-}" | tr ':' '\n' \
-    | while IFS= read -r _g_e; do
+  _g_here="$(cd "$(_main_root 2>/dev/null)" 2>/dev/null && pwd -P)" \
+    || _g_here=""
+  { printf '%s\n' "${WT_GROUP:-}" | tr ':' '\n'
+    printf '%s\n' "$_g_here"
+    find "${WT_PROJECTS:-$HOME/projects}" -maxdepth 3 \
+      \( -name node_modules -o -name .git \) -prune \
+      -o -name .worktrees -type d -prune -print 2>/dev/null \
+      | sed 's|/\.worktrees$||' | sort
+  } | while IFS= read -r _g_e; do
         test -n "$_g_e" || continue
         # A label is what precedes the first `=`, unless that holds a /.
         _g_l="${_g_e%%=*}"
@@ -420,20 +429,18 @@ _wt_group() {
         case "$_g_p" in ('~'/*) _g_p="$HOME/${_g_p#'~'/}" ;; esac
         if ! _g_c="$(git -C "$_g_p" rev-parse --path-format=absolute \
           --git-common-dir 2>/dev/null)"; then
-          echo "wt: WT_GROUP: no repo at $_g_p, skipped" >&2
+          test -z "$_g_l" \
+            || echo "wt: WT_GROUP: no repo at $_g_p, skipped" >&2
           continue
         fi
         _g_p="$(cd "$(dirname "$_g_c")" && pwd -P)" || continue
         printf '%s\t%s\n' "$_g_p" "${_g_l:-${_g_p##*/}}"
       done \
-    | awk -F '\t' -v h="$_g_here" -v m="$(_main_root)" '
+    | awk -F '\t' -v h="$_g_here" '
         seen[$1]++ { next }
-        $1 == h { print; f = 1; next }
+        $1 == h { print; next }
         { o[++n] = $0 }
-        END {
-          if (!f) { print m "\t"; exit }
-          for (i = 1; i <= n; i++) print o[i]
-        }'
+        END { for (i = 1; i <= n; i++) print o[i] }'
 }
 
 # Picker rows of one repo: "<root>\t<line>\t<label: line>", where
