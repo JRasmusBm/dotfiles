@@ -5,8 +5,8 @@
 -- chunk is transcribed into a live preview panel. The pasted text comes
 -- from one pass over the whole recording: chunk cuts split words.
 -- Voice: wakeword/listen.py (openWakeWord, local) runs while unmuted.
--- Saying START_PHRASE acts like Cmd+Shift+D, SUBMIT_PHRASE like Esc
--- (the phrase is cut from the pasted text), CANCEL_PHRASE aborts.
+-- Saying "Skalman" acts like Cmd+Shift+D, "Kör hårt" like Esc (its
+-- audio is cut off before transcribing), "Avbryt" aborts.
 -- Cmd+Alt+Shift+D mutes it; it mutes itself during Zoom or Meet calls.
 -- Hits go to WAKE_LOG. M.start/M.submit/M.cancel drive it from `hs -c`.
 -- Models: install_dependencies/dictation.
@@ -36,18 +36,19 @@ local WAKE_DIR = os.getenv("HOME") .. "/.local/share/wakeword/"
 local WAKE_PYTHON = WAKE_DIR .. "venv/bin/python"
 local WAKE_LOG = os.getenv("HOME") .. "/.local/state/dictation/wakeword.log"
 local WAKE = {
-  start = { phrase = "okay tundra", model = "okay_tundra", threshold = 0.8 },
-  submit = { phrase = "zephyr go", model = "zephyr_go", threshold = 0.8 },
-  cancel = { phrase = "tundra abort", model = "tundra_abort", threshold = 0.8 },
+  start = { model = "skalman", threshold = 0.8 },
+  submit = { model = "kor_hart", threshold = 0.8 },
+  cancel = { model = "avbryt", threshold = 0.8 },
 }
+-- The submit word plus detection lag, cut from the recording's end.
+local SUBMIT_CUT_SECONDS = 1.2
+local WAV_BYTES_PER_SECOND = 32000
 local CALL_POLL_SECONDS = 5
 local RESTART_SECONDS = 5
 local MEET_TITLE = "^Meet %- "
 local BROWSERS = {
   "Google Chrome", "Brave Browser", "Arc", "Safari", "Firefox",
 }
--- A transcribed phrase may differ from the spelling by this share.
-local PHRASE_TOLERANCE = 0.4
 
 local function copyqEval(script, callback, ...)
   local timer
@@ -119,13 +120,16 @@ local function trim(s)
 end
 
 -- Greedy decoding (-bs 1 -bo 1): beam search costs ~0.5s per call.
-local function whisper(file, prompt, callback)
+local function whisper(file, prompt, callback, seconds)
   local args = {
     "-m", MODEL, "--vad", "-vm", VAD_MODEL, "-bs", "1", "-bo", "1",
     "-l", "en", "-nt", "-np", "-f", file,
   }
   if prompt ~= "" then
     hs.fnutils.concat(args, { "--prompt", prompt })
+  end
+  if seconds then
+    hs.fnutils.concat(args, { "-d", tostring(math.floor(seconds * 1000)) })
   end
   local task = hs.task.new(WHISPER, function(code, out)
     callback(code, trim(out))
@@ -251,62 +255,20 @@ local function pollChunks()
   end)
 end
 
-local function letters(s)
-  return (s:lower():gsub("[^%a]", ""))
-end
-
-local function distance(a, b)
-  local prev = {}
-  for j = 0, #b do
-    prev[j] = j
-  end
-  for i = 1, #a do
-    local cur = { [0] = i }
-    for j = 1, #b do
-      local cost = a:sub(i, i) == b:sub(j, j) and 0 or 1
-      cur[j] = math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost)
-    end
-    prev = cur
-  end
-  return prev[#b]
-end
-
--- Whisper spells the phrase its own way ("Zephyr, go." or "Zefir go"):
--- drop the trailing words closest to it, if close enough.
-local function stripPhrase(text, phrase)
-  local words = {}
-  for w in text:gmatch("%S+") do
-    table.insert(words, w)
-  end
-  local target = letters(phrase)
-  local _, phraseWords = phrase:gsub("%S+", "")
-  local best, bestScore
-  for n = 1, math.min(#words, phraseWords + 1) do
-    local tail = letters(table.concat(words, " ", #words - n + 1))
-    local score = distance(tail, target) / #target
-    if not bestScore or score < bestScore then
-      best, bestScore = n, score
-    end
-  end
-  if not best or bestScore > PHRASE_TOLERANCE then
-    return text
-  end
-  local kept = table.concat(words, " ", 1, #words - best)
-  return (trim(kept):gsub("[,;:%-]+$", ""))
-end
-
 local function submit()
   state = "transcribing"
   escape:disable()
   poller:stop()
   stopTask(chunkTask)
   showPanel("Transcribing…  ⌘⇧D aborts", preview)
+  local seconds
+  if voiceSubmit then
+    local size = hs.fs.attributes(WAV, "size") or 0
+    seconds = size / WAV_BYTES_PER_SECOND - SUBMIT_CUT_SECONDS
+  end
   finalTask = whisper(WAV, "", function(code, text)
     if state ~= "transcribing" then
       return
-    end
-    if voiceSubmit then
-      text = stripPhrase(text, WAKE.submit.phrase)
     end
     reset()
     if code ~= 0 then
@@ -316,7 +278,7 @@ local function submit()
     else
       paste(text)
     end
-  end)
+  end, seconds)
 end
 
 local function start()
