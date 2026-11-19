@@ -6,11 +6,15 @@
 #   - its trusted .jrb/wt-hook sync (jrb-hook): the repo's own tells
 #     about merged PRs, deploys and ship queues (pr-merged-tell, wt-tell),
 #     killed at 120 s; the 3rd kill in a row runs its `stalled` event;
-#   - wt-pr-watch tells the agent of a worktree whose open PR has
-#     failing CI (types or lint at once) or a review newer than its
-#     last push, once per head sha / review; every 5th minute `wt
-#     pr-gone` lifts a `wt rb` whose PR merged, closed or got carried
-#     by another PR.
+#   - every 5th minute `wt pr-gone` lifts a `wt rb` whose PR merged,
+#     closed or got carried by another PR.
+# wt-sync --pr-watch (com.jrasmusbm.wt-pr-watch, every minute): only
+# wt-pr-watch in each repo, which tells the agent of a worktree whose
+# open PR has failing CI (types or lint at once) or a new review. Its
+# own job: a full run takes ~3 minutes (the repo hooks), which made a
+# CodeRabbit review wait 5-7 (RAS-93). Load it once:
+#   launchctl bootstrap gui/$(id -u) \
+#     ~/Library/LaunchAgents/com.jrasmusbm.wt-pr-watch.plist
 # First, offline too: tmux-revive snapshots the Claude panes and, once
 # the tmux server died or restarted, brings them back as run-slot
 # makes room; run-slot closes stalled Claude sessions and starts queued agents
@@ -46,6 +50,13 @@ btabs expire >/dev/null 2>&1
 test "$(( $(date +%-M) % 5 ))" != 0 || btabs log >/dev/null 2>&1
 
 _repos="${WT_SYNC_REPOS:-$(cat "$HOME/.config/wt-sync-repos" 2>/dev/null)}"
+if test "${1:-}" = --pr-watch; then
+  ! _metered || test "$(( $(date +%-M) % 5 ))" = 0 || exit 0
+  for _repo in $_repos; do
+    gtimeout -k 5 50 wt-pr-watch "$_repo"
+  done
+  exit 0
+fi
 _boards="$LOCAL_CONFIG/worktrees"
 
 # Snoozes that came due go back on the board. Local, so before the
@@ -143,10 +154,11 @@ fi
 
 for _repo in $_repos; do
   cd "$_repo" || continue
-  # Every minute: CI failures and reviews on my open PRs (a types
-  # error tells within a minute, RAS-23). Every 5th: `wt rb` waits
-  # whose PR merged, closed or got carried.
-  wt-pr-watch "$_repo"
+  # Until com.jrasmusbm.wt-pr-watch is loaded (a new Mac), watch here.
+  launchctl print "gui/$(id -u)/com.jrasmusbm.wt-pr-watch" >/dev/null 2>&1 \
+    || wt-pr-watch "$_repo"
+  # Every 5th minute: `wt rb` waits whose PR merged, closed or got
+  # carried.
   if test "$(( $(date +%-M) % 5 ))" = 0; then
     gtimeout -k 10 120 wt pr-gone >/dev/null 2>&1
   fi
