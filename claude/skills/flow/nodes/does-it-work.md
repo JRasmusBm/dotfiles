@@ -33,5 +33,6 @@
   cheapest test that covers it, and what does that test cost in CI
   time and flakiness?
 - Can Rasmus see what I tested without running it himself? A
-  screenshot or recording per acceptance criterion in the doc's
-  Tested, captioned with what to look for (artifacts node).
+  screenshot per acceptance criterion in the doc's Tested,
+  captioned with what to look for, from the first one on: the doc
+  is then a local page (artifacts node).

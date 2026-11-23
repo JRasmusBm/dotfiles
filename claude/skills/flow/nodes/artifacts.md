@@ -23,8 +23,12 @@ published it, so a local file is what he can open.
 
 ## Building one
 
-- The review page renders the doc (SKILL.md, The doc): its text and
-  Tested screenshots, not a rewrite of them.
+- What I tested is the doc's page, not a hand-built one: screenshots
+  in the doc's Tested, then `doc-page "$(wt doc path)"` renders it to
+  `.jrb/doc.html` (inlined images, the viewer below, logged), and
+  `wt doc` re-renders and opens it. Shared on his word: publish that
+  file as is, it is self-contained. The rest of this section is for
+  other pages (a decision, a report).
 - What does he need to judge in two minutes? Lead with that, the one
   or two decisions, then the evidence. Short text, no recap.
 - Screenshots of each key state (before, action, result, errors)

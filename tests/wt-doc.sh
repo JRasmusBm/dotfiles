@@ -16,7 +16,9 @@ export LOCAL_CONFIG="$_t/cfg" FAKE="$_t/fake"
 mkdir -p "$LOCAL_CONFIG/worktrees" "$FAKE/bin"
 printf '#!/bin/sh\nprintf "%%s\\n" "$*" > "$FAKE/opened"\n' \
   > "$FAKE/bin/nvim"
-chmod +x "$FAKE/bin/nvim"
+printf '#!/bin/sh\nprintf "%%s\\n" "$*" > "$FAKE/browsed"\n' \
+  > "$FAKE/bin/open"
+chmod +x "$FAKE/bin/nvim" "$FAKE/bin/open"
 export PATH="$FAKE/bin:$_bin:$PATH"
 export GIT_CONFIG_COUNT=1 GIT_CONFIG_KEY_0=core.hooksPath \
   GIT_CONFIG_VALUE_0=/dev/null
@@ -64,5 +66,25 @@ check "unknown worktree: says so" \
 _pv="$(wt-preview "$_r" 'IN PROGRESS: feat/x/abc-1')"
 check "preview: shows the doc top" \
   'echo "$_pv" | grep -q "^Now: testing the picker$"'
+
+# A screenshot in it: wt doc renders the page and opens that.
+_w2="$_r/.worktrees/abc-2"
+mkdir -p "$_w2/.jrb/screenshots"
+printf 'PNGDATA' > "$_w2/.jrb/screenshots/01-x.png"
+printf '# ABC-2: page\nNow: shot\n\n## Tested\n- [x] it shows: ![the badge](screenshots/01-x.png)\n' \
+  > "$_w2/.jrb/doc.md"
+rm -f "$FAKE/opened" "$FAKE/browsed"
+(cd "$_w2" && wt doc) </dev/null
+check "screenshots: opens the rendered page, not nvim" \
+  '[ "$(cat "$FAKE/browsed" 2>/dev/null)" = "$_w2/.jrb/doc.html" ] &&
+   [ ! -f "$FAKE/opened" ]'
+check "page: image inlined with its caption" \
+  'grep -q "data:image/png;base64,$(printf PNGDATA | base64)" \
+     "$_w2/.jrb/doc.html" && grep -q "<figcaption>the badge" \
+     "$_w2/.jrb/doc.html"'
+(cd "$_w2" && wt doc) </dev/null
+check "page: logged to the artifacts ledger once" \
+  '[ "$(grep -c "file://$_w2/.jrb/doc.html" \
+     "$LOCAL_CONFIG/artifacts.tsv")" = 1 ]'
 
 exit $_fail
