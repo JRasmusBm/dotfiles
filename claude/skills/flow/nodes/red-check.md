@@ -6,6 +6,9 @@
 - What does it tell me about the change? Does it lower my
   confidence (is-it-good node), or only block the merge? A review
   comment: is it real, and would a user notice the difference?
+  Real: apply it and push, the reviewer resolves its own thread on
+  the next pass. Wrong: reply with evidence. Never resolve threads
+  by hand or park the PR for a person to.
 - Here, or a follow-up? Would the push restart CI and reviews for
   little gain while others wait?
 - Who writes the fix: does it need what I hold in context, or a
