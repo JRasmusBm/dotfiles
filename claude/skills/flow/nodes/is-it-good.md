@@ -30,7 +30,10 @@ Before asking Rasmus "is it good?", consider the following.
   fine), holistically and relative to the problem, with CI (if present in the
   repo) green (including AI reviewers)? Then ship it. Behind a flag users can't
   turn on, holistically means: do I know nothing changes with the flag off, and
-  how it fits the other pieces? Then confidence is high; placeholders for
+  how it fits the other pieces? For UI built to a mockup or prototype,
+  holistically includes a screenshot next to its frame (layout, hierarchy,
+  copy): behaviour checks alone passed while the screens kept the old
+  layout. Then confidence is high; placeholders for
   unmerged pieces don't lower it, and polish is a follow-up PR. A minor review
   comment on a green head: would the push restart CI and reviews while others
   wait on this (a red base, a deadline)? Then ship the head, reply "follow-up",
