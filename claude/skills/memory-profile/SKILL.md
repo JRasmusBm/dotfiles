@@ -23,7 +23,8 @@ type-aware eslint server 1.2–2.6 GB per big-TS-repo nvim) were the bulk.
   mark watchdog suspends. Gaps = machine asleep.
 - Written by launchd agent `com.jrasmusbm.memlog`
   (`launchd/com.jrasmusbm.memlog.plist`, runs `mem-snapshot;
-  lsp-reclaim`). Errors: `memlog/errors.log`. Health:
+  lsp-reclaim; chrome-clone-sweep; nvim-orphan-reap`; reload it with
+  `launchctl bootout`/`bootstrap` after editing). Errors: `memlog/errors.log`. Health:
   `launchctl print gui/$(id -u)/com.jrasmusbm.memlog` (runs, last exit).
 - Snapshots before 2026-10-12 10:27 have session `-` and no
   pressure field (PATH bug under Hammerspoon), so attribute those by
@@ -75,7 +76,14 @@ type-aware eslint server 1.2–2.6 GB per big-TS-repo nvim) were the bulk.
   ~/projects -count 'kMDItemFSName == "package.json"'` (0 =
   excluded). Fix: add `~/projects` to System Settings →
   Spotlight → Search Privacy (needs GUI/sudo), then `sudo
-  killall mds` (it respawns small).
+  killall mds` (it respawns small). With that check at 0 it still
+  reached 19 GB by 2026-11-06 (4 days up) and regrew ~1 GB/h after
+  a restart, so the exclusion alone doesn't hold it.
+- Orphan nvim servers: `nvim --embed` reparented to launchd (ppid 1)
+  after their TUI died with the tmux pane (tty `(revoked)` in `lsof`)
+  or otherwise. They hang (no RPC answer, idle-quit never fires) and
+  keep 100–200 MB each: 100 of them, 9 GB, on 2026-11-06.
+  `nvim-orphan-reap` kills them every minute (`-n` lists them).
 - Biggest by GB-minutes after the LSP fixes: Brave, then 13–15 Claude
   sessions (~300–900 MB each, growing with age), then agents'
   devtools Chromes.

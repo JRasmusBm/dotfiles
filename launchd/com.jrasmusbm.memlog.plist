@@ -8,7 +8,7 @@
   <array>
     <string>/bin/sh</string>
     <string>-c</string>
-    <string>mem-snapshot; lsp-reclaim; chrome-clone-sweep</string>
+    <string>mem-snapshot; lsp-reclaim; chrome-clone-sweep; nvim-orphan-reap</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>

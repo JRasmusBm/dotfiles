@@ -1,0 +1,58 @@
+#!/bin/sh
+
+# nvim-orphan-reap [-n] — kill nvim servers whose UI is gone, with
+# their LSPs. A TUI nvim runs its server as a `nvim --embed` child;
+# when the tmux pane dies under it (kill-server, tmux revive, a TUI
+# crash) the server can outlive it: its tty revoked, reparented to
+# launchd, answering no RPC, holding 100–200 MB (+ LSPs) forever.
+# 100 of them held 9 GB on 2026-11-06. Nothing can reattach to one,
+# so any unsaved buffer in it is already lost. -n only prints.
+# Runs every minute from the memlog launchd job.
+
+_dry=
+while getopts n _o; do
+  case $_o in
+    n) _dry=1 ;;
+    *) exit 2 ;;
+  esac
+done
+
+# Orphan: `nvim --embed` whose parent is launchd (pid 1). Its own
+# descendants (LSP servers) go with it.
+_pids=$(
+  ps -axo pid=,ppid=,command= | awk '
+    { pp[$1] = $2; c = $0; sub(/^ *[0-9]+ +[0-9]+ +/, "", c); cmd[$1] = c }
+    END {
+      for (p in pp) if (pp[p] == 1 && cmd[p] ~ /^nvim --embed( |$)/) o[p] = 1
+      for (p in pp) {
+        q = p; n = 0
+        while (q > 1 && n++ < 50) { if (q in o) { print p; break } q = pp[q] }
+      }
+    }'
+)
+[ -n "$_pids" ] || exit 0
+
+_n=$(ps -axo pid=,ppid=,command= |
+  awk '$2 == 1 && $3 == "nvim" && $4 == "--embed"' | wc -l | tr -d ' ')
+# Phys footprint (incl. compressed and swapped), not RSS: an idle
+# orphan's pages are mostly compressed.
+# shellcheck disable=SC2046,SC2086
+_mb=$(footprint $(printf -- '-p %s ' $_pids) 2>/dev/null |
+  awk '/^Summary Footprint:/ {
+    printf "%d", $3 * ($4 == "GB" ? 1024 : $4 == "KB" ? 1 / 1024 : 1) }')
+_line="### $(date '+%F %T') nvim-orphan-reap $_n orphan servers, $(echo "$_pids" | wc -l | tr -d ' ') procs, ${_mb:-?} MB"
+if [ -n "$_dry" ]; then
+  echo "$_line"
+  ps -o pid=,ppid=,etime=,command= -p "$(echo "$_pids" | paste -sd, -)" |
+    cut -c1-160
+  exit 0
+fi
+echo "$_line" >>"${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog/$(date +%F).log"
+# A hung server never runs its SIGTERM handler (it runs on the event
+# loop), so KILL what is left after a few seconds.
+# shellcheck disable=SC2086
+kill -TERM $_pids 2>/dev/null
+sleep 3
+# shellcheck disable=SC2086
+kill -KILL $_pids 2>/dev/null
+exit 0
