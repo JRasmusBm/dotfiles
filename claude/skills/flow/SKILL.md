@@ -85,6 +85,8 @@ can't be public. Read it with the node when it exists.
   `nodes/starting-new-work.md`
 - Handing off, or another agent should know something →
   `nodes/telling-another-agent.md`
+- Writing the code, or briefing who writes it →
+  `nodes/building.md`
 - Built, checking it works → `nodes/does-it-work.md`
 - CI red, a gate refused, a review came in → `nodes/red-check.md`
 - Showing Rasmus a page (an artifact: what I tested, a decision,
