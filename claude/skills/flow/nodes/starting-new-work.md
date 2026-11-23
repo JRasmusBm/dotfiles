@@ -16,8 +16,7 @@
   only, adopt upstream's; changed here on purpose, keep it and
   judge; both, decide. No rename has to be told to every copier.
   Before shipping ahead of upstream, the copier asks: am I confident
-  enough in the copied change to cut the line? Yes: ship, whatever
-  the merge order. No: fix it upstream first, or wait.
+  enough in the copied change to cut the line?
   Stack only when it can't move without that code (then retargeted
   once it merges).
 - What does the agent need that the ticket lacks: what was decided
