@@ -103,6 +103,21 @@ check 'commits only its PR holds: removed like a pushed one' \
   '! onboard fix/jrb/squashed && ! test -d "$_r/.worktrees/squashed"'
 check 'open row untouched' 'onboard fix/jrb/open'
 
+echo '# wt settle'
+printf '%s\n' '# IN PROGRESS' fix/jrb/merged fix/jrb/after '# BLOCKED' \
+  fix/jrb/waits '# PROD REVIEW' fix/jrb/open > "$_of"
+printf 'waits\tfix/jrb/waits\tmerged\tfix/jrb/merged\n' \
+  > "$LOCAL_CONFIG/worktrees/app.blocked"
+(cd "$_r" && wt settle fix/jrb/merged 'PROD REVIEW') 2>>"$_t/err"
+(cd "$_r" && wt settle fix/jrb/after 'NEEDS FOCUS') 2>>"$_t/err"
+insec() { awk -v s="# $1" -v r="$2" '/^# /{c=$0} $0==r{f=(c==s)}
+  END{exit !f}' "$_of"; }
+check 'merged row moves to PROD REVIEW' 'insec "PROD REVIEW" fix/jrb/merged'
+check 'what it blocked goes back in progress' \
+  'insec "IN PROGRESS" fix/jrb/waits'
+check 'owner-review row moves to NEEDS FOCUS' \
+  'insec "NEEDS FOCUS" fix/jrb/after'
+
 echo '# wt-cold: which PROD REVIEW rows leave'
 python3 - "$_bin/wt-cold" <<'EOF' || _fail=1
 import importlib.machinery as m, importlib.util as u, sys
@@ -149,6 +164,62 @@ c.judge(b, x, {})
 print(('ok  ' if x['state'] == 'REMOVED' and x['ended'] == 'Done'
        else 'FAIL') + ' judge marks it REMOVED, before any other state')
 fail |= x['state'] != 'REMOVED'
+
+# RAS-104: a live row whose PR merged settles from its ticket.
+c._tickets.update({
+    'LIV-1': ('completed', 0, 'Done'),
+    'LIV-2': ('canceled', 0, 'Canceled'),
+    'LIV-3': ('started', 0, 'Needs live verification'),
+    'LIV-4': ('started', 0, 'Needs announcement'),
+    'LIV-5': ('started', 0, 'Owner review'),
+    'LIV-6': ('started', 0, 'Owner review'),
+    'LIV-7': ('backlog', 0, 'Backlog'),
+    'LIV-8': ('unstarted', 0, 'Todo'),
+    'LIV-9': ('started', 0, 'In Progress'),
+    'LIV-10': None})
+c.transcript = lambda path: (0, (0, 0))
+c.disk = lambda path: (0, 0, '', 0)
+
+
+class L(B):
+    blocked = snoozed = waiting = focus = {}
+    inbox = []
+
+
+left = ('STALLED', None)
+for br, sec, want in [
+        ('fix/jrb/liv-1-x', 'IN PROGRESS', ('REMOVED', 'Done')),
+        ('fix/jrb/liv-2-x', 'TEAM REVIEW', ('REMOVED', 'Canceled')),
+        ('fix/jrb/liv-3-x', 'IN PROGRESS', ('MOVED', 'PROD REVIEW')),
+        ('fix/jrb/liv-4-x', 'P0', ('MOVED', 'TO ANNOUNCE')),
+        ('fix/jrb/liv-5-x', 'NEEDS FOCUS', ('STALLED', 'needs focus')),
+        ('fix/jrb/liv-6-x', 'IN PROGRESS', ('MOVED', 'NEEDS FOCUS')),
+        ('fix/jrb/liv-7-x', 'IN PROGRESS', ('STALLED', 'left over')),
+        ('fix/jrb/liv-8-x', 'IN PROGRESS', ('STALLED', 'left over')),
+        ('fix/jrb/liv-9-x', 'IN PROGRESS', ('STALLED', 'left over')),
+        ('fix/jrb/liv-10-x', 'IN PROGRESS', ('STALLED', 'left over')),
+        ('test/jrb/notick', 'IN PROGRESS', ('STALLED', 'left over'))]:
+    b = L()
+    b.prs = {br: {'number': 9, 'state': 'MERGED'}}
+    x = it(br, '/wt/' + br.rsplit('/', 1)[-1])
+    x['sec'] = sec
+    c.judge(b, x, {})
+    got = (x['state'], x.get('ended') or x.get('to')
+           or x['why'].split(':')[0])
+    good = got == want and (want[0] != 'STALLED'
+                            or bool(x.get('batch')) == (want[1] == 'left over'))
+    print(('ok  ' if good else 'FAIL') + f' {sec} {br} -> {got} '
+          f'{x["why"]}')
+    fail |= not good
+c.RETIRE = False
+b = L()
+b.prs = {'fix/jrb/liv-3-x': {'number': 9, 'state': 'MERGED'}}
+x = it('fix/jrb/liv-3-x', '/wt/liv-3-x')
+x['sec'] = 'IN PROGRESS'
+c.judge(b, x, {})
+print(('ok  ' if x.get('batch') else 'FAIL') +
+      ' --overdue (no Linear) leaves it a left-over row')
+fail |= not x.get('batch')
 sys.exit(fail)
 EOF
 
