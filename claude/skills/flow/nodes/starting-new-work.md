@@ -15,10 +15,9 @@
   rebase that list is the base of a three-way look: changed upstream
   only, adopt upstream's; changed here on purpose, keep it and
   judge; both, decide. No rename has to be told to every copier.
-  If upstream is only unmerged (CI, review, the queue), the copier
-  ships on its own. If upstream is blocked on what was copied (its
-  contract or design is in question, or the copied code has a bug),
-  the copy has the same block: fix it upstream first, or wait.
+  Before shipping ahead of upstream, the copier asks: am I confident
+  enough in the copied change to cut the line? Yes: ship, whatever
+  the merge order. No: fix it upstream first, or wait.
   Stack only when it can't move without that code (then retargeted
   once it merges).
 - What does the agent need that the ticket lacks: what was decided
