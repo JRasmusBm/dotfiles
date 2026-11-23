@@ -1231,6 +1231,25 @@ _wt_retire() {
   echo "wt: took $1 off the board ($2)" >&2
 }
 
+# `wt settle <branch> <section>` (wt-cold): a live board row whose PR
+# merged moves to the section its ticket already names (Needs live
+# verification → PROD REVIEW), the way `wt rp`/`ra`/`nf` park it,
+# minus Linear, which is already there.
+_wt_settle() {
+  _match="$(_wt_match "$1")"
+  _st_path="${_match%%$(printf '\t')*}"
+  _st_name="$(basename "${_st_path:-$1}")"
+  _block_drop "$_st_name"
+  _snooze_drop "$_st_name"
+  _w8_drop "$_st_name"
+  _board_move "$1" "$_st_name" "$2"
+  case "$2" in
+    'PROD REVIEW'|'TO ANNOUNCE')
+      _unblock_dependents "$_st_name" merged || true ;;
+  esac
+  test -z "$_st_path" || _notif_clear "$_st_path"
+}
+
 _require_worktree() {
   _git_dir="$(cd "$(git rev-parse --git-dir)" && pwd)"
   _common="$(cd "$(git rev-parse --git-common-dir)" \
@@ -1901,6 +1920,7 @@ case "${1:-}" in
   done) shift; _WT_STATE=Done; _wt_evict "${1:-.}" ;;
   cancel) shift; _WT_STATE=Canceled; _wt_evict "${1:-.}" ;;
   retire) shift; _wt_retire "$1" "$2" ;;
+  settle) shift; _wt_settle "$1" "$2" ;;
   rm|remove) shift; _wt_evict "$@" ;;
   clean) shift; _wt_clean "$@" ;;
   resume) shift; _wt_resume "$@" ;;

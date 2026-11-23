@@ -20,7 +20,14 @@ Each item is in exactly one state, checked in this order:
            worktree), unless its agent is mid-turn. Never pinged:
            --ping / --sync take it off the board (`wt retire`, one
            Linear query per run), logged to $LOCAL_CONFIG/
-           wt-cold-retired.log
+           wt-cold-retired.log. So is a live-section row whose PR
+           merged or closed and whose ticket is Done or Canceled
+  MOVED    a live-section row whose PR merged or closed and whose
+           ticket moved on: Needs live verification → PROD REVIEW,
+           Needs announcement → TO ANNOUNCE, Owner review → NEEDS
+           FOCUS (already there: judged as any NEEDS FOCUS row).
+           Never pinged: --ping / --sync move it (`wt settle`),
+           logged like REMOVED
   SNOOZED  `wt sz` until a date, or BLOCKED on a worktree that is
   WAITING  `wt w8 <when> "<what>"` before its deadline (an agent may
            poll meanwhile); or the agent waits on a background agent
@@ -52,7 +59,8 @@ item is still STALLED. A row clears itself on the next run once its item
 is no longer STALLED, or is replaced when the touch it needs changed;
 rows carry a ref (NOTIFY_REF) so this holds after a jump re-keyed them
 onto a pane. Rows whose PR merged or closed while the board row is still
-live, rows with no worktree in a live section, unboarded PRs and orphan
+live and the ticket is open (Backlog, Todo, In Progress) or unreadable
+or absent, rows with no worktree in a live section, unboarded PRs and orphan
 worktrees each go in one batched row per repo.
 
 State between runs: $LOCAL_CONFIG/wt-cold-state (JSON). Each --ping /
@@ -90,6 +98,11 @@ NOW = time.time()
 RETIRED = os.path.join(CONF, 'wt-cold-retired.log')
 # Off for --overdue, which runs every minute on local files alone.
 RETIRE = True
+# Where a live row whose PR merged belongs, by its ticket's state:
+# the sections `wt rp`, `wt ra` and `wt nf` park in.
+SETTLE = {'Needs live verification': 'PROD REVIEW',
+          'Needs announcement': 'TO ANNOUNCE',
+          'Owner review': 'NEEDS FOCUS'}
 
 
 def notif_depth():
@@ -318,7 +331,7 @@ def tickets(tids):
     data, key = {}, linear_key()
     if key:
         q = '{' + ' '.join(f't{n}: issue(id: {json.dumps(t)})'
-                           '{state{type} updatedAt}'
+                           '{state{type name} updatedAt}'
                            for n, t in enumerate(tids)) + '}'
         req = urllib.request.Request(
             'https://api.linear.app/graphql',
@@ -333,12 +346,13 @@ def tickets(tids):
             pass
     for n, t in enumerate(tids):
         i = data.get(f't{n}')
-        _tickets[t] = (i['state']['type'], iso_ts(i['updatedAt'])) \
-            if i else None
+        _tickets[t] = (i['state']['type'], iso_ts(i['updatedAt']),
+                       i['state']['name']) if i else None
 
 
 def ticket(tid):
-    """(state type, updatedAt epoch) or None when Linear can't say."""
+    """(state type, updatedAt epoch, state name) or None when Linear
+    can't say."""
     tickets([tid])
     return _tickets[tid]
 
@@ -479,7 +493,14 @@ def judge(b, it, st, seen=()):
     pr = (b.prs or {}).get(it['branch'])
     gone = not path
     closed = pr and pr['state'] in ('MERGED', 'CLOSED')
-    if sec in LIVE and (gone or closed):
+    to = closed and RETIRE and sec in LIVE and settled(it)
+    if to and to[0] in ('Done', 'Canceled'):
+        it.update(state='REMOVED', why=to[1], ended=to[0])
+        return
+    if to and to[0] != sec:
+        it.update(state='MOVED', why=f'{to[1]}: to {to[0]}', to=to[0])
+        return
+    if sec in LIVE and (gone or closed) and not to:
         what = 'no worktree' if gone else \
             f"#{pr['number']} {pr['state'].lower()}"
         it.update(state='STALLED', why=f'left over: {what}', batch='stale')
@@ -498,6 +519,10 @@ def judge(b, it, st, seen=()):
                 it.update(state='WAITING',
                           why=f'blocked by {ref[:30]}, which leaves the '
                               'board: unblocks then')
+            elif dep['state'] == 'MOVED':
+                it.update(state='WAITING',
+                          why=f"blocked by {ref[:30]}, which moves to "
+                              f"{dep['to']}")
             elif dep['state'] == 'STALLED':
                 # Its why and ping are folded into the blocker's (fold).
                 it.update(state='STALLED', since=dep.get('since'),
@@ -602,6 +627,21 @@ def judge(b, it, st, seen=()):
               since=max(main, ctime, s.get('moved', 0)))
 
 
+def settled(it):
+    """Where a live row whose PR merged or closed belongs, by its
+    ticket: (Done|Canceled, why) leaves the board, (section, why) goes
+    there. None while the ticket is open, unreadable or absent."""
+    tid = branch_ticket(it['branch'])
+    t = tid and ticket(tid)
+    if not t:
+        return None
+    end = {'completed': 'Done', 'canceled': 'Canceled'}.get(t[0])
+    if end:
+        return end, f'{tid} {end.lower()}'
+    to = SETTLE.get(t[2] if len(t) > 2 else None)
+    return to and (to, f'{tid} {t[2].lower()}')
+
+
 def work_closed(b, it):
     """(Done|Canceled, why) when a PROD REVIEW row's work is closed:
     its ticket is Done or Canceled; with no ticket in the branch, its
@@ -637,15 +677,18 @@ def work_closed(b, it):
 
 
 def retire(boards):
-    """Take each REMOVED row off its board (`wt retire`), logged to
-    RETIRED: epoch, repo, branch, Done|Canceled, why, what wt said."""
+    """Take each REMOVED row off its board (`wt retire`) and move
+    each MOVED one (`wt settle`), logged to RETIRED: epoch, repo,
+    branch, Done|Canceled|section, why, what wt said."""
     n = 0
     for b in boards:
         for it in list(b.items.values()):
-            if it['state'] != 'REMOVED':
+            if it['state'] not in ('REMOVED', 'MOVED'):
                 continue
+            cmd, it['ended'] = ('retire', it['ended']) \
+                if it['state'] == 'REMOVED' else ('settle', it['to'])
             try:
-                r = subprocess.run(['wt', 'retire', it['branch'],
+                r = subprocess.run(['wt', cmd, it['branch'],
                                     it['ended']], cwd=b.root,
                                    capture_output=True, text=True,
                                    timeout=60)
@@ -744,7 +787,10 @@ def collect():
     if RETIRE:
         tickets(branch_ticket(it['branch']) for b in every
                 for it in b.items.values()
-                if it['sec'].upper() == 'PROD REVIEW')
+                if it['sec'].upper() == 'PROD REVIEW'
+                or it['sec'].upper() in LIVE
+                and (b.prs or {}).get(it['branch'], {}).get('state')
+                in ('MERGED', 'CLOSED'))
     for b in every:
         root = b.root
         for it in b.items.values():
@@ -987,6 +1033,12 @@ def main():
         print(f'\nREMOVED ({len(gone)}, work closed: --ping takes them '
               'off the board, no ping)')
         for i in gone:
+            print(line(i))
+    moved = [i for i in items if i['state'] == 'MOVED']
+    if moved:
+        print(f'\nMOVED ({len(moved)}, ticket moved on: --ping moves '
+              'them, no ping)')
+        for i in moved:
             print(line(i))
     if batches:
         print(f'\nBATCHED ({len(batches)})')
