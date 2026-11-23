@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
-"""claude-fresh — keep Claude chats short: a big chat goes on as a
-fresh, briefed one instead of being resumed whole.
-
-Every turn re-reads the whole context. A chat at 150k tokens pays that
-on each turn; a fresh chat with a short brief starts near 57k.
+"""claude-fresh — hand a chat off to a fresh, briefed one, and bring
+chats back.
 
   claude-fresh hand [PANE]
         Brief on stdin. Once the chat in PANE (default: this pane)
@@ -14,14 +11,8 @@ on each turn; a fresh chat with a short brief starts near 57k.
         successor.
   claude-fresh resume SID|- [DIR]
         Print the arguments for `claude` that bring chat SID back (`-`:
-        DIR's latest chat, DIR default .): `--resume SID` while its
-        last turn is under CLAUDE_FRESH_CTX (150000) tokens of context,
-        else `--session-id NEW --append-system-prompt-file BRIEF`: a
-        fresh chat holding an automatic brief (`brief`), recorded as
-        SID's successor. It sends no prompt of its own: the first turn
-        is what brought SID back (my answer, a tell), not a recap. A
-        successor never prompted yet comes back the same way. No chat
-        found for `-`: `--continue`.
+        DIR's latest chat, DIR default .): `--resume SID`, following
+        SID's successors. No chat found for `-`: `--continue`.
   claude-fresh brief SID
         Print the automatic brief for SID: where it ran, its last
         prompt and message, where the durable state lives.
@@ -39,7 +30,6 @@ import glob
 import json
 import os
 import re
-import shlex
 import subprocess
 import sys
 import time
@@ -50,19 +40,8 @@ CLAUDE = os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser(
 CONF = os.environ.get('LOCAL_CONFIG') or os.path.expanduser('~/.config')
 SUCC = os.path.join(CONF, 'claude-successors')
 BRIEFS = os.path.join(CONF, 'briefs')
-LIMIT = int(os.environ.get('CLAUDE_FRESH_CTX') or 150000)
 POLL = float(os.environ.get('CLAUDE_FRESH_POLL') or 2)
 QUOTE = 3000
-WAIT = """
-## The first message
-
-This chat started with no prompt of its own. The first message is what
-came next: often my answer to that last message, or a tell. Act on it
-with this brief as context; don't recap the old chat or ask its
-question again.
-"""
-
-
 def sh(*args):
     r = subprocess.run(args, capture_output=True, text=True)
     return r.stdout.strip() if r.returncode == 0 else None
@@ -198,21 +177,7 @@ def resume(sid, d):
         sid = latest(d or '.')
         if not sid:
             return '--continue'
-    sid = nxt(sid)
-    path = os.path.join(BRIEFS, sid + '.md')
-    if not transcript(sid) and os.path.exists(path):
-        return fresh(sid, path)
-    if last_turn(sid)[0] <= LIMIT:
-        return f'--resume {sid}'
-    new = str(uuid.uuid4())
-    path = save(new, brief(sid) + WAIT)
-    succeed(sid, new)
-    return fresh(new, path)
-
-
-def fresh(sid, path):
-    return (f'--session-id {sid} '
-            f'--append-system-prompt-file {shlex.quote(path)}')
+    return f'--resume {nxt(sid)}'
 
 
 def sid_of(pane):

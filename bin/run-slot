@@ -46,8 +46,7 @@
         others stay
   run-slot revive PANE|SID|.
         bring a closed session back in its pane (shell there), else
-        in a new window; `.` is this pane. A big one comes back as a
-        fresh, briefed chat (claude-fresh resume)
+        in a new window; `.` is this pane (claude-fresh resume)
   run-slot focus PANE  tmux focus hook: revive PANE if run-slot
                        closed the Claude that ran there; in a main
                        checkout's pane (many chats) only while that

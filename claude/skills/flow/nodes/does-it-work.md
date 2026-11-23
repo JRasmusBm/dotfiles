@@ -15,15 +15,20 @@
       (a service I didn't start locally, a shared deploy)?
     - A long click-through: does it go to a fresh, smaller subagent,
       with me judging its screenshots, not its verdict?
-    - Local first, always, when feasible: a shared environment is
-      one resource for the whole org. Ruled local out? On evidence
-      checked now (the repo's dev-stack docs: what runs my branch
-      locally against shared data), not a conclusion from earlier.
-      Except lint, type checks and the whole test suite: CI runs
-      those cheaper in tokens.
+    - Local, not a shared environment: one serves the whole org
+      and waits on a person. Before asking for it, have I written
+      down what I can't reproduce locally and the workaround I
+      tried for each (run the migration locally, start the missing
+      service locally, a test on recorded payloads, the local
+      backend on the shared stage, seeded data, a faked external
+      callback)? A hand-back saying "can't test here": what did it
+      try, and did my brief invite the stop? Only what's left goes
+      to the shared env, named in the hand-back. Lint, types and
+      the whole suite go to CI: cheaper in tokens.
 - What would make it wrong? Did I look for that, not just the happy
   path? Would a fresh agent, given only the goal and the diff, find
-  something?
+  something? What would come back after I hand it off that I could
+  find now?
 - Will this check be needed again on every change? What is the
   cheapest test that covers it, and what does that test cost in CI
   time and flakiness?

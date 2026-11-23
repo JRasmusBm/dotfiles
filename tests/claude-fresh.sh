@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# tests/claude-fresh.sh [BIN] — scenarios for bin/claude-fresh (RAS-53:
-# a big chat goes on fresh, from a brief, instead of being resumed
-# whole) and the claude-pane lookups that follow its successors. Fake
+# tests/claude-fresh.sh [BIN] — scenarios for bin/claude-fresh (resume
+# brings a chat back whole, `hand` moves it to a fresh, briefed one)
+# and the claude-pane lookups that follow its successors. Fake
 # transcripts in a temp CLAUDE_CONFIG_DIR; `hand` runs against a
 # throwaway tmux server whose pane fakes Claude's idle prompt. Nothing
 # real is touched. BIN defaults to this checkout's bin/.
@@ -49,17 +49,11 @@ check "- finds the directory's latest chat" \
   'test "$_a" = "--resume 11111111-0000-0000-0000-000000000000"'
 _a="$(claude-fresh resume - "$_t")"
 check "- with no chat there continues as before" 'test "$_a" = --continue'
-_a="$(claude-fresh resume 22222222-0000-0000-0000-000000000000)"
-_new="$(printf '%s' "$_a" | awk '{ print $2 }')"
-_f="$LOCAL_CONFIG/briefs/$_new.md"
-check "a big chat starts fresh, the brief as system prompt, no prompt" \
-  'test "$_a" = "--session-id $_new --append-system-prompt-file $_f"'
-check "its brief says the first message is what came next" \
-  'grep -q "The first message is what" "$_f"'
-check "a successor never prompted comes back the same way" \
-  'test "$(claude-fresh resume 22222222-0000-0000-0000-000000000000)" = "$_a"'
-check "the fresh chat is the big one's successor" \
-  'test "$(claude-fresh next 22222222-0000-0000-0000-000000000000)" = "$_new"'
+check "a big chat resumes whole too" \
+  'test "$(claude-fresh resume 22222222-0000-0000-0000-000000000000)" \
+    = "--resume 22222222-0000-0000-0000-000000000000"'
+_f="$_t/brief.md"
+claude-fresh brief 22222222-0000-0000-0000-000000000000 > "$_f"
 check "its brief names the old chat, quotes its last prompt and message" \
   'grep -q "claude-log -p 22222222" "$_f" && grep -q "> please fix the thing" "$_f" \
      && grep -q "> Fixed it. Is the design right?" "$_f"'
@@ -67,9 +61,8 @@ check "the brief skips tool results as prompts" '! grep -q "> x$" "$_f"'
 check "its context shows in the brief" 'grep -q "160k" "$_f"'
 check "ctx reads the last turn" \
   'test "$(claude-fresh ctx 11111111-0000-0000-0000-000000000000)" = 90010'
-_a="$(CLAUDE_FRESH_CTX=50000 claude-fresh resume 11111111-0000-0000-0000-000000000000)"
-check "CLAUDE_FRESH_CTX moves the limit" \
-  'case "$_a" in --session-id*) true ;; *) false ;; esac'
+printf '%s\t%s\t%s\n' 0 11111111-0000-0000-0000-000000000000 \
+  44444444 >> "$LOCAL_CONFIG/claude-successors"
 _n1="$(claude-fresh next 11111111-0000-0000-0000-000000000000)"
 printf '%s\t%s\t%s\n' 0 "$_n1" 33333333 >> "$LOCAL_CONFIG/claude-successors"
 check "next follows a chain of successors" \
@@ -77,7 +70,7 @@ check "next follows a chain of successors" \
 
 echo "== claude-pane follows successors"
 check "a replaced chat with no pane has no cwd" \
-  'test -z "$(claude-pane cwd 22222222-0000-0000-0000-000000000000)"'
+  'test -z "$(claude-pane cwd 11111111-0000-0000-0000-000000000000)"'
 
 echo "== hand"
 # A pane whose command reads as `claude` (a tiny binary of that name

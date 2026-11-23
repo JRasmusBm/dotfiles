@@ -5,6 +5,9 @@ Before ending a turn, consider the following. A turn that ends on
 nobody ends: which one did I set?
 
 - Is anything left that I could do myself? Then it isn't a wait.
+- Am I using the wait? What comes right after it that I could start
+  now (a review, a lookup, the next step's prep), so it isn't a
+  second wait?
 - What exactly am I waiting on: CI, a deploy, another PR, my own
   background agent, a person, a date? Who or what tells me it's
   over?

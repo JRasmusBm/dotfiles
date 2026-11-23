@@ -6,7 +6,7 @@
 # after a reboot) or no Claude in its cli window: starts it with
 # `claude --continue` there (plain `claude` when the worktree has
 # no conversation yet; the session `run-slot close` closed there,
-# if it did; a big chat as a fresh, briefed one: claude-fresh resume) and hands the tell to `run-slot pend`, which delivers it
+# if it did; claude-fresh resume follows its successors) and hands the tell to `run-slot pend`, which delivers it
 # once Claude is up and keeps the session open until then: exit 0,
 # though not yet told, so the caller stops retrying. WT_TELL_SID names
 # the chat instead (a main checkout's: there `--continue` opens the
