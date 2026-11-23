@@ -42,16 +42,16 @@ Any step, give it to a subagent with the following considerations:
 Each piece of work keeps one living doc at `<worktree>/.jrb/doc.md`
 (`.jrb/` is git-ignored; `wt doc` opens it, `wt doc path` prints
 it). Rasmus opens it from any pane (M-w) or board row (`wt :`,
-alt-w) to see within seconds what I'm building, where it stands,
-what I decided and what I showed works. Is it current now, before I
-act, hand off or wait?
+alt-w) and must know within 3 seconds what I'm building and where
+it stands. Is it current now, before I act, hand off or wait?
 
-    # ABC-123: <title>
+    # ABC-123: <what it builds, in his words>
     Now: <where it stands, what's next: one line>
 
     ## Building
-    Problem, goal, acceptance criteria (a checklist), the
-    assumptions I work from.
+    <problem and goal: two lines>
+    - [ ] <acceptance criterion, ticked once Tested shows it>
+    Assumes: <one line each>
 
     ## Decisions
     - <decision> | <why>
@@ -59,10 +59,18 @@ act, hand off or wait?
     ## Tested
     - <criterion>: ![<what to look for>](screenshots/01-<what>.png)
 
+- Do the title and Now line alone answer "what is it doing"? The
+  rest is for when he reads on.
+- Does it fit one screen? Rewrite, don't append: a stale line, a
+  log of steps, a recap, a paragraph where a line does: cut it.
 - Did I just make a call the brief or spec is silent on? One line
-  in Decisions with the reason, when I make it, not at the end.
-- It is the only copy: the review page and the PR body draw from
-  it. Something they need that it lacks goes into it first.
+  in Decisions with the reason, when I make it; drop it once a
+  later call replaces it.
+- It is the only copy: the review page (its rendering, artifacts
+  node) and the PR body draw from it. Something they need that it
+  lacks goes into it first.
+- Visual work: from the first screenshot, the doc is a local page
+  (`doc-page`); `wt doc` and M-w open that instead of the text.
 
 ## Nodes
 

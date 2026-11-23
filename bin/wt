@@ -1468,7 +1468,8 @@ _wt_id() {
 
 # A worktree's doc (flow skill): what it builds, where it stands,
 # what it decided, what it showed works, at <worktree>/.jrb/doc.md.
-# `wt doc` opens this worktree's read-only, `wt doc <branch|dir|
+# `wt doc` opens this worktree's read-only (as a local page once it
+# holds screenshots), `wt doc <branch|dir|
 # picker line>` another's (M-w in a pane, alt-w in `wt :`);
 # `wt doc path [..]` prints the path without opening it.
 _wt_doc_path() {
@@ -1490,6 +1491,11 @@ _wt_doc() {
     (*': '*) _dn="${_dn#*: }" ;;
   esac
   if _df="$(_wt_doc_path "$_dn")" && test -f "$_df"; then
+    # Screenshots in it: a local page shows them (doc-page).
+    if $_grep -q '!\[' "$_df"; then
+      open "$(doc-page "$_df")"
+      return
+    fi
     exec nvim -R "$_df"
   fi
   # No doc yet: what the board preview knows (branch, PR, prompt).

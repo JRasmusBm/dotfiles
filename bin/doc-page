@@ -1,0 +1,169 @@
+#!/usr/bin/env python3
+"""doc-page <doc.md> — render a worktree doc (flow skill, The doc) to
+a self-contained page next to it (doc.html): images inlined, a click
+opens one full-screen with its caption, a second shows native size
+with panning; Escape, x or a click outside closes. Logs the page to
+the artifacts ledger once, so `artifacts` lists it. Prints its path.
+
+Knows the doc's small markdown: # headings, - lists, [ ] / [x]
+checkboxes, ![caption](path) images, `code`, **bold**, paragraphs.
+"""
+import base64
+import html
+import mimetypes
+import os
+import re
+import sys
+import time
+
+CSS = """
+:root{--bg:#fff;--fg:#1d1d1f;--mute:#6e6e73;--line:#e5e5ea;--acc:#0a66c2}
+@media (prefers-color-scheme:dark){:root{--bg:#161618;--fg:#f2f2f7;
+--mute:#98989d;--line:#2c2c2e;--acc:#64a8ff}}
+body{background:var(--bg);color:var(--fg);margin:0;
+font:15px/1.5 -apple-system,system-ui,sans-serif}
+main{max-width:860px;margin:0 auto;padding:24px 16px 64px}
+h1{font-size:22px;margin:0 0 4px}h2{font-size:16px;margin:28px 0 8px;
+border-bottom:1px solid var(--line);padding-bottom:4px}
+.now{font-size:17px;font-weight:600;color:var(--acc);margin:0 0 8px}
+ul{padding-left:20px;margin:6px 0}li{margin:3px 0}
+li.cb{list-style:none;margin-left:-20px}
+code{font:13px ui-monospace,Menlo,monospace;background:var(--line);
+padding:1px 4px;border-radius:4px}
+figure{margin:8px 0 16px}figure img{max-width:100%;max-height:360px;
+border:1px solid var(--line);border-radius:6px;cursor:zoom-in}
+figcaption{color:var(--mute);font-size:13px}
+#lb{position:fixed;inset:0;background:rgba(0,0,0,.88);display:none;
+flex-direction:column;align-items:center;justify-content:center;
+z-index:9}#lb.on{display:flex}
+#lb .wrap{max-width:96vw;max-height:88vh;overflow:hidden}
+#lb img{max-width:96vw;max-height:88vh;cursor:zoom-in;display:block}
+#lb.native .wrap{overflow:auto}#lb.native img{max-width:none;
+max-height:none;cursor:zoom-out}
+#lb p{color:#eee;margin:10px 16px 0;text-align:center}
+#lb button{position:absolute;top:10px;right:14px;font-size:28px;
+background:none;border:0;color:#fff;cursor:pointer}
+"""
+
+JS = """
+const lb=document.getElementById('lb'),li=lb.querySelector('img'),
+lc=lb.querySelector('p');
+document.querySelectorAll('figure img').forEach(i=>i.onclick=()=>{
+li.src=i.src;lc.textContent=i.alt;lb.className='on'});
+li.onclick=e=>{e.stopPropagation();lb.classList.toggle('native')};
+lb.querySelector('.wrap').onclick=e=>e.stopPropagation();
+const close=()=>lb.className='';
+lb.onclick=close;lb.querySelector('button').onclick=close;
+document.onkeydown=e=>{if(e.key==='Escape')close()};
+"""
+
+
+def inline(text):
+    out = html.escape(text)
+    out = re.sub(r"`([^`]+)`", r"<code>\1</code>", out)
+    out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
+    return out
+
+
+def image(base, alt, src):
+    path = os.path.join(base, src)
+    try:
+        with open(path, "rb") as f:
+            data = base64.b64encode(f.read()).decode()
+        mime = mimetypes.guess_type(path)[0] or "image/png"
+        src = f"data:{mime};base64,{data}"
+    except OSError:
+        pass
+    return (f'<figure><img src="{html.escape(src)}" '
+            f'alt="{html.escape(alt)}"><figcaption>{inline(alt)}'
+            f"</figcaption></figure>")
+
+
+IMG = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+
+
+def render(md, base):
+    body, in_list, title, gap = [], False, "Doc", True
+    for raw in md.splitlines():
+        line = raw.rstrip()
+        was_gap, gap = gap, not line.strip()
+        item = re.match(r"\s*[-*] (.*)", line)
+        if in_list and not item and not (line.startswith("  ") and line):
+            body.append("</ul>")
+            in_list = False
+        if not line.strip():
+            continue
+        if line.startswith("# "):
+            title = line[2:]
+            body.append(f"<h1>{inline(title)}</h1>")
+        elif line.startswith("## "):
+            body.append(f"<h2>{inline(line[3:])}</h2>")
+        elif line.startswith("Now:"):
+            body.append(f'<p class="now">{inline(line)}</p>')
+        elif item:
+            if not in_list:
+                body.append("<ul>")
+                in_list = True
+            text = item.group(1)
+            cls = ""
+            cb = re.match(r"\[( |x)\] (.*)", text)
+            if cb:
+                cls = ' class="cb"'
+                text = ("☑ " if cb.group(1) == "x" else "☐ ") \
+                    + cb.group(2)
+            body.append(f"<li{cls}>{render_line(text, base)}</li>")
+        elif in_list:
+            body[-1] = body[-1][:-5] + " " + render_line(line.strip(),
+                                                          base) + "</li>"
+        elif body and body[-1].startswith("<p>") and not was_gap:
+            body[-1] = body[-1][:-4] + " " + render_line(line, base) + "</p>"
+        else:
+            body.append(f"<p>{render_line(line, base)}</p>")
+    if in_list:
+        body.append("</ul>")
+    return title, "\n".join(body)
+
+
+def render_line(text, base):
+    parts, last = [], 0
+    for m in IMG.finditer(text):
+        parts.append(inline(text[last:m.start()]))
+        parts.append(image(base, m.group(1), m.group(2)))
+        last = m.end()
+    parts.append(inline(text[last:]))
+    return "".join(parts)
+
+
+def main():
+    if len(sys.argv) != 2:
+        sys.exit(__doc__)
+    src = os.path.abspath(sys.argv[1])
+    base = os.path.dirname(src)
+    with open(src) as f:
+        title, body = render(f.read(), base)
+    out = os.path.join(base, "doc.html")
+    with open(out, "w") as f:
+        f.write(f"<!doctype html><html><head><meta charset=utf-8>"
+                f'<meta name=viewport content="width=device-width">'
+                f"<title>{html.escape(title)}</title><style>{CSS}"
+                f"</style></head><body><main>{body}</main>"
+                f'<div id="lb"><button aria-label="Close">×</button>'
+                f'<div class="wrap"><img alt=""></div><p></p></div>'
+                f"<script>{JS}</script></body></html>")
+    ledger = os.path.join(os.environ.get("LOCAL_CONFIG") or
+                          os.path.expanduser("~/.config"), "artifacts.tsv")
+    url = "file://" + out
+    try:
+        with open(ledger) as f:
+            seen = url in f.read()
+    except OSError:
+        seen = False
+    if not seen:
+        os.makedirs(os.path.dirname(ledger), exist_ok=True)
+        with open(ledger, "a") as f:
+            f.write(f"{int(time.time())}\tlocal\t{url}\t{title}\t{out}\t"
+                    f"{os.path.dirname(base)}\n")
+    print(out)
+
+
+main()
