@@ -27,9 +27,9 @@ case "$last_user" in
   *"<<autonomous-loop"*|*"/loop"*|*"I am about to review"*) exit 0 ;;
 esac
 
-text=$(tail -60 "$transcript" | jq -rs '
-  [ .[] | select(.type == "assistant")
-    | .message.content[]? | select(.type == "text") | .text ] | last // ""')
+# The reply that just ended, from the hook input: the transcript can
+# lag it, so its tail held an older reply and blocked on that (RAS-106).
+text=$(jq -r '.last_assistant_message // empty' <<<"$input")
 [ -n "$text" ] || exit 0
 
 block() {
