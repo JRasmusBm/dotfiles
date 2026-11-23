@@ -52,9 +52,10 @@ check "open: from a picker line" \
 rm -f "$FAKE/opened"
 _err="$( (cd "$_r" && wt doc abc-2) </dev/null 2>&1)"
 _rc=$?
-check "no doc: says so, fails, opens nothing" \
+check "no doc: says so, shows the preview, opens nothing" \
   '[ $_rc -ne 0 ] && [ ! -f "$FAKE/opened" ] &&
-   echo "$_err" | grep -q "no doc yet"'
+   echo "$_err" | grep -q "no doc yet" &&
+   echo "$_err" | grep -q "^branch  feat/x/abc-2$"'
 
 _err="$( (cd "$_r" && wt doc nope) </dev/null 2>&1)"
 check "unknown worktree: says so" \
