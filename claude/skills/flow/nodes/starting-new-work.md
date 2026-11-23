@@ -7,9 +7,12 @@
   that agent on the ticket: who investigates, this session or it?
 - Is there a ticket, claimed where teammates see it (the repo's own
   claim step), and one worktree per ticket id?
-- Does it start from the right code: the base, or this PR's branch
-  because it needs this code (then blocked on this one, retargeted
-  once it merges)?
+- Does it start from the base, or stacked on another PR's branch?
+  Stacking blocks it on work that may not really block it, and with
+  many agents on the same kind of work, most would wait. Can it copy
+  the code it needs instead, noting in its doc what it copied from
+  which ticket, so the rebase knows what to drop? Stack only when
+  it can't move without that code (then retargeted once it merges).
 - What does the agent need that the ticket lacks: what was decided
   and rejected, and why, in whose words? Prior PRs or branches to
   port? Where to look?
