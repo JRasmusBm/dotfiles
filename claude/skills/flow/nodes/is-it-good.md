@@ -23,6 +23,9 @@ Before asking Rasmus "is it good?", consider the following.
   that safer?
 - Will the things I don't know be easy to change? (For example be wary of a big
   UX change that I'm not sure about)
+- Is the doc current, and does the PR body draw from it (problem,
+  decisions, what was tested, as text) rather than a fresh
+  write-up?
 - Am I highly confident it's an improvement (a step in the right direction is
   fine), holistically and relative to the problem, with CI (if present in the
   repo) green (including AI reviewers)? Then ship it. A minor review comment on

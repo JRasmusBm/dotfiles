@@ -22,4 +22,4 @@
   ticket, so an edit I make in its worktree is a second agent on
   the same change. What I found goes to it as a message instead.
   Its notifications reach Rasmus; report the ticket, slug and
-  brief, then stop.
+  brief (its doc: `wt doc <slug>`), then stop.
