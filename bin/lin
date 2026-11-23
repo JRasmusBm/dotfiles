@@ -74,15 +74,40 @@ _gql() {
   fi
   _q="$1"
   shift
-  _res="$(jq -n --arg q "$_q" "$@" '{query: $q, variables: $ARGS.named}' \
-    | curl -s https://api.linear.app/graphql \
-      -H 'Content-Type: application/json' \
-      -H "Authorization: $LINEAR_API_KEY" -d @-)"
-  if printf '%s' "$_res" | jq -e '.errors' >/dev/null; then
-    printf '%s' "$_res" | jq -r '.errors[0].message' >&2
+  _req="$(jq -n --arg q "$_q" "$@" '{query: $q, variables: $ARGS.named}')"
+  _rc=0
+  _post "$_req" || _rc=$?
+  if test "$_rc" -eq 1; then
+    sleep "${LIN_RETRY_DELAY:-2}"
+    echo "lin: retrying" >&2
+    _rc=0
+    _post "$_req" || _rc=$?
+  fi
+  test "$_rc" -eq 0 || return 1
+  printf '%s' "$_res"
+}
+
+# POST request $1 to Linear into $_res. Returns 1 when the reply
+# isn't JSON (an error page, a network failure: worth a retry),
+# saying the HTTP status and the start of the body; 2 on a GraphQL
+# error, saying its message.
+_post() {
+  _resp="$(printf '%s' "$1" | curl -sS -w '\n%{http_code}' \
+    https://api.linear.app/graphql \
+    -H 'Content-Type: application/json' \
+    -H "Authorization: $LINEAR_API_KEY" -d @- 2>&1)" || true
+  _code="$(printf '%s\n' "$_resp" | tail -n 1)"
+  _res="$(printf '%s\n' "$_resp" | sed '$d')"
+  if ! printf '%s' "$_res" | jq -e 'type == "object"' >/dev/null 2>&1
+  then
+    echo "lin: Linear answered HTTP $_code, not JSON:" \
+      "$(printf '%s' "$_res" | tr -s '\n\t ' ' ' | cut -c1-200)" >&2
     return 1
   fi
-  printf '%s' "$_res"
+  if printf '%s' "$_res" | jq -e '.errors' >/dev/null; then
+    printf '%s' "$_res" | jq -r '.errors[0].message' >&2
+    return 2
+  fi
 }
 
 _lin_state() {
