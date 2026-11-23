@@ -11,7 +11,8 @@
   Stacking blocks it on work that may not really block it, and with
   many agents on the same kind of work, most would wait. Can it copy
   the code it needs instead, noting in its doc what it copied from
-  which ticket, so the rebase knows what to drop? Stack only when
+  which ticket and what it assumes that ticket will end up as, so
+  the rebase knows what to drop and what to check? Stack only when
   it can't move without that code (then retargeted once it merges).
 - What does the agent need that the ticket lacks: what was decided
   and rejected, and why, in whose words? Prior PRs or branches to
