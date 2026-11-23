@@ -87,4 +87,15 @@ check "page: logged to the artifacts ledger once" \
   '[ "$(grep -c "file://$_w2/.jrb/doc.html" \
      "$LOCAL_CONFIG/artifacts.tsv")" = 1 ]'
 
+# A bare path, as agents write it: still the page, rest = caption.
+printf '# ABC-2: page\nNow: shot\n\n## Tested\n- screenshots/01-x.png: the\n  badge ([]) shows\n' \
+  > "$_w2/.jrb/doc.md"
+rm -f "$FAKE/opened" "$FAKE/browsed"
+(cd "$_w2" && wt doc) </dev/null
+check "bare path: opens the page, image with the item as caption" \
+  '[ -f "$FAKE/browsed" ] && [ ! -f "$FAKE/opened" ] &&
+   grep -q "data:image/png;base64,$(printf PNGDATA | base64)" \
+     "$_w2/.jrb/doc.html" &&
+   grep -q "<figcaption>the badge (\[\]) shows" "$_w2/.jrb/doc.html"'
+
 exit $_fail

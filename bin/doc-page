@@ -7,6 +7,8 @@ the artifacts ledger once, so `artifacts` lists it. Prints its path.
 
 Knows the doc's small markdown: # headings, - lists, [ ] / [x]
 checkboxes, ![caption](path) images, `code`, **bold**, paragraphs.
+A bare image path counts too: `- shots/01.png: caption` shows the
+image with the rest of the item as its caption.
 """
 import base64
 import html
@@ -82,15 +84,41 @@ def image(base, alt, src):
 
 
 IMG = re.compile(r"!\[([^\]]*)\]\(([^)]+)\)")
+SHOT = r"[\w./-]+\.(?:png|jpe?g|gif|webp)"
+LEAD = re.compile(rf"({SHOT}):?\s*(.*)", re.I)
+BARE = re.compile(rf"(?<![(\w/.-])({SHOT})(?![\w)])", re.I)
+
+
+def item_html(text, base):
+    """A bare path leading an item takes the rest as its caption."""
+    if "![" not in text:
+        m = LEAD.fullmatch(text)
+        if m:
+            return image(base, m.group(2) or m.group(1), m.group(1))
+        text = BARE.sub(lambda m: f"![{m.group(1)}]({m.group(1)})", text)
+    return render_line(text, base)
+
+
+def join_items(lines):
+    """An item's indented continuation lines join the item."""
+    out = []
+    for raw in lines:
+        line = raw.rstrip()
+        if (line.startswith("  ") and out
+                and re.match(r"\s*[-*] ", out[-1])
+                and not re.match(r"\s*[-*] ", line)):
+            out[-1] += " " + line.strip()
+        else:
+            out.append(line)
+    return out
 
 
 def render(md, base):
     body, in_list, title, gap = [], False, "Doc", True
-    for raw in md.splitlines():
-        line = raw.rstrip()
+    for line in join_items(md.splitlines()):
         was_gap, gap = gap, not line.strip()
         item = re.match(r"\s*[-*] (.*)", line)
-        if in_list and not item and not (line.startswith("  ") and line):
+        if in_list and not item:
             body.append("</ul>")
             in_list = False
         if not line.strip():
@@ -106,17 +134,15 @@ def render(md, base):
             if not in_list:
                 body.append("<ul>")
                 in_list = True
-            text = item.group(1)
-            cls = ""
+            text, cls = item.group(1), ""
             cb = re.match(r"\[( |x)\] (.*)", text)
             if cb:
                 cls = ' class="cb"'
                 text = ("☑ " if cb.group(1) == "x" else "☐ ") \
-                    + cb.group(2)
-            body.append(f"<li{cls}>{render_line(text, base)}</li>")
-        elif in_list:
-            body[-1] = body[-1][:-5] + " " + render_line(line.strip(),
-                                                          base) + "</li>"
+                    + item_html(cb.group(2), base)
+            else:
+                text = item_html(text, base)
+            body.append(f"<li{cls}>{text}</li>")
         elif body and body[-1].startswith("<p>") and not was_gap:
             body[-1] = body[-1][:-4] + " " + render_line(line, base) + "</p>"
         else:
