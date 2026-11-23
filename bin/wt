@@ -1492,7 +1492,7 @@ _wt_doc() {
   esac
   if _df="$(_wt_doc_path "$_dn")" && test -f "$_df"; then
     # Screenshots in it: a local page shows them (doc-page).
-    if $_grep -q '!\[' "$_df"; then
+    if $_grep -qiE '!\[|\.(png|jpe?g|gif|webp)\b' "$_df"; then
       open "$(doc-page "$_df")"
       return
     fi
