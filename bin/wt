@@ -1492,7 +1492,13 @@ _wt_doc() {
   if _df="$(_wt_doc_path "$_dn")" && test -f "$_df"; then
     exec nvim -R "$_df"
   fi
-  test -z "$_df" || echo "no doc yet: $_df" >&2
+  # No doc yet: what the board preview knows (branch, PR, prompt).
+  if test -n "$_df"; then
+    echo "no doc yet: $_df" >&2
+    echo
+    wt-preview "$(_main_root)" "$(basename "$(dirname "$(dirname \
+      "$_df")")")" || true
+  fi
   # A popup closes on exit: hold the message until a key.
   if test -t 0; then read -r _ </dev/tty || true; fi
   return 1
