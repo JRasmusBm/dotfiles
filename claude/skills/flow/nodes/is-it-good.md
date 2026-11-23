@@ -28,8 +28,12 @@ Before asking Rasmus "is it good?", consider the following.
   write-up?
 - Am I highly confident it's an improvement (a step in the right direction is
   fine), holistically and relative to the problem, with CI (if present in the
-  repo) green (including AI reviewers)? Then ship it. A minor review comment on
-  a green head: would the push restart CI and reviews while others wait on this
-  (a red base)? Then ship the head, reply "follow-up", resolve, fix on another branch.
+  repo) green (including AI reviewers)? Then ship it. Behind a flag users can't
+  turn on, holistically means: do I know nothing changes with the flag off, and
+  how it fits the other pieces? Then confidence is high; placeholders for
+  unmerged pieces don't lower it, and polish is a follow-up PR. A minor review
+  comment on a green head: would the push restart CI and reviews while others
+  wait on this (a red base, a deadline)? Then ship the head, reply "follow-up",
+  resolve, fix on another branch.
 - Not confident: is the design the problem? Back to the drawing board
   may be cheaper than more testing.

@@ -7,7 +7,8 @@ nobody ends: which one did I set?
 - Is anything left that I could do myself? Then it isn't a wait.
 - Am I using the wait? What comes right after it that I could start
   now (a review, a lookup, the next step's prep), so it isn't a
-  second wait?
+  second wait? Coordinating to a deadline: at each tell, do the
+  merges so far make it, and why hasn't each green PR shipped?
 - What exactly am I waiting on: CI, a deploy, another PR, my own
   background agent, a person, a date? Who or what tells me it's
   over?

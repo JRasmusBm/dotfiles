@@ -14,7 +14,8 @@
   which ticket, and the names and types it builds on from them? At
   rebase that list is the base of a three-way look: changed upstream
   only, adopt upstream's; changed here on purpose, keep it and
-  judge; both, decide. No rename has to be told to every copier.
+  judge; both, decide. No rename has to be told to every copier,
+  and a copier ships on its own, whatever the merge order.
   Stack only when it can't move without that code (then retargeted
   once it merges).
 - What does the agent need that the ticket lacks: what was decided
