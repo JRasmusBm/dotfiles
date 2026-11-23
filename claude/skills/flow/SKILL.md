@@ -37,6 +37,33 @@ Any step, give it to a subagent with the following considerations:
   add. Once he decides, record it: a new node, or an edit to an
   existing one.
 
+## The doc
+
+Each piece of work keeps one living doc at `<worktree>/.jrb/doc.md`
+(`.jrb/` is git-ignored; `wt doc` opens it, `wt doc path` prints
+it). Rasmus opens it from any pane (M-w) or board row (`wt :`,
+alt-w) to see within seconds what I'm building, where it stands,
+what I decided and what I showed works. Is it current now, before I
+act, hand off or wait?
+
+    # ABC-123: <title>
+    Now: <where it stands, what's next: one line>
+
+    ## Building
+    Problem, goal, acceptance criteria (a checklist), the
+    assumptions I work from.
+
+    ## Decisions
+    - <decision> | <why>
+
+    ## Tested
+    - <criterion>: ![<what to look for>](screenshots/01-<what>.png)
+
+- Did I just make a call the brief or spec is silent on? One line
+  in Decisions with the reason, when I make it, not at the end.
+- It is the only copy: the review page and the PR body draw from
+  it. Something they need that it lacks goes into it first.
+
 ## Nodes
 
 Each node can have a private half at `~/.private/jrb/flow/nodes/`

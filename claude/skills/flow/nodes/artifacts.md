@@ -23,6 +23,8 @@ published it, so a local file is what he can open.
 
 ## Building one
 
+- The review page renders the doc (SKILL.md, The doc): its text and
+  Tested screenshots, not a rewrite of them.
 - What does he need to judge in two minutes? Lead with that, the one
   or two decisions, then the evidence. Short text, no recap.
 - Screenshots of each key state (before, action, result, errors)

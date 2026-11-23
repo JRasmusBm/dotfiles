@@ -16,3 +16,6 @@
 - Is someone else already on it: a teammate, another agent, an open
   PR? Is it claimed where teammates will see it?
 - Is it still relevant? Did anything change since it was written?
+- Before the first edit, is my answer in the doc (SKILL.md, The
+  doc): the problem, goal, acceptance criteria and the assumptions
+  I work from?

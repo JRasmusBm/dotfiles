@@ -505,6 +505,7 @@ _wt_pick() {
   _sel="$(printf '%s' "$_list" | fzf --reverse --exact \
     --delimiter="$(printf '\t')" --with-nth=3 \
     --preview 'wt-preview {1} {2}' \
+    --bind 'alt-w:execute(cd {1} && wt doc {2})' \
     --preview-window=right,55%,wrap || true)"
 
   test -z "$_sel" && exit 0
@@ -1465,6 +1466,38 @@ _wt_id() {
   echo "$_id"
 }
 
+# A worktree's doc (flow skill): what it builds, where it stands,
+# what it decided, what it showed works, at <worktree>/.jrb/doc.md.
+# `wt doc` opens this worktree's read-only, `wt doc <branch|dir|
+# picker line>` another's (M-w in a pane, alt-w in `wt :`);
+# `wt doc path [..]` prints the path without opening it.
+_wt_doc_path() {
+  if test -n "${1:-}"; then
+    _dp="$(_wt_match "$1" | cut -f1)"
+    test -n "$_dp" || { echo "wt doc: no worktree $1" >&2; return 1; }
+  else
+    _dp="$(git rev-parse --show-toplevel 2>/dev/null)" \
+      || { echo "wt doc: not in a worktree" >&2; return 1; }
+  fi
+  echo "$_dp/.jrb/doc.md"
+}
+
+_wt_doc() {
+  if test "${1:-}" = path; then shift; _wt_doc_path "$@"; return; fi
+  _dn="${1:-}"
+  case "$_dn" in
+    ('⊘ '*) _dn="${_dn#⊘ }" ;;
+    (*': '*) _dn="${_dn#*: }" ;;
+  esac
+  if _df="$(_wt_doc_path "$_dn")" && test -f "$_df"; then
+    exec nvim -R "$_df"
+  fi
+  test -z "$_df" || echo "no doc yet: $_df" >&2
+  # A popup closes on exit: hold the message until a key.
+  if test -t 0; then read -r _ </dev/tty || true; fi
+  return 1
+}
+
 _wt_unpin() {
   _slug="$(basename "$(git rev-parse --show-toplevel)")"
   tsp unpin "${1:-$(_repo_name):$_slug}"
@@ -1776,7 +1809,7 @@ _wt_clean() {
 }
 
 _usage() {
-  echo "Usage: wt [.|:|open|add|fix|feat|review|id|pin|unpin|rb|fx|sz|w8|night|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
+  echo "Usage: wt [.|:|open|add|fix|feat|review|id|doc|pin|unpin|rb|fx|sz|w8|night|wake|ip|rt|rd|rp|rm|done|cancel|clean|resume|forget|dedup|move|e]" >&2
 }
 
 # Snoozed worktrees whose date has come wake up on any wt run.
@@ -1808,6 +1841,7 @@ case "${1:-}" in
   feat) shift; _wt_typed feat "$@" ;;
   review) shift; _wt_review "$@" ;;
   id) _wt_id ;;
+  doc) shift; _wt_doc "$@" ;;
   pin) shift; _wt_pin "$@" ;;
   unpin) shift; _wt_unpin "$@" ;;
   rb) shift; _wt_block "$@" ;;

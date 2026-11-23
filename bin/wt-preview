@@ -2,8 +2,8 @@
 
 # fzf preview for `wt :`. Given the repo root and a picker
 # line ("HEADING: branch", "⊘ branch", or a bare name),
-# show the worktree's branch, last commit, PR state, and a
-# one-line summary of its most recent Claude session.
+# show the worktree's branch, last commit, PR state, and its
+# doc (wt doc), else a one-line summary of its latest Claude session.
 # Best-effort throughout — missing pieces are skipped so the
 # preview never errors out.
 # Usage: wt-preview <root> <picker-line>
@@ -53,12 +53,15 @@ if command -v gh >/dev/null 2>&1; then
   echo
 fi
 
-# Snippet from the most recent Claude session for this
-# worktree: a Claude summary entry if present, else the first
-# user prompt. Context dir = the path with / and . → -.
+# The agent's doc (wt doc) when it keeps one: its top says what it
+# builds and where it stands. Else a snippet from the most recent
+# Claude session for this worktree: the first user prompt. Context
+# dir = the path with / and . → -.
 _ctx="$HOME/.claude/projects/$(printf '%s' "$_wt" \
   | sed 's![/.]!-!g')"
-if test -d "$_ctx"; then
+if test -f "$_wt/.jrb/doc.md"; then
+  head -n 30 "$_wt/.jrb/doc.md"
+elif test -d "$_ctx"; then
   _last="$(ls -t "$_ctx"/*.jsonl 2>/dev/null | head -1)"
   if test -n "$_last"; then
     # First user prompt = what the session was about. Stream
