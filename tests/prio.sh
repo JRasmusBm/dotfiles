@@ -4,7 +4,8 @@
 # parse and list (sources, groupings, notes, tickets from the cache),
 # capture (`add`, `--top` below hand-pinned rows, a hand-removed
 # outcome never comes back), `in`, hand edits (removed, pinned), the
-# history log, done, tickets/slugs/rank and the brief. LOCAL_CONFIG is
+# history log, done, tickets/slugs/rank and the brief (an idle priority
+# leads, Duplicate is done, Backlog under a busy one is a count). LOCAL_CONFIG is
 # a temp dir; tmux is a fake with no panes; Linear is
 # tests/prio-linear-fake. PRIO defaults to this checkout's bin/prio.
 
@@ -224,5 +225,38 @@ check "log: zero priorities is a rank-0 row" \
   'tail -1 "$_f.log" | awk -F "\t" "\$3 == 0 && \$4 == \"\" && NF == 5" \
    | grep -q .'
 check "pinned: emptied with its outcome" 'test ! -s "$_f.pinned"'
+
+
+# The brief leads with a priority that has open tickets and nothing
+# running; Duplicates count as done; Backlog under a busy priority is
+# a count.
+cat > "$_t/linear.json" <<'X'
+{"label:busy": ["ABC-20 started me busy", "ABC-21 unstarted me next",
+   "ABC-22 backlog me later", "ABC-23 backlog me later too",
+   "ABC-24 duplicate me dup"],
+ "parent:ABC-40": ["ABC-41 backlog me idle later",
+   "ABC-42 unstarted me idle next", "ABC-43 duplicate me dup"],
+ "label:gone": ["ABC-50 duplicate me only a dup"]}
+X
+printf 'Busy one\n  in label:busy\nIdle one\n  in ABC-40\nGone one\n  in label:gone\n' \
+  > "$_f"
+printf '# IN PROGRESS\nfeat/jrb/abc-20-busy\n' > "$LOCAL_CONFIG/worktrees/repo"
+: > "$LOCAL_CONFIG/notifications"
+p sync
+p brief > "$_t/brief"
+check "brief: the priority with nothing running leads, one line" \
+  'test "$(head -1 "$_t/brief")" \
+     = "P0 2 has nothing running: wt feat ABC-42, or drop it" \
+   && test -z "$(sed -n 2p "$_t/brief")" \
+   && test "$(grep -c "nothing running" "$_t/brief")" = 1'
+check "brief: Backlog under a busy priority is a count" \
+  'grep -A2 "^1\. Busy one" "$_t/brief" | grep -qx "   no worktree: ABC-21, 2 in Backlog"'
+check "brief: an idle priority lists its Backlog too" \
+  'grep -A1 "^2\. Idle one" "$_t/brief" | grep -qx "   no worktree: ABC-41 ABC-42"'
+check "brief: Duplicates count as done" \
+  '! grep -q "ABC-24\|ABC-43\|ABC-50" "$_t/brief" \
+   && grep -A1 "^3\. Gone one" "$_t/brief" | grep -q "no open ticket"'
+check "tickets: Backlog is open, Duplicate is not" \
+  'test "$(p tickets | cut -f2 | sort | tr "\n" " ")" = "ABC-20 ABC-21 ABC-22 ABC-23 ABC-41 ABC-42 "'
 
 exit "$_fail"

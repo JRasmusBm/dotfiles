@@ -49,7 +49,8 @@ ticket. `#` lines and blank lines are ignored.
 
 Side files, next to it:
   priorities.tickets  what sync last read from Linear: outcome, TICKET,
-                      open|done, title (done: in the last 7 days)
+                      open|backlog|done, title (done: completed in the
+                      last 7 days; backlog is open too)
   priorities.log      epoch, actor (hand|capture|linear), rank,
                       outcome, its open tickets; a snapshot per change
                       (rank 0 and no outcome: nothing ranked)
@@ -103,7 +104,7 @@ SOURCE = re.compile(r'^\s+>\s?(.*)$')
 GROUPING = re.compile(r'^\s+in\s+(\S+)(?:\s+#\s*(.*))?$')
 PROJECT = re.compile(r'/project/[^/\s]*?([0-9a-f]{8,})(?:/|$)')
 HEADING = re.compile(r'^\s*#|:\s*$')
-DONE = ('completed', 'canceled')
+DONE = ('completed', 'canceled', 'duplicate')
 # Post-merge and parking sections: wt owns them, `# P0` leaves them be.
 KEEP = {'PROD REVIEW', 'TO ANNOUNCE', 'BLOCKED', 'NEEDS FOCUS', 'SNOOZED'}
 TEMPLATE = """\
@@ -222,7 +223,7 @@ def load():
 
 
 def cached():
-    """{outcome.casefold(): [(TICKET, open|done, title)]}"""
+    """{outcome.casefold(): [(TICKET, open|backlog|done, title)]}"""
     out = {}
     for r in tsv(CACHE):
         if len(r) >= 3:
@@ -236,7 +237,7 @@ def tickets(ps, cache=None):
     cache = cached() if cache is None else cache
     return [(p['rank'], t, p['outcome']) for p in ps
             for t, st, _ in cache.get(p['outcome'].casefold(), [])
-            if st == 'open']
+            if st != 'done']
 
 
 def rank_of(name, ts):
@@ -366,10 +367,10 @@ def cmd_ls(_args):
         rows = cache.get(p['outcome'].casefold(), [])
         for t, st, title in sorted(rows, key=lambda r: r[1] != 'done'):
             mark = 'x' if st == 'done' else ' '
-            where = at.get(t, '') if st == 'open' else ''
+            where = at.get(t, '') if st != 'done' else ''
             print(f'   [{mark}] {t} {title}'
                   + (f'   [{where}]' if where else
-                     '   [no worktree]' if st == 'open' else ''))
+                     '   [no worktree]' if st != 'done' else ''))
     return 0
 
 
@@ -734,29 +735,43 @@ def states(rows):
 
 
 def cmd_brief(_args):
+    """A priority with open tickets and no worktree leads, one line
+    each; then each priority. Under one with worktrees, its Backlog
+    tickets with no worktree are a count, not a list."""
     ps = load()
     if not ps:
         print("No priority is set: what's today's P0?")
         return 0
     boards = board_files()
-    ts = tickets(ps)
-    rows = states(on_board(ts, boards))
+    cache = cached()
+    rows = states(on_board(tickets(ps, cache), boards))
     need = needs_me(ps, boards)
-    print("Today's priorities:")
+    lead, body = [], ["Today's priorities:"]
     for p in ps:
-        print(f"{p['rank']}. {p['outcome']}")
-        if need.get(p['rank']):
-            print(f"   needs you: {', '.join(need[p['rank']])}")
-        mine = [x for x in rows if x[0] == p['rank']]
+        n = p['rank']
+        body.append(f"{n}. {p['outcome']}")
+        if need.get(n):
+            body.append(f"   needs you: {', '.join(need[n])}")
+        mine = [x for x in rows if x[0] == n]
         for _, s, _, st in mine:
-            print(f'   {s}: {st}')
-        idle = [t for r, t, _ in ts if r == p['rank']
+            body.append(f'   {s}: {st}')
+        free = [(t, st) for t, st, _ in cache.get(p['outcome'].casefold(), [])
+                if st != 'done'
                 and not any(on(b, t) for _, _, b, _ in mine)]
-        if idle:
-            print(f"   no worktree: {' '.join(idle)}")
-        if not mine and not idle:
-            print('   no open ticket' if p['groupings']
-                  else '   no grouping yet')
+        if free and not mine:
+            pick = next((t for t, st in free if st == 'open'), free[0][0])
+            lead.append(f'P0 {n} has nothing running: wt feat {pick}, '
+                        'or drop it')
+        ready = [t for t, st in free if st == 'open' or not mine]
+        back = len(free) - len(ready)
+        if ready or back:
+            body.append('   no worktree: ' + ', '.join(
+                ([' '.join(ready)] if ready else [])
+                + ([f'{back} in Backlog'] if back else [])))
+        if not mine and not free:
+            body.append('   no open ticket' if p['groupings']
+                        else '   no grouping yet')
+    print('\n'.join(lead + ([''] if lead else []) + body))
     return 0
 
 
@@ -887,7 +902,7 @@ def gql(query, variables=None):
 
 
 FIELDS = 'identifier title state{type} completedAt assignee{isMe}'
-RECENT = ('or:[{state:{type:{nin:["completed","canceled"]}}},'
+RECENT = ('or:[{state:{type:{nin:["completed","canceled","duplicate"]}}},'
           '{completedAt:{gt:"-P7D"}}]')
 
 
@@ -905,7 +920,8 @@ def grouping_query(n, kind, key):
 
 
 def members(kind, d):
-    """[(TICKET, open|done, title)] of a grouping's answer."""
+    """[(TICKET, open|backlog|done, title)] of a grouping's answer;
+    canceled and duplicate issues left out."""
     if kind == 'parent':
         nodes, todo = [], list((d.get('children') or {}).get('nodes') or [])
         while todo:
@@ -922,10 +938,11 @@ def members(kind, d):
         st = (x.get('state') or {}).get('type')
         if st in DONE:
             c = x.get('completedAt')
-            if st == 'canceled' or not c or iso(c) < week:
+            if st != 'completed' or not c or iso(c) < week:
                 continue
         out.append((x['identifier'].upper(), 'done' if st in DONE
-                    else 'open', clean(x.get('title'), 120)))
+                    else 'backlog' if st == 'backlog' else 'open',
+                    clean(x.get('title'), 120)))
     return out
 
 
@@ -942,7 +959,8 @@ def read_linear(ps, since):
         '%Y-%m-%dT%H:%M:%SZ')
     parts.append('new: issues(first:50, orderBy:createdAt, filter:{'
                   'assignee:{isMe:{eq:true}}, createdAt:{gt:%s}, '
-                  'state:{type:{nin:["completed","canceled"]}}})'
+                  'state:{type:{nin:["completed","canceled",'
+                  '"duplicate"]}}})'
                   '{nodes{identifier title}}' % json.dumps(stamp))
     d = gql('{' + ' '.join(parts) + '}')
     out = {p['outcome'].casefold(): [] for p in ps}
