@@ -18,8 +18,10 @@ import time
 
 CSS = """
 :root{--bg:#fff;--fg:#1d1d1f;--mute:#6e6e73;--line:#e5e5ea;--acc:#0a66c2}
-@media (prefers-color-scheme:dark){:root{--bg:#161618;--fg:#f2f2f7;
---mute:#98989d;--line:#2c2c2e;--acc:#64a8ff}}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){
+--bg:#161618;--fg:#f2f2f7;--mute:#98989d;--line:#2c2c2e;--acc:#64a8ff}}
+:root[data-theme=dark]{--bg:#161618;--fg:#f2f2f7;--mute:#98989d;
+--line:#2c2c2e;--acc:#64a8ff}
 body{background:var(--bg);color:var(--fg);margin:0;
 font:15px/1.5 -apple-system,system-ui,sans-serif}
 main{max-width:860px;margin:0 auto;padding:24px 16px 64px}
