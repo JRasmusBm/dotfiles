@@ -11,9 +11,11 @@
   Stacking blocks it on work that may not really block it, and with
   many agents on the same kind of work, most would wait. Can it copy
   the code it needs instead, noting in its doc what it copied from
-  which ticket, and the names and types it builds on from them? A
-  rename or reshape upstream is then a grep at rebase. Stack only when
-  it can't move without that code (then retargeted once it merges).
+  which ticket, and the names and types it builds on from them? At
+  rebase the upstream names win: it greps its list and renames its
+  own uses, so no rename has to be told to every copier. Stack only
+  when it can't move without that code (then retargeted once it
+  merges).
 - What does the agent need that the ticket lacks: what was decided
   and rejected, and why, in whose words? Prior PRs or branches to
   port? Where to look?
