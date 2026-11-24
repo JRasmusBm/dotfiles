@@ -609,7 +609,8 @@ _of_insert() {
 # URL, "<type>/<initials>/<slug>" from a project URL (its
 # trailing 12-hex slug id dropped) or from free text. The
 # Linear URL already carries a lowercase, hyphenated slug,
-# so no API/token is needed.
+# so no API/token is needed; a bare issue URL asks Linear for
+# the title (`lin title`).
 _branch_from() {
   _type="$1"
   _arg="$2"
@@ -621,6 +622,13 @@ _branch_from() {
         | tr '[:upper:]' '[:lower:]')"
       _slug="$(printf '%s' "$_arg" \
         | $_sed -nE 's#.*/issue/[^/]+/([^/?#]+).*#\1#p')"
+      # A bare URL (no title segment) names the worktree by id
+      # alone; ask Linear for the title, cut like Linear's own
+      # slug (whole words, ~45 chars).
+      test -n "$_slug" || _slug="$(lin title "$_id" 2>/dev/null \
+        | tr '[:upper:]' '[:lower:]' \
+        | $_sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//' \
+        | $_sed -E '/^.{46}/s/^(.{1,45})-.*/\1/')" || true
       if test -n "$_slug"; then
         echo "${_type}/${_ini}/${_id}-${_slug}"
       else

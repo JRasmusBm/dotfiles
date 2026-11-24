@@ -7,7 +7,10 @@
   here.
 - Will the current release lead to a poor/pointless experience for
   the user without the change? Build it here.
-- Otherwise, would it make more sense in another PR?
+- Otherwise, would it make more sense in another PR? Or is it one
+  of many small changes to the same code while the design still
+  moves? Then one branch we iterate on beats a PR each: each PR
+  pays its own review loop.
   - Create the ticket (see the drafting-a-ticket node) if it doesn't
     exist.
   - Start its agent (starting-new-work node).
