@@ -1311,7 +1311,7 @@ def notify_guess(t, title, p):
 def cmd_guess(args):
     """The popup a guess row opens: y joins the ticket to the guessed
     priority's first grouping, a digit to that priority's, n rejects;
-    anything else leaves the row."""
+    Enter leaves the row; any other answer asks again."""
     if not args:
         print('usage: prio guess <TICKET>', file=sys.stderr)
         return 2
@@ -1322,12 +1322,22 @@ def cmd_guess(args):
     if st != 'asked':
         print(f'{t}: no open guess')
         return 1
-    print(f'{t} is in no priority. Guess: #{r} '
+    try:
+        title = (gql('query($id: String!) { issue(id: $id) { title } }',
+                     {'id': t}).get('issue') or {}).get('title') or ''
+    except RuntimeError:
+        title = ''
+    print(f'{t} {title}'.rstrip())
+    print(f'is in no priority. Guess: #{r} '
           f"{ps[r - 1]['outcome'] if 0 < r <= len(ps) else '?'}\n")
     for p in ps:
         print(f"  {p['rank']}. {p['outcome']}")
-    a = input('\ny: yes, 1-9: that one, n: none of them, '
-              'Enter: later > ').strip().lower()
+    while True:
+        a = input('\ny: yes, 1-9: that one, n: none of them, '
+                  'Enter: later > ').strip().lower().strip('#.')
+        if a in ('', 'y', 'n') or (a.isdigit() and 0 < int(a) <= len(ps)):
+            break
+        print(f'"{a}"? answer y, 1-{len(ps)}, n or Enter')
     to = r if a == 'y' else int(a) if a.isdigit() else None
     if a == 'n':
         append(GUESSES, (t, 'rejected', r, int(time.time())))
@@ -1347,6 +1357,7 @@ def cmd_guess(args):
             return 1
         append(GUESSES, (t, 'accepted', to, int(time.time())))
         print(f"{t}: in {gs[0]['ref']} (#{to})")
+        time.sleep(1.5)
     else:
         return 0
     for p in ps:
