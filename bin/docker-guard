@@ -1,0 +1,57 @@
+#!/bin/sh
+#
+# docker-guard — kill a runaway Docker process before the Mac freezes.
+#
+# On 2026-11-24 Docker Desktop went from fine to ~30 GB and froze the
+# Mac within seconds; the minute-by-minute memlog job never saw it.
+# This polls every DOCKER_GUARD_INTERVAL (1) seconds with one ps and
+# one awk, and SIGKILLs:
+#   - any `docker-scout scout sbom` (Docker's image indexer: 3-30 GB,
+#     never needed), whatever its size;
+#   - any process under /Applications/Docker.app, Docker's Linux VM
+#     (com.apple.Virtualization.VirtualMachine) or docker-scout whose
+#     RSS exceeds DOCKER_GUARD_MB (4096).
+# Each kill goes to $LOCAL_CONFIG/memlog/docker-guard.log and `notify`.
+# Run by launchd (com.jrasmusbm.docker-guard, KeepAlive).
+#
+#   docker-guard          loop forever
+#   docker-guard once     one pass (tests)
+#
+# DOCKER_GUARD_MATCH overrides the size-checked regex,
+# DOCKER_GUARD_SBOM the always-killed one (tests).
+
+_dir="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog"
+mkdir -p "$_dir"
+_log="$_dir/docker-guard.log"
+_mb="${DOCKER_GUARD_MB:-4096}"
+_every="${DOCKER_GUARD_INTERVAL:-1}"
+# Bracketed so the patterns, passed to awk as -v values, never match
+# awk's own command line.
+_vm='com[.]apple[.]Virtualization[.]VirtualMachin[e]'
+_match="${DOCKER_GUARD_MATCH:-^/Applications/Docke[r].app/|$_vm|docker-scou[t]}"
+_sbom="${DOCKER_GUARD_SBOM:-docker-scou[t] scout sbom}"
+
+_pass() {
+  ps -axo pid=,rss=,command= | awk -v kb="$((_mb * 1024))" \
+    -v m="$_match" -v s="$_sbom" -v lf="$_log" '
+    $0 ~ s || $2 > kb {
+      cmd = $0
+      sub(/^ *[0-9]+ +[0-9]+ +/, "", cmd)
+      if (!(cmd ~ s || cmd ~ m)) next
+      system("kill -9 " $1)
+      "date \"+%F %T\"" | getline now
+      close("date \"+%F %T\"")
+      printf "%s killed %d %dMB %s\n", now, $1, $2 / 1024,
+        substr(cmd, 1, 200) >> lf
+      fflush(lf)
+      gsub(/["\\$`]/, "", cmd)
+      system("notify \"docker-guard\" \"killed " int($2 / 1024) \
+        "MB: " substr(cmd, 1, 80) "\" >/dev/null 2>&1 &")
+    }'
+}
+
+case "${1:-}" in
+  once) _pass ;;
+  "") while :; do _pass; sleep "$_every"; done ;;
+  *) sed -n '3,21p' "$0" | cut -c3-; exit 2 ;;
+esac

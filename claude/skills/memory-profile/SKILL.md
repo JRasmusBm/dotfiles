@@ -61,8 +61,11 @@ type-aware eslint server 1.2–2.6 GB per big-TS-repo nvim) were the bulk.
   starts — the only pressure event on 2026-10-13 morning, and 13 GB
   again at 17:00 even with `"UseBackgroundIndexing": false` in
   `~/Library/Group Containers/group.com.docker/settings-store.json`,
-  so that isn't the switch. `pkill -f 'docker-scout scout sbom'` is
-  safe and frees it at once.
+  so that isn't the switch. On 2026-11-24 Docker hit ~30 GB and
+  froze the Mac within seconds (watchdog reset, memlog blind). Now
+  `docker-guard` (launchd, KeepAlive) kills the sbom indexer on
+  sight and any Docker-owned process over 4 GB RSS, polling every
+  second; kills land in `memlog/docker-guard.log`.
 - Forgotten dev stacks: a `react-scripts start` frontend detached
   from tmux (session `-`) ran 2.5 days, peaking 5.7 GB. One-shot `tsc`
   runs by agents reach ~4.3 GB for under a minute (normal).
