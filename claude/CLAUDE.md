@@ -84,7 +84,7 @@ weighted pool (`pool ls`): hooks queue agents first in first
 out, and a queued tsc command waits ("pool: queued …" on
 stderr), so give it a long `timeout`. Repos listed in
 `~/.config/pool-no-local-tsc` refuse local tsc/check-ts (4-8 GB
-each): push to the draft PR and read CI's typecheck.
+each): push to the PR and read CI's typecheck.
 
 ## Shared slots
 
@@ -94,7 +94,7 @@ queue). Prepare before taking one: the code done, the build
 green, the checklist written, the person you need at the
 keyboard. One heavy job per session, at the smallest scope
 that answers the question (changed files first). Where the
-repo's CI runs the full checks on a draft PR, let CI run them.
+repo's CI runs the full checks on a PR, let CI run them.
 Never rush or expedite one item past a queue, nor offer to: it
 only reorders the same line (Goldratt). A queue that is too slow
 is a system fix; a shared blocker (a broken base, a stuck queue):

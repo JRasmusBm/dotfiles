@@ -34,5 +34,12 @@
   time and flakiness?
 - Can Rasmus see what I tested without running it himself? A
   screenshot per acceptance criterion in the doc's Tested,
-  captioned with what to look for, from the first one on: the doc
-  is then a local page (artifacts node).
+  captioned with what to look for: the doc is then a local page
+  (artifacts node). Of what runs on its own, placeholders visible,
+  taken alongside CI, not a gate on other PRs merging; the whole
+  page gets its screenshots after deploy, with the flag on.
+- Past the repo's pre-PR gate, is the PR open and ready, not a
+  draft, so AI reviewers start (draft only on Rasmus's "show me
+  first")? While CI and they run, do the browser pass and a review
+  subagent run side by side, their findings in one push? Each push
+  restarts CI.
