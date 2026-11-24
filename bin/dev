@@ -3,11 +3,12 @@
 # dev — run a repo's dev processes in the current tmux session's `run`
 # window.
 #
-#   dev up [--wait]  take a stack lease from `pool` (queued, holding
+#   dev up [--wait] [--tunnel]
+#                    take a stack lease from `pool` (queued, holding
 #                    nothing, while the pool is full), rebuild `run`
 #                    as fresh shells (index kept), then source
 #                    $(repo_root)/.jrb/dev; --wait polls each URL in
-#                    DEV_WAIT_URLS
+#                    DEV_WAIT_URLS; --tunnel sets DEV_TUNNEL=1
 #   dev down         rebuild `run` as a single fresh shell, release
 #                    the lease
 #   dev trust [file] show .jrb/dev (or file) and trust its digest
@@ -23,6 +24,8 @@
 #   dev_wait <url> [s]     poll url until any HTTP response (default
 #                          300s), nonzero on timeout
 #   DEV_WAIT_URLS          set it for `dev up --wait`
+#   DEV_TUNNEL             1 with `dev up --tunnel`, else empty: the
+#                          dev file decides what tunnelling means
 #
 # A running stack holds a `pool` stack lease. An agent's lapses after
 # POOL_IDLE (10 min) without a devtools or localhost call from its
@@ -233,13 +236,16 @@ _dev_up() {
   fi
 
   _wait=''
+  DEV_TUNNEL=''
   _args="$*"
   while test $# -gt 0; do
     case "$1" in
       --wait) _wait=1 ;;
+      --tunnel) DEV_TUNNEL=1 ;;
     esac
     shift
   done
+  export DEV_TUNNEL
   _s="$(_session)"
   POOL_OWNER="$_s" pool wait stack
   _detach_if_inside_run up $_args
@@ -440,7 +446,8 @@ _dev_logs() {
 }
 
 _usage() {
-  echo "Usage: dev [up [--wait]|down|trust|ls|:|logs <tag>]" >&2
+  echo "Usage: dev [up [--wait] [--tunnel]|down|trust|ls|:|logs <tag>]" \
+    >&2
   exit 1
 }
 
