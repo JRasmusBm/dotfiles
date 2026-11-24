@@ -11,6 +11,7 @@
 #                    STATE (case-insensitive), e.g. "In Progress"
 #   lin block BLOCKER [ID]
 #                    mark the ticket as blocked by BLOCKER
+#   lin title [ID]   print the ticket's title
 #
 # With no id, the identifier is read from the current branch
 # (e.g. fix/jrb/abc-123-slug). Opening requires
@@ -131,6 +132,12 @@ _lin_block() {
   echo "$_id: blocked by $_blocker" >&2
 }
 
+_lin_title() {
+  _id="$(_id "$1")" || exit 1
+  _gql 'query($id: String!) { issue(id: $id) { title } }' \
+    --arg id "$_id" | jq -r '.data.issue.title // empty'
+}
+
 _usage() {
   sed -n '2,/^$/s/^# \{0,1\}//p' "$0" >&2
 }
@@ -140,6 +147,7 @@ case "${1:-o}" in
   id) _branch_identifier "$2" ;;
   state) _lin_state "$2" "$3" ;;
   block) _lin_block "$2" "$3" ;;
+  title) _lin_title "$2" ;;
   -h|--help|help) _usage ;;
   [A-Za-z]*-[0-9]*) _lin_open "$1" ;;
   *) _usage; exit 1 ;;
