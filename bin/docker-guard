@@ -18,7 +18,8 @@
 #   docker-guard once     one pass (tests)
 #
 # DOCKER_GUARD_MATCH overrides the size-checked regex,
-# DOCKER_GUARD_SBOM the always-killed one (tests).
+# DOCKER_GUARD_SBOM the always-killed one, DOCKER_GUARD_NOTIFY the
+# notifier (tests: `true`).
 
 _dir="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog"
 mkdir -p "$_dir"
@@ -27,13 +28,15 @@ _mb="${DOCKER_GUARD_MB:-4096}"
 _every="${DOCKER_GUARD_INTERVAL:-1}"
 # Bracketed so the patterns, passed to awk as -v values, never match
 # awk's own command line.
+_app='^/Applications/Docke[r].app/'
 _vm='com[.]apple[.]Virtualization[.]VirtualMachin[e]'
-_match="${DOCKER_GUARD_MATCH:-^/Applications/Docke[r].app/|$_vm|docker-scou[t]}"
+_match="${DOCKER_GUARD_MATCH:-$_app|$_vm|docker-scou[t]}"
 _sbom="${DOCKER_GUARD_SBOM:-docker-scou[t] scout sbom}"
+_notify="${DOCKER_GUARD_NOTIFY:-notify}"
 
 _pass() {
   ps -axo pid=,rss=,command= | awk -v kb="$((_mb * 1024))" \
-    -v m="$_match" -v s="$_sbom" -v lf="$_log" '
+    -v m="$_match" -v s="$_sbom" -v lf="$_log" -v nf="$_notify" '
     $0 ~ s || $2 > kb {
       cmd = $0
       sub(/^ *[0-9]+ +[0-9]+ +/, "", cmd)
@@ -45,7 +48,7 @@ _pass() {
         substr(cmd, 1, 200) >> lf
       fflush(lf)
       gsub(/["\\$`]/, "", cmd)
-      system("notify \"docker-guard\" \"killed " int($2 / 1024) \
+      system(nf " \"docker-guard\" \"killed " int($2 / 1024) \
         "MB: " substr(cmd, 1, 80) "\" >/dev/null 2>&1 &")
     }'
 }
@@ -53,5 +56,5 @@ _pass() {
 case "${1:-}" in
   once) _pass ;;
   "") while :; do _pass; sleep "$_every"; done ;;
-  *) sed -n '3,21p' "$0" | cut -c3-; exit 2 ;;
+  *) sed -n '3,22p' "$0" | cut -c3-; exit 2 ;;
 esac
