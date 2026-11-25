@@ -30,11 +30,15 @@ out of swap and a freed slot goes to the next agent at once.
   pool test            self-test in a scratch LOCAL_CONFIG
 
 Heavy jobs: type-aware builds (tsc, eslint, `yarn lint`, `check-ts`)
-and test runs (mocha, `yarn test:*`, `yarn/npm test`, `run-tests`).
+and test runs (mocha, jest, `yarn test:*`, `yarn/npm test`,
+`run-tests`). An agent's jest run that sets no worker count gets
+--maxWorkers=2: jest forks ncpu-1 workers at 300-700 MB each, and
+agents' runs peaked at 12.5 GB.
 
 Weights (units): heavy POOL_HEAVY (4) for a build or a full test
-suite (`yarn test`, `npm test`, `run-tests`), POOL_TEST (2) for a
-targeted test run (mocha, `yarn test:mocha FILES`) with neither beside
+suite (`yarn test`, `npm test`, `run-tests`, jest with no paths),
+POOL_TEST (2) for a targeted test run (mocha, `yarn test:mocha
+FILES`, `yarn jest PATHS`) with neither beside
 it; the first line of POOL_HEAVY_WEIGHTS, `UNITS REGEX`, whose regex
 matches "CWD COMMAND", wins over both (builds differ, from 1.9 to 5.6
 GB median per run). Stack POOL_STACK (4, its devtools Chrome
@@ -130,8 +134,18 @@ SUITE_RE = re.compile(
 MOCHA_RE = re.compile(
     CMD + r'((npx|yarn|pnpm|exec|time)\s+)*(\S*/)?mocha' + END
     + '|' + CMD + r'(yarn|pnpm|npm run)\s+test:[a-z:-]+' + END)
+JEST = (r'((npx|yarn|pnpm|exec|time|node)\s+)*'
+          r'(?P<jest>(\S*/)?jest(\.js)?)' + END)
+JEST_RE = re.compile(CMD + JEST)
+# The same run found in the raw command, opening a quote too (`sh -c
+# 'jest x'`), to put --maxWorkers in; jest_cap() skips quoted text.
+JEST_RAW_RE = re.compile(r'(^|[;&|({`\'"]|\n)\s*([A-Za-z_]+=\S*\s+)*' + JEST)
+JEST_VALUE = {'-t', '--testNamePattern', '-c', '--config', '-w',
+              '--maxWorkers', '--selectProjects', '--shard', '--reporters',
+              '--testTimeout', '--outputFile', '--rootDir'}
+JEST_CAP = re.compile(r'^(-w|--maxWorkers|-i|--runInBand)(=|$)')
 HEAVY_RE = re.compile('|'.join(
-    r.pattern for r in (BUILD_RE, SUITE_RE, MOCHA_RE)))
+    r.pattern for r in (BUILD_RE, SUITE_RE, MOCHA_RE, JEST_RE)))
 LOCAL_RE = re.compile(r'(localhost|127\.0\.0\.1):\d+')
 READY = ('Take it only when ready to test: the code is done, the build '
          'green, the checklist written, and the person you need at the '
@@ -448,11 +462,44 @@ def cwd_of(pid):
     return next((l[1:] for l in out.splitlines() if l.startswith('n')), '')
 
 
+def jest_args(c, end):
+    """The words after a jest run's token at end, up to its command's
+    end."""
+    return re.split(r'[;&|)`\n]', c[end:], maxsplit=1)[0].split()
+
+
+def jest_targeted(args):
+    """Whether a jest run names test paths (a word that is no flag
+    nor a flag's value): unscoped, it runs the whole project."""
+    skip = False
+    for a in args:
+        if skip:
+            skip = False
+        elif a.startswith('-'):
+            skip = a in JEST_VALUE
+        else:
+            return True
+    return False
+
+
+def jest_cap(c):
+    """c with --maxWorkers=2 after each jest run that sets no worker
+    count: jest forks ncpu-1 workers (11 here) at 300-700 MB each, and
+    agents' runs peaked at 12.5 GB (memlog 2026-11-24/25)."""
+    for m in reversed(list(JEST_RAW_RE.finditer(c))):
+        i = m.end('jest')
+        if (unquoted(c[:i]).rstrip().endswith(m['jest'])
+                and not any(JEST_CAP.match(a) for a in jest_args(c, i))):
+            c = c[:i] + ' --maxWorkers=2' + c[i:]
+    return c
+
+
 def heavy_units(cwd, c):
     """POOL_HEAVY_WEIGHTS: lines of `UNITS REGEX`, matched against
     "CWD COMMAND"; the first match wins. Else a targeted test run
-    (mocha, `yarn test:*`) with no build or full suite beside it takes
-    POOL_TEST, anything else POOL_HEAVY."""
+    (mocha, `yarn test:*`, jest with paths) with no build, full suite
+    or unscoped jest beside it takes POOL_TEST, anything else
+    POOL_HEAVY."""
     for line in os.environ.get('POOL_HEAVY_WEIGHTS', '').splitlines():
         u, _, rx = line.strip().partition(' ')
         try:
@@ -460,8 +507,10 @@ def heavy_units(cwd, c):
                 return int(u)
         except (re.error, ValueError):
             continue
-    if (MOCHA_RE.search(c) and not BUILD_RE.search(c)
-            and not SUITE_RE.search(c)):
+    jest = [jest_targeted(jest_args(c, m.end('jest')))
+            for m in JEST_RE.finditer(c)]
+    if ((MOCHA_RE.search(c) or jest) and all(jest)
+            and not BUILD_RE.search(c) and not SUITE_RE.search(c)):
         return UNITS['test']
     return UNITS['heavy']
 
@@ -774,7 +823,8 @@ def hook_bash():
         print(json.dumps({'hookSpecificOutput': {
             'hookEventName': 'PreToolUse',
             'updatedInput': dict(
-                inp, command='pool take heavy $$ || exit 75\n' + c)}}))
+                inp, command='pool take heavy $$ || exit 75\n'
+                + jest_cap(c))}}))
         return 0
     if LOCAL_RE.search(c):
         cmd_touch([])
@@ -958,7 +1008,9 @@ def cmd_test():
                 "cat <<'EOF' > f\ntsc\nEOF\necho done",
                 "git commit -m 'mocha passes'", 'grep -r mocha src',
                 'cat scripts/run-tests', 'yarn add -D mocha',
-                'echo "yarn test fails"', 'ls node_modules/.bin/mocha'):
+                'echo "yarn test fails"', 'ls node_modules/.bin/mocha',
+                'cat jest.config.js', 'yarn add -D jest',
+                'git commit -m "yarn jest passes"', 'ls node_modules/jest'):
         r = run(a, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: quoted tsc is no build ({cmd[:9]})',
@@ -971,11 +1023,34 @@ def cmd_test():
                 'yarn mocha x', 'npx mocha x', 'node_modules/.bin/mocha x',
                 'mocha x', 'yarn test', 'npm test', 'npm run test',
                 'node scripts/run-tests', 'cd x && NODE_ENV=t yarn test',
-                'yarn tsc;', 'npx mocha x&& y'):
+                'yarn tsc;', 'npx mocha x&& y', 'yarn jest',
+                'yarn jest src/a.test.ts', 'npx jest a',
+                'node node_modules/jest/bin/jest.js a',
+                'node_modules/.bin/jest a', "sh -c 'yarn jest a'"):
         r = run(b, 'hook', 'bash',
                 stdin=json.dumps({'tool_input': {'command': cmd}}))
         check(f'hook bash: still gated ({cmd[:12]!r})',
               'pool take heavy' in r.stdout)
+    for cmd, want in (
+            ('yarn jest a', 'yarn jest --maxWorkers=2 a'),
+            ('yarn jest', 'yarn jest --maxWorkers=2'),
+            ('cd f && node node_modules/jest/bin/jest.js a.test.ts',
+             'cd f && node node_modules/jest/bin/jest.js --maxWorkers=2 '
+             'a.test.ts'),
+            ("sh -c 'npx jest a'", "sh -c 'npx jest --maxWorkers=2 a'"),
+            ('yarn jest a -w 4', 'yarn jest a -w 4'),
+            ('yarn jest --maxWorkers=50% a', 'yarn jest --maxWorkers=50% a'),
+            ('yarn jest -i a', 'yarn jest -i a'),
+            ('yarn jest --runInBand a', 'yarn jest --runInBand a'),
+            ('grep -w x f; yarn jest a', 'grep -w x f; yarn jest '
+             '--maxWorkers=2 a'),
+            ('echo "yarn jest"; yarn jest a',
+             'echo "yarn jest"; yarn jest --maxWorkers=2 a')):
+        r = run(b, 'hook', 'bash',
+                stdin=json.dumps({'tool_input': {'command': cmd}}))
+        got = json.loads(r.stdout or '{}').get('hookSpecificOutput', {}).get(
+            'updatedInput', {}).get('command', '').partition('\n')[2]
+        check(f'hook bash: jest workers {cmd[:24]!r}', got == want)
     repo = tempfile.mkdtemp(prefix='pool-notsc.')
     os.makedirs(os.path.join(repo, 'sub'))
     for cmd, cwd, refused in (
@@ -993,7 +1068,12 @@ def cmd_test():
     for cmd, u in (('yarn test:mocha a.test.ts', 2), ('npx mocha x', 2),
                    ('node_modules/.bin/mocha x', 2), ('yarn test', 4),
                    ('npm test', 4), ('node scripts/run-tests', 4),
-                   ('yarn tsc; yarn test:mocha x', 4), ('yarn tsc', 4)):
+                   ('yarn tsc; yarn test:mocha x', 4), ('yarn tsc', 4),
+                   ('yarn jest src/a.test.ts', 2), ('npx jest a b', 2),
+                   ('node node_modules/jest/bin/jest.js -t x a', 2),
+                   ('yarn jest --maxWorkers=2 a', 2), ('yarn jest', 4),
+                   ('yarn jest -t name', 4), ('npx jest --watch', 4),
+                   ('yarn jest a; yarn jest', 4)):
         check(f'weights: {cmd!r} takes {u} units', heavy_units('/x', cmd) == u)
 
     # a: heavy 4 of 8. b takes a stack (4): full.
