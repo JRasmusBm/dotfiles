@@ -1742,7 +1742,7 @@ _wt_dedup() {
 # Claude pid has locked. Uncommitted changes get a snapshot
 # commit; every head is pinned to refs/wt/<id> and logged to the
 # registry first. The dir moves into <git-common-dir>/wt-trash
-# and is deleted in the background at low priority.
+# and is deleted in the background (utility QoS, nice 19).
 # `wt clean --agents` runs only this (hourly: wt-agent-sweep).
 _wt_clean_agents() {
   _root="$(_main_root)"
@@ -1797,7 +1797,7 @@ _wt_clean_agents() {
   rm -f "$_tmp" "$_tmp.cwd" "$_tmp.br"
   test "$_n" -eq 0 && return 0
   pgrep -qf "rm -rf $_trash" \
-    || nohup taskpolicy -b nice -n 19 rm -rf "$_trash" \
+    || nohup taskpolicy -c utility nice -n 19 rm -rf "$_trash" \
       >/dev/null 2>&1 &
   echo "removed $_n agent worktrees" \
     "(heads pinned in refs/wt/)" >&2
