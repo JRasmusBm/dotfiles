@@ -17,7 +17,12 @@ nobody ends: which one did I set?
 - Waiting on something else that isn't Rasmus? Then `wt w8 <deadline>
   "<what>"`, so the wait has an end someone checks. `<what>` names
   the event, not the step after it: that step gets decided fresh
-  when it arrives.
+  when it arrives. The deadline is when it should be over, not a
+  safe margin: a bot reply or review in 10 min, CI in its usual
+  run time. A deadline twice too long is Rasmus asking me instead.
+- Did what I asked already answer? A bot or person may have replied
+  "won't do that" to my request: read the reply before waiting on
+  it, and never repeat a request it already declined.
 - Is the wait long (an hour of logs, a soak)? A subagent's hooks
   block sleeps and polling loops, so it returns early with
   nothing: the wait stays in this thread (`wt w8`), and the
