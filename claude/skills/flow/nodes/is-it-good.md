@@ -23,6 +23,9 @@ Before asking Rasmus "is it good?", consider the following.
   that safer?
 - Will the things I don't know be easy to change? (For example be wary of a big
   UX change that I'm not sure about)
+- Has a fresh adversarial reviewer read the whole branch once, even
+  an unattended one? One found a deleted record's text surviving in
+  copies of it.
 - Is the doc current, and does the PR body draw from it (problem,
   decisions, what was tested, as text) rather than a fresh
   write-up?
