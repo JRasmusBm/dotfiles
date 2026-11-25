@@ -271,7 +271,7 @@ def adopt():
             out.append({'kind': 'heavy',
                         'owner': m.group(1) if m else f'heavy-slot-{pid}',
                         'units': heavy_units(cwd_of(pid), tag),
-                        'tag': tag,
+                        'tag': tag[:160],
                         'since': now(), 'seen': now(), 'pid': pid,
                         'adopted': 'new'})
     return out
@@ -596,9 +596,9 @@ def cmd_take(kind, pid):
                   detail=f'{state}: {e.get("tag", "")}')
             print(refusal(o, e, state), file=sys.stderr)
             return 75
-    tag = command_of(pid)
-    wait_turn('heavy', o, pid=int(pid), tag=tag,
-              units=heavy_units(cwd_of(pid), tag))
+    c = command_of(pid)
+    wait_turn('heavy', o, pid=int(pid), tag=c[:160],
+              units=heavy_units(cwd_of(pid), c))
     return 0
 
 
@@ -622,14 +622,16 @@ def refusal(o, e, state):
 
 
 def command_of(pid):
-    c = sh('ps', '-o', 'command=', '-p', str(pid)).strip()
+    """pid's whole command: weigh it whole (a jest run's paths can sit
+    past any cut), shorten only the tag shown."""
+    c = sh('ps', '-ww', '-o', 'command=', '-p', str(pid)).strip()
     # An agent's Bash shell: keep the command it evals.
     m = re.search(r"(?:pool|heavy-slot) take (?:heavy )?\$\$"
                   r"(?: \|\| exit 75)?\\012(.*?)"
                   r"(' < /dev/null && pwd -P|$)", c)
     if m:
         c = m.group(1).replace('\\012', '; ')
-    return c[:160]
+    return c
 
 
 def cmd_release(quiet=False):
@@ -1160,6 +1162,14 @@ def cmd_test():
     with open(os.path.join(t4['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
         check('weights: POOL_TEST sets a targeted test run\'s units',
               [h['units'] for h in json.load(f)['holders']] == [3])
+    t5 = dict(LOCAL_CONFIG=tempfile.mkdtemp(prefix='pool-test.'))
+    run(b, 'take', 'heavy', str(life(
+        'true || yarn jest --maxWorkers=2 ' + 'x' * 200 + '/a.test.ts').pid),
+        **t5)
+    with open(os.path.join(t5['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
+        h = json.load(f)['holders']
+        check('weights: a jest run\'s paths past the tag cut still count',
+              [x['units'] for x in h] == [2] and len(h[0]['tag']) == 160)
     w = run(a, 'wait', 'browser', bg=True, CLAUDECODE='')
     check("jrb's own lease: taken at once", w.wait(5) == 0)
     r = run(a, 'ls')
