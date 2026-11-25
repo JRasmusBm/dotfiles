@@ -8,9 +8,11 @@ out of swap and a freed slot goes to the next agent at once.
   pool wait KIND       queue for a lease (KIND browser or stack) for
                        this session; exit 0 once held. Keeps its place
                        when asked again. Run it in the background
-  pool take heavy PID  queue for a heavy job that PID holds until it
+  pool take heavy PID [UNITS]
+                       queue for a heavy job that PID holds until it
                        exits; exit 75 when this session already has a
-                       heavy job running or queued
+                       heavy job running or queued. UNITS: the hook's
+                       weight, else weighed from PID's command
   pool release [--quiet]
                        drop this session's lease and quit its devtools
                        Chrome (the MCP restarts it on the next call)
@@ -21,7 +23,7 @@ out of swap and a freed slot goes to the next agent at once.
                        or take a browser lease, else block the call
   pool hook bash       PreToolUse hook, Bash: prefix heavy commands
                        (builds and test runs, see Heavy jobs)
-                       with `pool take heavy $$`, refuse a second one
+                       with `pool take heavy $$ UNITS`, refuse a second one
                        per session; a localhost call renews the lease
   pool log [N]         last N (20) history rows
   pool waits [N]       last N (20) waits, one row each: queued, ended,
@@ -580,9 +582,9 @@ def cmd_wait(kind):
     return 0
 
 
-def cmd_take(kind, pid):
+def cmd_take(kind, pid, units=None):
     if kind != 'heavy':
-        sys.exit('usage: pool take heavy PID')
+        sys.exit('usage: pool take heavy PID [UNITS]')
     o = owner()
     with Pool() as p:
         line = lineage(pid)
@@ -598,7 +600,7 @@ def cmd_take(kind, pid):
             return 75
     c = command_of(pid)
     wait_turn('heavy', o, pid=int(pid), tag=c[:160],
-              units=heavy_units(cwd_of(pid), c))
+              units=int(units) if units else heavy_units(cwd_of(pid), c))
     return 0
 
 
@@ -626,7 +628,7 @@ def command_of(pid):
     past any cut), shorten only the tag shown."""
     c = sh('ps', '-ww', '-o', 'command=', '-p', str(pid)).strip()
     # An agent's Bash shell: keep the command it evals.
-    m = re.search(r"(?:pool|heavy-slot) take (?:heavy )?\$\$"
+    m = re.search(r"(?:pool|heavy-slot) take (?:heavy )?\$\$(?: \d+)?"
                   r"(?: \|\| exit 75)?\\012(.*?)"
                   r"(' < /dev/null && pwd -P|$)", c)
     if m:
@@ -812,6 +814,9 @@ def hook_bash():
               file=sys.stderr)
         return 2
     if HEAVY_RE.search(unquoted(c)):
+        # Weighed here, from the command as the shell runs it: ps's copy
+        # still holds quoted text (a sed arg naming jest).
+        units = heavy_units(cwd, unquoted(c))
         o = owner()
         with Pool() as p:
             e, state = p.heavy(o)
@@ -825,7 +830,7 @@ def hook_bash():
         print(json.dumps({'hookSpecificOutput': {
             'hookEventName': 'PreToolUse',
             'updatedInput': dict(
-                inp, command='pool take heavy $$ || exit 75\n'
+                inp, command=f'pool take heavy $$ {units} || exit 75\n'
                 + jest_cap(c))}}))
         return 0
     if LOCAL_RE.search(c):
@@ -996,7 +1001,14 @@ def cmd_test():
     out = json.loads(r.stdout or '{}').get('hookSpecificOutput', {})
     check('hook bash: prefixes heavy command',
           out.get('updatedInput', {}).get('command', '').startswith(
-              'pool take heavy $$ || exit 75\nyarn tsc'))
+              'pool take heavy $$ 4 || exit 75\nyarn tsc'))
+    for cmd, u in (("sed -E 's/(jest|x)/y/' f; yarn jest a", 2),
+                   ("yarn jest a; echo 'yarn tsc'", 2),
+                   ('yarn jest', 4)):
+        r = run(b, 'hook', 'bash',
+                stdin=json.dumps({'tool_input': {'command': cmd}}))
+        check(f'hook bash: weighs quoted-free {cmd[:16]!r} at {u}',
+              f'pool take heavy $$ {u} ||' in r.stdout)
     r = run(b, 'hook', 'bash',
             stdin=json.dumps({'tool_input': {'command': 'ls'}}))
     check('hook bash: leaves others alone', r.returncode == 0 and not r.stdout)
@@ -1162,6 +1174,11 @@ def cmd_test():
     with open(os.path.join(t4['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
         check('weights: POOL_TEST sets a targeted test run\'s units',
               [h['units'] for h in json.load(f)['holders']] == [3])
+    t6 = dict(LOCAL_CONFIG=tempfile.mkdtemp(prefix='pool-test.'))
+    run(b, 'take', 'heavy', str(life('true || yarn tsc').pid), '2', **t6)
+    with open(os.path.join(t6['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
+        check("weights: take's UNITS wins over the command's",
+              [h['units'] for h in json.load(f)['holders']] == [2])
     t5 = dict(LOCAL_CONFIG=tempfile.mkdtemp(prefix='pool-test.'))
     run(b, 'take', 'heavy', str(life(
         'true || yarn jest --maxWorkers=2 ' + 'x' * 200 + '/a.test.ts').pid),
@@ -1249,8 +1266,8 @@ def main(a):
         return cmd_pick()
     elif cmd == 'wait' and len(a) == 2:
         return cmd_wait(a[1])
-    elif cmd == 'take' and len(a) == 3:
-        return cmd_take(a[1], a[2])
+    elif cmd == 'take' and len(a) in (3, 4):
+        return cmd_take(*a[1:])
     elif cmd == 'release':
         cmd_release('--quiet' in a)
     elif cmd == 'touch':
