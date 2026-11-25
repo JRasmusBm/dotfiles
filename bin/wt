@@ -1736,22 +1736,40 @@ _wt_dedup() {
 
 # Remove Claude Code's isolated subagent worktrees
 # (`.claude/worktrees/agent-*`) untouched for WT_AGENT_TTL hours
-# (default 24). Claude only auto-removes the unchanged ones, and
+# (default 6). Claude only auto-removes the unchanged ones, and
 # `wt` never shows them, so the rest are invisible work that
-# piles up GBs. Uncommitted changes get a snapshot commit; every
-# head is pinned to refs/wt/<id> and logged to the registry first.
+# piles up GBs. Skips one a live process has as cwd or a live
+# Claude pid has locked. Uncommitted changes get a snapshot
+# commit; every head is pinned to refs/wt/<id> and logged to the
+# registry first. The dir moves into <git-common-dir>/wt-trash
+# and is deleted in the background at low priority.
+# `wt clean --agents` runs only this (hourly: wt-agent-sweep).
 _wt_clean_agents() {
   _root="$(_main_root)"
-  _ttl=$(( ${WT_AGENT_TTL:-24} * 3600 ))
+  _ttl=$(( ${WT_AGENT_TTL:-6} * 3600 ))
   _now="$(date +%s)"
   _n=0
+  _tmp="${TMPDIR:-/tmp}/wt-agents.$$"
   git -C "$_root" worktree list --porcelain | awk '
-    /^worktree /{ p=$2; b=""; next }
+    /^worktree /{ p=$2; b=""; l=""; next }
     /^branch /{ b=$2; sub(/^refs\/heads\//, "", b); next }
-    /^$/{ if (p ~ /\/\.claude\/worktrees\/agent-/) print p "\t" b; p="" }
-  ' > "${TMPDIR:-/tmp}/wt-agents.$$"
-  while IFS="$(printf '\t')" read -r _p _b; do
+    /^locked/{ l="-"; if (match($0, /pid [0-9]+/))
+      l=substr($0, RSTART + 4, RLENGTH - 4); next }
+    /^$/{ if (p ~ /\/\.claude\/worktrees\/agent-/)
+      print p "\t" b "\t" l; p="" }
+  ' > "$_tmp"
+  test -s "$_tmp" || { rm -f "$_tmp"; return 0; }
+  lsof -a -d cwd -Fn 2>/dev/null | sed -n 's/^n//p' > "$_tmp.cwd"
+  _trash="$(cd "$(git -C "$_root" rev-parse --git-common-dir)" \
+    && pwd)/wt-trash"
+  while IFS="$(printf '\t')" read -r _p _b _l; do
     _id="$(basename "$_p")"
+    if test -n "$_l" && test "$_l" != - \
+      && kill -0 "$_l" 2>/dev/null; then
+      continue
+    fi
+    awk -v p="$_p" 'index($0, p "/") == 1 || $0 == p { f=1 }
+      END { exit !f }' "$_tmp.cwd" && continue
     _at="$(git -C "$_p" log -1 --format=%ct 2>/dev/null || echo 0)"
     _mt="$(cd "$_p" && git status --porcelain 2>/dev/null \
       | cut -c4- | xargs stat -f %m 2>/dev/null | sort -n | tail -1)"
@@ -1766,12 +1784,22 @@ _wt_clean_agents() {
     test -n "$_sha" || continue
     git -C "$_root" update-ref "refs/wt/$_id" "$_sha"
     _registry_append "$_id" "${_b:-DETACHED}" "$_sha"
-    git -C "$_root" worktree remove --force "$_p" || continue
-    test -z "$_b" || git -C "$_root" branch -D -q "$_b" || true
+    test -z "$_l" || git -C "$_root" worktree unlock "$_p" 2>/dev/null \
+      || true
+    mkdir -p "$_trash"
+    mv "$_p" "$_trash/$_id.$_now" || continue
+    test -z "$_b" || echo "$_b" >> "$_tmp.br"
     _n=$((_n + 1))
-  done < "${TMPDIR:-/tmp}/wt-agents.$$"
-  rm -f "${TMPDIR:-/tmp}/wt-agents.$$"
-  test "$_n" -eq 0 || echo "removed $_n agent worktrees" \
+  done < "$_tmp"
+  test "$_n" -eq 0 || git -C "$_root" worktree prune
+  test -s "$_tmp.br" && xargs git -C "$_root" branch -D -q \
+    < "$_tmp.br" 2>/dev/null || true
+  rm -f "$_tmp" "$_tmp.cwd" "$_tmp.br"
+  test "$_n" -eq 0 && return 0
+  pgrep -qf "rm -rf $_trash" \
+    || nohup taskpolicy -b nice -n 19 rm -rf "$_trash" \
+      >/dev/null 2>&1 &
+  echo "removed $_n agent worktrees" \
     "(heads pinned in refs/wt/)" >&2
 }
 
@@ -1785,6 +1813,7 @@ _wt_clean() {
   _force=false
   case "${1:-}" in
     -f|--force) _force=true ;;
+    --agents) _wt_clean_agents; return ;;
   esac
   _wt_clean_agents
 

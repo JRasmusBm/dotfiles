@@ -1,0 +1,18 @@
+#!/bin/sh
+#
+# wt-agent-sweep [ROOT...] — run `wt clean --agents` in every repo
+# that has Claude subagent worktrees (`.claude/worktrees`), found
+# under ROOTs (default ~/projects, two levels deep). Hourly via
+# launchd (com.jrasmusbm.wt-agent-sweep).
+
+test $# -gt 0 || set -- "$HOME/projects"
+for _base in "$@"; do
+  for _wd in "$_base"/*/.claude/worktrees "$_base"/*/*/.claude/worktrees
+  do
+    test -d "$_wd" || continue
+    _repo="${_wd%/.claude/worktrees}"
+    test -e "$_repo/.git" || continue
+    echo "$(date -u +%FT%TZ) $_repo"
+    ( cd "$_repo" && wt clean --agents ) 2>&1
+  done
+done

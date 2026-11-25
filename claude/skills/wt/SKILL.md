@@ -54,7 +54,7 @@ agent. One tmux server, `default`, holds every session: never
 - `wt night`: told to work alone on your own recommended answers,
   as far as the flow skill takes you. Finished: say so and stop, no
   invented work. Follow-up tickets: `wt night queue <url>`.
-- An isolated subagent's worktree is swept after a day: cherry-pick
+- An isolated subagent's worktree is swept after 6 idle hours: cherry-pick
   what you keep into your branch right away.
 - `wt id` prints the slug, to point another agent at you.
 

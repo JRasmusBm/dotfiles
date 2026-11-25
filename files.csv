@@ -49,3 +49,4 @@ False,launchd/com.jrasmusbm.wt-pr-watch.plist,Library/LaunchAgents/com.jrasmusbm
 False,launchd/com.jrasmusbm.tmux-watch.plist,Library/LaunchAgents/com.jrasmusbm.tmux-watch.plist
 False,launchd/com.jrasmusbm.docker-slot.plist,Library/LaunchAgents/com.jrasmusbm.docker-slot.plist
 False,launchd/com.jrasmusbm.docker-guard.plist,Library/LaunchAgents/com.jrasmusbm.docker-guard.plist
+False,launchd/com.jrasmusbm.wt-agent-sweep.plist,Library/LaunchAgents/com.jrasmusbm.wt-agent-sweep.plist
