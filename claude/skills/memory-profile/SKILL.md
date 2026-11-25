@@ -74,11 +74,14 @@ type-aware eslint server 1.2–2.6 GB per big-TS-repo nvim) were the bulk.
   grows ~2 GB/day at ~100% CPU: 7 GB on 2026-10-13, 24–26 GB
   by 10-20/21, 32 GB on 10-23 when the Mac hung (no Jetsam or
   panic report: a hang; ResetCounter `btn_rst` = power button),
-  the top consumer by far. Check: `mdfind -onlyin
-  ~/projects -count 'kMDItemFSName == "package.json"'` (0 =
-  excluded). Fix: add `~/projects` to System Settings →
-  Spotlight → Search Privacy (needs GUI/sudo), then `sudo
-  killall mds` (it respawns small).
+  the top consumer by far. Excluding `~/projects` (Search
+  Privacy; `mdfind -onlyin ~/projects -count 'kMDItemFSName ==
+  "package.json"'` = 0) didn't stop it: 31 GB again on 11-25, a
+  leak. ps RSS hides it (250 MB); memlog's footprint doesn't.
+  Fix: `mds-reclaim` in the memlog minute job runs `sudo -n
+  killall mds` past 6 GB (`MDS_RECLAIM_MB`); it respawns small.
+  Needs `sudoers/mds-reclaim` installed (its header); without it
+  memlog gets one "failed" `###` line.
 - Biggest by GB-minutes after the LSP fixes: Brave, then 13–15 Claude
   sessions (~300–900 MB each, growing with age), then agents'
   devtools Chromes.

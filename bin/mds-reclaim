@@ -1,0 +1,38 @@
+#!/bin/sh
+
+# mds-reclaim — kill Spotlight's mds once its footprint passes
+# MDS_RECLAIM_MB (6144). mds (root) grows ~1.5 GB/h from boot and
+# never shrinks: 31 GB on 2026-11-25, pushing 17 GB to swap and
+# filling the disk. launchd respawns it small.
+#
+# Runs in the memlog minute job right after mem-snapshot and reads
+# that snapshot's footprint (ps RSS hides it: 250 MB for that 31 GB
+# mds), so it costs nothing extra. The kill is `sudo -n /usr/bin/
+# killall mds`, allowed by sudoers/mds-reclaim (its header says how
+# to install it); without that the failure is logged once, not
+# every minute. MDS_RECLAIM_KILL overrides the kill (tests).
+
+_dir="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog"
+_log="$_dir/$(date +%F).log"
+_flag="$_dir/mds-reclaim.nosudo"
+_max="${MDS_RECLAIM_MB:-6144}"
+_kill="${MDS_RECLAIM_KILL:-sudo -n /usr/bin/killall mds}"
+
+[ -f "$_log" ] || exit 0
+_mb=$(awk '
+  /^=== / { mb = 0; next }
+  $5 ~ /\/Metadata\.framework\/.*\/Support\/mds$/ { mb = $1 }
+  END { print mb + 0 }' "$_log")
+[ "$_mb" -gt "$_max" ] || exit 0
+
+_now=$(date '+%F %T')
+if $_kill >/dev/null 2>&1; then
+  rm -f "$_flag"
+  echo "### $_now mds-reclaim killed mds ${_mb}MB" >>"$_log"
+  notify "mds-reclaim" "killed Spotlight mds at ${_mb}MB" \
+    >/dev/null 2>&1 &
+elif [ ! -f "$_flag" ]; then
+  : >"$_flag"
+  echo "### $_now mds-reclaim mds ${_mb}MB: '$_kill' failed" \
+    "(sudoers/mds-reclaim not installed?), logged once" >>"$_log"
+fi

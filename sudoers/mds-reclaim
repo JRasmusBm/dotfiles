@@ -1,0 +1,6 @@
+# mds-reclaim — lets bin/mds-reclaim kill Spotlight's mds (root)
+# without a password, and nothing else. launchd respawns mds small.
+# Install from the dotfiles root (validates, then copies root-owned):
+#   sudo visudo -cf sudoers/mds-reclaim && sudo install -m 0440 \
+#     -o root -g wheel sudoers/mds-reclaim /etc/sudoers.d/mds-reclaim
+jrasmusbm ALL=(root) NOPASSWD: /usr/bin/killall mds
