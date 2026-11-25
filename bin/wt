@@ -1434,7 +1434,8 @@ _wt_snooze() {
 # with "overdue: <what>" (wt-cold --overdue, listed repos). `wt w8
 # done` (the event arrived), `ip`, `rt`, `rd`, `rp`, `ra`, `sz`, `done`,
 # `rm` and its deadline tell end the wait; any other tell leaves it
-# open and reminds the agent of it.
+# open and reminds the agent of it. A wait on CI or a review is refused
+# while the branch's PR conflicts with its base (pr-push-check).
 _wt_w8() {
   _require_worktree
   _self="$(basename "$(git rev-parse --show-toplevel)")"
@@ -1453,6 +1454,15 @@ _wt_w8() {
     '(^|[^[:alnum:]])(rasmus|me|my|user)([^[:alnum:]]|$)'; then
     echo "wt: no w8 on me: end the turn on the question (it pings)," \
       "or take your recommended answer if it's reversible" >&2
+    exit 1
+  fi
+  # GitHub runs no CI and no review on a PR that conflicts with its
+  # base: a wait on either would never end.
+  if printf '%s' "$2" | grep -qiE \
+    '(^|[^[:alnum:]])(ci|checks?|reviews?|coderabbit|re-?review)([^[:alnum:]]|$)' \
+    && _c="$(pr-push-check conflicts)"; then
+    echo "wt: PR ${_c% *} conflicts with ${_c#* }: no CI or review runs" \
+      "until you rebase on it and push" >&2
     exit 1
   fi
   _w8_in="$(echo "$1" | sed -E 's/^\+?([0-9]+) ?h$/+\1 hours/;

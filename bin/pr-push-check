@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# pr-push-check — no agent waits on CI or a review that can't come.
+# GitHub runs no PR workflows while a PR conflicts with its base.
+#
+#   pr-push-check hook        PostToolUse hook for Bash: after a `git
+#                             push` (also inside a compound command;
+#                             quoted text doesn't count) from a branch
+#                             with an open PR, waits up to
+#                             $PR_PUSH_WAIT s (default 30) for GitHub's
+#                             mergeability of the pushed head; if the
+#                             PR conflicts, tells the agent to rebase.
+#                             Then runs the repo's `pushed <pr> <sha>`
+#                             event (jrb-hook) detached, logging to
+#                             $LOCAL_CONFIG/pr-push-check.log.
+#   pr-push-check conflicts [dir]
+#                             exit 0 and print "#<pr> <base>" when the
+#                             branch checked out at dir (default .)
+#                             has an open PR conflicting with its base;
+#                             exit 1 otherwise, or when gh fails.
+
+_wait="${PR_PUSH_WAIT:-30}"
+_step="${PR_PUSH_STEP:-3}"
+
+# _state <dir> <branch> [sha] — "<pr> <mergeable> <base> <head sha>" of
+# the open PR on <branch>, once GitHub has computed mergeable for <sha>
+# (default: any head), or the last answer when $_wait runs out.
+_state() {
+  _end=$(( $(date +%s) + _wait ))
+  while :; do
+    _s="$(cd "$1" && timeout 15 gh pr view "$2" \
+      --json number,state,mergeable,baseRefName,headRefOid --jq '
+      select(.state == "OPEN")
+      | "\(.number) \(.mergeable) \(.baseRefName) \(.headRefOid)"' \
+      2>/dev/null)" || return 1
+    test -n "$_s" || return 1
+    case "$_s" in
+      *" UNKNOWN "*) ;;
+      *) test -z "${3:-}" || test "${_s##* }" = "$3" && break ;;
+    esac
+    test "$(date +%s)" -lt "$_end" || break
+    sleep "$_step"
+  done
+  echo "$_s"
+}
+
+_conflicts() {
+  _dir="${1:-.}"
+  _b="$(git -C "$_dir" branch --show-current 2>/dev/null)"
+  test -n "$_b" || exit 1
+  _s="$(_wait="${PR_PUSH_WAIT:-15}" _state "$_dir" "$_b")" || exit 1
+  set -- $_s
+  test "$2" = CONFLICTING || exit 1
+  echo "#$1 $3"
+}
+
+_hook() {
+  _p="$(jq -r '
+    (.tool_input.command // "") as $raw
+    | ($raw | gsub("'"'"'[^'"'"']*'"'"'|\"(?:[^\"\\\\]|\\\\.)*\""; "\"\"")) as $c
+    | select($c | test("(^|[;&|(\\s])git(\\s+-C\\s+\\S+)?\\s+push([^A-Za-z0-9_-]|$)"))
+    | "(?:\"(?<dq>[^\"]*)\"|'"'"'(?<sq>[^'"'"']*)'"'"'|(?<bare>[^\\s;&|)]+))" as $arg
+    | def last_arg($re): [$raw | capture($re + $arg; "g")
+        | .dq // .sq // .bare] | last // "";
+    [.cwd // "", last_arg("(?:^|[;&|(\n])\\s*cd\\s+"),
+      last_arg("git\\s+-C\\s+")] | join("\u001f")')"
+  test -n "$_p" || exit 0
+  IFS="$(printf '\037')" read -r _cwd _cd _gc <<EOF
+$_p
+EOF
+  _cwd="${_cwd:-$PWD}"
+  _dir="$_cwd"
+  for _d in "$_cd" "$_gc"; do
+    case "$_d" in
+      ''|*'$'*|*'`'*) ;;
+      '~'|'~/'*) _dir="$HOME${_d#\~}" ;;
+      /*) _dir="$_d" ;;
+      *) _dir="$_dir/$_d" ;;
+    esac
+  done
+  _top="$(git -C "$_dir" rev-parse --show-toplevel 2>/dev/null)" || exit 0
+  _b="$(git -C "$_top" branch --show-current 2>/dev/null)"
+  test -n "$_b" || exit 0
+  _sha="$(git -C "$_top" rev-parse HEAD)"
+  _s="$(_state "$_top" "$_b" "$_sha")" || exit 0
+  set -- $_s
+  _log="${LOCAL_CONFIG:-$HOME/.local-config}/pr-push-check.log"
+  ( cd "$_top" && nohup "$(dirname "$0")/jrb-hook" "$_top" pushed "$1" \
+    "$_sha" >> "$_log" 2>&1 </dev/null & )
+  test "$2" = CONFLICTING || exit 0
+  jq -nc --arg c "PR #$1 conflicts with $3: GitHub runs no CI and no \
+review on it until you rebase on $3 and push again. Don't wait on CI or \
+a review before that." '{hookSpecificOutput: {hookEventName: "PostToolUse",
+    additionalContext: $c}}'
+}
+
+case "${1:-}" in
+  hook) _hook ;;
+  conflicts) shift; _conflicts "$@" ;;
+  *) sed -n '3,21p' "$0" | sed 's/^# \{0,1\}//' ;;
+esac

@@ -75,6 +75,16 @@
         ]
       },
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.bin/pr-push-check hook",
+            "timeout": 45
+          }
+        ]
+      },
+      {
         "matcher": "Artifact",
         "hooks": [
           {
