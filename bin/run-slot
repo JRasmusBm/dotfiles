@@ -888,8 +888,8 @@ def revive(key, into=None):
             # existed has it cached past the shim (Remote Control off
             # on a borrowed login).
             args = sh('claude-fresh', 'resume', sid) or f'--resume {sid}'
-            tmux('send-keys', '-t', pane, f'hash -r; claude {args}',
-                 'Enter')
+            tmux('send-keys', '-t', pane, f'hash -r; claude {args}'
+                 f' || claude-pane failed {args}', 'Enter')
             where = pane
         elif into:
             return 1

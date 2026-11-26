@@ -13,6 +13,9 @@
 #                         also under a wrapper script (cr), which
 #                         tmux shows as its shell; <cmd>: the pane's
 #                         pane_current_command, when known
+# claude-pane failed <args>  after `claude <args>` exits non-zero in
+#                         a pane: say so and ping, instead of a
+#                         fresh chat that buries the one it resumed
 #
 # A Claude chat's identity is its session id, not the pane it runs
 # in: panes get killed and reused, and the main checkout's session
@@ -140,15 +143,23 @@ _runs() {
   esac
 }
 
+_failed() {
+  _m="claude $* failed: its error is above"
+  echo "$_m" >&2
+  NOTIFY_CLASS=fail notify "$(basename "$PWD")" "$_m" >/dev/null 2>&1
+  return 1
+}
+
 # A chat handed on to a fresh one (claude-fresh) is found as that one.
 _next() { claude-fresh next "$1" 2>/dev/null || echo "$1"; }
 
 case "${1:-}" in
-  "") sed -n '3,15s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
+  "") sed -n '3,18s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
   cwd) _cwd "$(_next "${2:?sid}")" ;;
   of) _of "${2:?pane}" ;;
   open) _open "$(_next "${2:?sid}")" ;;
   map) _map ;;
   runs) _runs "${2:?pane}" ${3+"$3"} ;;
+  failed) shift; _failed "$@" ;;
   *) _live "$(_next "$1")" ;;
 esac
