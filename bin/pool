@@ -10,9 +10,12 @@ out of swap and a freed slot goes to the next agent at once.
                        when asked again. Run it in the background
   pool take heavy PID [UNITS]
                        queue for a heavy job that PID holds until it
-                       exits; exit 75 when this session already has a
-                       heavy job running or queued. UNITS: the hook's
-                       weight, else weighed from PID's command
+                       exits. Behind this session's own heavy job (a
+                       subagent's) it waits first, the session's jobs
+                       first in first out, then joins the queue: one
+                       heavy job per session runs at a time. UNITS:
+                       the hook's weight, else weighed from PID's
+                       command
   pool release [--quiet]
                        drop this session's lease and quit its devtools
                        Chrome (the MCP restarts it on the next call)
@@ -23,8 +26,9 @@ out of swap and a freed slot goes to the next agent at once.
                        or take a browser lease, else block the call
   pool hook bash       PreToolUse hook, Bash: prefix heavy commands
                        (builds and test runs, see Heavy jobs)
-                       with `pool take heavy $$ UNITS`, refuse a second one
-                       per session; a localhost call renews the lease
+                       with `pool take heavy $$ UNITS`, which queues a
+                       session's second one behind its first; a
+                       localhost call renews the lease
   pool log [N]         last N (20) history rows
   pool waits [N]       last N (20) waits, one row each: queued, ended,
                        outcome (granted, gone, waiting), wait_s, units,
@@ -71,8 +75,9 @@ the session frees them.
 
 State: $LOCAL_CONFIG/pool/state.json (flock on .lock). History:
 pool/history.tsv, one row per event: epoch event kind owner units
-wait_s hold_s used/cap queued detail; events queue, acquire,
-release, expire, stall, refuse, drop (waiter gone).
+wait_s hold_s used/cap queued detail; events behind (waits for its
+session's heavy job), leave (gone from behind), queue, acquire,
+release, expire, stall, drop (waiter gone).
 """
 import fcntl
 import glob
@@ -297,6 +302,9 @@ class Pool:
             st = {'holders': adopt()}
         self.holders = st.get('holders', [])
         self.queue = st.get('queue', [])
+        # A session's heavy jobs waiting for its running or queued one,
+        # oldest first; the first joins the queue once that one ends.
+        self.behind = st.get('behind', [])
         self.reaped_at = st.get('reaped_at', 0)
         self.after = []
         for h in self.holders:
@@ -310,7 +318,7 @@ class Pool:
         tmp = STATE + '.tmp'
         with open(tmp, 'w') as f:
             json.dump({'holders': self.holders, 'queue': self.queue,
-                       'reaped_at': self.reaped_at}, f, indent=1)
+                       'behind': self.behind, 'reaped_at': self.reaped_at}, f, indent=1)
         os.replace(tmp, STATE)
         fcntl.flock(self.fd, fcntl.LOCK_UN)
         self.fd.close()
@@ -379,6 +387,10 @@ class Pool:
                     q.get('pid') and not pid_alive(q['pid'])):
                 self.queue.remove(q)
                 self.log('drop', q, wait=t - q['at'])
+        for q in list(self.behind):
+            if not pid_alive(q['waiter']) or not pid_alive(q['pid']):
+                self.behind.remove(q)
+                self.log('leave', q, wait=t - q['at'])
 
     def lease(self, o):
         return next((h for h in self.holders
@@ -585,22 +597,47 @@ def cmd_wait(kind):
 def cmd_take(kind, pid, units=None):
     if kind != 'heavy':
         sys.exit('usage: pool take heavy PID [UNITS]')
-    o = owner()
-    with Pool() as p:
-        line = lineage(pid)
-        if any(h['kind'] == 'heavy' and str(h['pid']) in line
-               for h in p.holders):
-            return 0
-        e, state = p.heavy(o)
-        if e and str(e.get('pid')) not in line:
-            p.log('refuse', {'kind': 'heavy', 'owner': o,
-                             'units': UNITS['heavy']},
-                  detail=f'{state}: {e.get("tag", "")}')
-            print(refusal(o, e, state), file=sys.stderr)
-            return 75
+    o, line = owner(), lineage(pid)
     c = command_of(pid)
-    wait_turn('heavy', o, pid=int(pid), tag=c[:160],
-              units=int(units) if units else heavy_units(cwd_of(pid), c))
+    units = int(units) if units else heavy_units(cwd_of(pid), c)
+    said = False
+    while True:
+        if not pid_alive(pid):
+            sys.exit(f'pool: pid {pid} exited before its turn')
+        with Pool() as p:
+            if any(h['kind'] == 'heavy' and str(h['pid']) in line
+                   for h in p.holders):
+                return 0
+            e, state = p.heavy(o)
+            if e and str(e.get('pid')) in line:
+                break
+            me = next((q for q in p.behind if str(q['pid']) == str(pid)),
+                      None)
+            mine = [q for q in p.behind if q['owner'] == o]
+            if not me and not e and not mine:
+                queue_entry(p, 'heavy', o, int(pid), c[:160], units)
+                break
+            if not me:
+                me = {'kind': 'heavy', 'owner': o, 'units': units,
+                      'pid': int(pid), 'waiter': os.getpid(), 'at': now(),
+                      'tag': c[:160]}
+                p.behind.append(me)
+                mine.append(me)
+                p.log('behind', me, detail=c)
+            me['waiter'] = os.getpid()
+            if not e and mine[0] is me:
+                p.behind.remove(me)
+                # Into the queue under the lock, so no sibling slips in.
+                queue_entry(p, 'heavy', o, int(pid), c[:160], units)
+                break
+            ahead = e or mine[0]
+        if not said:
+            print(f'pool: queued behind {ahead.get("tag") or ahead["pid"]}'
+                  f': {o} runs one heavy job at a time, this one starts '
+                  'after it. `pool ls` shows the line.', file=sys.stderr)
+            said = True
+        time.sleep(POLL)
+    wait_turn('heavy', o, pid=int(pid), tag=c[:160], units=units)
     return 0
 
 
@@ -612,15 +649,6 @@ def lineage(pid):
         out.append(pid)
         pid = sh('ps', '-o', 'ppid=', '-p', pid).strip()
     return out
-
-
-def refusal(o, e, state):
-    return (f'pool: {o} already has a heavy job {state} '
-            f'({e.get("tag") or "pid " + str(e.get("pid"))}). One heavy '
-            'job per session: wait for it, then run this one. Use the '
-            'smallest scope that answers the question (changed files '
-            "first). Where the repo's CI runs the full checks on a "
-            'draft PR, let CI run them.')
 
 
 def command_of(pid):
@@ -817,16 +845,6 @@ def hook_bash():
         # Weighed here, from the command as the shell runs it: ps's copy
         # still holds quoted text (a sed arg naming jest).
         units = heavy_units(cwd, unquoted(c))
-        o = owner()
-        with Pool() as p:
-            e, state = p.heavy(o)
-            if e:
-                p.log('refuse', {'kind': 'heavy', 'owner': o,
-                                 'units': UNITS['heavy']},
-                      detail=f'{state}: {c}')
-        if e:
-            print(refusal(o, e, state), file=sys.stderr)
-            return 2
         print(json.dumps({'hookSpecificOutput': {
             'hookEventName': 'PreToolUse',
             'updatedInput': dict(
@@ -846,6 +864,7 @@ def ago(t):
 def cmd_ls():
     with Pool() as p:
         holders, queue, used = list(p.holders), list(p.queue), p.used()
+        behind = list(p.behind)
     print(f'units: {used}/{CAP}')
     for h in holders:
         if h['kind'] == 'heavy':
@@ -861,6 +880,11 @@ def cmd_ls():
         print('queue:')
     for i, q in enumerate(queue, 1):
         print(f'  #{i} {q["units"]}u {q["kind"]:7} {q["owner"]}  waiting '
+              f'{ago(q["at"])}  {q.get("tag", "")}'[:200])
+    if behind:
+        print("behind their session's heavy job:")
+    for q in behind:
+        print(f'  {q["units"]}u {q["kind"]:7} {q["owner"]}  waiting '
               f'{ago(q["at"])}  {q.get("tag", "")}'[:200])
 
 
@@ -982,9 +1006,6 @@ def cmd_test():
 
     r = run(a, 'take', 'heavy', str(j1.pid))
     check('heavy: free pool takes at once', r.returncode == 0)
-    r = run(a, 'take', 'heavy', str(j2.pid))
-    check('heavy: second heavy job per session refused',
-          r.returncode == 75 and 'One heavy job per session' in r.stderr)
     r = run(a, 'take', 'heavy', str(j1.pid))
     check('heavy: same pid re-enters', r.returncode == 0)
     kid = []
@@ -995,8 +1016,8 @@ def cmd_test():
 
     hook = json.dumps({'tool_input': {'command': 'yarn tsc --noEmit'}})
     r = run(a, 'hook', 'bash', stdin=hook)
-    check('hook bash: refuses while one runs',
-          r.returncode == 2 and 'already has a heavy job' in r.stderr)
+    check('hook bash: a second heavy job per session is prefixed too',
+          r.returncode == 0 and 'pool take heavy $$ 4 ||' in r.stdout)
     r = run(b, 'hook', 'bash', stdin=hook)
     out = json.loads(r.stdout or '{}').get('hookSpecificOutput', {})
     check('hook bash: prefixes heavy command',
@@ -1156,9 +1177,9 @@ def cmd_test():
           all(h['owner'] != c for h in state()['holders']))
     r = run(d, 'touch', d)
     hist = open(os.path.join(tmp, 'pool', 'history.tsv')).read()
-    check('history: logs queue, acquire, release, expire, refuse, drop',
+    check('history: logs queue, acquire, release, expire, drop',
           all(f'\t{ev}\t' in hist for ev in
-              ('queue', 'acquire', 'release', 'expire', 'refuse', 'drop')))
+              ('queue', 'acquire', 'release', 'expire', 'drop')))
     wv = run(a, 'waits', '100').stdout
     check('waits: one row per wait, granted and gone',
           '\tgranted\t' in wv and '\tgone\t' in wv)
@@ -1222,6 +1243,48 @@ def cmd_test():
                        text=True)
     check('shim: heavy-slot run still runs the command',
           r.returncode == 0 and r.stdout == 'ran\n')
+
+    # A session's second and third heavy jobs (subagents) wait behind
+    # its first, in order, then run one at a time.
+    t7 = dict(LOCAL_CONFIG=tempfile.mkdtemp(prefix='pool-test.'))
+
+    def t7s():
+        with open(os.path.join(t7['LOCAL_CONFIG'], 'pool', 'state.json')) as f:
+            return json.load(f)
+
+    def held():
+        return [h['pid'] for h in t7s()['holders']]
+    s1, s2, s3, s4 = life(), life(), life(), life()
+    run(a, 'take', 'heavy', str(s1.pid), **t7)
+    w2 = run(a, 'take', 'heavy', str(s2.pid), bg=True, **t7)
+    until(lambda: len(t7s()['behind']) == 1, 5)
+    w3 = run(a, 'take', 'heavy', str(s3.pid), bg=True, **t7)
+    w4 = run(a, 'take', 'heavy', str(s4.pid), bg=True, **t7)
+    until(lambda: len(t7s()['behind']) == 3, 5)
+    check('heavy: siblings wait behind the first, in order',
+          [q['pid'] for q in t7s()['behind']]
+          == [s2.pid, s3.pid, s4.pid] and held() == [s1.pid]
+          and not t7s()['queue'])
+    s4.kill()
+    s4.wait()
+    check('heavy: a sibling that died leaves the line',
+          w4.wait(5) != 0 and until(lambda: (
+              run(a, 'ls', **t7), len(t7s()['behind']) == 2)[1], 5))
+    s1.kill()
+    s1.wait()
+    _, err = w2.communicate(timeout=5)
+    check('heavy: the next sibling runs once the first ends',
+          w2.returncode == 0 and 'pool: queued behind' in err
+          and held() == [s2.pid]
+          and [q['pid'] for q in t7s()['behind']] == [s3.pid])
+    s2.kill()
+    s2.wait()
+    check('heavy: then the one after it', w3.wait(5) == 0
+          and held() == [s3.pid] and not t7s()['behind'])
+    with open(os.path.join(t7['LOCAL_CONFIG'], 'pool', 'history.tsv')) as f:
+        h7 = f.read()
+    check('history: logs behind, leave',
+          '\tbehind\t' in h7 and '\tleave\t' in h7)
 
     # Cutover: a first run counts what test-slot and heavy-slot hold.
     old = tempfile.mkdtemp(prefix='pool-test.')
