@@ -184,6 +184,30 @@ _notif_clear() {
 
 # Move <branch>'s Linear ticket to state $1, if it has one.
 # Fails only when there is a ticket and Linear wasn't updated.
+# A repo whose main checkout is the one that runs (repo-sync marks it
+# with wt.live): a merged ticket is live only once its merge commit is
+# in that checkout. Not yet: park it at Needs live verification and
+# fail. $1 = branch, $2 = its worktree dir.
+_live_gate() {
+  _lg_root="$(_main_root)"
+  test "$(git -C "$_lg_root" config --bool wt.live)" = true || return 0
+  _lg_sha="$(cd "$_lg_root" && timeout 20 gh pr list --state merged \
+    --head "$1" --limit 1 --json mergeCommit \
+    --jq '.[0].mergeCommit.oid // ""' 2>/dev/null)" || {
+    echo "wt: couldn't look up $1's merge commit; is it live?" >&2
+    return 1
+  }
+  test -n "$_lg_sha" || return 0
+  git -C "$_lg_root" merge-base --is-ancestor "$_lg_sha" HEAD \
+    2>/dev/null && return 0
+  echo "wt: merge commit $(echo "$_lg_sha" | cut -c1-8) isn't in" \
+    "$_lg_root yet (repo-sync brings it; its notify says what's in" \
+    "the way). Never copy merged files in by hand." >&2
+  _board_move "$1" "$(basename "$2")" 'PROD REVIEW'
+  _linear 'Needs live verification' "$1" || true
+  return 1
+}
+
 _linear() {
   _li_id="$(lin id "$2" 2>/dev/null)" || return 0
   lin state "$1" "$_li_id" && return 0
@@ -1017,7 +1041,9 @@ _wt_evict_current() {
   # take that session down.
   _cur_session="$(tmux-session-name-from-path "$_wt_path")"
   if test -n "${_WT_STATE:-}"; then
-    if ! _linear "$_WT_STATE" "$_branch"; then
+    if { test "$_WT_STATE" = Done \
+      && ! _live_gate "$_branch" "$_wt_path"; } \
+      || ! _linear "$_WT_STATE" "$_branch"; then
       echo "wt: not removing $(basename "$_wt_path")" >&2
       exit 1
     fi
@@ -1129,7 +1155,9 @@ _wt_evict() {
     test -z "$_match_branch" || _branch="$_match_branch"
   fi
   _wt_name="$(basename "$_wt_path")"
-  if test -n "${_WT_STATE:-}" && ! _linear "$_WT_STATE" "$_branch"; then
+  if test -n "${_WT_STATE:-}" && { { test "$_WT_STATE" = Done \
+    && ! _live_gate "$_branch" "$_wt_path"; } \
+    || ! _linear "$_WT_STATE" "$_branch"; }; then
     echo "wt: not removing $_wt_name" >&2
     exit 1
   fi
@@ -1963,7 +1991,10 @@ case "${1:-}" in
       merged
     ;;
   rp) _wt_park 'PROD REVIEW' 'Needs live verification' ;;
-  ra) _wt_park 'TO ANNOUNCE' 'Needs announcement' ;;
+  ra) _require_worktree
+    _live_gate "$(git branch --show-current)" \
+      "$(git rev-parse --show-toplevel)" || exit 1
+    _wt_park 'TO ANNOUNCE' 'Needs announcement' ;;
   done) shift; _WT_STATE=Done; _wt_evict "${1:-.}" ;;
   cancel) shift; _WT_STATE=Canceled; _wt_evict "${1:-.}" ;;
   retire) shift; _wt_retire "$1" "$2" ;;

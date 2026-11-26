@@ -4,6 +4,8 @@
   running is this one (deploy status, installed file, version)?
   Does something still need to be applied or enabled (infra, a
   flag, config), and by whom (applying-infra node)?
+  Dotfiles or overlay: is the merge commit in the checkout that
+  runs? Never copy merged files into it.
 - How can I verify that it's working as intended (does-it-work
   node, now in prod)? When should its effect show: now, the next
   scheduled run, the next time someone uses it? A grep of the bundle

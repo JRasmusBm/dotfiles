@@ -46,7 +46,9 @@ agent. One tmux server, `default`, holds every session: never
   A deploy or rollout tell that says it is handled already: one line
   saying so, stop. Where
   the merge is the release (a tooling repo), not READY TO DEPLOY: `wt
-  rp`, `wt w8` until it should show, check it live, `wt done`.
+  rp`, `wt w8` until it should show, check it live, `wt done`
+  (in a repo marked `wt.live`, `wt done` and `wt ra` refuse until
+  repo-sync has the merge commit in the main checkout).
 - Finished and announcing: the flow skill's waiting and announce
   nodes; a customer post waits in `wt ra` for my send. `wt done` /
   `wt cancel` are reversible (`wt resume`): run them yourself, never
