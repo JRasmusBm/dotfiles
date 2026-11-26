@@ -11,6 +11,11 @@ every Claude session. Speaks newline-delimited JSON-RPC on stdio.
 - The first other request starts the real server: the client's
   initialize is replayed, its response swallowed,
   notifications/initialized sent, then the request forwarded.
+- Profile: PROFILE_DIR starts empty; the first start copies the
+  logged-in seed (~/.cache/chrome-devtools-mcp/chrome-profile) into it,
+  so sessions that never open the browser cost no disk. The proxy
+  deletes the dir when its client goes, even when the
+  chrome-devtools-mcp-session shell above it was SIGKILLed.
 - Stop = end the server and its Chrome (killed by profile dir if it
   outlives the server); the proxy keeps running and the next request
   restarts the server. Never while a request is in flight. Triggers:
@@ -47,6 +52,7 @@ VERSION = "1.12.0"
 
 HOME = os.path.expanduser("~")
 CACHE = os.path.join(HOME, ".cache", "chrome-devtools-mcp", f"proxy-{VERSION}.json")
+SEED = os.path.join(HOME, ".cache", "chrome-devtools-mcp", "chrome-profile")
 LOCAL_CONFIG = os.environ.get("LOCAL_CONFIG") or os.path.join(HOME, ".config")
 IDLE = int(os.environ.get("CHROME_MCP_IDLE", "600"))
 SLOT_POLL = 60
@@ -201,7 +207,33 @@ class Proxy:
             )
         return b
 
+    def seed(self):
+        try:
+            if os.listdir(self.profile) or not os.path.isdir(SEED):
+                return
+            shutil.copytree(
+                SEED,
+                self.profile,
+                symlinks=True,
+                dirs_exist_ok=True,
+                ignore=lambda d, names: [
+                    n
+                    for n in names
+                    if n.startswith("Singleton")
+                    or (n == "Sessions" and os.path.basename(d) == "Default")
+                ],
+            )
+            prefs = os.path.join(self.profile, "Default", "Preferences")
+            with open(prefs) as f:
+                d = json.load(f)
+            d.get("browser", {}).pop("window_placement", None)
+            with open(prefs, "w") as f:
+                json.dump(d, f)
+        except (OSError, ValueError, shutil.Error) as e:
+            log(f"seeding profile: {e}")
+
     def spawn(self):
+        self.seed()
         self.proc = subprocess.Popen(
             [self.server_bin(), *self.server_cmd],
             stdin=subprocess.PIPE,
@@ -513,6 +545,7 @@ class Proxy:
             with self.life:
                 self.stop("client gone")
             self.remove_pidfile()
+            shutil.rmtree(self.profile, ignore_errors=True)
 
 
 def main():
