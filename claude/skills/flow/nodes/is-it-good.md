@@ -4,6 +4,11 @@ Before asking Rasmus "is it good?", consider the following.
 
 - Can I find out (and thus make the change) safely without asking Rasmus? Include him if sensitive!
 - Does it work? (does-it-work node)
+- Does it fix a message (an error, a refusal, a log line)? Which
+  other code produces that text: the message grepped, its
+  formatter's callers, sibling tools? Does the failure's alert or
+  log query over the last 7 days show it from code this fix doesn't
+  touch? Cover them, or name them in the PR.
 - When does it reach users? Does merging release it, or does
   something else ship it (a shared image, a scheduled build, another
   person's deploy)? If merged means live whenever anyone builds, it
