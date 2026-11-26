@@ -33,7 +33,12 @@ priority points at the Linear groupings that hold its work.
                         agent (`wt feat|fix`)
   prio sync             wt-sync, every minute: reads Linear, moves the
                         boards' `# P0` rows, links new outcomes, and
-                        guesses a priority for new tickets in none
+                        places my new tickets in none: one with no
+                        project joins the grouping its parent chain
+                        sits in, or (no parent either) the one its
+                        related tickets sit in; else a guess, and a
+                        ticket still in none with a board row is
+                        asked once (a `P?` row)
 
 File: one priority per line with no indent, in rank order (its text is
 the outcome and its key); under it, indented, sources
@@ -60,9 +65,11 @@ Side files, next to it:
                       inserts above them
   priorities.links    epoch, outcome, started|linked|none|failed,
                       detail: the linking agent's runs
-  priorities.guesses  TICKET, asked|none|accepted|rejected, rank,
-                      epoch; a `-` cursor row: new tickets count from
-  priorities.changes  epoch, by (link|guess), created|joined, TICKET,
+  priorities.guesses  TICKET, pending|asked|none|accepted|rejected|
+                      joined|closed, rank (0: asked with no guess), epoch; a
+                      `-` cursor row: new tickets count from
+  priorities.changes  epoch, by (link|guess|inherit), created|joined,
+                      TICKET,
                       grouping, outcome: every write prio made in Linear
   priorities.err      the last Linear read's error, if it failed
   worktrees/<repo>.p0 board rows `prio sync` moved into `# P0`: entry,
@@ -1001,12 +1008,16 @@ def sync_cache(ps):
         write(CACHE, text)
         if before != tickets(ps):
             snapshot('linear', ps)
-    # A parent grouping's own issue (often made by `prio link`) is the
-    # priority itself, not a ticket to guess: joining it is self-parenting.
-    known = {r[1] for r in rows} | {g['kind'][1] for p in ps
-                                    for g in p['groupings']
-                                    if g['kind'] and g['kind'][0] == 'parent'}
+    known = placed(ps)
     return [(t, title) for t, title in new if t not in known]
+
+
+def placed(ps):
+    """Tickets in a grouping, and the parent groupings' own issues (the
+    priority itself, not a ticket to guess: joining it self-parents)."""
+    return {t for rs in cached().values() for t, _, _ in rs} | {
+        g['kind'][1] for p in ps for g in p['groupings']
+        if g['kind'] and g['kind'][0] == 'parent'}
 
 
 def search_issues(words):
@@ -1150,7 +1161,9 @@ GUESS_SCHEMA = {
 }
 GUESS_SYSTEM = """You get the user's ranked work priorities and new \
 tickets assigned to them that sit in none of the priorities' \
-groupings. For each ticket, guess the rank of the priority whose \
+groupings, each with its description's first lines and the tickets \
+it links to (parent, related) with their projects. For each ticket, \
+guess the rank of the priority whose \
 outcome it clearly serves, or 0 when it serves none or you are \
 unsure: a wrong guess costs the user a decision, a 0 costs nothing. \
 Answer with the JSON object only."""
@@ -1264,17 +1277,136 @@ def guess_cursor():
     return cur
 
 
+SPOT = 'identifier team{key} project{slugId name} labels{nodes{name}}'
+
+
+def up(n):
+    return SPOT + (' parent{%s}' % up(n - 1) if n else '')
+
+
+LINKS_OF = (' relations{nodes{type relatedIssue{%s}}}'
+            ' inverseRelations{nodes{type issue{%s}}}' % (up(3), up(3)))
+ISSUE = ('query($id: String!) { issue(id: $id) { title description'
+         ' state{type} %s%s parent{%s%s} } }'
+         % (SPOT, LINKS_OF, up(3), LINKS_OF))
+
+
+def ancestors(x):
+    while x:
+        yield x
+        x = x.get('parent')
+
+
+def sits(x, ps):
+    """[(p, g)] of the priority groupings issue x sits in: its own or an
+    ancestor's project or label, or under a parent grouping."""
+    out = []
+    for a in ancestors(x):
+        pr = (a.get('project') or {}).get('slugId')
+        ls = {n['name'].casefold() for n in
+              (a.get('labels') or {}).get('nodes') or []}
+        for p in ps:
+            for g in p['groupings']:
+                k, key = g['kind'] or ('', '')
+                if (k == 'project' and key == pr
+                        or k == 'label' and key.casefold() in ls
+                        or k == 'parent' and a is not x
+                        and key == a['identifier'].upper()) \
+                        and (p, g) not in out:
+                    out.append((p, g))
+    return out
+
+
+def related(i):
+    return [r['relatedIssue'] for r in (i.get('relations') or {}).get(
+        'nodes') or [] if r.get('type') == 'related'] + \
+        [r['issue'] for r in (i.get('inverseRelations') or {}).get(
+            'nodes') or [] if r.get('type') == 'related']
+
+
+def inherit(i, ps):
+    """(p, g, via) issue i should join: through its parent chain (no
+    project of its own; a parent in none lends what its related
+    tickets give it), else through its related tickets (no parent
+    either) in its team when they all sit in one priority; None
+    otherwise."""
+    if i.get('project'):
+        return None
+    if i.get('parent'):
+        hit = [(p, g) for p, g in sits(i['parent'], ps)
+               if g['kind'][0] != 'parent']
+        hit.sort(key=lambda h: h[0]['rank'])
+        if hit:
+            return (*hit[0], 'parent ' + i['parent']['identifier'])
+        h = inherit(i['parent'], ps)
+        return h and (*h[:2], f"parent {i['parent']['identifier']} {h[2]}")
+    team = (i.get('team') or {}).get('key')
+    rs = [(r, sits(r, ps)) for r in related(i)
+          if (r.get('team') or {}).get('key') == team]
+    rs = [(r, h) for r, h in rs if h]
+    if len({h[0][0]['rank'] for _, h in rs}) != 1:
+        return None
+    p, g = rs[0][1][0]
+    return p, g, 'related ' + ' '.join(r['identifier'] for r, _ in rs)
+
+
+def context(i):
+    """The description's first lines and the linked tickets' places."""
+    desc = clean(' / '.join(ln for ln in (i.get('description') or '')
+                            .split('\n')[:4] if ln.strip()), 300)
+    links = [('parent', i['parent'])] if i.get('parent') else []
+    links += [('related', r) for r in related(i)]
+    where = '; '.join(
+        f"{k} {r['identifier']} in "
+        f"{(r.get('project') or {}).get('name') or 'no project'}"
+        for k, r in links[:8])
+    return ' | '.join(x for x in (desc, where) if x)
+
+
+def board_rows():
+    return [e for b in board_files() for _, e, _ in entries(b)]
+
+
+def boarded(t, rows=None):
+    return any(on(e, t) for e in (board_rows() if rows is None else rows))
+
+
 def cmd_guess_new(args):
-    """Guess a priority for each TICKET<TAB>title argument; one inbox
-    row per guess."""
+    """Place each TICKET<TAB>title argument (an empty title: read it):
+    join what its parent or related tickets give it, guess the rest; an
+    inbox row per guess, and per ticket left in none with a board row."""
     ps = load()
     new = [a.split('\t', 1) for a in args if '\t' in a]
     if not ps or not new:
         return 0
+    now, left = int(time.time()), []
+    for t, title in new:
+        t = t.upper()
+        try:
+            i = gql(ISSUE, {'id': t}).get('issue') or {}
+        except RuntimeError:
+            i = {}
+        title = title or clean(i.get('title'), 120)
+        if (i.get('state') or {}).get('type') in DONE:
+            append(GUESSES, (t, 'closed', 0, now))
+            continue
+        h = i and inherit(i, ps)
+        if h:
+            try:
+                join(t, h[1]['ref'], 'inherit', h[0]['outcome'])
+                append(GUESSES, (t, 'joined', h[0]['rank'], now))
+                print(f"prio: {t} in {h[1]['ref']} via {h[2]}")
+                continue
+            except RuntimeError as e:
+                print(f'prio guess: {t}: {e}', file=sys.stderr)
+        left.append((t, title, i and context(i)))
+    if not left:
+        return 0
     try:
         d = claude('Priorities, ranked:\n%s\n\nNew tickets:\n%s' % (
             '\n'.join(f"{p['rank']}. {p['outcome']}" for p in ps),
-            '\n'.join(f'{t} {title}' for t, title in new)),
+            '\n'.join(f'{t} {title}' + (f'\n  {c}' if c else '')
+                      for t, title, c in left)),
             GUESS_SYSTEM, GUESS_SCHEMA, 'haiku',
             os.environ.get('PRIO_GUESS_BUDGET', '0.10'))
     except RuntimeError as e:
@@ -1282,14 +1414,13 @@ def cmd_guess_new(args):
         return 1
     got = {ticket(g.get('ticket', '')): g.get('rank', 0)
            for g in d.get('guesses') or []}
-    titles = dict((t.upper(), title) for t, title in new)
-    now = int(time.time())
-    for t in titles:
+    for t, title, _ in left:
         r = got.get(t, 0)
         p = ps[r - 1] if 0 < r <= len(ps) else None
-        append(GUESSES, (t, 'asked' if p else 'none', r if p else 0, now))
-        if p:
-            notify_guess(t, titles[t], p)
+        ask = bool(p) or boarded(t)
+        append(GUESSES, (t, 'asked' if ask else 'none', r if p else 0, now))
+        if ask:
+            notify_guess(t, title, p)
     return 0
 
 
@@ -1298,12 +1429,15 @@ def guess_ref(outcome, t):
 
 
 def notify_guess(t, title, p):
-    k = guess_ref(p['outcome'], t)
+    """An inbox row for a guess; with no p, one asking which."""
+    k = guess_ref(p['outcome'] if p else '', t)
     env = dict(os.environ, NOTIFY_CLASS='step', NOTIFY_CTX=k,
                NOTIFY_REF=k, NOTIFY_MODE='sticky')
     env.pop('TMUX_PANE', None)
-    subprocess.call(['notify', f'P{p["rank"] - 1}?',
-                     f"{t} {title} -> {p['outcome']}"], env=env,
+    subprocess.call(['notify', f'P{p["rank"] - 1}?' if p else 'P?',
+                     f"{t} {title} -> "
+                     f"{p['outcome'] if p else 'which priority?'}"],
+                    env=env,
                     cwd=os.path.expanduser('~'), stdout=subprocess.DEVNULL,
                     stderr=subprocess.DEVNULL)
 
@@ -1349,8 +1483,8 @@ def cmd_guess(args):
         print(f"{t}: in {gs[0]['ref']} (#{to})")
     else:
         return 0
-    for p in ps:
-        subprocess.call(['notif', 'seen-ref', guess_ref(p['outcome'], t)],
+    for o in [p['outcome'] for p in ps] + ['']:
+        subprocess.call(['notif', 'seen-ref', guess_ref(o, t)],
                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     return 0
 
@@ -1373,8 +1507,12 @@ def sync_links(ps):
 
 
 def sync_guesses(ps, new):
+    """Place new tickets, and once more each 'none' with a board row."""
     g, _ = guesses()
     ask = [f'{t}\t{title}' for t, title in new if t not in g]
+    rows, known = board_rows(), placed(ps)
+    ask += [f'{t}\t' for t, (st, _) in g.items()
+            if st == 'none' and t not in known and boarded(t, rows)]
     if ps and ask:
         for a in ask:
             append(GUESSES, (a.split('\t')[0], 'pending', 0,
@@ -1391,7 +1529,9 @@ def sync_rows(ps):
     guess settled elsewhere)."""
     g, _ = guesses()
     want = {guess_ref(p['outcome'], t) for t, (st, r) in g.items()
-            for p in ps if st == 'asked' and p['rank'] == r}
+            for p in ps if st == 'asked' and p['rank'] == r} | \
+        {guess_ref('', t) for t, (st, r) in g.items()
+         if st == 'asked' and r == 0}
     for k in inbox_refs() - want:
         subprocess.call(['notif', 'seen-ref', k], stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL)
