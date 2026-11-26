@@ -9,6 +9,10 @@
 #                         (created if missing), fresh when it is big
 #                         (claude-fresh resume); print that pane
 # claude-pane map         every live chat: <pane><TAB><sid><TAB><cwd>
+# claude-pane runs <pane> [<cmd>]  succeed when <pane> runs Claude,
+#                         also under a wrapper script (cr), which
+#                         tmux shows as its shell; <cmd>: the pane's
+#                         pane_current_command, when known
 #
 # A Claude chat's identity is its session id, not the pane it runs
 # in: panes get killed and reused, and the main checkout's session
@@ -121,14 +125,30 @@ _open() {
   echo "$_new"
 }
 
+_runs() {
+  _c="${2-$(tmux display-message -p -t "$1" '#{pane_current_command}' \
+    2>/dev/null)}"
+  case "$_c" in
+    claude|[0-9]*.[0-9]*.[0-9]*) return 0 ;;
+    # Claude must be the tty's foreground process group leader.
+    zsh|bash|sh|fish)
+      _tty="$(tmux display-message -p -t "$1" '#{pane_tty}' 2>/dev/null)"
+      ps -o tpgid=,pgid=,comm= -t "${_tty#/dev/}" 2>/dev/null \
+        | awk '$1 == $2 && $3 ~ /(^|\/)claude$/ { f = 1 } END { exit !f }'
+      ;;
+    *) return 1 ;;
+  esac
+}
+
 # A chat handed on to a fresh one (claude-fresh) is found as that one.
 _next() { claude-fresh next "$1" 2>/dev/null || echo "$1"; }
 
 case "${1:-}" in
-  "") sed -n '3,11s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
+  "") sed -n '3,15s/^# \{0,1\}//p' "$0" >&2; exit 2 ;;
   cwd) _cwd "$(_next "${2:?sid}")" ;;
   of) _of "${2:?pane}" ;;
   open) _open "$(_next "${2:?sid}")" ;;
   map) _map ;;
+  runs) _runs "${2:?pane}" ${3+"$3"} ;;
   *) _live "$(_next "$1")" ;;
 esac

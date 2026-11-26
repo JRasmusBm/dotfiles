@@ -274,11 +274,15 @@ def disk(path):
 def panes():
     """Claude panes: [(id, session, path)]."""
     out = []
+    live = {ln.split('\t')[0] for ln in
+            (sh('claude-pane', 'map') or '').splitlines()}
     for ln in sh('tmux', 'list-panes', '-a', '-F',
                  '#{pane_id}\t#{session_name}\t#{pane_current_command}'
                  '\t#{pane_current_path}').splitlines():
         p = ln.split('\t')
-        if len(p) == 4 and (p[2] == 'claude' or
+        # A Claude under cr shows as bash: its session file still
+        # names the pane (claude-pane map).
+        if len(p) == 4 and (p[2] == 'claude' or p[0] in live or
                             re.fullmatch(r'\d+\.\d+\.\d+', p[2])):
             out.append((p[0], p[1], p[3]))
     return out

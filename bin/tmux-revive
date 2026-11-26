@@ -83,7 +83,10 @@ _claude_panes() {
   tmux -u list-panes -a -F \
     "#{pane_id}$_t#S$_t#W$_t#{pane_current_command}$_t#{pane_current_path}" \
     2>/dev/null | while IFS="$_t" read -r _p _s _w _c _d; do
-      _is_claude "$_c" || continue
+      # A Claude under cr shows as bash: its session file still
+      # names the pane (claude-pane map).
+      _is_claude "$_c" || printf '%s\n' "$_m" | cut -f1 | grep -qxF "$_p" \
+        || continue
       _row="$(printf '%s\n' "$_m" | awk -F "$_t" -v p="$_p" \
         '$1 == p { print $2 "\t" $3; exit }')"
       _sid="${_row%%"$_t"*}"
