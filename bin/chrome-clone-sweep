@@ -3,7 +3,11 @@
 # chrome-clone-sweep [-n] — delete Google Chrome's code_sign_clone
 # copies (~1.4 GB each) that no running Chrome can be using. Chrome
 # copies its bundle there at launch and only removes it on a clean
-# quit, so every killed devtools Chrome leaks one. -n only prints.
+# quit, so every killed devtools Chrome leaks one. Also deletes
+# chrome-devtools-mcp.* profile dirs (~150 MB each) older than
+# CHROME_PROFILE_MIN_AGE minutes (120) that no process names in its
+# args or holds open: their proxy was killed before it could delete
+# them. -n only prints. Every minute via launchd (memlog).
 
 _dry=
 while getopts n _o; do
@@ -13,7 +17,24 @@ while getopts n _o; do
   esac
 done
 
-_tmp=$(getconf DARWIN_USER_TEMP_DIR)
+_tmp=${CHROME_SWEEP_TMP:-$(getconf DARWIN_USER_TEMP_DIR)}
+_memlog="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog/$(date +%F).log"
+
+_live=$(ps -axww -o command=)
+find "$_tmp" -mindepth 1 -maxdepth 1 -type d -name 'chrome-devtools-mcp.*' \
+  -mmin +"${CHROME_PROFILE_MIN_AGE:-120}" |
+  while read -r _p; do
+    case $_live in *"${_p##*/}"*) continue ;; esac
+    lsof +D "$_p" >/dev/null 2>&1 && continue
+    _line="### $(date '+%F %T') chrome-clone-sweep orphan profile $_p"
+    if [ -n "$_dry" ]; then
+      echo "$_line"
+    else
+      echo "$_line" >>"$_memlog"
+      rm -rf "$_p"
+    fi
+  done
+
 _dir="${_tmp%/T/}/X/com.google.Chrome.code_sign_clone"
 [ -d "$_dir" ] || exit 0
 
@@ -41,5 +62,5 @@ if [ -n "$_dry" ]; then
   echo "$_old"
   exit 0
 fi
-echo "$_line" >>"${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/memlog/$(date +%F).log"
+echo "$_line" >>"$_memlog"
 echo "$_old" | while read -r _c; do rm -rf "$_c"; done
