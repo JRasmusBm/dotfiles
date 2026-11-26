@@ -1008,12 +1008,16 @@ def sync_cache(ps):
         write(CACHE, text)
         if before != tickets(ps):
             snapshot('linear', ps)
-    # A parent grouping's own issue (often made by `prio link`) is the
-    # priority itself, not a ticket to guess: joining it is self-parenting.
-    known = {r[1] for r in rows} | {g['kind'][1] for p in ps
-                                    for g in p['groupings']
-                                    if g['kind'] and g['kind'][0] == 'parent'}
+    known = placed(ps)
     return [(t, title) for t, title in new if t not in known]
+
+
+def placed(ps):
+    """Tickets in a grouping, and the parent groupings' own issues (the
+    priority itself, not a ticket to guess: joining it self-parents)."""
+    return {t for rs in cached().values() for t, _, _ in rs} | {
+        g['kind'][1] for p in ps for g in p['groupings']
+        if g['kind'] and g['kind'][0] == 'parent'}
 
 
 def search_issues(words):
@@ -1506,9 +1510,9 @@ def sync_guesses(ps, new):
     """Place new tickets, and once more each 'none' with a board row."""
     g, _ = guesses()
     ask = [f'{t}\t{title}' for t, title in new if t not in g]
-    rows = board_rows()
+    rows, known = board_rows(), placed(ps)
     ask += [f'{t}\t' for t, (st, _) in g.items()
-            if st == 'none' and boarded(t, rows)]
+            if st == 'none' and t not in known and boarded(t, rows)]
     if ps and ask:
         for a in ask:
             append(GUESSES, (a.split('\t')[0], 'pending', 0,

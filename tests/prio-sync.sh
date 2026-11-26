@@ -274,13 +274,19 @@ check "ask: a digit joins it there and clears the row" \
      "$_t/linear.json.calls" && test -z "$(refs)"'
 
 printf '{"guesses": [{"ticket": "ABC-31", "rank": 0}]}' > "$_t/haiku.json"
-printf 'TODO:\nfeat/abc-31-new-two\n' > "$LOCAL_CONFIG/worktrees/repo"
+printf 'TODO:\nfeat/abc-31-new-two\nfeat/abc-24-placed\n' \
+  > "$LOCAL_CONFIG/worktrees/repo"
+printf 'ABC-24\tnone\t0\t1\n' >> "$_f.guesses"
+sed -i '' 's/"label:one": \[\]/"label:one": ["ABC-24 started me placed by hand"]/' \
+  "$_t/linear.json"
 "$_bin/prio" sync
 until_ 'grep -q "^ABC-31	asked" "$_f.guesses" 2>/dev/null'
 check "recheck: an old none that got a board row is asked, title read" \
   'grep -q "^ABC-31	asked	0" "$_f.guesses" \
    && grep -q "^ABC-31 new two$" "$_t/haiku.prompt"'
 "$_bin/prio" sync
+check "recheck: not a none since placed by hand" \
+  '! grep -q "^ABC-24	pending" "$_f.guesses"'
 check "recheck: once" \
   'test "$(grep -c "^ABC-31	" "$_f.guesses")" = 4'
 
