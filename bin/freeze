@@ -1,0 +1,88 @@
+#!/bin/sh
+#
+# freeze — a timed ship freeze for agents. Reads $FREEZE_FILE (default
+# ~/.config/freeze), `key: value` lines:
+#   end:      the first moment shipping is allowed again, ISO 8601 with
+#             its offset (2026-12-01T00:00:00+01:00)
+#   reason:   one line, why
+#   link:     where it was announced
+#   rules:    what agents do instead (one line)
+#   commands: ERE of shell commands that ship (`gh pr merge|deploy`)
+# While now < end the freeze is active; after it, or with no file, every
+# subcommand is silent and allows. Delete the file to end it early.
+# FREEZE_OVERRIDE=1 in the session's env lets a hook call through.
+#
+#   freeze          the notice while active, else nothing
+#   freeze active   exit 0 while active, else 1
+#   freeze hook     PreToolUse hook: denies a Bash call whose command
+#                   runs one of `commands`; any other tool routed here
+#                   is denied outright (the settings matcher picks them)
+
+_file="${FREEZE_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/freeze}"
+
+_get() {
+  sed -nE "s/^$1:[[:space:]]*//p" "$_file" 2>/dev/null | head -1
+}
+
+_active() {
+  test -r "$_file" || return 1
+  _end="$(_get end)"
+  test -n "$_end" || return 1
+  # BSD date wants the offset without its colon (+0100).
+  _e="$(printf '%s' "$_end" | sed -E 's/([+-][0-9]{2}):([0-9]{2})$/\1\2/')"
+  _end_s="$(date -j -f '%Y-%m-%dT%H:%M:%S%z' "$_e" +%s 2>/dev/null \
+    || date -d "$_end" +%s 2>/dev/null)" || {
+    echo "freeze: unreadable end '$_end' in $_file" >&2
+    return 1
+  }
+  test "$(date +%s)" -lt "$_end_s"
+}
+
+_notice() {
+  _link="$(_get link)"
+  printf 'CODE FREEZE until %s: %s%s. %s\n' "$_end" "$(_get reason)" \
+    "${_link:+ ($_link)}" "$(_get rules)"
+}
+
+_strip='
+  (.tool_input.command // "")
+  | gsub("(?<pre>[^\n]*)<<-?\\s*[\"'"'"']?(?<tag>[A-Za-z_]+)[\"'"'"']?(?<rest>[^\n]*)\n(?<body>[\\s\\S]*?)\n\\s*\\k<tag>(?=\n|$)";
+      if (.pre | test("(^|[^A-Za-z_-])(sh|bash|zsh)\\s"))
+      then .pre + " " + .rest + "\n" + .body + "\n"
+      else .pre + " " + .rest end)
+  | gsub("(?<pre>-c\\s+)?(?:'"'"'(?<sq>[^'"'"']*)'"'"'|\"(?<dq>(?:[^\"\\\\]|\\\\.)*)\")";
+      if .pre or ((.dq // "") | test("\\$\\(|`"))
+      then (.pre // "") + "\n" + (.sq // .dq) + "\n"
+      else "\"\"" end)'
+
+_deny() {
+  jq -nc --arg r "$1" '{hookSpecificOutput: {hookEventName: "PreToolUse",
+    permissionDecision: "deny", permissionDecisionReason: $r}}'
+  exit 0
+}
+
+_hook() {
+  _in="$(cat)"
+  test "${FREEZE_OVERRIDE:-}" = 1 && exit 0
+  _active || exit 0
+  _tool="$(printf '%s' "$_in" | jq -r '.tool_name // ""')"
+  if test "$_tool" = Bash; then
+    _cmds="$(_get commands)"
+    test -n "$_cmds" || exit 0
+    # Quoted text and heredoc bodies don't run, unless fed to `sh -c`
+    # or `sh <<EOF` (or hold a substitution). Then a command at the
+    # start of a line or after ; & | ( or $(, behind VAR=value prefixes.
+    printf '%s' "$_in" | jq -r "$_strip" \
+      | grep -qE "(^|[;&|(]|\\\$\\()[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*($_cmds)([[:space:]]|$|[;&|)])" \
+      || exit 0
+  fi
+  _deny "$(_notice) Refused: this ships. An urgent fix goes through only with \
+FREEZE_OVERRIDE=1, set by a person, never by an agent."
+}
+
+case "${1:-}" in
+  '') _active && _notice; exit 0 ;;
+  active) _active ;;
+  hook) _hook ;;
+  *) sed -n '3,19p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+esac

@@ -12,7 +12,8 @@
 # The checkout is the tool call's cwd, or a literal `cd <dir>` before
 # the `gh pr create` (`cd $VAR` is refused); the branch is its
 # `--head`, else the checked-out one. If `gh pr list` fails, the
-# ticket-id check is skipped.
+# ticket-id check is skipped. First, while a ship freeze is active,
+# it denies what `freeze hook` denies (`gh pr merge` and the like).
 #
 #   pr-gate hook   PreToolUse hook for Bash: deny or pass (no output)
 
@@ -55,7 +56,11 @@ _first_id() {
 }
 
 _hook() {
-  _p="$(jq -r "$_parse")"
+  _in="$(cat)"
+  _f="$(printf '%s' "$_in" | "$(dirname "$0")/freeze" hook 2>/dev/null)" \
+    || true
+  test -z "$_f" || { printf '%s\n' "$_f"; exit 0; }
+  _p="$(printf '%s' "$_in" | jq -r "$_parse")"
   test -n "$_p" || exit 0
   _us="$(printf '\037')"
   IFS="$_us" read -r _cwd _cd _head _repo <<EOF
@@ -107,5 +112,5 @@ has an open PR from another branch: $_other. $_board"
 
 case "${1:-}" in
   hook) _hook ;;
-  *) sed -n '3,18p' "$0" | sed 's/^# \{0,1\}//' ;;
+  *) sed -n '3,20p' "$0" | sed 's/^# \{0,1\}//' ;;
 esac
