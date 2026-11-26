@@ -89,14 +89,15 @@ _given() {
   tmux -f /dev/null new-session -d -s _ /bin/sh
 }
 
-# _transcript SID: its last turn ended 64 hours ago, on no question.
+# _transcript SID [TEXT]: its last turn ended 64 hours ago, on TEXT
+# (no question).
 _transcript() {
   _at="$(date -u -r $(($(date +%s) - 230400)) +%Y-%m-%dT%H:%M:%S)"
   printf '%s\n' \
     "{\"type\":\"user\",\"timestamp\":\"$_at.000Z\",\"message\":{}}" \
     "{\"type\":\"assistant\",\"timestamp\":\"$_at.000Z\",$(
       )\"message\":{\"content\":[{\"type\":\"text\",$(
-      )\"text\":\"Done.\"}]}}" \
+      )\"text\":\"${2:-Done.}\"}]}}" \
     > "$CLAUDE_CONFIG_DIR/projects/p/$1.jsonl"
 }
 
@@ -183,6 +184,51 @@ run-slot close >/dev/null
 _check "focus: a chat revived on focus is not closed a minute later" \
   'test "$(_cmd foc)" = claude \
     && run-slot close -n -v | grep -q "^keep	foc	started 0m ago"'
+
+# --- focus after a tmux restart (RAS-131): the worktree's session is
+# rebuilt, its shell pane has a new id, the closed row the old one
+_given
+_old="$(_closed rst)"; : > "$_t/w/.worktrees/rst/.ready"
+tmux kill-server; tmux -f /dev/null new-session -d -s _ /bin/sh
+tmux new-session -d -s other /bin/sh
+tmux new-session -d -s rst -n cli -c "$_t/w/.worktrees/rst" /bin/sh
+_p="$(tmux display-message -p -t =rst:cli '#{pane_id}')"
+_check "restart: the rebuilt pane has another id" 'test "$_p" != "$_old"'
+run-slot focus "$(tmux list-panes -t =other -F '#{pane_id}')" >/dev/null
+_check "restart: a focus in another session revives nothing" '! _up rst'
+run-slot focus "$_p" >/dev/null
+_wait '_up rst'
+_check "restart: a focus on the worktree's shell resumes its chat" \
+  'grep -qx "argv --resume srst" "$_t/w/.worktrees/rst/.got"'
+# Closed again, then resumed by hand and exited: not brought back.
+_given
+_p="$(_closed hnd)"; : > "$_t/w/.worktrees/hnd/.ready"
+_transcript shnd; sed -i.bak "s/\"timestamp\":\"[^\"]*\"/\"timestamp\":\"$(
+  date -u -r $(($(date +%s) + 120)) +%Y-%m-%dT%H:%M:%S).000Z\"/" \
+  "$CLAUDE_CONFIG_DIR/projects/p/shnd.jsonl"
+run-slot focus "$_p" >/dev/null
+_check "restart: a chat used since it closed is not brought back" \
+  '! grep -q argv "$_t/w/.worktrees/hnd/.got" 2>/dev/null'
+# An old closed row (8 days) stays while its worktree does.
+_given
+_closed eig >/dev/null; : > "$_t/w/.worktrees/eig/.ready"
+gsed -i "s/^[0-9]*\(\tseig\t\)/$(($(date +%s) - 691200))\1/" "$_rs/closed"
+_closed nxt >/dev/null
+run-slot park snew "$(tmux display-message -p -t =nxt:cli '#{pane_id}')" \
+  nxt "$_t/w/.worktrees/nxt" >/dev/null
+_check "expiry: an 8-day-old closed row survives the next close" \
+  'grep -q "	seig	" "$_rs/closed"'
+
+# --- asks (RAS-131): a question before a trailer, or a "say go"
+_given
+_transcript sq1 'Should I delete those 2 rows? I recommend yes.'
+_transcript sq2 'Please run /mcp, reconnect, then say \\\"go\\\".'
+_transcript sq3 'Shipped. Nothing here needs you.'
+_check "asks: a question then I recommend yes keeps it" \
+  'test "$(run-slot needs-open sq1 q1)" = "asked me"'
+_check "asks: please run /mcp, say go keeps it" \
+  'test "$(run-slot needs-open sq2 q2)" = "asked me"'
+_check "asks: nothing here needs you does not" '! run-slot needs-open sq3 q3'
 
 # --- control: started and idle 64 hours ago, nothing on its way
 _given
