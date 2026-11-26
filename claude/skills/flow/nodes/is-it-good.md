@@ -16,11 +16,11 @@ Before asking Rasmus "is it good?", consider the following.
 - Could it run up a bill (warehouse queries, AI calls, something on
   a schedule)? What measures that cost for this project and pings
   past a threshold, before it runs without anyone watching?
-- Is a high-stakes period close (e.g. BFCM for e-commerce)? Then
-  nothing may break, freeze or not: how would this fail during it,
-  and could I undo it in minutes? Is there a freeze? Check the team's
-  channels. Holding it adds to what ships at once afterwards: is
-  that safer?
+- Is a code freeze on (check the team's channels), or a high-stakes
+  period close for the business? Then don't ship: park it
+  and hand back. Only Rasmus calls something an urgent fix. A
+  snooze, a "ship tomorrow" or a brief set before the freeze
+  doesn't override it.
 - Will the things I don't know be easy to change? (For example be wary of a big
   UX change that I'm not sure about)
 - Has a fresh adversarial reviewer read the whole branch once, even
