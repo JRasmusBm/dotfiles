@@ -27,7 +27,10 @@ Existing non-symlink files are backed up to `~/.backup_dotfiles/` before being r
 Agents merge their own PRs here and verify the result
 live (installed scripts, launchd jobs, a real run) without
 asking: the repo is my personal tooling, the merge is the
-release, and waiting on me only stalls it. No CI runs on
+release, and waiting on me only stalls it. Live means the
+main checkout ~/projects/dotfiles has pulled main. Other
+sessions' WIP there blocks the pull? `/commit` it, then
+`git pull --rebase`: only a real conflict is mine. No CI runs on
 PRs and `/iterate-review` doesn't exist in this setup: for
 the flow skill's is-it-good node, local tests plus that live
 check stand in for CI.
