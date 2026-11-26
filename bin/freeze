@@ -8,15 +8,20 @@
 #   link:     where it was announced
 #   rules:    what agents do instead (one line)
 #   commands: ERE of shell commands that ship (`gh pr merge|deploy`)
+#   repos:    ERE of the origin URLs the freeze covers (`work-org/`);
+#             no key: every repo
 # While now < end the freeze is active; after it, or with no file, every
 # subcommand is silent and allows. Delete the file to end it early.
 # FREEZE_OVERRIDE=1 in the session's env lets a hook call through.
 #
-#   freeze          the notice while active, else nothing
+#   freeze          the notice while active and $PWD is in `repos`
 #   freeze active   exit 0 while active, else 1
-#   freeze hook     PreToolUse hook: denies a Bash call whose command
-#                   runs one of `commands`; any other tool routed here
-#                   is denied outright (the settings matcher picks them)
+#   freeze hook     PreToolUse hook: denies a Bash call that runs one of
+#                   `commands` in `repos`: the call's cwd (else $PWD)
+#                   or a `cd`/`-C` target in it has a matching origin,
+#                   or its text names one (`-R work-org/app`, a URL).
+#                   Any other tool routed here is denied outright (the
+#                   settings matcher picks them)
 
 _file="${FREEZE_FILE:-${XDG_CONFIG_HOME:-$HOME/.config}/freeze}"
 
@@ -36,6 +41,34 @@ _active() {
     return 1
   }
   test "$(date +%s)" -lt "$_end_s"
+}
+
+_covers() {
+  _repos="$(_get repos)"
+  test -n "$_repos" || return 0
+  _o="$(git -C "$1" remote get-url origin 2>/dev/null)" || return 1
+  printf '%s' "$_o" | grep -qE "$_repos"
+}
+
+_in_scope() {
+  _cwd="$(printf '%s' "$_in" | jq -r '.cwd // ""')"
+  _cwd="${_cwd:-$PWD}"
+  _covers "$_cwd" && return 0
+  _cmd="$(printf '%s' "$_in" | jq -r '.tool_input.command // ""')"
+  printf '%s' "$_cmd" | grep -qE "$_repos" && return 0
+  printf '%s\n' "$_cmd" | tr "\"'" '  ' \
+    | grep -oE '(^|[;&|(`[:space:]])(cd|-C)[[:space:]]+[^;&|)`[:space:]]+' \
+    | sed -E 's/^.?(cd|-C)[[:space:]]+//' \
+    | while IFS= read -r _d; do
+        case "$_d" in
+          '~'|'$HOME'|'${HOME}') _d="$HOME" ;;
+          '~/'*) _d="$HOME/${_d#\~/}" ;;
+          '$HOME/'*) _d="$HOME/${_d#\$HOME/}" ;;
+          '${HOME}/'*) _d="$HOME/${_d#\$\{HOME\}/}" ;;
+        esac
+        case "$_d" in /*) ;; *) _d="$_cwd/$_d" ;; esac
+        _covers "$_d" && echo "$_d"
+      done | grep -q .
 }
 
 _notice() {
@@ -75,14 +108,15 @@ _hook() {
     printf '%s' "$_in" | jq -r "$_strip" \
       | grep -qE "(^|[;&|(]|\\\$\\()[[:space:]]*([A-Za-z_][A-Za-z0-9_]*=[^[:space:]]*[[:space:]]+)*($_cmds)([[:space:]]|$|[;&|)])" \
       || exit 0
+    _in_scope || exit 0
   fi
   _deny "$(_notice) Refused: this ships. An urgent fix goes through only with \
 FREEZE_OVERRIDE=1, set by a person, never by an agent."
 }
 
 case "${1:-}" in
-  '') _active && _notice; exit 0 ;;
+  '') _active && _covers "$PWD" && _notice; exit 0 ;;
   active) _active ;;
   hook) _hook ;;
-  *) sed -n '3,19p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
+  *) sed -n '3,25p' "$0" | sed 's/^# \{0,1\}//'; exit 2 ;;
 esac
