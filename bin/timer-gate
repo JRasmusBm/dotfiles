@@ -3,6 +3,7 @@
 # timer-gate — agents schedule wake-ups through `wt w8` / `wt sz` only.
 # Denies Bash tool commands that hand-roll a timer instead: a sleep
 # loop, `sleep N && cmd`, a backgrounded sleep or `date +%s` deadline,
+# a `(g)tail --pid` / `-f /dev/null` wait on a process,
 # `wt-tell` fired from a deadline, or `at` / `crontab` / launchd
 # scheduling. Quoted text and heredoc bodies (commit messages, echo)
 # are ignored unless a shell or `at` runs them.
@@ -13,7 +14,7 @@
 
 set -e
 
-_reason='Hand-rolled timers are blocked: waiting on something (CI, a deploy, a reply) -> `wt w8 <deadline> "<what>"`; know when you want to wake up -> `wt sz <when>`. Nothing else schedules a wake-up.'
+_reason='Hand-rolled timers are blocked: waiting on something (CI, a deploy, a reply) -> `wt w8 <deadline> "<what>"`; know when you want to wake up -> `wt sz <when>`; waiting on your own command -> run it with run_in_background: true and act on its exit notification. Nothing else schedules a wake-up.'
 
 _hook() {
   jq -c --arg reason "$_reason" '
@@ -37,10 +38,11 @@ _hook() {
     | ($c | test("\\b(while|until)\\b[\\s\\S]*\\bdo\\b[\\s\\S]*\\bsleep\\b")) as $sleeploop
     | ($c | test("date\\s+\\+%s[\\s\\S]*-(lt|le|gt|ge)\\b|-(lt|le|gt|ge)\\b[\\s\\S]*date\\s+\\+%s")) as $deadline
     | ($c | test("(^|[;&|({\n]|\\bthen|\\bdo)\\s*sleep\\s+[0-9.]+[smhd]?\\s*(&&|;|\n)\\s*[^\\s)}]")) as $sleepthen
+    | ($c | test("(^|[^A-Za-z_-])g?tail\\s[^;&|\n]*(--pid|-f\\s+/dev/null)")) as $pidwait
     | ($c | test("(^|[^A-Za-z_-])wt-tell([^A-Za-z_-]|$)")) as $tell
     | ($c | test("(^|[;&|({]|\n)\\s*(sudo\\s+)?(at|batch)\\s+[^-\\s]|(^|[;&|({]|\n)\\s*(sudo\\s+)?crontab(\\s+(?!-l)|\\s*$)|launchctl\\s+(submit|load|bootstrap)|Start(Calendar)?Interval|(>\\s*|\\btee\\s+(-a\\s+)?|\\b(cp|mv|ln)\\s[^;&|\n]*)\\S*Library/Launch(Agents|Daemons)")) as $sched
     | if (($detached or $bg) and ($sleep or $deadline))
-        or $sleeploop or $sleepthen
+        or $sleeploop or $sleepthen or $pidwait
         or ($tell and $deadline)
         or $sched
       then {hookSpecificOutput: {hookEventName: "PreToolUse",
@@ -89,6 +91,9 @@ EOF"
 <plist/>
 EOF"
   _case deny false "cp wake.plist ~/Library/LaunchAgents/"
+  _case deny false "gtail --pid=1 -f /dev/null"
+  _case deny true "tail --pid=1 -f /dev/null"
+  _case deny false "./refresh > r.log 2>&1 & gtail --pid \$! -f /dev/null"
   _case allow false "sleep 2"
   _case allow false "for f in a b; do echo \$f; done && sleep 1"
   _case allow false "./scripts/test.sh  # waits on its own"
@@ -100,6 +105,8 @@ EOF"
   _case allow false "wt sz \"tomorrow 08:00\""
   _case allow false "wt sz monday"
   _case allow false "wt w8 45m \"CI on #12\""
+  _case allow false "tail -f dev.log"
+  _case allow false "tail -n 50 /tmp/x.log | grep wrote"
   _case allow false "crontab -l"
   _case allow false "ls ~/Library/LaunchAgents"
   _case allow false "launchctl list | grep wake"
