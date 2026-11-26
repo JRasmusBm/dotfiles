@@ -2,7 +2,8 @@
 #
 # cache-why — why Claude Code rewrote the prompt cache mid-session,
 # read from the local transcripts (~/.claude/projects/*/**/*.jsonl,
-# subagents included). Zero tokens.
+# subagents included). Zero tokens. Sessions claude-archive gzipped
+# (untouched 30+ days) lost their api-request rows, so they're skipped.
 #
 # A rewrite is one API request writing more than --min cache tokens
 # within --gap seconds of the request before it (so not an expired

@@ -13,7 +13,8 @@ set -e
 #   chats _index          print the index rows, newest first
 #   chats _preview <path> <uuid> <session> <cwd>
 #
-# Transcripts: ~/.claude/projects/<escaped cwd>/<session>.jsonl.
+# Transcripts: ~/.claude/projects/<escaped cwd>/<session>.jsonl, or
+# .jsonl.gz once claude-archive shrank it.
 # Cache: ${XDG_CACHE_HOME:-~/.cache}/chats/<session>.tsv, rebuilt
 # when its transcript is newer.
 
@@ -21,7 +22,7 @@ _projects="$HOME/.claude/projects"
 _cache="${XDG_CACHE_HOME:-$HOME/.cache}/chats"
 
 _extract() {
-  jq -r --arg path "$1" '
+  gzip -cdf "$1" | jq -r --arg path "$1" '
     def clean: gsub("[\t\r\n]+"; " ") | gsub("  +"; " ");
     def skip: test("^\\s*(<|\\[Request interrupted|Caveat:"
       + "|Another Claude session)");
@@ -42,11 +43,12 @@ _extract() {
           + (if $role == "user" then "  › " else "  ‹ " end)
           + $text[0:400] ]
     | @tsv
-  ' "$1" 2>/dev/null
+  ' 2>/dev/null
 }
 
 _refresh() {
-  _r_out="$_cache/$(basename "$1" .jsonl).tsv"
+  _r_out="${1##*/}"
+  _r_out="$_cache/${_r_out%%.jsonl*}.tsv"
   if ! test "$_r_out" -nt "$1"; then
     _extract "$1" > "$_r_out.tmp" && mv "$_r_out.tmp" "$_r_out"
   fi
@@ -55,7 +57,8 @@ _refresh() {
 
 _index() {
   mkdir -p "$_cache"
-  find "$_projects" -mindepth 2 -maxdepth 2 -name '*.jsonl' \
+  find "$_projects" -mindepth 2 -maxdepth 2 \
+    \( -name '*.jsonl' -o -name '*.jsonl.gz' \) \
     -mtime "-${CHATS_DAYS:-14}" -print0 \
     | xargs -0 -n 8 -P 8 "$0" _refresh \
     | sort -t "$(printf '\t')" -k1,1nr
@@ -64,7 +67,7 @@ _index() {
 _preview() {
   _p_pane="$(claude-pane "$3" || true)"
   _p_cwd="$4"
-  _p_title="$(grep -F '"type":"custom-title"' "$1" | tail -1 \
+  _p_title="$(gzip -cdf "$1" | grep -F '"type":"custom-title"' | tail -1 \
     | jq -r '.customTitle // ""' 2>/dev/null)"
   if test -n "$_p_pane"; then
     _p_where="live: $(tmux display-message -p -t "$_p_pane" \
@@ -73,7 +76,7 @@ _preview() {
     _p_where="not running"
   fi
   printf '%s\n%s\n%s\n\n' "${_p_title:-untitled}" "$_p_cwd" "$_p_where"
-  grep -F "\"uuid\":\"$2\"" "$1" | jq -r '
+  gzip -cdf "$1" | grep -F "\"uuid\":\"$2\"" | jq -r '
     .message.content
     | if type == "string" then .
       else [.[]? | select(.type == "text") | .text] | join("\n") end

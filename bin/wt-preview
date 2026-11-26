@@ -62,19 +62,21 @@ _ctx="$HOME/.claude/projects/$(printf '%s' "$_wt" \
 if test -f "$_wt/.jrb/doc.md"; then
   head -n 30 "$_wt/.jrb/doc.md"
 elif test -d "$_ctx"; then
-  _last="$(ls -t "$_ctx"/*.jsonl 2>/dev/null | head -1)"
+  _last="$(ls -t "$_ctx"/*.jsonl "$_ctx"/*.jsonl.gz 2>/dev/null \
+    | head -1)"
   if test -n "$_last"; then
     # First user prompt = what the session was about. Stream
     # and stop at the first match (head closes the pipe), so
     # we don't parse the whole multi-MB transcript.
     _sum=""
     if command -v jq >/dev/null 2>&1; then
-      _sum="$(jq -r 'select(.type=="user")
-        | (.message.content | strings)' "$_last" 2>/dev/null \
-        | head -1)"
+      _sum="$(gzip -cdf "$_last" 2>/dev/null | jq -r '
+        select(.type=="user") | (.message.content | strings)' \
+        2>/dev/null | head -1)"
     fi
     if test -z "$_sum"; then
-      _sum="$(grep -m1 '"type":"user"' "$_last" 2>/dev/null \
+      _sum="$(gzip -cdf "$_last" 2>/dev/null \
+        | grep -m1 '"type":"user"' \
         | sed -n 's/.*"content":"//p')"
     fi
     if test -n "$_sum" && test "$_sum" != null; then

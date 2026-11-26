@@ -2,7 +2,8 @@
 #
 # tok-top — which Claude Code sessions burn the token budget, read
 # from the local transcripts (~/.claude/projects/*/*.jsonl plus each
-# session's subagents/*.jsonl, counted into the parent). Zero tokens.
+# session's subagents/*.jsonl, counted into the parent; .jsonl.gz once
+# claude-archive shrank them). Zero tokens.
 # Weighted per assistant turn: input x1, output x5, cache write
 # x1.25, cache read x0.1 (millions). One API response counts once
 # (first line per message.id within a file).
@@ -19,7 +20,7 @@
 # Place = worktree slug (cwd under */.worktrees/<slug>), else the
 # repo dir name. PR = the worktree branch's PR (`gh pr list`, one
 # call per repo, cached 10 min in $LOCAL_CONFIG/tok-top-gh).
-import argparse, glob, json, os, subprocess, sys, time
+import argparse, glob, gzip, json, os, subprocess, sys, time
 from datetime import datetime, timedelta, timezone
 
 W = dict(input_tokens=1, output_tokens=5,
@@ -43,9 +44,16 @@ def window(s):
     sys.exit("tok-top: --since today|yesterday|Nd|Nh")
 
 
+def lines(path):
+    """A transcript's lines, gzipped (claude-archive) or not."""
+    if path.endswith(".gz"):
+        return gzip.open(path, "rt", errors="replace")
+    return open(path, errors="replace")
+
+
 def scan(path, lo, hi, acc):
     seen = set()
-    for line in open(path, errors="replace"):
+    for line in lines(path):
         if '"usage"' not in line:
             continue
         try:
@@ -75,7 +83,7 @@ def scan(path, lo, hi, acc):
 
 
 def first_cwd(path):
-    for line in open(path, errors="replace"):
+    for line in lines(path):
         if '"cwd"' in line:
             try:
                 return json.loads(line).get("cwd") or ""
@@ -134,13 +142,15 @@ def main():
     lo, hi = lo.timestamp(), hi.timestamp() if hi else None
 
     rows = {}  # (place, repo) -> [w, turns, ctx, cwd]
-    for f in glob.glob(HOME + "/.claude/projects/*/*.jsonl"):
+    for f in glob.glob(HOME + "/.claude/projects/*/*.jsonl") + \
+            glob.glob(HOME + "/.claude/projects/*/*.jsonl.gz"):
         if os.path.getmtime(f) < lo:
             continue
         cwd = first_cwd(f)
         place, repo = place_of(cwd)
         acc = [0.0, 0, 0]
-        for g in [f] + glob.glob(f[:-6] + "/subagents/*.jsonl"):
+        d = f[:f.rindex(".jsonl")] + "/subagents/*.jsonl"
+        for g in [f] + glob.glob(d) + glob.glob(d + ".gz"):
             if os.path.getmtime(g) >= lo:
                 scan(g, lo, hi, acc)
         if not acc[1]:

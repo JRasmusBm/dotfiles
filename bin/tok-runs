@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 #
 # tok-runs — where subagent tokens go, per run, read from the local
-# transcripts (~/.claude/projects/*/*/subagents/agent-*.jsonl, type
+# transcripts (~/.claude/projects/*/*/subagents/agent-*.jsonl or
+# .jsonl.gz once claude-archive shrank them, type
 # from the sibling .meta.json). Zero tokens. Weighted as in tok-top:
 # input x1, output x5, cache write x1.25, cache read x0.1.
 #
@@ -33,7 +34,7 @@
 # context; "review loops" = a review skill (/iterate-review) ran in
 # it, as the brief or a follow-up. --runs flags: B build, R review,
 # pN parent follow-ups, cN compactions, tN turns.
-import argparse, glob, json, os, re, sys
+import argparse, glob, gzip, json, os, re, sys
 from collections import defaultdict
 from datetime import datetime, timedelta
 
@@ -125,6 +126,13 @@ def event_of(d):
 REVIEW = re.compile(r"/iterate-review|iterate-review\b")
 
 
+def lines(path):
+    """A transcript's lines, gzipped (claude-archive) or not."""
+    if path.endswith(".gz"):
+        return gzip.open(path, "rt", errors="replace")
+    return open(path, errors="replace")
+
+
 def run_of(path, lo, hi):
     r = dict(path=path, kinds=defaultdict(float), turns=0, w=0.0,
              briefed=False, parents=0, compacts=0, review=False,
@@ -133,7 +141,7 @@ def run_of(path, lo, hi):
              ctx=0, first_ctx=0, reads=defaultdict(int),
              t0=None, last_kind="other", last_w=0.0)
     seen = set()
-    for line in open(path, errors="replace"):
+    for line in lines(path):
         try:
             d = json.loads(line)
         except ValueError:
@@ -227,6 +235,7 @@ def main():
         if a.repo and a.repo not in meta:
             continue
         j = meta[: -len(".meta.json")] + ".jsonl"
+        j = j if os.path.exists(j) else j + ".gz"
         if not os.path.exists(j) or os.path.getmtime(j) < lo:
             continue
         try:
