@@ -5,6 +5,8 @@
 - What I'd copy: is it what the repo mostly does, or just the
   nearest example? Who chose it: a person who reviewed it, or an
   earlier agent? Code on base is released, not endorsed.
+- Does the repo have skills for this kind of change (UI, copy,
+  migrations)? Loaded before the first edit, in every builder too?
 - Does the base already have it (`git log`/grep on origin/<base>)?
   Twice an agent was briefed on what base had shipped. Check before
   briefing.
