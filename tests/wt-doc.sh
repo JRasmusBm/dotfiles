@@ -98,4 +98,12 @@ check "bare path: opens the page, image with the item as caption" \
      "$_w2/.jrb/doc.html" &&
    grep -q "<figcaption>the badge (\[\]) shows" "$_w2/.jrb/doc.html"'
 
+# Try it's numbered steps: an ordered list, Today after it a line.
+printf '# ABC-2: page\nNow: shot\n\n## Try it\n/home\n1. click a\n2. see b\nToday: c\n' \
+  > "$_w2/.jrb/doc.md"
+doc-page "$_w2/.jrb/doc.md" >/dev/null
+check "try it: steps render as an ordered list" \
+  'tr -d "\n" < "$_w2/.jrb/doc.html" |
+     grep -q "<ol><li>click a</li><li>see b</li></ol><p>Today: c</p>"'
+
 exit $_fail

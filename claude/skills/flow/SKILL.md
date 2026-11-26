@@ -53,6 +53,11 @@ it stands. Is it current now, before I act, hand off or wait?
     - [ ] <acceptance criterion, ticked once Tested shows it>
     Assumes: <one line each>
 
+    ## Try it
+    <where: page, workspace, flag or command>
+    1. <click or run this> → <expect that>
+    Today: <what he'd see there before this change>
+
     ## Decisions
     - <decision> | <why>
 
@@ -63,6 +68,9 @@ it stands. Is it current now, before I act, hand off or wait?
   rest is for when he reads on.
 - Does it fit one screen? Rewrite, don't append: a stale line, a
   log of steps, a recap, a paragraph where a line does: cut it.
+- Could he test it from Try it alone, without asking me? Write it
+  once I know what I'm building, while he can still catch a wrong
+  direction; keep it true as the design moves.
 - Did I just make a call the brief or spec is silent on? One line
   in Decisions with the reason, when I make it; drop it once a
   later call replaces it.
