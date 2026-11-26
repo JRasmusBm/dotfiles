@@ -26,9 +26,10 @@ _rs="$LOCAL_CONFIG/run-slots"
 
 # claude: forks the zsh below, so tmux shows `claude` as the pane's
 # command. It writes its session file (startedAt now, or $FAKE_STARTED
-# ms), logs argv and each line typed to $PWD/.got, shows an empty
-# prompt only once $PWD/.ready exists (Claude still starting) and
-# exits on /exit.
+# ms), logs argv and each line typed or each claude-msg message (its
+# messaging socket, served by $FAKE/msg.py) to $PWD/.got, shows an
+# empty prompt only once $PWD/.ready exists (Claude still starting)
+# and exits on /exit.
 cat > "$FAKE/claude.c" <<'X'
 #include <stdlib.h>
 #include <unistd.h>
@@ -49,9 +50,12 @@ cat > "$FAKE_ZSH" <<'X'
 sid="${FAKE_SID:-}"
 test "${1:-}" = --resume && sid="$2"
 w="$(tmux display-message -p -t "$TMUX_PANE" '#S:#{window_id}')"
+m="$CLAUDE_CONFIG_DIR/sessions/$$.sock"
+python3 "$FAKE/msg.py" "$m" $$ &
 {
   printf '{"sessionId":"%s","cwd":"%s","tmux":"%s.%s",' "$sid" "$PWD" "$w" \
     "$TMUX_PANE"
+  printf '"messagingSocketPath":"%s",' "$m"
   printf '"startedAt":%s,"status":"idle"}\n' \
     "${FAKE_STARTED:-$(($(date +%s) * 1000))}"
 } > "$CLAUDE_CONFIG_DIR/sessions/$$.json"
@@ -63,6 +67,43 @@ while read -r l; do
   test "$l" = /exit && exit
   echo "said $l" >> .got; idle
 done
+X
+# msg.py SOCK PID: PID's messaging socket, up once .ready exists, for
+# as long as PID lives; logs each claude-msg message's body as a typed
+# line.
+cat > "$FAKE/msg.py" <<'X'
+import json, os, socket, sys, time
+sp, pid = sys.argv[1], int(sys.argv[2])
+while not os.path.exists('.ready'):
+    time.sleep(0.2)
+    os.kill(pid, 0)
+s = socket.socket(socket.AF_UNIX)
+s.bind(sp); s.listen(4); s.settimeout(0.5)
+while True:
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        break
+    try:
+        c, _ = s.accept()
+    except socket.timeout:
+        continue
+    c.settimeout(5)
+    b = b''
+    while True:
+        d = c.recv(4096)
+        if not d:
+            break
+        b += d
+    for l in b.decode().splitlines():
+        m = json.loads(l)
+        if m.get('type') == 'user':
+            body = m['message']['content'].split('\n')[1:-1]
+            open('.got', 'a').write('said %s\n' % ' '.join(body))
+            sys.stdout.write('\n\u276f \n-- INSERT --\n')
+            sys.stdout.flush()
+    c.close()
+os.unlink(sp)
 X
 for _c in notify notif; do
   printf '#!/bin/sh\necho "$*" >> "$FAKE/%s"\n' "$_c" > "$FAKE/bin/$_c"
