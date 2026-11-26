@@ -1,0 +1,90 @@
+#!/bin/sh
+#
+# repo-sync [--push] <dir> — keep a checkout that runs (its bin on
+# PATH, skills linked from it) on origin/main, so a merged PR goes
+# live with no second step (RAS-116). launchd runs it every 2 minutes
+# per repo: com.jrasmusbm.repo-sync-dotfiles, and the overlay's
+# overlay-sync (with --push).
+#   - on main only; hands off during a merge, a rebase, a cherry-pick
+#     or while the index is locked.
+#   - behind: fast-forward.
+#   - ahead and behind: rebase --autostash onto origin/main.
+#   - either way, only when no uncommitted file (tracked or
+#     untracked) is touched by the incoming commits; a conflict is
+#     aborted and the checkout left as it was.
+#   - --push: push local commits (the overlay's data refreshes). The
+#     default never pushes: dotfiles is public.
+#   - can't converge: one env notify per state, naming the merged PRs
+#     that aren't live and the files in the way.
+# Marks the checkout with `git config wt.live true`: `wt done` then
+# refuses a ticket whose merge commit isn't in it.
+# Quiet when there is nothing to do. Log: $LOCAL_CONFIG/repo-sync/<repo>/log.
+
+set -u
+_push=''
+test "${1:-}" = --push && { _push=1; shift; }
+test -n "${1:-}" || { sed -n '3,21s/^# \{0,1\}//p' "$0" >&2; exit 2; }
+cd "$1" 2>/dev/null || exit 1
+_top="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 1
+cd "$_top" || exit 1
+_name="$(basename "$(pwd -P)")"
+_state="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}/repo-sync/$_name"
+mkdir -p "$_state"
+
+_log() { printf '%s %s\n' "$(date '+%F %T')" "$*" >> "$_state/log"; }
+# One notify per key: a blocked sync stays blocked until someone acts,
+# and this runs every 2 minutes.
+_ping() {
+  grep -qxF "$1" "$_state/pinged" 2>/dev/null && return
+  echo "$1" >> "$_state/pinged"
+  shift
+  _log "$*"
+  NOTIFY_CLASS=env NOTIFY_CTX="$_name" \
+    notify "$_name: merged PRs not live" "$*" >/dev/null 2>&1
+}
+_words() { tr '\n' ' ' | sed 's/ *$//'; }
+
+test "$(git branch --show-current)" = main || exit 0
+for _f in MERGE_HEAD CHERRY_PICK_HEAD rebase-merge rebase-apply \
+  index.lock; do
+  test -e "$(git rev-parse --git-path "$_f")" && exit 0
+done
+test "$(git config --bool wt.live)" = true || git config wt.live true
+gtimeout -k 5 60 git fetch -q origin main 2>>"$_state/log" || exit 0
+
+_main="$(git rev-parse origin/main)"
+_head="$(git rev-parse HEAD)"
+if ! git merge-base --is-ancestor "$_main" HEAD; then
+  # Files the incoming commits touch, against what's uncommitted here.
+  _in="$(git diff --name-only HEAD..."$_main")"
+  _dirty="$(git status --porcelain --untracked-files=all \
+    | cut -c4- | sed 's/.* -> //')"
+  _way="$(printf '%s\n' "$_dirty" | grep -xF "$_in" 2>/dev/null | _words)"
+  _prs="$(git log --format=%s HEAD.."$_main" \
+    | grep -oE '\(#[0-9]+\)$' | tr -d '()' | _words)"
+  _prs="${_prs:-$(git rev-parse --short "$_main")}"
+  if test -n "$_way"; then
+    _ping "dirty $_main $_head $_way" \
+      "$_prs wait on uncommitted $_way in $_top: commit or drop them"
+    exit 0
+  fi
+  if git merge-base --is-ancestor HEAD "$_main"; then
+    git merge -q --ff-only "$_main" 2>>"$_state/log" \
+      && _log "fast-forwarded to $(git rev-parse --short "$_main")"
+  elif git rebase -q --autostash "$_main" >>"$_state/log" 2>&1; then
+    _log "rebased local commits onto $(git rev-parse --short "$_main")"
+  else
+    _u="$(git diff --name-only --diff-filter=U | _words)"
+    git rebase --abort 2>/dev/null
+    _ping "conflict $_main $_head" \
+      "$_prs conflict with local commits in $_top (${_u:-?}):" \
+      "rebase by hand"
+    exit 0
+  fi
+fi
+
+test -n "$_push" || exit 0
+test "$(git rev-parse HEAD)" = "$_main" && exit 0
+gtimeout -k 5 60 git push -q origin HEAD:main 2>>"$_state/log" \
+  && _log "pushed $(git rev-parse --short HEAD)" \
+  || _log "push failed"
