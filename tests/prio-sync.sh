@@ -7,7 +7,10 @@
 # an unlinked priority to the linking agent (once an hour), and asks
 # the guessing agent about my new tickets in no grouping: a guess is an
 # inbox row whose popup (`prio guess`) joins the ticket in Linear or
-# rejects it, and clears the row. Real notify/notif on a temp
+# rejects it, and clears the row. A ticket with no project joins what
+# its parent chain sits in, or (no parent) what all its related tickets
+# sit in, without asking; one still in none with a board row gets a
+# `P?` row, once. Real notify/notif on a temp
 # LOCAL_CONFIG; tmux, osascript and afplay log; Linear is
 # tests/prio-linear-fake and claude a fake answering from a file. BIN
 # defaults to this checkout's bin/.
@@ -27,15 +30,17 @@ done
 # The fake claude answers $_t/<model>.json and logs its tools.
 cat > "$_t/bin/claude" <<X
 #!/bin/sh
-m=""; tools=""
+m=""; tools=""; p=""
 while test \$# -gt 0; do
   case "\$1" in
+    -p) p="\$2"; shift ;;
     --model) m="\$2"; shift ;;
     --allowedTools) tools="\$2"; shift ;;
   esac
   shift
 done
 echo "claude \$m \$tools" >> "$_t/calls"
+printf '%s\n' "\$p" > "$_t/\$m.prompt"
 printf '{"is_error": false, "structured_output": %s}\n' "\$(cat "$_t/\$m.json")"
 X
 chmod +x "$_t/bin/"*
@@ -191,5 +196,92 @@ NOTIFY_CLASS=step NOTIFY_CTX=prio:one:write-the-spec \
 test -n "$(refs)" || no "setup: the old row is there"
 "$_bin/prio" sync
 check "sync: drops prio rows that are no open guess" 'test -z "$(refs)"'
+
+# Inheriting: EXP-1456's shape (related tickets all in one project) and
+# EXP-1480's (its parent in it), a split ticket, a ticket on a board.
+printf 'Onb\n  in https://linear.app/x/project/onb-aaa111aaa111\n' >> "$_f"
+python3 - "$_t/linear.json" <<'X'
+import json, sys
+d = json.load(open(sys.argv[1]))
+onb = {'identifier': 'ABC-41', 'team': {'key': 'ABC'}, 'project': {'slugId': 'aaa111aaa111',
+                                           'name': 'Onb'}}
+also = {'identifier': 'ABC-42', 'team': {'key': 'ABC'}, 'project': {'slugId': 'aaa111aaa111'}}
+loose = {'identifier': 'ABC-43', 'project': None}
+one = {'identifier': 'ABC-47', 'team': {'key': 'ABC'}, 'labels': {'nodes': [{'name': 'One'}]}}
+rel = lambda *xs: {'nodes': [{'type': 'related', 'relatedIssue': x}
+                             for x in xs]}
+d['new'] = ['ABC-40 started me combined branch',
+            'ABC-44 started me follow-up', 'ABC-45 started me split',
+            'ABC-46 started me on a board', 'ABC-49 started me next',
+            'ABC-50 started me closed since']
+d['issues'].update({
+    'ABC-40': {'title': 'combined branch', 'description': 'Folds\nsteps',
+               'team': {'key': 'ABC'},
+               'relations': rel(onb, loose), 'inverseRelations': {
+                   'nodes': [{'type': 'related', 'issue': also}]}},
+    'ABC-44': {'title': 'follow-up', 'parent': {
+        'identifier': 'ABC-40', 'parent': {'identifier': 'ABC-48',
+                                           'labels': {'nodes': [
+                                               {'name': 'one'}]}}}},
+    'ABC-45': {'title': 'split', 'description': 'Line one\n\nLine two',
+               'team': {'key': 'ABC'},
+               'relations': rel(onb, one)},
+    'ABC-49': {'title': 'next', 'parent': {
+        'identifier': 'ABC-51', 'team': {'key': 'ABC'},
+        'relations': rel(onb)}},
+    'ABC-50': {'title': 'closed since', 'state': {'type': 'completed'}},
+    'ABC-46': {'title': 'on a board', 'team': {'key': 'XYZ'},
+               'relations': rel(onb)},
+    'ABC-31': {'title': 'new two', 'relations': rel(loose)}})
+json.dump(d, open(sys.argv[1], 'w'))
+X
+printf '{"guesses": [{"ticket": "ABC-45", "rank": 0}, {"ticket": "ABC-46", "rank": 0}]}' \
+  > "$_t/haiku.json"
+printf 'TODO:\nfeat/abc-46-on-a-board\n' > "$LOCAL_CONFIG/worktrees/repo"
+"$_bin/prio" sync
+until_ 'grep -q "^ABC-46	asked" "$_f.guesses" 2>/dev/null'
+until_ 'test "$(refs)" = "prio::abc-46 "'
+check "inherit: related tickets all in one project join it, unasked" \
+  'grep -q "^update id-ABC-40 {\"projectId\": \"proj-aaa111aaa111\"}" \
+     "$_t/linear.json.calls" && grep -q "^ABC-40	joined	5" "$_f.guesses"'
+check "inherit: the nearest ancestor in a grouping wins (label one)" \
+  'grep -q "^label id-ABC-44 label-one" "$_t/linear.json.calls" \
+   && grep -q "^ABC-44	joined	1" "$_f.guesses"'
+check "inherit: a parent in none lends its related tickets' grouping" \
+  'grep -q "^update id-ABC-49 {\"projectId\": \"proj-aaa111aaa111\"}" \
+     "$_t/linear.json.calls"'
+check "changes: the inherited joins say so" \
+  'test "$(grep -c "	inherit	joined	ABC-4[049]	" "$_f.changes")" = 3'
+check "a ticket closed by the time it is placed is left alone" \
+  'grep -q "^ABC-50	closed" "$_f.guesses" \
+   && ! grep -q "ABC-50" "$_t/haiku.prompt"'
+check "inherit: related tickets split over two priorities go to the guess" \
+  'grep -q "^ABC-45	none	0" "$_f.guesses" \
+   && ! grep -q "id-ABC-45" "$_t/linear.json.calls"'
+check "guess: sees the description and the linked tickets' places" \
+  'grep -q "^  Line one / Line two | related ABC-41 in Onb; related ABC-47 in no project$" \
+     "$_t/haiku.prompt" && ! grep -q "ABC-40" "$_t/haiku.prompt"'
+check "inherit: related tickets in another team don't count" \
+  '! grep -q "^update id-ABC-46" "$_t/linear.json.calls"'
+check "guess: none on a ticket with a board row asks which, once" \
+  'grep -q "^ABC-46	asked	0" "$_f.guesses" \
+   && grep -q "ABC-46 on a board -> which priority?" "$_inbox"'
+"$_bin/prio" sync
+check "ask: the row stays while it is open" 'test "$(refs)" = "prio::abc-46 "'
+printf '5\n' | "$_bin/prio" guess ABC-46 >/dev/null
+check "ask: a digit joins it there and clears the row" \
+  'grep -q "^update id-ABC-46 {\"projectId\": \"proj-aaa111aaa111\"}" \
+     "$_t/linear.json.calls" && test -z "$(refs)"'
+
+printf '{"guesses": [{"ticket": "ABC-31", "rank": 0}]}' > "$_t/haiku.json"
+printf 'TODO:\nfeat/abc-31-new-two\n' > "$LOCAL_CONFIG/worktrees/repo"
+"$_bin/prio" sync
+until_ 'grep -q "^ABC-31	asked" "$_f.guesses" 2>/dev/null'
+check "recheck: an old none that got a board row is asked, title read" \
+  'grep -q "^ABC-31	asked	0" "$_f.guesses" \
+   && grep -q "^ABC-31 new two$" "$_t/haiku.prompt"'
+"$_bin/prio" sync
+check "recheck: once" \
+  'test "$(grep -c "^ABC-31	" "$_f.guesses")" = 4'
 
 exit "$_fail"

@@ -59,8 +59,8 @@ if q.lstrip().startswith('mutation'):
         data['issueUpdate'] = {'success': True}
 elif 'issue(id: $id)' in q:
     i = fx.get('issues', {}).get(var['id'])
-    data['issue'] = i and dict(id='id-' + var['id'], team={'id': 't'},
-                               project=None, **i)
+    data['issue'] = i and {'id': 'id-' + var['id'], 'team': {'id': 't'},
+                           'project': None, **i}
 elif 'teams(' in q:
     data['teams'] = {'nodes': [{'id': 'team-' + var['k']}]}
 elif 'viewer' in q:
