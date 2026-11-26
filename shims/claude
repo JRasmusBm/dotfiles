@@ -17,6 +17,8 @@
 #   `--resume` of a session that had Remote Control on connects it
 #   again regardless (11-11: four sessions revived on a borrowed login
 #   connected, 2.1.322).
+# - `--resume SID` of a session claude-archive gzipped gunzips it first
+#   (claude-unarchive): --resume only finds .jsonl.
 #
 # Both merge into the first --settings (JSON or file) when there is
 # one: a second --settings flag isn't documented to merge. The caller's
@@ -38,6 +40,19 @@ case "${1:-}" in
   mcp|config|update|doctor|install|migrate-installer|setup-token|plugin|\
   --version|-v|--help|-h) exec "$real" "$@" ;;
 esac
+
+for (( i = 1; i <= $#; i++ )); do
+  case "${@[i]}" in
+    -r|--resume) sid="${@[i+1]:-}" ;;
+    --resume=*) sid="${@[i]#--resume=}" ;;
+    *) continue ;;
+  esac
+  [[ -n "$sid" && "$sid" != -* ]] || continue
+  gz=(
+    "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/projects/*/"$sid".jsonl.gz(N)
+  )
+  (( $#gz )) && "${0:A:h}/../bin/claude-unarchive" "$sid" >/dev/null
+done
 
 extra='{}'
 if [[ -r "${CLAUDE_EXTRA_SETTINGS:-}" ]]; then

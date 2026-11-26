@@ -8,7 +8,7 @@
 #   claude-log .          the chat in the active tmux pane (prefix h)
 #   claude-log : [query]  fuzzy pick a session
 #   claude-log -p ...     print to stdout instead of opening
-#   claude-log --path ... print the session's .jsonl path only
+#   claude-log --path ... print the session's .jsonl(.gz) path only
 set -euo pipefail
 
 projects=~/.claude/projects
@@ -31,20 +31,23 @@ pick() {
       fi ;;
     '')
       local dir=$projects/$(pwd -P | sed 's|[^A-Za-z0-9]|-|g')
-      ls -t "$dir"/*.jsonl 2>/dev/null | sed -n 1p ;;
+      { ls -t "$dir"/*.jsonl "$dir"/*.jsonl.gz 2>/dev/null || :; } \
+        | sed -n 1p ;;
     :)
       shift
-      ls -t "$projects"/*/*.jsonl \
+      { ls -t "$projects"/*/*.jsonl "$projects"/*/*.jsonl.gz 2>/dev/null \
+          || :; } \
         | while read -r f; do
-            t=$(jq -r 'select(.type=="custom-title") | .customTitle' \
-              "$f" 2>/dev/null | tail -1)
-            printf '%s\t%s  %s\n' "$f" "$(basename "$f" .jsonl | cut -c1-8)" \
+            t=$(gzip -cdf "$f" | jq -r 'select(.type=="custom-title")
+              | .customTitle' 2>/dev/null | tail -1)
+            printf '%s\t%s  %s\n' "$f" "$(basename "$f" | cut -c1-8)" \
               "${t:-$(basename "$(dirname "$f")")}"
           done \
         | fzf --with-nth=2.. --delimiter='\t' --query="${1:-}" \
         | cut -f1 ;;
     *)
-      ls -t "$projects"/*/"$1"*.jsonl 2>/dev/null | sed -n 1p ;;
+      { ls -t "$projects"/*/"$1"*.jsonl "$projects"/*/"$1"*.jsonl.gz \
+          2>/dev/null || :; } | sed -n 1p ;;
   esac
 }
 
@@ -53,7 +56,7 @@ file=$(pick "$@")
 ((print == 2)) && { echo "$file"; exit; }
 
 render() {
-  jq -r '
+  gzip -cdf "$file" | jq -r '
     def text: if type == "string" then .
       else [.[]? | select(.type == "text") | .text] | join("\n") end;
     select((.isSidechain // false) | not)
@@ -68,7 +71,7 @@ render() {
         | select($t != "")
         | "\n### Claude\n\n\($t)"
       else empty end
-  ' "$file"
+  '
 }
 
 if ((print)); then

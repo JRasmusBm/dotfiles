@@ -36,7 +36,8 @@ flow skill, artifacts node).
 1. The ledger's file column, if it still exists (scratchpads under
    `/private/tmp` get cleaned).
 2. Otherwise rebuild it from the session transcript that published it
-   (`~/.claude/projects/<escaped cwd>/*.jsonl`, subagents included):
+   (`~/.claude/projects/<escaped cwd>/*.jsonl`, subagents included;
+   `.jsonl.gz` once a month old: `gzip -cd`, images there are blanked):
    the last `Write` to that path plus the `Edit`s after it. Write the
    result into this session's scratchpad.
 3. Neither: say the source is gone and what it would take to rebuild.

@@ -1,0 +1,382 @@
+#!/usr/bin/env python3
+"""claude-archive — shrink Claude Code transcripts nobody touched for a
+month, keeping every session (cleanupPeriodDays keeps them for years).
+
+  claude-archive [--dry-run] [--days N] [--limit N] [--backup DIR]
+                 [--only SID] [-j N]
+        Each session whose newest file (<sid>.jsonl and everything
+        under <sid>/) is older than --days (30): in every .jsonl of
+        it, drop the logged API requests (api-request,
+        api-request-blob, api-request-shape rows: no uuid, outside the
+        parentUuid chain), swap each image's base64 for a 1x1 PNG,
+        then gzip it to .jsonl.gz with the same mtime. Atomic per file
+        (tmp, fsync, rename), directory mtimes kept. Skips a session a
+        live Claude process holds (sessions/<pid>.json) or any process
+        has open (lsof). --dry-run prints the byte counts only.
+        --backup DIR hard-links each original there before removing
+        it. --limit N stops after N sessions. Daily via launchd
+        (com.jrasmusbm.claude-archive).
+  claude-unarchive SID|:|.
+  claude-archive restore SID|:|.
+        Gunzip a session back to .jsonl so `claude --resume` sees it
+        (what was stripped stays stripped). SID or a prefix, `:` fuzzy
+        pick, `.` this directory's latest archived session. The claude
+        shim runs it on `--resume SID`.
+
+Readers of transcripts open <sid>.jsonl.gz too (gzip -cdf, gzip.open).
+Tests: CLAUDE_CONFIG_DIR.
+"""
+import argparse
+import concurrent.futures
+import glob
+import gzip
+import json
+import os
+import re
+import shutil
+import subprocess
+import sys
+import time
+
+CLAUDE = os.environ.get('CLAUDE_CONFIG_DIR') or os.path.expanduser(
+    '~/.claude')
+ROOT = os.path.join(CLAUDE, 'projects')
+DROP = {'api-request', 'api-request-blob', 'api-request-shape'}
+PIXEL = ('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk'
+         '+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==')
+KEYS = ('before', 'api', 'image', 'after')
+
+
+def held():
+    """Session ids live Claude processes hold, and paths open anywhere."""
+    sids = set()
+    for f in glob.glob(os.path.join(CLAUDE, 'sessions', '*.json')):
+        try:
+            os.kill(int(os.path.basename(f)[:-5]), 0)
+            with open(f) as h:
+                sids.add(json.load(h).get('sessionId'))
+        except (OSError, ValueError):
+            pass
+    r = subprocess.run(['lsof', '-n', '-w', '-Fn'], capture_output=True,
+                       text=True, errors='replace')
+    roots = ('n' + ROOT + '/', 'n' + os.path.realpath(ROOT) + '/')
+    paths = {os.path.realpath(ln[1:]) for ln in r.stdout.splitlines()
+             if ln.startswith(roots)}
+    return sids, paths
+
+
+def sessions():
+    """(project dir, sid) for every session on disk."""
+    for p in sorted(os.scandir(ROOT), key=lambda e: e.name):
+        if not p.is_dir():
+            continue
+        sids = set()
+        for e in os.scandir(p.path):
+            n = e.name
+            if n.endswith('.jsonl'):
+                sids.add(n[:-6])
+            elif n.endswith('.jsonl.gz'):
+                sids.add(n[:-9])
+            elif e.is_dir():
+                sids.add(n)
+        for s in sorted(sids):
+            yield p.path, s
+
+
+def files_of(proj, sid):
+    """(newest mtime, plain .jsonl files, every path) of one session."""
+    every = [os.path.join(proj, sid + x) for x in ('.jsonl', '.jsonl.gz')]
+    d = os.path.join(proj, sid)
+    if os.path.isdir(d):
+        every.append(d)
+        for top, dirs, fs in os.walk(d):
+            every += [os.path.join(top, x) for x in dirs + fs]
+    newest, plain = 0, []
+    for p in every:
+        try:
+            st = os.lstat(p)
+        except OSError:
+            continue
+        newest = max(newest, st.st_mtime)
+        if p.endswith('.jsonl') and os.path.isfile(p):
+            plain.append(p)
+    return newest, plain, every
+
+
+def scrub(o):
+    """Swap base64 image data for PIXEL in place; how many swapped."""
+    n = 0
+    if isinstance(o, dict):
+        s = o.get('source')
+        if (o.get('type') == 'image' and isinstance(s, dict)
+                and isinstance(s.get('data'), str) and s['data'] != PIXEL):
+            o['source'] = dict(type='base64', media_type='image/png',
+                               data=PIXEL)
+            n += 1
+        for v in o.values():
+            n += scrub(v)
+    elif isinstance(o, list):
+        for v in o:
+            n += scrub(v)
+    return n
+
+
+def strip(line, st):
+    if b'"type":"api-request' in line:
+        try:
+            if json.loads(line).get('type') in DROP:
+                st['api'] += len(line)
+                return None
+        except ValueError:
+            return line
+    if b'"type":"image"' in line:
+        try:
+            d = json.loads(line)
+        except ValueError:
+            return line
+        if scrub(d):
+            new = json.dumps(d, ensure_ascii=False,
+                             separators=(',', ':')).encode()
+            new += b'\n' if line.endswith(b'\n') else b''
+            st['image'] += len(line) - len(new)
+            return new
+    return line
+
+
+class Count:
+    def __init__(self):
+        self.n = 0
+
+    def write(self, b):
+        self.n += len(b)
+        return len(b)
+
+    def flush(self):
+        pass
+
+
+def fsync_dir(d):
+    fd = os.open(d, os.O_RDONLY)
+    try:
+        os.fsync(fd)
+    finally:
+        os.close(fd)
+
+
+def shrink(src, dry, backup):
+    """Strip and gzip one file; byte counts, or None when it changed."""
+    st0 = os.stat(src)
+    st = dict.fromkeys(KEYS, 0)
+    st['before'] = st0.st_size
+    dst = src + '.gz'
+    tmp = f'{dst}.tmp{os.getpid()}'
+    out = Count() if dry else open(tmp, 'wb')
+    try:
+        with gzip.GzipFile(filename='', mode='wb', fileobj=out,
+                           mtime=int(st0.st_mtime)) as gz, \
+                open(src, 'rb') as f:
+            for line in f:
+                new = strip(line, st)
+                if new is not None:
+                    gz.write(new)
+        if dry:
+            st['after'] = out.n
+            return st
+        out.flush()
+        os.fsync(out.fileno())
+        out.close()
+        st['after'] = os.path.getsize(tmp)
+        now = os.stat(src)
+        if (now.st_mtime_ns, now.st_size) != (st0.st_mtime_ns,
+                                              st0.st_size):
+            os.unlink(tmp)
+            return None
+        os.utime(tmp, ns=(st0.st_atime_ns, st0.st_mtime_ns))
+        if backup:
+            b = os.path.join(backup, os.path.relpath(src, ROOT))
+            os.makedirs(os.path.dirname(b), exist_ok=True)
+            if not os.path.exists(b):
+                os.link(src, b)
+        os.rename(tmp, dst)
+        fsync_dir(os.path.dirname(dst))
+        os.unlink(src)
+        return st
+    except BaseException:
+        if not dry:
+            out.close()
+            if os.path.exists(tmp):
+                os.unlink(tmp)
+        raise
+
+
+def keep_mtimes(dirs):
+    return {d: os.stat(d) for d in dirs if os.path.isdir(d)}
+
+
+def put_mtimes(saved):
+    for d, s in saved.items():
+        try:
+            os.utime(d, ns=(s.st_atime_ns, s.st_mtime_ns))
+        except OSError:
+            pass
+
+
+def archive_session(proj, sid, plain, dry, backup):
+    dirs = {proj} | {os.path.dirname(p) for p in plain}
+    saved = keep_mtimes(dirs)
+    tot = dict.fromkeys(KEYS, 0)
+    try:
+        for p in plain:
+            st = shrink(p, dry, backup)
+            if st is None:
+                return None
+            for k in KEYS:
+                tot[k] += st[k]
+    finally:
+        if not dry:
+            put_mtimes(saved)
+    return tot
+
+
+def gb(n):
+    return f'{n / 1e9:.2f}G'
+
+
+def archive(a):
+    cutoff = time.time() - a.days * 86400
+    sids, open_paths = held()
+    todo, skipped = [], dict(live=0, open=0, recent=0)
+    for proj, sid in sessions():
+        if a.only and not sid.startswith(a.only):
+            continue
+        newest, plain, every = files_of(proj, sid)
+        if not plain:
+            continue
+        if newest >= cutoff:
+            skipped['recent'] += 1
+        elif sid in sids:
+            skipped['live'] += 1
+        elif any(os.path.realpath(p) in open_paths for p in every):
+            skipped['open'] += 1
+        else:
+            todo.append((proj, sid, plain))
+        if a.limit and len(todo) >= a.limit:
+            break
+    tot = dict.fromkeys(KEYS, 0)
+    done = changed = 0
+    with concurrent.futures.ProcessPoolExecutor(a.j) as ex:
+        futs = [ex.submit(archive_session, proj, sid, plain, a.dry_run,
+                          a.backup) for proj, sid, plain in todo]
+        for (proj, sid, _), f in zip(todo, futs):
+            try:
+                st = f.result()
+            except OSError as e:
+                print(f'claude-archive: {sid}: {e}', file=sys.stderr)
+                continue
+            if st is None:
+                changed += 1
+                continue
+            done += 1
+            for k in KEYS:
+                tot[k] += st[k]
+    verb = 'would archive' if a.dry_run else 'archived'
+    print(f"{time.strftime('%F %T')} {verb} {done} sessions: "
+          f"{gb(tot['before'])} -> {gb(tot['after'])} "
+          f"(api-request {gb(tot['api'])}, images {gb(tot['image'])} "
+          f"stripped); skipped recent={skipped['recent']} "
+          f"live={skipped['live']} open={skipped['open']} "
+          f"written-meanwhile={changed}")
+
+
+def gunzip(gz):
+    dst = gz[:-3]
+    if os.path.exists(dst):
+        os.unlink(gz)
+        return
+    st0 = os.stat(gz)
+    tmp = f'{dst}.tmp{os.getpid()}'
+    try:
+        with gzip.open(gz, 'rb') as f, open(tmp, 'wb') as out:
+            shutil.copyfileobj(f, out, 1 << 20)
+            out.flush()
+            os.fsync(out.fileno())
+        os.utime(tmp, ns=(st0.st_atime_ns, st0.st_mtime_ns))
+        os.rename(tmp, dst)
+        fsync_dir(os.path.dirname(dst))
+        os.unlink(gz)
+    except BaseException:
+        if os.path.exists(tmp):
+            os.unlink(tmp)
+        raise
+
+
+def archived():
+    return sorted(glob.glob(os.path.join(ROOT, '*', '*.jsonl.gz')),
+                  key=os.path.getmtime, reverse=True)
+
+
+def pick(arg):
+    if arg == ':':
+        day = lambda p: time.strftime('%F', time.localtime(
+            os.path.getmtime(p)))
+        rows = '\n'.join(
+            f'{p}\t{day(p)}  {os.path.basename(p)[:8]}  '
+            f'{os.path.basename(os.path.dirname(p))}' for p in archived())
+        r = subprocess.run(['fzf', '--with-nth=2..', '--delimiter=\t'],
+                           input=rows, capture_output=False,
+                           stdout=subprocess.PIPE, text=True)
+        return r.stdout.split('\t')[0] or None
+    if arg == '.':
+        d = os.path.join(ROOT, re.sub('[^A-Za-z0-9]', '-',
+                                      os.path.realpath('.')))
+        fs = [p for p in archived() if os.path.dirname(p) == d]
+        return fs[0] if fs else None
+    fs = glob.glob(os.path.join(ROOT, '*', glob.escape(arg) + '*.jsonl.gz'))
+    if len({os.path.basename(p) for p in fs}) > 1:
+        sys.exit(f'claude-unarchive: {arg} matches {len(fs)} sessions')
+    return fs[0] if fs else None
+
+
+def restore(arg):
+    gz = pick(arg)
+    if not gz:
+        sys.exit(f'claude-unarchive: no archived session for {arg}')
+    proj = os.path.dirname(gz)
+    sid = os.path.basename(gz)[:-9]
+    d = os.path.join(proj, sid)
+    gzs = [gz] + glob.glob(os.path.join(glob.escape(d), '**', '*.jsonl.gz'),
+                           recursive=True)
+    saved = keep_mtimes({os.path.dirname(p) for p in gzs})
+    try:
+        for p in gzs:
+            gunzip(p)
+    finally:
+        put_mtimes(saved)
+    print(gz[:-3])
+
+
+def main():
+    if os.path.basename(sys.argv[0]) == 'claude-unarchive' \
+            or sys.argv[1:2] == ['restore']:
+        args = sys.argv[1:] if sys.argv[1:2] != ['restore'] \
+            else sys.argv[2:]
+        if len(args) != 1 or args[0] in ('-h', '--help'):
+            sys.exit(__doc__)
+        return restore(args[0])
+    ap = argparse.ArgumentParser(
+        prog='claude-archive', description=__doc__,
+        formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument('--dry-run', action='store_true')
+    ap.add_argument('--days', type=float, default=30)
+    ap.add_argument('--limit', type=int, default=0)
+    ap.add_argument('--backup')
+    ap.add_argument('--only')
+    ap.add_argument('-j', type=int, default=2)
+    a = ap.parse_args()
+    if a.backup:
+        a.backup = os.path.abspath(a.backup)
+    archive(a)
+
+
+if __name__ == '__main__':
+    main()

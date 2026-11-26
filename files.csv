@@ -51,3 +51,4 @@ False,launchd/com.jrasmusbm.docker-slot.plist,Library/LaunchAgents/com.jrasmusbm
 False,launchd/com.jrasmusbm.docker-guard.plist,Library/LaunchAgents/com.jrasmusbm.docker-guard.plist
 False,launchd/com.jrasmusbm.wt-agent-sweep.plist,Library/LaunchAgents/com.jrasmusbm.wt-agent-sweep.plist
 False,launchd/com.jrasmusbm.repo-sync-dotfiles.plist,Library/LaunchAgents/com.jrasmusbm.repo-sync-dotfiles.plist
+False,launchd/com.jrasmusbm.claude-archive.plist,Library/LaunchAgents/com.jrasmusbm.claude-archive.plist
