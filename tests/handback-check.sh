@@ -13,6 +13,11 @@ trap 'rm -rf "$_t"' EXIT
 export LOCAL_CONFIG="$_t/cfg"
 mkdir -p "$LOCAL_CONFIG/worktrees"
 _fail=0
+# A fake gh: FAKE_CI is "<pr> <checks still running>" of the open PR.
+mkdir -p "$_t/bin"
+printf '#!/bin/sh\necho "${FAKE_CI:-}"\n' > "$_t/bin/gh"
+chmod +x "$_t/bin/gh"
+export PATH="$_t/bin:$PATH"
 
 git init -q -b main "$_t/repo"
 git -C "$_t/repo" commit -q --no-verify --allow-empty -m init
@@ -33,8 +38,9 @@ _tx() {
 # _run NAME WANT(block|pass) CWD TEXT [EXTRA_JSONL]
 _run() {
   _tx "$_t/tx.jsonl" "$4" "${5:-}"
-  _out="$(jq -cn --arg p "$_t/tx.jsonl" --arg c "$3" \
-    '{transcript_path:$p, cwd:$c, session_id:"s1"}' | (cd "$3" && bash "$_hook"))"
+  _out="$(jq -cn --arg p "$_t/tx.jsonl" --arg c "$3" --arg m "$4" \
+    '{transcript_path:$p, cwd:$c, session_id:"s1",
+      last_assistant_message:$m}' | (cd "$3" && bash "$_hook"))"
   _got=pass
   printf '%s' "$_out" | grep -q '"decision": *"block"' && _got=block
   if test "$_got" = "$2"; then
@@ -106,8 +112,22 @@ _run 'PR wait, live subagent: passes' pass "$_wt" "$_prwait" "$_agent"
 _run 'hand-back list: blocked' block "$_t/repo" \
   "Done with A. Still needs doing: B and C."
 
+_ci="PR #9 is up; CI is running."
+FAKE_CI="9 2" _run 'CI running, no wait: blocked' block "$_wt" "$_ci"
+FAKE_CI="9 0" _run 'CI done: passes' pass "$_wt" "$_ci"
+_run 'CI running, no open PR: passes' pass "$_wt" "$_ci"
+FAKE_CI="9 2" _run 'CI running, asks me: passes' pass "$_wt" \
+  "PR #9 is up. Keep the old flag or drop it?"
+FAKE_CI="9 2" _run 'CI running, main checkout: passes' pass "$_t/repo" \
+  "$_ci"
+printf 'abc-1\tfeat/jrb/abc-1\t2099-01-01T10:00\tCI on #9\t0\t%s\n' \
+  "$_t/repo" > "$LOCAL_CONFIG/worktrees/repo.waiting"
+FAKE_CI="9 2" _run 'CI running, wt w8: passes' pass "$_wt" "$_ci"
+rm "$LOCAL_CONFIG/worktrees/repo.waiting"
+
 _log="$LOCAL_CONFIG/handback-blocks.log"
-if test "$(wc -l < "$_log")" -eq 9 \
+if test "$(wc -l < "$_log")" -eq 10 \
+  && test "$(grep -c "	ci-wait: #9" "$_log")" -eq 1 \
   && test "$(grep -c "	promise: " "$_log")" -eq 3 \
   && test "$(grep -c "	pr-wait: " "$_log")" -eq 5; then
   echo "ok   every block logged"

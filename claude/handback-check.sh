@@ -9,7 +9,11 @@
 #    would bring it back, so I end up asking "status?", or
 #  - waits on a PR ("waiting for #123") with no `wt rb` on it (or a
 #    `wt w8` naming it): only rb wakes on merge, close and carry. One
-#    such turn slept 17.7h on a PR closed for another (RAS-84).
+#    such turn slept 17.7h on a PR closed for another (RAS-84), or
+#  - ends with CI still running on the worktree's open PR and no `wt
+#    w8`, `wt sz` or `wt rb`, no background agent or shell and no
+#    question for me: run-slot closes the idle chat and nothing
+#    brings it back for a red check (RAS-131).
 # Each block is logged to $LOCAL_CONFIG/handback-blocks.log so the
 # my-impact daily review can tell whether it overcorrects (same list
 # re-stopped, scope corrections right after a block).
@@ -41,6 +45,12 @@ block() {
   exit 0
 }
 
+# A real question for me (not "Shall I / Want me to …?").
+asks_me() {
+  grep -Eo '[^.?!]*\?' <<<"$text" \
+    | grep -Eqiv '^\s*[-*0-9.)]*\s*(shall I|should I|want me to|do you want me to|say (go|the word)|ok to)'
+}
+
 # --- hand-back ----------------------------------------------------
 
 handback() {
@@ -53,11 +63,7 @@ handback() {
   grep -Eqi "needs? your (go-ahead|login|MFA|approval)|only you can" \
     <<<"$text" && return 0
 
-  # A real question for me (not "Shall I / Want me to …?") lets it stop.
-  if grep -Eo '[^.?!]*\?' <<<"$text" \
-    | grep -Eqiv '^\s*[-*0-9.)]*\s*(shall I|should I|want me to|do you want me to|say (go|the word)|ok to)'; then
-    return 0
-  fi
+  asks_me && return 0
 
   block "$phrase" "You ended with work left (\"$phrase\") and no real question for Rasmus. Give this moment to a subagent (flow skill, waiting node) and act on its answer."
 }
@@ -127,6 +133,26 @@ pr_wait() {
   block "pr-wait: $phrase" "You wait on a PR (\"$phrase\") but no wt rb is set on it. A w8 only fires at its deadline and wt merged only on merge: run wt rb #$n, which wakes you when it merges, closes, or another PR carries it (a wt w8 naming #$n for your own PR's CI). Then end the turn."
 }
 
+# --- CI running, no wait --------------------------------------------
+
+ci_wait() {
+  board_of || return 0
+  for f in "$board.waiting" "$board.snoozed" "$board.blocked"; do
+    [ -f "$f" ] && awk -F '\t' -v s="$slug" '$1 == s { f = 1 } END { exit !f }' "$f" \
+      && return 0
+  done
+  asks_me && return 0
+  live_background && return 0
+  # Checks of the branch's open PR that haven't finished.
+  run=$(cd "$cwd" && timeout 6 gh pr view --json state,number,statusCheckRollup \
+    -q 'select(.state == "OPEN") | "\(.number) \([.statusCheckRollup[]
+      | select((.status // .state) | test("^(IN_PROGRESS|QUEUED|PENDING|WAITING|EXPECTED)$"))]
+      | length)"' 2>/dev/null)
+  [ "${run##* }" -gt 0 ] 2>/dev/null || return 0
+  block "ci-wait: #${run% *}" "CI still runs on #${run% *} and nothing brings you back when it ends: no wt w8, wt sz or wt rb on this worktree and no background agent or shell. Set wt w8 <estimate> \"CI on #${run% *}\" (wt-pr-watch tells you if it goes red; the deadline brings you back to see it green), then end the turn."
+}
+
 handback
 pr_wait
 promise
+ci_wait

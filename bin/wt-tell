@@ -4,8 +4,8 @@
 # Claude (its `cli` pane), busy or not, <prompt>, once per worktree
 # and key ($LOCAL_CONFIG/wt-told). No session (or tmux down, as
 # after a reboot) or no Claude in its cli window: starts it with
-# `claude --continue` there (plain `claude` when the worktree has
-# no conversation yet; the session `run-slot close` closed there,
+# `claude --continue` there (a failed one pings, never a fresh chat:
+# `claude-pane failed`; the session `run-slot close` closed there,
 # if it did; claude-fresh resume follows its successors) and hands the tell to `run-slot pend`, which delivers it
 # once Claude is up and keeps the session open until then: exit 0,
 # though not yet told, so the caller stops retrying. WT_TELL_SID names
@@ -129,21 +129,15 @@ _cmd="$(tmux display-message -p -t "$_pane" '#{pane_current_command}' \
   2>/dev/null)" || _cmd=""
 case "$_cmd" in zsh|bash|sh|fish) _shell=1 ;; *) _shell="" ;; esac
 # A wrapper script (cr) shows as bash while Claude runs under it.
-if test -n "$_shell"; then
-  _tty="$(tmux display-message -p -t "$_pane" '#{pane_tty}' 2>/dev/null)"
-  if ps -o tpgid=,pgid=,comm= -t "${_tty#/dev/}" 2>/dev/null \
-    | awk '$1 == $2 && $3 ~ /(^|\/)claude$/ { found = 1 }
-      END { exit !found }'; then
-    _shell=""
-  fi
-fi
+test -z "$_shell" || ! claude-pane runs "$_pane" "$_cmd" || _shell=""
 if { test -z "$_pane" || test -n "$_shell"; } \
   && test -z "${WT_TELL_NO_REVIVE:-}" && test -d "$_root"; then
   if _gate "revive:$(basename "$_root")"; then
     if test -n "$_pane"; then
+      _a="$(claude-fresh resume - "$_root" 2>/dev/null)" || _a=--continue
       run-slot revive "$_pane" >/dev/null \
-        || tmux send-keys -t "$_pane" "hash -r; claude $(claude-fresh \
-          resume - "$_root" 2>/dev/null || echo --continue) || claude" Enter
+        || tmux send-keys -t "$_pane" \
+          "hash -r; claude $_a || claude-pane failed $_a" Enter
     else
       ( cd "$_root" && _WT_CONTINUE=1 WT_NO_ATTACH=1 \
         wt open "$(basename "$_root")" ) >/dev/null 2>&1 || true

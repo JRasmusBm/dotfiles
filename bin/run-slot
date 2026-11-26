@@ -47,8 +47,10 @@
   run-slot revive PANE|SID|.
         bring a closed session back in its pane (shell there), else
         in a new window; `.` is this pane (claude-fresh resume)
-  run-slot focus PANE  tmux focus hook: revive PANE if run-slot
-                       closed the Claude that ran there; in a main
+  run-slot focus PANE  tmux focus hook: revive, in PANE (a shell),
+                       the Claude run-slot closed there, else in a
+                       worktree's session its last closed one (after
+                       a tmux restart pane ids change); in a main
                        checkout's pane (many chats) only while that
                        chat has an inbox row: landing there on the
                        way to another chat must not bring it back
@@ -637,10 +639,41 @@ def timers(sid, since=0):
     return None
 
 
+# A turn that ends asking me, in its last 4 lines: a question, often
+# followed by "I recommend yes." (a last-line "?" caught none of 151
+# asking closes, RAS-131), or asking me to act: say "go", run `/mcp`,
+# `! cmd`, your call, once you OK. Measured over 413 closes: catches
+# 144 of 151 that asked, keeps 28 of 262 that didn't open longer.
+ASK = re.compile(
+    r'\?(\s|$|["”*_`)])'
+    r'|\b(say|reply|type|answer)\b[^.\n]{0,20}["“`]'
+    r'|\b(say|reply) (go|yes|ship|send)\b'
+    r'|\btell me (when|if|which|whether)\b'
+    r'|\byour (call|ok|word|go|answer|decision|approval|input|pick)\b'
+    r'|\b(waits?|waiting) (on|for) (you|your)\b'
+    r'|\bneeds? (you|your)\b'
+    r'|\b(please|could you|can you|would you) \w+'
+    r'|^\s*`?! \S'
+    r'|\b(yes or no|questions? above|(two|both|the) questions)\b'
+    r'|\b(once|after|when|until) you (ok|approve|send|resolve|reply|answer'
+    r'|say|decide|pick|confirm)'
+    r'|\b(my (pick|recommendation)|i recommend|decisions? (are |is )?'
+    r'(still )?open|left open for you)\b'
+    r"|\bif you're ok\b|\brun `?/(mcp|login)\b"
+    r'|\b(allow|approve) (that|this|it)\b'
+    r'|\bunless you\b|\bif you (want|prefer|agree|disagree|say)\b',
+    re.I | re.M)
+NO_ASK = re.compile(r'nothing (here )?(needs|is waiting on) you'
+                    r'|no (action|response) (needed|requested)'
+                    r'|nothing for you', re.I)
+
+
 def asks(text):
-    """The turn ended on a question for me (its last line)."""
-    lines = [ln.strip() for ln in text.strip().splitlines() if ln.strip()]
-    return bool(lines) and lines[-1].rstrip('*_` )').endswith('?')
+    """The turn ended asking me something (ASK)."""
+    lines = [re.sub(r'https?://\S+', '', ln).strip()
+             for ln in text.strip().splitlines() if ln.strip()]
+    t = '\n'.join(lines[-4:])
+    return bool(ASK.search(t)) and not NO_ASK.search(t)
 
 
 def rss_mb(pid):
@@ -757,11 +790,20 @@ def needs_open(sid, name):
     return (waiting(name) or timers(sid) or kept({'tmux': name}))
 
 
+def kept_row(r, sid):
+    """A closed row stays while its worktree does, however long it
+    sits (a focus comes back to it); a revived one for 7 days."""
+    if r[1] == sid:
+        return False
+    if r[7] == 'closed':
+        return os.path.isdir(r[4])
+    return NOW - float(r[0]) < 7 * 86400
+
+
 def park(sid, pane, name, cwd):
     ctx, _, end = last_turn(sid)
     with Lock():
-        rs = [r for r in rows(CLOSED) if r[1] != sid
-              and NOW - float(r[0]) < 7 * 86400]
+        rs = [r for r in rows(CLOSED) if kept_row(r, sid)]
         rs.append([int(NOW), sid, pane_key(pane), name, cwd, ctx,
                    int(end), 'closed'])
         write(CLOSED, rs)
@@ -804,8 +846,7 @@ def close(dry, verbose):
             else:
                 log('close-failed', sid, room, f'{name} {pane} still up')
                 continue
-            rs = [r for r in rows(CLOSED) if r[1] != sid
-                  and NOW - float(r[0]) < 7 * 86400]
+            rs = [r for r in rows(CLOSED) if kept_row(r, sid)]
             rs.append([int(NOW), sid, pane, name, s.get('cwd', ''), ctx,
                        int(end), 'closed'])
             write(CLOSED, rs)
@@ -821,11 +862,11 @@ def in_inbox(sid):
                for r in rows(os.path.join(CONF, 'notifications')))
 
 
-def revive(key, focus=False):
-    """Resume the session closed in pane or with sid KEY: in its pane
-    while that is still the shell it left in the same tmux session (a
-    restarted tmux reuses pane ids), else in a new window; on focus
-    only in its pane."""
+def revive(key, into=None):
+    """Resume the session closed in pane or with sid KEY: in pane INTO
+    (a focus) or its own pane while that is still a shell in the same
+    tmux session (a restarted tmux reuses pane ids), else in a new
+    window; given INTO, only there."""
     if key == '.':
         key = os.environ.get('TMUX_PANE', '')
     if key.startswith('%'):
@@ -838,6 +879,7 @@ def revive(key, focus=False):
         if not hit:
             return 1
         _, sid, pane, name, cwd, ctx, end = hit[:7]
+        pane = into or pane
         at = (tmux('display-message', '-p', '-t', pane,
                    '#{session_name}\t#{pane_current_command}') or '\t')
         sess, cmd = at.split('\t', 1)
@@ -846,10 +888,10 @@ def revive(key, focus=False):
             # existed has it cached past the shim (Remote Control off
             # on a borrowed login).
             args = sh('claude-fresh', 'resume', sid) or f'--resume {sid}'
-            tmux('send-keys', '-t', pane, f'hash -r; claude {args}',
-                 'Enter')
+            tmux('send-keys', '-t', pane, f'hash -r; claude {args}'
+                 f' || claude-pane failed {args}', 'Enter')
             where = pane
-        elif focus:
+        elif into:
             return 1
         else:
             where = sh('claude-pane', 'open', sid) or '?'
@@ -861,6 +903,37 @@ def revive(key, focus=False):
         f'{name} {where} after={gap / 60:.0f}m ctx={ctx} cost={cost}')
     print(where)
     return 0
+
+
+def focused(pane):
+    """The closed chat a focus on pane brings back, or None: the one
+    closed in that pane, else, in a worktree's session, its last
+    closed chat (a restarted tmux gave its panes new ids, RAS-131).
+    Only into a shell; in a main checkout (many chats) only while
+    that chat has an inbox row: landing there on the way to another
+    chat must not bring it back. Never a chat running again, or one
+    used since it closed (resumed by hand, then exited)."""
+    at = (tmux('display-message', '-p', '-t', pane,
+               '#{session_name}\t#{pane_current_command}') or '\t')
+    sess, cmd = at.split('\t', 1)
+    if cmd not in ('zsh', 'bash', 'sh', 'fish'):
+        return None
+    rs = [r for r in rows(CLOSED) if r[3] == sess]
+    hit = next((r for r in reversed(rs) if r[7] == 'closed'
+                and pane_key(r[2]) == pane), None)
+    wt = bool(rs) and '/.worktrees/' in rs[-1][4]
+    if not hit and wt:
+        last = max(rs, key=lambda r: float(r[0]))
+        hit = last if last[7] == 'closed' else None
+    if not hit or not (wt or in_inbox(hit[1])):
+        return None
+    for s in sessions():
+        if s.get('sessionId') == hit[1] or wt and (
+                s.get('tmux') or '').split(':')[0] == sess:
+            return None
+    if last_turn(hit[1])[2] > float(hit[0]) + 60:
+        return None
+    return hit[1]
 
 
 def ls():
@@ -924,13 +997,10 @@ def main(a):
         return 0
     if cmd == 'revive' and len(a) == 2:
         return revive(a[1])
-    if cmd == 'focus' and len(a) == 2:
-        hit = next((r for r in reversed(rows(CLOSED))
-                    if pane_key(r[2]) == pane_key(a[1])
-                    and r[7] == 'closed'), None)
-        # A worktree's pane is its one chat's; a main checkout's is not.
-        if hit and ('/.worktrees/' in hit[4] or in_inbox(hit[1])):
-            revive(a[1], focus=True)
+    if cmd == 'focus' and len(a) == 2 and a[1]:
+        sid = focused(pane_key(a[1]))
+        if sid:
+            revive(sid, into=pane_key(a[1]))
         return 0
     if cmd == 'ls':
         ls()

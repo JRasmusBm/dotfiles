@@ -26,9 +26,10 @@ _rs="$LOCAL_CONFIG/run-slots"
 
 # claude: forks the zsh below, so tmux shows `claude` as the pane's
 # command. It writes its session file (startedAt now, or $FAKE_STARTED
-# ms), logs argv and each line typed to $PWD/.got, shows an empty
-# prompt only once $PWD/.ready exists (Claude still starting) and
-# exits on /exit.
+# ms), logs argv and each line typed or each claude-msg message (its
+# messaging socket, served by $FAKE/msg.py) to $PWD/.got, shows an
+# empty prompt only once $PWD/.ready exists (Claude still starting)
+# and exits on /exit.
 cat > "$FAKE/claude.c" <<'X'
 #include <stdlib.h>
 #include <unistd.h>
@@ -49,9 +50,12 @@ cat > "$FAKE_ZSH" <<'X'
 sid="${FAKE_SID:-}"
 test "${1:-}" = --resume && sid="$2"
 w="$(tmux display-message -p -t "$TMUX_PANE" '#S:#{window_id}')"
+m="$CLAUDE_CONFIG_DIR/sessions/$$.sock"
+python3 "$FAKE/msg.py" "$m" $$ &
 {
   printf '{"sessionId":"%s","cwd":"%s","tmux":"%s.%s",' "$sid" "$PWD" "$w" \
     "$TMUX_PANE"
+  printf '"messagingSocketPath":"%s",' "$m"
   printf '"startedAt":%s,"status":"idle"}\n' \
     "${FAKE_STARTED:-$(($(date +%s) * 1000))}"
 } > "$CLAUDE_CONFIG_DIR/sessions/$$.json"
@@ -63,6 +67,43 @@ while read -r l; do
   test "$l" = /exit && exit
   echo "said $l" >> .got; idle
 done
+X
+# msg.py SOCK PID: PID's messaging socket, up once .ready exists, for
+# as long as PID lives; logs each claude-msg message's body as a typed
+# line.
+cat > "$FAKE/msg.py" <<'X'
+import json, os, socket, sys, time
+sp, pid = sys.argv[1], int(sys.argv[2])
+while not os.path.exists('.ready'):
+    time.sleep(0.2)
+    os.kill(pid, 0)
+s = socket.socket(socket.AF_UNIX)
+s.bind(sp); s.listen(4); s.settimeout(0.5)
+while True:
+    try:
+        os.kill(pid, 0)
+    except OSError:
+        break
+    try:
+        c, _ = s.accept()
+    except socket.timeout:
+        continue
+    c.settimeout(5)
+    b = b''
+    while True:
+        d = c.recv(4096)
+        if not d:
+            break
+        b += d
+    for l in b.decode().splitlines():
+        m = json.loads(l)
+        if m.get('type') == 'user':
+            body = m['message']['content'].split('\n')[1:-1]
+            open('.got', 'a').write('said %s\n' % ' '.join(body))
+            sys.stdout.write('\n\u276f \n-- INSERT --\n')
+            sys.stdout.flush()
+    c.close()
+os.unlink(sp)
 X
 for _c in notify notif; do
   printf '#!/bin/sh\necho "$*" >> "$FAKE/%s"\n' "$_c" > "$FAKE/bin/$_c"
@@ -89,14 +130,15 @@ _given() {
   tmux -f /dev/null new-session -d -s _ /bin/sh
 }
 
-# _transcript SID: its last turn ended 64 hours ago, on no question.
+# _transcript SID [TEXT]: its last turn ended 64 hours ago, on TEXT
+# (no question).
 _transcript() {
   _at="$(date -u -r $(($(date +%s) - 230400)) +%Y-%m-%dT%H:%M:%S)"
   printf '%s\n' \
     "{\"type\":\"user\",\"timestamp\":\"$_at.000Z\",\"message\":{}}" \
     "{\"type\":\"assistant\",\"timestamp\":\"$_at.000Z\",$(
       )\"message\":{\"content\":[{\"type\":\"text\",$(
-      )\"text\":\"Done.\"}]}}" \
+      )\"text\":\"${2:-Done.}\"}]}}" \
     > "$CLAUDE_CONFIG_DIR/projects/p/$1.jsonl"
 }
 
@@ -183,6 +225,51 @@ run-slot close >/dev/null
 _check "focus: a chat revived on focus is not closed a minute later" \
   'test "$(_cmd foc)" = claude \
     && run-slot close -n -v | grep -q "^keep	foc	started 0m ago"'
+
+# --- focus after a tmux restart (RAS-131): the worktree's session is
+# rebuilt, its shell pane has a new id, the closed row the old one
+_given
+_old="$(_closed rst)"; : > "$_t/w/.worktrees/rst/.ready"
+tmux kill-server; tmux -f /dev/null new-session -d -s _ /bin/sh
+tmux new-session -d -s other /bin/sh
+tmux new-session -d -s rst -n cli -c "$_t/w/.worktrees/rst" /bin/sh
+_p="$(tmux display-message -p -t =rst:cli '#{pane_id}')"
+_check "restart: the rebuilt pane has another id" 'test "$_p" != "$_old"'
+run-slot focus "$(tmux list-panes -t =other -F '#{pane_id}')" >/dev/null
+_check "restart: a focus in another session revives nothing" '! _up rst'
+run-slot focus "$_p" >/dev/null
+_wait '_up rst'
+_check "restart: a focus on the worktree's shell resumes its chat" \
+  'grep -qx "argv --resume srst" "$_t/w/.worktrees/rst/.got"'
+# Closed again, then resumed by hand and exited: not brought back.
+_given
+_p="$(_closed hnd)"; : > "$_t/w/.worktrees/hnd/.ready"
+_transcript shnd; sed -i.bak "s/\"timestamp\":\"[^\"]*\"/\"timestamp\":\"$(
+  date -u -r $(($(date +%s) + 120)) +%Y-%m-%dT%H:%M:%S).000Z\"/" \
+  "$CLAUDE_CONFIG_DIR/projects/p/shnd.jsonl"
+run-slot focus "$_p" >/dev/null
+_check "restart: a chat used since it closed is not brought back" \
+  '! grep -q argv "$_t/w/.worktrees/hnd/.got" 2>/dev/null'
+# An old closed row (8 days) stays while its worktree does.
+_given
+_closed eig >/dev/null; : > "$_t/w/.worktrees/eig/.ready"
+gsed -i "s/^[0-9]*\(\tseig\t\)/$(($(date +%s) - 691200))\1/" "$_rs/closed"
+_closed nxt >/dev/null
+run-slot park snew "$(tmux display-message -p -t =nxt:cli '#{pane_id}')" \
+  nxt "$_t/w/.worktrees/nxt" >/dev/null
+_check "expiry: an 8-day-old closed row survives the next close" \
+  'grep -q "	seig	" "$_rs/closed"'
+
+# --- asks (RAS-131): a question before a trailer, or a "say go"
+_given
+_transcript sq1 'Should I delete those 2 rows? I recommend yes.'
+_transcript sq2 'Please run /mcp, reconnect, then say \\\"go\\\".'
+_transcript sq3 'Shipped. Nothing here needs you.'
+_check "asks: a question then I recommend yes keeps it" \
+  'test "$(run-slot needs-open sq1 q1)" = "asked me"'
+_check "asks: please run /mcp, say go keeps it" \
+  'test "$(run-slot needs-open sq2 q2)" = "asked me"'
+_check "asks: nothing here needs you does not" '! run-slot needs-open sq3 q3'
 
 # --- control: started and idle 64 hours ago, nothing on its way
 _given

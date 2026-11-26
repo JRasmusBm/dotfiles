@@ -736,7 +736,10 @@ _wt_open_with_claude() {
   elif test -n "${_WT_CONTINUE:-}" && test "$_created" = true; then
     # A big chat goes on fresh, from a brief (claude-fresh).
     _a="$(claude-fresh resume - "$_target" 2>/dev/null)" || _a=--continue
-    tmux send-keys -t "$_session:cli" "claude $_a || claude" Enter \
+    # A failed resume stays on screen and pings: a fresh chat would
+    # bury the one this worktree was in.
+    tmux send-keys -t "$_session:cli" \
+      "claude $_a || claude-pane failed $_a" Enter \
       2>/dev/null || true
   fi
 

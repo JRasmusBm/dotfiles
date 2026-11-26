@@ -24,8 +24,8 @@
 #     it closed, so a focus on that pane or a tell resumes it.
 #     A missing session is rebuilt like `wt open` does (its .tmux, else
 #     the run/vim/cli layout) under its old name, and `claude --resume
-#     <sid>` (no sid: `claude --continue || claude`; via claude-fresh
-#     resume) is typed into a
+#     <sid>` (no sid: `claude --continue`; via claude-fresh resume;
+#     a failed one pings: `claude-pane failed`) is typed into a
 #     window it just built with the old window's name (`cli`), else
 #     into a new window of that name. Panes it didn't build are never touched.
 #   - A later run checks each started pane runs Claude, and once a
@@ -83,7 +83,10 @@ _claude_panes() {
   tmux -u list-panes -a -F \
     "#{pane_id}$_t#S$_t#W$_t#{pane_current_command}$_t#{pane_current_path}" \
     2>/dev/null | while IFS="$_t" read -r _p _s _w _c _d; do
-      _is_claude "$_c" || continue
+      # A Claude under cr shows as bash: its session file still
+      # names the pane (claude-pane map).
+      _is_claude "$_c" || printf '%s\n' "$_m" | cut -f1 | grep -qxF "$_p" \
+        || continue
       _row="$(printf '%s\n' "$_m" | awk -F "$_t" -v p="$_p" \
         '$1 == p { print $2 "\t" $3; exit }')"
       _sid="${_row%%"$_t"*}"
@@ -181,10 +184,12 @@ _start() {
   fi
   if test "$_sid" != -; then
     _a="$(claude-fresh resume "$_sid" 2>/dev/null)" || _a="--resume $_sid"
-    tmux send-keys -t "$_pane" "$_claude $_a" Enter
+    tmux send-keys -t "$_pane" "$_claude $_a || claude-pane failed $_a" \
+      Enter
   else
     _a="$(claude-fresh resume - "$_cwd" 2>/dev/null)" || _a=--continue
-    tmux send-keys -t "$_pane" "$_claude $_a || $_claude" Enter
+    tmux send-keys -t "$_pane" "$_claude $_a || claude-pane failed $_a" \
+      Enter
   fi
   _st=started
 }
