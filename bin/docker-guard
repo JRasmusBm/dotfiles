@@ -11,6 +11,8 @@
 #   - any process under /Applications/Docker.app, Docker's Linux VM
 #     (com.apple.Virtualization.VirtualMachine) or docker-scout whose
 #     RSS exceeds DOCKER_GUARD_MB (4096).
+# Both match the executable, never the arguments: a `claude -p`
+# whose prompt mentions docker-scout is not docker-scout.
 # Each kill goes to $LOCAL_CONFIG/memlog/docker-guard.log and `notify`.
 # Run by launchd (com.jrasmusbm.docker-guard, KeepAlive).
 #
@@ -26,21 +28,22 @@ mkdir -p "$_dir"
 _log="$_dir/docker-guard.log"
 _mb="${DOCKER_GUARD_MB:-4096}"
 _every="${DOCKER_GUARD_INTERVAL:-1}"
-# Bracketed so the patterns, passed to awk as -v values, never match
-# awk's own command line.
-_app='^/Applications/Docke[r].app/'
-_vm='com[.]apple[.]Virtualization[.]VirtualMachin[e]'
-_match="${DOCKER_GUARD_MATCH:-$_app|$_vm|docker-scou[t]}"
-_sbom="${DOCKER_GUARD_SBOM:-docker-scou[t] scout sbom}"
+# Anchored at the command's start, so they see the executable (and,
+# for sbom, its first arguments), never awk's own -v values.
+_app='^/Applications/Docker[.]app/'
+_vm='^[^ ]*/com[.]apple[.]Virtualization[.]VirtualMachine( |$)'
+_scout='^([^ ]*/)?docker-scout( |$)'
+_match="${DOCKER_GUARD_MATCH:-$_app|$_vm|$_scout}"
+_sbom="${DOCKER_GUARD_SBOM:-^([^ ]*/)?docker-scout scout sbom( |$)}"
 _notify="${DOCKER_GUARD_NOTIFY:-notify}"
 
 _pass() {
   ps -axo pid=,rss=,command= | awk -v kb="$((_mb * 1024))" \
     -v m="$_match" -v s="$_sbom" -v lf="$_log" -v nf="$_notify" '
-    $0 ~ s || $2 > kb {
+    {
       cmd = $0
       sub(/^ *[0-9]+ +[0-9]+ +/, "", cmd)
-      if (!(cmd ~ s || cmd ~ m)) next
+      if (!(cmd ~ s || ($2 > kb && cmd ~ m))) next
       system("kill -9 " $1)
       "date \"+%F %T\"" | getline now
       close("date \"+%F %T\"")
@@ -56,5 +59,5 @@ _pass() {
 case "${1:-}" in
   once) _pass ;;
   "") while :; do _pass; sleep "$_every"; done ;;
-  *) sed -n '3,22p' "$0" | cut -c3-; exit 2 ;;
+  *) sed -n '3,24p' "$0" | cut -c3-; exit 2 ;;
 esac
