@@ -19,7 +19,8 @@ chats back.
   claude-fresh ctx SID
         Print the context tokens of SID's last turn (0: unknown).
   claude-fresh next SID
-        Print SID's latest successor (SID itself when it has none).
+        Print SID's latest successor that started (a transcript, or
+        running); SID itself when it has none.
         claude-pane follows it, so the inbox, Slack watches and tells
         that keep the old id reach the fresh chat.
 
@@ -50,6 +51,20 @@ def sh(*args):
 def transcript(sid):
     f = glob.glob(os.path.join(CLAUDE, 'projects', '*', sid + '.jsonl'))
     return f[0] if f else None
+
+
+def running(sid):
+    """Whether a live Claude process holds sid (a fresh chat may not
+    have written its transcript yet)."""
+    for f in glob.glob(os.path.join(CLAUDE, 'sessions', '*.json')):
+        try:
+            os.kill(int(os.path.basename(f)[:-5]), 0)
+            with open(f) as h:
+                if json.load(h).get('sessionId') == sid:
+                    return True
+        except (OSError, ValueError):
+            pass
+    return False
 
 
 def latest(d):
@@ -165,8 +180,11 @@ def nxt(sid):
                     edges[p[1]] = p[2]
     except FileNotFoundError:
         pass
+    # A successor that never started (no transcript, not running)
+    # is no chat: the chain stops before it.
     seen = {sid}
-    while sid in edges and edges[sid] not in seen:
+    while (sid in edges and edges[sid] not in seen
+           and (transcript(edges[sid]) or running(edges[sid]))):
         sid = edges[sid]
         seen.add(sid)
     return sid

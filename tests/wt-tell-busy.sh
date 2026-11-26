@@ -32,6 +32,7 @@ echo "\$*" >> "\$FAKE/pane"
 case "\$1" in
   of) echo $_sid ;;
   cwd) test -n "\$FAKE_CWD" && echo "\$FAKE_CWD" ;;
+  *) test -n "\$FAKE_PANE" && echo "\$FAKE_PANE" || exit 1 ;;
 esac
 EOF
 cat > "$FAKE/claude-msg" <<'EOF'
@@ -166,5 +167,25 @@ check "exits 1 (still pending)" 'test "$_rc" = 1'
 check "revive gated" 'grep -q "^gate tell revive:$_gone -- " "$FAKE/slot"'
 check "not pinged" 'test ! -s "$FAKE/pinged"'
 unset WT_TELL_SID RUN_SLOT_PENDING FAKE_CWD
+
+# RAS-111: the sid's chat was handed on (claude-fresh); claude-pane
+# finds its successor's pane, and the tell goes to the chat running
+# there, not the old sid.
+_old=cccccccc-0000-0000-0000-000000000000
+_pn="$(tmux display-message -p -t "=w:cli" '#{pane_id}')"
+echo "== 11. sid handed on, successor runs in a pane"
+fresh; status busy; export WT_TELL_SID="$_old" FAKE_PANE="$_pn"; tell k11
+check "exits 0" 'test "$_rc" = 0'
+check "claude-msg got the running chat, not the old sid" \
+  'test "$(cat "$FAKE/msg")" = "$_sid|hello k11"'
+check "told recorded" 'told k11'
+
+echo "== 12. pending run, gate refuses (75)"
+fresh; status idle; export RUN_SLOT_PENDING=1 FAKE_GATE_RC=75; tell k12
+check "exits 1 (still pending)" 'test "$_rc" = 1'
+check "claude-msg not called" 'test ! -s "$FAKE/msg"'
+check "wt-told not written" 'test ! -s "$LOCAL_CONFIG/wt-told"'
+unset WT_TELL_SID RUN_SLOT_PENDING FAKE_PANE
+FAKE_GATE_RC=0
 
 exit "$_fail"

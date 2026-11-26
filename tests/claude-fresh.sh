@@ -65,12 +65,23 @@ printf '%s\t%s\t%s\n' 0 11111111-0000-0000-0000-000000000000 \
   44444444 >> "$LOCAL_CONFIG/claude-successors"
 _n1="$(claude-fresh next 11111111-0000-0000-0000-000000000000)"
 printf '%s\t%s\t%s\n' 0 "$_n1" 33333333 >> "$LOCAL_CONFIG/claude-successors"
+chat 44444444 "$_w" 1000
+chat 33333333 "$_big" 1000
 check "next follows a chain of successors" \
   'test "$(claude-fresh next 11111111-0000-0000-0000-000000000000)" = 33333333'
+# RAS-111: a successor with no transcript never started (af828140 was
+# handed to 8f21f7be, which never ran): the chain stops before it.
+printf '%s\t%s\t%s\n' 0 33333333 55555555 >> "$LOCAL_CONFIG/claude-successors"
+check "next stops before a successor that never started" \
+  'test "$(claude-fresh next 11111111-0000-0000-0000-000000000000)" = 33333333'
+chat af828140 "$_w" 1000
+printf '%s\t%s\t%s\n' 0 af828140 8f21f7be >> "$LOCAL_CONFIG/claude-successors"
+check "next of a chat handed to one that never started is itself" \
+  'test "$(claude-fresh next af828140)" = af828140'
 
 echo "== claude-pane follows successors"
-check "a replaced chat with no pane has no cwd" \
-  'test -z "$(claude-pane cwd 11111111-0000-0000-0000-000000000000)"'
+check "a replaced chat's cwd is its successor's" \
+  'test "$(claude-pane cwd 11111111-0000-0000-0000-000000000000)" = "$_big"'
 
 echo "== hand"
 # A pane whose command reads as `claude` (a tiny binary of that name

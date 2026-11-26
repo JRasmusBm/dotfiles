@@ -170,14 +170,18 @@ fi
 # or a draft is open, and hands it over at the agent's next turn. A
 # busy agent holds its run-slot already; an idle one starts a turn, so
 # it waits for room, and run-slot runs it then (queued: the caller
-# stops retrying).
-_chat="${_sid:-$(claude-pane of "$_pane" 2>/dev/null)}" || _chat=""
+# stops retrying). The chat that runs in the pane, not the sid: a
+# chat handed on (claude-fresh) runs there as its successor. Inside a
+# pending run a refused gate is not delivery: exit 1 keeps it pending.
+_chat="$(claude-pane of "$_pane" 2>/dev/null)" || _chat=""
+_chat="${_chat:-$_sid}"
 test -n "$_chat" || exit 1
 if ! jq -e --arg s "$_chat" \
   'select(.sessionId == $s and .status == "busy")' \
   "${CLAUDE_CONFIG_DIR:-$HOME/.claude}"/sessions/*.json >/dev/null 2>&1
 then
   _gate "tell:$(basename "$_root"):$_key" || {
+    test -z "$_pending" || exit 1
     echo "queued: run-slot tells $_slug once there is room"
     exit 0
   }
