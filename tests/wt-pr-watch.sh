@@ -5,10 +5,13 @@
 # lines, while other checks still run; once per head sha; the finished
 # run's tell names only failures not told yet) and CodeRabbit tells
 # (RAS-93: a review of the head that opens threads tells their count
-# and titles, once per review). A temp repo with one worktree on
+# and titles, once per review; RAS-126: from the 3rd round still
+# opening a Critical or Major, it asks "split it, or ship with
+# deferrals?" and pings me once per PR). A temp repo with one worktree on
 # branch b; gh and wt-tell are fakes first on PATH (gh answers `pr
 # list` by running its --jq over $FAKE/prs.json, and `api --paginate
-# .../pulls/<path>` over $FAKE/api/<path, / as _>.json, with jq).
+# .../pulls/<path>` over $FAKE/api/<path, / as _>.json, with jq; notify is
+# a fake too, logging to $FAKE/pings).
 # Nothing real is touched. BIN defaults to this checkout's bin/.
 
 set -u
@@ -61,7 +64,11 @@ grep -qxF "$1	$2" "$LOCAL_CONFIG/wt-told" 2>/dev/null && exit 0
 printf '%s\n%s\n----\n' "$2" "$4" >> "$FAKE/tells"
 printf '%s\t%s\n' "$1" "$2" >> "$LOCAL_CONFIG/wt-told"
 EOF
-chmod +x "$FAKE/gh" "$FAKE/wt-tell"
+cat > "$FAKE/notify" <<'EOF'
+#!/bin/sh
+printf '%s %s\n' "$NOTIFY_CLASS" "$2" >> "$FAKE/pings"
+EOF
+chmod +x "$FAKE/gh" "$FAKE/wt-tell" "$FAKE/notify"
 export PATH="$FAKE:$_bin:$PATH"
 
 # _pr <sha> <check>... — PR #7 on b; a check is name:workflow:state
@@ -141,20 +148,24 @@ check 'no early tell' 'test "$(told ci-early:7:s4)" = 0'
 check 'finished-run tell names it' 'test "$(told ci:7:s4)" = 1'
 
 # _review <id> <sha> — CodeRabbit review <id> of <sha>, added to #7's
-# reviews. _thread <review id> <title> [reply] — a comment it posted.
+# reviews. _thread <review id> <title> [reply|<severity>] — a comment
+# it posted (default Minor).
 mkdir -p "$FAKE/api"
 echo '[]' > "$FAKE/api/7_reviews.json"
+echo '[]' > "$FAKE/api/7_comments.json"
 _review() {
   jq --argjson i "$1" --arg s "$2" \
     '. + [{id: $i, commit_id: $s, user: {login: "coderabbitai[bot]"}}]' \
     "$FAKE/api/7_reviews.json" | sponge "$FAKE/api/7_reviews.json"
-  echo '[]' > "$FAKE/api/7_reviews_$1_comments.json"
 }
 _thread() {
-  _f="$FAKE/api/7_reviews_$1_comments.json"
-  jq --arg t "$2" --arg r "${3:-}" '. + [{path: "src/a.ts",
-    in_reply_to_id: (if $r == "" then null else 1 end),
-    body: "<!-- x -->\n\n**<picture></picture> Minor** · **Bug**\n\n**\($t)**\n\nmore"}]' \
+  _f="$FAKE/api/7_comments.json"
+  _sev="${3:-Minor}"; test "$_sev" != reply || _sev=Minor
+  jq --argjson i "$1" --arg t "$2" --arg r "${3:-}" --arg v "$_sev" \
+    '. + [{path: "src/a.ts", pull_request_review_id: $i,
+    user: {login: "coderabbitai[bot]"},
+    in_reply_to_id: (if $r == "reply" then 1 else null end),
+    body: "<!-- x -->\n\n**<picture></picture> \($v)** · **Bug**\n\n**\($t)**\n\nmore"}]' \
     "$_f" | sponge "$_f"
 }
 
@@ -162,7 +173,7 @@ echo '# CodeRabbit reviews the head and opens two threads'
 export CR=2026-11-19T10:00:00Z
 _pr s5 test:check-services:run
 _review 501 s5; _thread 501 'Await the promise.'
-_thread 501 'Guard the null.'; _thread 501 'Reply text' reply
+_thread 501 'Guard the null.' Major; _thread 501 'Reply text' reply
 _run
 check 'one tell for the review' 'test "$(told cr:7:501)" = 1'
 check 'it counts the new threads' \
@@ -171,6 +182,7 @@ check 'it gives their titles' \
   'grep -qx -- "- Await the promise. (src/a.ts)" "$FAKE/tells" \
     && grep -qx -- "- Guard the null. (src/a.ts)" "$FAKE/tells"'
 check 'not the badge line' '! grep -q "picture" "$FAKE/tells"'
+check 'round 1 with a Major: no question' '! grep -q "split it" "$FAKE/tells"'
 _run
 check 'once per review' 'test ! -s "$FAKE/tells"'
 
@@ -198,5 +210,40 @@ unset TELL_DOWN
 _run
 check 'retried next run, singular' \
   'test "$(told cr:7:504)" = 1 && grep -q "opened 1 thread:" "$FAKE/tells"'
+
+pinged() { test -f "$FAKE/pings" && grep -c "$1" "$FAKE/pings"; }
+
+echo '# round 4 (501, 503 of an older sha, 504 before it) opens a Major'
+export CR=2026-11-19T11:00:00Z
+_pr s8 test:check-services:run
+_review 505 s8; _thread 505 'Second-round major.' Major
+_run
+check 'tells the threads' 'test "$(told cr:7:505)" = 1'
+check 'it counts the rounds' 'grep -q "round 4 on this PR" "$FAKE/tells"'
+check 'it gives Majors per round' \
+  'grep -q "per round: 1,0,0,1)" "$FAKE/tells"'
+check 'it asks the question' \
+  'grep -q "split it, or ship with" "$FAKE/tells"'
+check 'pings me, blocked' \
+  'test "$(pinged "^blocked #7: 4 CodeRabbit rounds, Majors 1,0,0,1")" = 1'
+
+echo '# round 5, only Minors: no question'
+export CR=2026-11-19T11:20:00Z
+_pr s9 test:check-services:run
+_review 506 s9; _thread 506 'A nit.'
+_run
+check 'tells the threads' 'test "$(told cr:7:506)" = 1'
+check 'no question' '! grep -q "split it" "$FAKE/tells"'
+
+echo '# round 6, a Critical: asks again, no second ping'
+export CR=2026-11-19T11:40:00Z
+_pr s10 test:check-services:run
+_review 507 s10; _thread 507 'Data loss.' Critical
+_thread 507 'Also major.' Major
+_run
+check 'asks with the Criticals counted' \
+  'grep -q "round 6 on this PR" "$FAKE/tells" \
+    && grep -q "per round: 1,0,0,1,0,2)" "$FAKE/tells"'
+check 'one ping per PR' 'test "$(pinged "#7:")" = 1'
 
 exit "$_fail"
