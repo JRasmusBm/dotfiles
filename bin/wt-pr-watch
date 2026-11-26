@@ -16,7 +16,9 @@
 #   - CodeRabbit reviewed the head commit and opened new threads: the
 #     tell gives their count and titles, once per review. A re-review
 #     with no new threads sends nothing: a tell per push only re-read
-#     the PR mid-fix and burned tokens.
+#     the PR mid-fix and burned tokens. From its 3rd such round, one
+#     still opening Critical or Major threads asks "split it, or ship
+#     with deferrals?", and pings me too (once per PR).
 #   - the stale bot labelled it (it closes the PR 7 days later; once
 #     per head sha).
 # Conflicts with dev get no tell: a rebase goes stale as dev moves and
@@ -90,33 +92,72 @@ _errors() {
 # _coderabbit <worktree> <pr> <sha> — tell each CodeRabbit review of
 # <sha> that opened threads, once per review (cr:<pr>:<review id>); one
 # that opened none is marked told here. Fails while a tell was not
-# taken, so the caller retries next run.
+# taken, so the caller retries next run. A round is a CodeRabbit
+# review that opened threads, any sha; from round 3 on, one still
+# opening a Critical or Major adds the rounds and their Majors and asks
+# "split it, or ship with deferrals?" (RAS-126: #11829 took 7 rounds,
+# 65 threads), and pings me the same, once per PR (cr-rounds:<pr>).
 _coderabbit() {
   _ids="$(timeout 20 gh api --paginate \
     "repos/{owner}/{repo}/pulls/$2/reviews" --jq '.[]
     | select((.user.login | test("coderabbit")) and .commit_id == "'"$3"'")
     | .id' 2>/dev/null)" || return 1
-  _rc=0
+  _new=""
   for _id in $_ids; do
-    ! grep -qxF "$1	cr:$2:$_id" "$_told" 2>/dev/null || continue
-    _threads="$(timeout 20 gh api --paginate \
-      "repos/{owner}/{repo}/pulls/$2/reviews/$_id/comments" --jq '.[]
-      | select(.in_reply_to_id == null)
-      | "- " + ([.body | split("\n")[] | select(test("^\\*\\*[^<*]"))
+    grep -qxF "$1	cr:$2:$_id" "$_told" 2>/dev/null || _new="$_new $_id"
+  done
+  test -n "$_new" || return 0
+  # <review id> TAB <severity> TAB - <title> (<path>) per thread
+  # CodeRabbit opened on the PR; the severity is its badge line's word.
+  _all="$(timeout 20 gh api --paginate \
+    "repos/{owner}/{repo}/pulls/$2/comments" --jq '.[]
+    | select(.in_reply_to_id == null and (.user.login | test("coderabbit")))
+    | [.pull_request_review_id,
+      ([.body | split("\n")[]
+        | capture("</picture> (?<s>[A-Za-z]+)\\*\\*") | .s][0] // "-"),
+      "- " + ([.body | split("\n")[] | select(test("^\\*\\*[^<*]"))
           | gsub("\\*\\*"; "")][0] // "(untitled)")
-        + " (" + .path + ")"' 2>/dev/null)" || { _rc=1; continue; }
+        + " (" + .path + ")"] | @tsv' 2>/dev/null)" || return 1
+  _rc=0
+  for _id in $_new; do
+    _threads="$(printf '%s\n' "$_all" | awk -F'\t' -v i="$_id" \
+      '$1 == i { print $3 }')"
     if test -z "$_threads"; then
       echo "$1	cr:$2:$_id" >> "$_told"
       continue
     fi
     _n="$(printf '%s\n' "$_threads" | wc -l | tr -d ' ') thread"
     test "$_n" = "1 thread" || _n="${_n}s"
+    # Critical and Major threads per round up to this review, in order.
+    _majors="$(printf '%s\n' "$_all" | awk -F'\t' -v i="$_id" '
+      $1 != "" && $1 + 0 <= i + 0 {
+        r[$1]; m[$1] += ($2 == "Critical" || $2 == "Major") }
+      END { for (k in r) print k, m[k] }' | sort -n | cut -d' ' -f2 \
+      | paste -sd, -)"
+    _round="$(printf '%s\n' "$_majors" | tr ',' '\n' | wc -l | tr -d ' ')"
+    _rounds=""
+    if test "$_round" -ge 3 && test "${_majors##*,}" -gt 0; then
+      _rounds="
+This is CodeRabbit's round $_round on this PR, still with new Critical \
+or Major findings (Critical and Major per round: $_majors). It is not \
+converging. Before more fixes, decide: split it, or ship with \
+deferrals? I got the same question; tell me your pick and why.
+"
+      if ! grep -qxF "$1	cr-rounds:$2" "$_told" 2>/dev/null; then
+        _pane="$(tmux display-message -p -t "=$(basename "$1"):cli" \
+          '#{pane_id}' 2>/dev/null)" || _pane=""
+        ( cd "$1" && TMUX_PANE="$_pane" NOTIFY_CLASS=blocked \
+          notify "Claude: $(basename "$1")" "#$2: $_round CodeRabbit \
+rounds, Majors $_majors. Split it, or ship with deferrals?" )
+        echo "$1	cr-rounds:$2" >> "$_told"
+      fi
+    fi
     wt-tell "$1" "cr:$2:$_id" \
       "#$2 CodeRabbit opened $_n, no agent session" \
       "$(flow-lead red-check) CodeRabbit reviewed PR #$2 and opened \
 $_n:
 $_threads
-
+$_rounds
 Read them, then send what is right to a fresh builder subagent briefed \
 with it: this thread writes no code. Push, reply on the threads, and \
 tell me what it was." || _rc=1
