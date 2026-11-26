@@ -19,6 +19,7 @@ _title="${1:-Notification}"
 _msg="${2:-done}"
 _sound="${3:-/System/Library/Sounds/Glass.aiff}"
 
+_cfg="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}"
 _here="$PWD"
 [ -n "$TMUX_PANE" ] && _here="$(tmux display-message -p -t "$TMUX_PANE" \
   '#{pane_current_path}' 2>/dev/null || echo "$PWD")"
@@ -26,7 +27,7 @@ case "$_here" in
   */.worktrees/?*)
     _wt="${_here#*/.worktrees/}"
     _repo="${_here%%/.worktrees/*}"
-    _sf="${LOCAL_CONFIG:-$HOME/.local-config}/worktrees/${_repo##*/}.snoozed"
+    _sf="$_cfg/worktrees/${_repo##*/}.snoozed"
     [ -f "$_sf" ] && awk -F '\t' -v s="${_wt%%/*}" '$1 == s { f = 1 }
       END { exit !f }' "$_sf" && exit 0
     ;;
@@ -56,46 +57,44 @@ fi
 # Plain `>>` of one short line is atomic, so concurrent
 # notifiers don't clobber each other; dedup happens at view
 # time in `notif`.
-if [ -n "$LOCAL_CONFIG" ]; then
-  _inbox="$LOCAL_CONFIG/notifications"
-  if [ -n "$TMUX_PANE" ]; then
-    _ctx="$(tmux display-message -p -t "$TMUX_PANE" '#S:#W.#P' \
-      2>/dev/null)"
-    _path="$(tmux display-message -p -t "$TMUX_PANE" \
-      '#{pane_current_path}' 2>/dev/null)"
-  else
-    _ctx="${NOTIFY_CTX:-$(basename "$PWD")}"
-    _path="$PWD"
-  fi
-  mkdir -p "$(dirname "$_inbox")"
-  # One row per notification: newlines and tabs in the title or
-  # message would split it into junk rows (RAS-47), so they become a
-  # separator here (the toast above keeps them).
-  _flat() {
-    printf '%s\n' "$1" | awk '{ gsub(/[\t\r]/, " ") }
-      $0 !~ /^ *$/ { printf "%s%s", (n++ ? " \302\267 " : ""), $0 }'
-  }
-  # Row: epoch  ctx  title  message  path  pane  mode  class  sid
-  # [ref]. NOTIFY_SID (a Claude session id) finds the chat again once
-  # its pane is gone (`claude-pane`); the path is the anchor `notif`
-  # reopens from otherwise (e.g. after `wt rt`/`rm`).
-  _row="$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s' \
-    "$(date +%s)" "$_ctx" "$(_flat "$_title")" "$(_flat "$_msg")" \
-    "$_path" \
-    "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" "${NOTIFY_SID:-}" \
-    "${NOTIFY_REF:+	$NOTIFY_REF}")"
-  if [ "$_class" = fyi ]; then
-    # Needs nothing from me: cleared on arrival, so it shows in the
-    # recent list and the log but never waits in the inbox (RAS-21:
-    # half the pending rows were a "done" that needed nothing).
-    printf '%s\t%s\n' "$(date +%s)" "$_row" \
-      | tee -a "$_inbox.log" >> "$_inbox.recent"
-    exit 0
-  fi
-  printf '%s\n' "$_row" >> "$_inbox"
-  focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
-  # Update the status-bar counter (`notif count`) right away.
-  if [ -n "$TMUX_PANE" ]; then
-    tmux refresh-client -S 2>/dev/null || true
-  fi
+_inbox="$_cfg/notifications"
+if [ -n "$TMUX_PANE" ]; then
+  _ctx="$(tmux display-message -p -t "$TMUX_PANE" '#S:#W.#P' \
+    2>/dev/null)"
+  _path="$(tmux display-message -p -t "$TMUX_PANE" \
+    '#{pane_current_path}' 2>/dev/null)"
+else
+  _ctx="${NOTIFY_CTX:-$(basename "$PWD")}"
+  _path="$PWD"
+fi
+mkdir -p "$(dirname "$_inbox")"
+# One row per notification: newlines and tabs in the title or
+# message would split it into junk rows (RAS-47), so they become a
+# separator here (the toast above keeps them).
+_flat() {
+  printf '%s\n' "$1" | awk '{ gsub(/[\t\r]/, " ") }
+    $0 !~ /^ *$/ { printf "%s%s", (n++ ? " \302\267 " : ""), $0 }'
+}
+# Row: epoch  ctx  title  message  path  pane  mode  class  sid
+# [ref]. NOTIFY_SID (a Claude session id) finds the chat again once
+# its pane is gone (`claude-pane`); the path is the anchor `notif`
+# reopens from otherwise (e.g. after `wt rt`/`rm`).
+_row="$(printf '%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s%s' \
+  "$(date +%s)" "$_ctx" "$(_flat "$_title")" "$(_flat "$_msg")" \
+  "$_path" \
+  "${TMUX_PANE:-}" "${NOTIFY_MODE:-}" "$_class" "${NOTIFY_SID:-}" \
+  "${NOTIFY_REF:+	$NOTIFY_REF}")"
+if [ "$_class" = fyi ]; then
+  # Needs nothing from me: cleared on arrival, so it shows in the
+  # recent list and the log but never waits in the inbox (RAS-21:
+  # half the pending rows were a "done" that needed nothing).
+  printf '%s\t%s\n' "$(date +%s)" "$_row" \
+    | tee -a "$_inbox.log" >> "$_inbox.recent"
+  exit 0
+fi
+printf '%s\n' "$_row" >> "$_inbox"
+focus-log notif-in "${_ctx%%:*}" "$_title" 2>/dev/null || true
+# Update the status-bar counter (`notif count`) right away.
+if [ -n "$TMUX_PANE" ]; then
+  tmux refresh-client -S 2>/dev/null || true
 fi

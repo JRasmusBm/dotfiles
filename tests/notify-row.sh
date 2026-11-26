@@ -1,7 +1,7 @@
 #!/bin/sh
 #
 # tests/notify-row.sh [BIN] — RAS-47: a multi-line `notify` writes one
-# inbox row, and the readers (`notif`, `notif-depth`, `wt-cold --ping`)
+# inbox row (RAS-117: even with LOCAL_CONFIG unset), and the readers (`notif`, `notif-depth`, `wt-cold --ping`)
 # skip a line too short to be a row instead of crashing. Nothing real
 # is touched: LOCAL_CONFIG and the one board repo are a temp dir, and
 # tmux, the toast and Linear are fakes first on PATH. BIN defaults to
@@ -61,6 +61,15 @@ import importlib.machinery as m, importlib.util as u, sys
 l = m.SourceFileLoader(\"d\", sys.argv[1]); s = u.spec_from_loader(\"d\", l)
 d = u.module_from_spec(s); l.exec_module(d); print(len(d.inbox()))
 " "$_bin/notif-depth")" = 1'
+
+# RAS-117: a LaunchAgent without LOCAL_CONFIG (cswap-auto's pace ping)
+# still lands in the inbox, at the one default.
+(cd "$_t" && unset LOCAL_CONFIG && HOME="$_t/home" NOTIFY_CLASS=env \
+  notify Tokens "Run out Tue")
+check 'notify with LOCAL_CONFIG unset writes a row at the default' \
+  'grep -q "Tokens" "$_t/home/.config/jrasmusbm/notifications"'
+check 'every LaunchAgent sets LOCAL_CONFIG' \
+  'test -z "$(grep -L LOCAL_CONFIG "$_root"/launchd/*.plist)"'
 
 git init -q "$_t/app"
 git -C "$_t/app" commit -q --allow-empty -m init

@@ -56,7 +56,7 @@ _own_login() {
 # claude.ai (11-05: archived ones kept coming back), so switch it off.
 _disconnect() { claude-rc-off | grep -v '^busy '; }
 
-_state="${LOCAL_CONFIG:-$HOME/.config}"
+_state="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}"
 
 # Pane $1 got /remote-control in the last 10 minutes: one that drops
 # again at once would otherwise get it (and a push) every tick.
@@ -164,7 +164,7 @@ _pace_tick() {
   if [ "$_h" -ge 15 ]; then _slot=15
   elif [ "$_h" -ge 10 ]; then _slot=10
   else return 0; fi
-  _stamp="${LOCAL_CONFIG:-$HOME/.config}/cswap-pace-stamp"
+  _stamp="$_state/cswap-pace-stamp"
   _key="$(gdate +%F)-$_slot"
   [ "$(cat "$_stamp" 2>/dev/null)" = "$_key" ] && return 0
   echo "$_key" > "$_stamp"
