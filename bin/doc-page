@@ -99,14 +99,17 @@ def item_html(text, base):
     return render_line(text, base)
 
 
+ITEM = r"\s*([-*]|\d+\.) "
+
+
 def join_items(lines):
     """An item's indented continuation lines join the item."""
     out = []
     for raw in lines:
         line = raw.rstrip()
         if (line.startswith("  ") and out
-                and re.match(r"\s*[-*] ", out[-1])
-                and not re.match(r"\s*[-*] ", line)):
+                and re.match(ITEM, out[-1])
+                and not re.match(ITEM, line)):
             out[-1] += " " + line.strip()
         else:
             out.append(line)
@@ -114,13 +117,14 @@ def join_items(lines):
 
 
 def render(md, base):
-    body, in_list, title, gap = [], False, "Doc", True
+    body, in_list, title, gap = [], None, "Doc", True
     for line in join_items(md.splitlines()):
         was_gap, gap = gap, not line.strip()
-        item = re.match(r"\s*[-*] (.*)", line)
-        if in_list and not item:
-            body.append("</ul>")
-            in_list = False
+        item = re.match(ITEM + "(.*)", line)
+        tag = item and ("ol" if item.group(1)[0].isdigit() else "ul")
+        if in_list and tag != in_list:
+            body.append(f"</{in_list}>")
+            in_list = None
         if not line.strip():
             continue
         if line.startswith("# "):
@@ -132,9 +136,9 @@ def render(md, base):
             body.append(f'<p class="now">{inline(line)}</p>')
         elif item:
             if not in_list:
-                body.append("<ul>")
-                in_list = True
-            text, cls = item.group(1), ""
+                body.append(f"<{tag}>")
+                in_list = tag
+            text, cls = item.group(2), ""
             cb = re.match(r"\[( |x)\] (.*)", text)
             if cb:
                 cls = ' class="cb"'
@@ -148,7 +152,7 @@ def render(md, base):
         else:
             body.append(f"<p>{render_line(line, base)}</p>")
     if in_list:
-        body.append("</ul>")
+        body.append(f"</{in_list}>")
     return title, "\n".join(body)
 
 
