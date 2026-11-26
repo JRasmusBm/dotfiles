@@ -18,6 +18,13 @@ every Claude session. Speaks newline-delimited JSON-RPC on stdio.
   $LOCAL_CONFIG/chrome-mcp/<tmux session>/); the session's `pool`
   lease (stack or browser) going away (polled every 60 s); with no
   lease, CHROME_MCP_IDLE seconds (600) without a request.
+- Login: with a `chrome-mcp-login` executable on PATH (the private
+  overlay ships one), Chrome also gets a remote-debugging port, and
+  each start launches it (a list_pages call of the proxy's own),
+  then runs `chrome-mcp-login WS_URL` in the session's cwd before
+  the client's request is forwarded, so the first browser call
+  lands logged in. The hook owns the credentials and prints none;
+  its output goes to stderr. Failure is logged, never fatal.
 
 Bump the pinned version:
   npm view chrome-devtools-mcp version
@@ -44,7 +51,9 @@ LOCAL_CONFIG = os.environ.get("LOCAL_CONFIG") or os.path.join(HOME, ".config")
 IDLE = int(os.environ.get("CHROME_MCP_IDLE", "600"))
 SLOT_POLL = 60
 INIT_TIMEOUT = 60
+LOGIN_TIMEOUT = 60
 INIT_ID = "chrome-mcp-proxy:init"
+LAUNCH_ID = "chrome-mcp-proxy:launch"
 
 
 def log(msg):
@@ -55,6 +64,7 @@ def log(msg):
 class Proxy:
     def __init__(self, profile, label, args):
         self.profile = profile
+        self.login_hook = shutil.which("chrome-mcp-login")
         self.server_cmd = [
             "--viewport",
             "1440x900",
@@ -63,13 +73,15 @@ class Proxy:
             f"--chromeArg=--window-name=Claude · {label}",
             *args,
         ]
+        if self.login_hook:
+            self.server_cmd.append("--chromeArg=--remote-debugging-port=0")
         self.out_lock = threading.Lock()
         self.life = threading.RLock()  # start/stop vs forwarding
         self.flight_lock = threading.Lock()
         self.inflight = set()
         self.proc = None
         self.init_msg = None  # client's initialize, replayed on start
-        self.init_done = None  # (event, response) for a replay
+        self.internal = {}  # proxy's own request id -> [event, response]
         self.record = {}  # cache miss: method -> request id
         self.cache = self.load_cache()
         self.last_activity = time.monotonic()
@@ -200,26 +212,76 @@ class Proxy:
         log(f"server started, pid {self.proc.pid}")
         threading.Thread(target=self.read_server, args=(self.proc,), daemon=True).start()
 
+    def call(self, msg, timeout):
+        """Send the proxy's own request; its response, or None."""
+        ev = threading.Event()
+        self.internal[msg["id"]] = [ev, None]
+        try:
+            self.send_server(json.dumps(msg))
+            ev.wait(timeout)
+            return self.internal[msg["id"]][1]
+        finally:
+            self.internal.pop(msg["id"], None)
+
     def start(self):
         """Start the server and replay the client's initialize."""
         self.spawn()
-        ev = threading.Event()
-        self.init_done = [ev, None]
         msg = dict(self.init_msg)
         msg["id"] = INIT_ID
-        self.send_server(json.dumps(msg))
-        if not ev.wait(INIT_TIMEOUT) or self.init_done[1] is None:
-            self.init_done = None
+        resp = self.call(msg, INIT_TIMEOUT)
+        if resp is None:
             self.stop("initialize failed")
             raise RuntimeError("chrome-devtools-mcp did not answer initialize")
-        resp = self.init_done[1]
-        self.init_done = None
         if "error" in resp:
             self.stop("initialize error")
             raise RuntimeError(f"initialize error: {resp['error']}")
         self.send_server(
             json.dumps({"jsonrpc": "2.0", "method": "notifications/initialized"})
         )
+        if self.login_hook:
+            self.login()
+
+    def login(self):
+        """Launch Chrome and run the login hook on it. Never raises."""
+        port_file = os.path.join(self.profile, "DevToolsActivePort")
+        try:
+            os.unlink(port_file)  # a copied seed's or a stopped Chrome's
+        except OSError:
+            pass
+        launch = {
+            "jsonrpc": "2.0",
+            "id": LAUNCH_ID,
+            "method": "tools/call",
+            "params": {"name": "list_pages", "arguments": {}},
+        }
+        if self.call(launch, INIT_TIMEOUT) is None:
+            log("login skipped: Chrome did not launch")
+            return
+        ws = None
+        for _ in range(100):
+            try:
+                with open(port_file) as f:
+                    port, path = f.read().split("\n")[:2]
+                if port and path:
+                    ws = f"ws://127.0.0.1:{port}{path}"
+                    break
+            except (OSError, ValueError):
+                pass
+            time.sleep(0.1)
+        if not ws:
+            log("login skipped: no DevToolsActivePort")
+            return
+        try:
+            r = subprocess.run(
+                [self.login_hook, ws],
+                stdin=subprocess.DEVNULL,
+                stdout=sys.stderr,
+                timeout=LOGIN_TIMEOUT,
+            )
+            if r.returncode:
+                log(f"chrome-mcp-login exited {r.returncode}")
+        except (OSError, subprocess.SubprocessError) as e:
+            log(f"chrome-mcp-login failed: {e}")
 
     def chrome_pids(self):
         try:
@@ -287,9 +349,9 @@ class Proxy:
                 continue
             mid = msg.get("id") if isinstance(msg, dict) else None
             is_resp = isinstance(msg, dict) and "method" not in msg and mid is not None
-            if is_resp and mid == INIT_ID and self.init_done is not None:
-                self.init_done[1] = msg
-                self.init_done[0].set()
+            if is_resp and mid in self.internal:
+                self.internal[mid][1] = msg
+                self.internal[mid][0].set()
                 continue
             if is_resp:
                 with self.flight_lock:
@@ -301,8 +363,8 @@ class Proxy:
                 self.maybe_save_record()
             self.send_client(raw)
         # server exited
-        if self.init_done is not None:
-            self.init_done[0].set()
+        for ev, _ in list(self.internal.values()):
+            ev.set()
         if proc is self.proc:
             log(f"server pid {proc.pid} exited unexpectedly ({proc.wait()})")
             with self.flight_lock:
