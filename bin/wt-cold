@@ -63,6 +63,15 @@ live and the ticket is open (Backlog, Todo, In Progress) or unreadable
 or absent, rows with no worktree in a live section, unboarded PRs and orphan
 worktrees each go in one batched row per repo.
 
+Telling instead: a 'verify in prod' row (PROD REVIEW) or an overdue
+background agent, with a worktree on disk, is its agent's to move, not
+mine. Where it would ping, its agent is told once per state (`wt-tell`,
+key cold:<prod|bg>:<when the row entered PROD REVIEW | the background
+work started>): check and move the ticket on, or `wt w8`. I get one
+row only when the tell failed (wt-tell exit != 0) or the row is still
+stalled a workday after it; cleared, it doesn't come back for that
+state.
+
 State between runs: $LOCAL_CONFIG/wt-cold-state (JSON). Each --ping /
 --sync run appends its counts to $LOCAL_CONFIG/stalled.log: epoch,
 stalled, waiting, active, snoozed, inbox pending.
@@ -90,6 +99,19 @@ COUNTS = os.path.join(CONF, 'stalled.log')
 STALL = int(os.environ.get('WT_STALL_MIN', '30')) * 60
 CAP = 3600
 STATES = ['STALLED', 'WAITING', 'ACTIVE', 'SNOOZED']
+# What a row's agent is told for a state only it can move: (flow node,
+# ask).
+ASKS = {
+    'prod': ('live', 'Your board row sits in PROD REVIEW with no wt w8. '
+             'Check prod read-only: is it live and working as intended? '
+             'Then move the ticket on (Done takes the row off the '
+             'board), or wt w8 what you wait on, until when.'),
+    'bg': ('waiting', 'Your background agent or shell has run over an '
+           'hour with no output, and nothing else is waited on. Check '
+           'it: carry on with its result, stop it, or wt w8 what you '
+           'wait on, until when.'),
+}
+DAY = 86400
 # Sections where a merged PR or a missing worktree means the row is
 # left over, not on its way.
 LIVE = {'P0', 'IN PROGRESS', 'TEAM REVIEW', 'PAUSED', 'BLOCKED', 'NEEDS FOCUS'}
@@ -430,6 +452,11 @@ def judge(b, it, st, seen=()):
     seen = seen + (it['slug'],)
     s = st.setdefault(f"{b.repo}/{it['slug']}", {})
     slug, sec = it['slug'], it['sec'].upper()
+    it['st'] = s
+    if sec == 'PROD REVIEW':
+        s.setdefault('prod_at', NOW)
+    else:
+        s.pop('prod_at', None)
 
     if sec == 'PROD REVIEW' and RETIRE:
         gone = work_closed(b, it)
@@ -576,8 +603,8 @@ def judge(b, it, st, seen=()):
             s['moved'] = NOW
             return
         it.update(state='STALLED', since=s['bg_at'] + CAP,
-                  why=f"background agent overdue "
-                      f"({ago(NOW - s['bg_at'])}): investigate")
+                  why='background agent overdue: investigate',
+                  tell=('bg', s['bg_at']))
         return
     s.pop('bg_at', None)
 
@@ -611,6 +638,7 @@ def judge(b, it, st, seen=()):
         why = f"merged {day(pr and pr.get('mergedAt'))}: announce"
     elif sec == 'PROD REVIEW':
         why = 'verify in prod'
+        it['tell'] = ('prod', s['prod_at'])
     elif sec == 'READY TO DEPLOY':
         why = 'merged: ship it' if closed else 'ready to deploy: ship?'
     elif dirty or ahead:
@@ -834,11 +862,52 @@ def collect():
                 why=', '.join(o[:28] for o in orph[:6]) +
                 ': adopt (wt :) or wt rm'))
     keep = {f"{b.repo}/{s}" for b in boards for s in b.items}
-    st = {k: v for k, v in st.items() if k in keep}
-    with open(STATE + '.tmp', 'w') as f:
-        json.dump(st, f)
-    os.replace(STATE + '.tmp', STATE)
+    global ST
+    ST = {k: v for k, v in st.items() if k in keep}
+    save_state()
     return nd, inbox, boards, batches
+
+
+ST = {}
+
+
+def save_state():
+    with open(STATE + '.tmp', 'w') as f:
+        json.dump(ST, f)
+    os.replace(STATE + '.tmp', STATE)
+
+
+def tell(it, ref, pending):
+    """A state only the row's agent can move ('verify in prod', an
+    overdue background agent): tell that agent once per state
+    (wt-tell, key cold:<kind>:<since>). Returns the row's message for
+    me when the tell failed or the row is still stalled a workday
+    after it, once; None while the agent has it."""
+    kind, since = it['tell']
+    key = f'cold:{kind}:{int(since)}'
+    t = it['st'].get('told')
+    if not t or t.get('key') != key:
+        node, ask = ASKS[kind]
+        msg = f"{sh('flow-lead', node).strip()} {ask}"
+        try:
+            rc = subprocess.run(
+                ['wt-tell', it['path'], key, f"{it['slug']}: {it['why']}",
+                 msg], env=dict(os.environ, LOCAL_CONFIG=CONF),
+                capture_output=True, timeout=120).returncode
+        except subprocess.TimeoutExpired:
+            rc = 124
+        t = it['st']['told'] = dict(key=key, at=NOW, ok=rc == 0)
+        if t['ok']:
+            return None
+    elif t['ok'] and wk(t['at']) < DAY:
+        return None
+    if t.get('pinged') and ref not in pending:
+        return None
+    t['pinged'] = NOW
+    if not t['ok']:
+        return f"{it['why']}: telling its agent failed"
+    when = datetime.fromtimestamp(t['at']).strftime('%m-%d')
+    return f"{it['why']}: its agent was told {when}, still here"
 
 
 def last_clears(nd):
@@ -871,6 +940,8 @@ def ping(nd, inbox, boards, batches, overdue=False):
     rows; every other row and item is left alone."""
     clears = last_clears(nd)
     want, fresh = {}, set()
+    pending = {r[9] for r in inbox
+               if len(r) > 9 and r[7] == 'stalled' and r[9]}
     for b in boards:
         for it in b.items.values():
             if it['state'] != 'STALLED' or it.get('batch') \
@@ -882,8 +953,12 @@ def ping(nd, inbox, boards, batches, overdue=False):
             if not it.get('now') and wk(since) < STALL:
                 continue
             ref = f"{b.repo}/{it['slug']}"
-            want[ref] = (
-                it['path'] or b.root, it['slug'], it['slug'], it['why'])
+            why = it['why']
+            if it.get('tell') and it['path']:
+                why = tell(it, ref, pending)
+                if why is None:
+                    continue
+            want[ref] = (it['path'] or b.root, it['slug'], it['slug'], why)
             # A row cleared before this deadline was about something
             # else: the overdue ping goes out now.
             if it.get('w8') and clears.get(ref, 0) < since:
@@ -1015,6 +1090,7 @@ def main():
             return 1
         gone = 0 if o.overdue else retire(boards)
         sent, dropped = ping(nd, inbox, boards, batches, o.overdue)
+        save_state()
         if not o.overdue:
             log_counts(nd, items)
         print(f'{summary(items, batches)}: {sent} rows sent, '
