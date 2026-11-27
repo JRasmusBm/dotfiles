@@ -7,7 +7,8 @@
 # (RAS-93: a review of the head that opens threads tells their count
 # and titles, once per review; RAS-126: from the 3rd round still
 # opening a Critical or Major, it asks "split it, or ship with
-# deferrals?" and pings me once per PR). A temp repo with one worktree on
+# deferrals?" and pings me once per PR; RAS-134: a ping that never
+# reached my inbox is not counted, so the next such round pings). A temp repo with one worktree on
 # branch b; gh and wt-tell are fakes first on PATH (gh answers `pr
 # list` by running its --jq over $FAKE/prs.json, and `api --paginate
 # .../pulls/<path>` over $FAKE/api/<path, / as _>.json, with jq; notify is
@@ -64,9 +65,14 @@ grep -qxF "$1	$2" "$LOCAL_CONFIG/wt-told" 2>/dev/null && exit 0
 printf '%s\n%s\n----\n' "$2" "$4" >> "$FAKE/tells"
 printf '%s\t%s\n' "$1" "$2" >> "$LOCAL_CONFIG/wt-told"
 EOF
+# notify: logs the ping and appends its inbox row, unless NOTIFY_DROP
+# (a ping that never reached the inbox).
 cat > "$FAKE/notify" <<'EOF'
 #!/bin/sh
+test -z "${NOTIFY_DROP:-}" || exit 0
 printf '%s %s\n' "$NOTIFY_CLASS" "$2" >> "$FAKE/pings"
+printf '%s\tc\t%s\t%s\t%s\t\t\t%s\t\t%s\n' "$(date +%s)" "$1" "$2" \
+  "$PWD" "$NOTIFY_CLASS" "${NOTIFY_REF:-}" >> "$LOCAL_CONFIG/notifications"
 EOF
 chmod +x "$FAKE/gh" "$FAKE/wt-tell" "$FAKE/notify"
 export PATH="$FAKE:$_bin:$PATH"
@@ -213,19 +219,21 @@ check 'retried next run, singular' \
 
 pinged() { test -f "$FAKE/pings" && grep -c "$1" "$FAKE/pings"; }
 
-echo '# round 4 (501, 503 of an older sha, 504 before it) opens a Major'
-export CR=2026-11-19T11:00:00Z
+echo '# round 4 (501, 503 of an older sha, 504 before it) opens a Major,'
+echo '# and its ping to me never reaches the inbox'
+export CR=2026-11-19T11:00:00Z NOTIFY_DROP=1
 _pr s8 test:check-services:run
 _review 505 s8; _thread 505 'Second-round major.' Major
 _run
+unset NOTIFY_DROP
 check 'tells the threads' 'test "$(told cr:7:505)" = 1'
 check 'it counts the rounds' 'grep -q "round 4 on this PR" "$FAKE/tells"'
 check 'it gives Majors per round' \
   'grep -q "per round: 1,0,0,1)" "$FAKE/tells"'
 check 'it asks the question' \
   'grep -q "split it, or ship with" "$FAKE/tells"'
-check 'pings me, blocked' \
-  'test "$(pinged "^blocked #7: 4 CodeRabbit rounds, Majors 1,0,0,1")" = 1'
+check 'the dropped ping is not recorded as told' \
+  '! grep -q "cr-rounds:7" "$LOCAL_CONFIG/wt-told"'
 
 echo '# round 5, only Minors: no question'
 export CR=2026-11-19T11:20:00Z
@@ -235,7 +243,7 @@ _run
 check 'tells the threads' 'test "$(told cr:7:506)" = 1'
 check 'no question' '! grep -q "split it" "$FAKE/tells"'
 
-echo '# round 6, a Critical: asks again, no second ping'
+echo '# round 6, a Critical: asks again, and pings me this time'
 export CR=2026-11-19T11:40:00Z
 _pr s10 test:check-services:run
 _review 507 s10; _thread 507 'Data loss.' Critical
@@ -244,6 +252,16 @@ _run
 check 'asks with the Criticals counted' \
   'grep -q "round 6 on this PR" "$FAKE/tells" \
     && grep -q "per round: 1,0,0,1,0,2)" "$FAKE/tells"'
+check 'pings me, blocked, now that the last one was dropped' \
+  'test "$(pinged "^blocked #7: 6 CodeRabbit rounds, Majors 1,0,0,1,0,2")" = 1'
+check 'and records it told' 'grep -q "cr-rounds:7" "$LOCAL_CONFIG/wt-told"'
+
+echo '# round 7, a Major again: no second ping'
+export CR=2026-11-19T12:00:00Z
+_pr s11 test:check-services:run
+_review 508 s11; _thread 508 'Still major.' Major
+_run
+check 'asks the agent again' 'grep -q "round 7 on this PR" "$FAKE/tells"'
 check 'one ping per PR' 'test "$(pinged "#7:")" = 1'
 
 exit "$_fail"

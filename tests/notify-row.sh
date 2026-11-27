@@ -2,7 +2,8 @@
 #
 # tests/notify-row.sh [BIN] — RAS-47: a multi-line `notify` writes one
 # inbox row (RAS-117: even with LOCAL_CONFIG unset), and the readers (`notif`, `notif-depth`, `wt-cold --ping`)
-# skip a line too short to be a row instead of crashing. Nothing real
+# skip a line too short to be a row instead of crashing. RAS-134: a
+# snoozed worktree's fyi is muted, its ask wakes it and lands. Nothing real
 # is touched: LOCAL_CONFIG and the one board repo are a temp dir, and
 # tmux, the toast and Linear are fakes first on PATH. BIN defaults to
 # this checkout's bin/.
@@ -78,5 +79,24 @@ check 'wt-cold --ping survives' \
   'WT_SYNC_REPOS="$_t/app" wt-cold --ping >/dev/null 2>"$_t/err"'
 check 'and writes its counts line' \
   'test "$(awk -F"\t" "{ print \$NF }" "$LOCAL_CONFIG/stalled.log")" = 1'
+echo '# a snoozed worktree (RAS-134)'
+git -C "$_t/app" worktree add -q -b s "$_t/app/.worktrees/s"
+printf '# IN PROGRESS\n# SNOOZED\ns\n' > "$LOCAL_CONFIG/worktrees/app"
+_snz="$LOCAL_CONFIG/worktrees/app.snoozed"
+printf 's\ts\t2099-01-01T08:00\tIN PROGRESS\t%s\t%s\n' "$(date +%s)" \
+  "$_t/app" > "$_snz"
+: > "$_inbox"
+(cd "$_t/app/.worktrees/s" && NOTIFY_CLASS=fyi notify t 'progress')
+check 'its fyi is muted' \
+  '! cat "$_inbox" "$_inbox.recent" 2>/dev/null | grep -q progress'
+check 'and it stays snoozed' 'grep -q "^s	" "$_snz"'
+(cd "$_t/app/.worktrees/s" && NOTIFY_CLASS=blocked notify t 'pick A or B?')
+check 'its ask lands in the inbox' 'grep -q "pick A or B?" "$_inbox"'
+check 'and wakes it' '! grep -q "^s	" "$_snz"'
+check 'back in the section it came from' \
+  'test "$(awk "/^# /{h=\$0} \$0==\"s\"{print h}" \
+    "$LOCAL_CONFIG/worktrees/app")" = "# IN PROGRESS"'
+check 'its agent is not told' '! grep -q "^wt-tell" "$FAKE/calls"'
+
 test "$_fail" = 0 || cat "$_t/err"
 exit "$_fail"
