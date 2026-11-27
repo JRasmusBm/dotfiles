@@ -71,9 +71,11 @@ it stands. Is it current now, before I act, hand off or wait?
 - Could he test it from Try it alone, without asking me? Write it
   once I know what I'm building, while he can still catch a wrong
   direction; keep it true as the design moves.
-- Did I just make a call the brief or spec is silent on? One line
-  in Decisions with the reason, when I make it; drop it once a
-  later call replaces it.
+- Did the brief or spec leave a call open? Propose it to Rasmus,
+  wait for his OK, and only then write one line in Decisions with
+  the reason. Don't move on to the next point until he answers.
+  Only his confirmed calls go in; drop one once a later call of his
+  replaces it. Alone, no reviewer: write it and mark it unconfirmed.
 - It is the only copy: the review page (its rendering, artifacts
   node) and the PR body draw from it. Something they need that it
   lacks goes into it first.
