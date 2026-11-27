@@ -220,7 +220,10 @@ check 'retried next run, singular' \
 pinged() { test -f "$FAKE/pings" && grep -c "$1" "$FAKE/pings"; }
 
 echo '# round 4 (501, 503 of an older sha, 504 before it) opens a Major,'
-echo '# and its ping to me never reaches the inbox'
+echo '# and its ping to me never reaches the inbox (an older row with'
+echo '# the same ref sits there already)'
+printf '1\tc\tt\tm\t/p\t\t\tblocked\t\tcr-rounds:7\n' \
+  >> "$LOCAL_CONFIG/notifications"
 export CR=2026-11-19T11:00:00Z NOTIFY_DROP=1
 _pr s8 test:check-services:run
 _review 505 s8; _thread 505 'Second-round major.' Major
