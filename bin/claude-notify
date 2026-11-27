@@ -148,10 +148,14 @@ case "$TYPE" in
     ;;
 esac
 
-# The question in the last paragraph: its last sentence ending in
-# "?", a recommendation after it or not (RAS-72). A "?" inside a
-# code span asks nothing.
-_q="$(_last_text | perl -0777 -ne '
+# A line starting "! " anywhere in the reply, fenced or not, hands
+# me a command to run: always an ask (RAS-133). Else the question
+# in the last paragraph: its last sentence ending in "?", a
+# recommendation after it or not (RAS-72). A "?" inside a code span
+# asks nothing.
+_q="$(_last_text | perl -ne 'print "run: $1\n" if /^\s*(!\s.*?)\s*$/' \
+  | tail -1 | cut -c1-80)"
+[ -n "$_q" ] || _q="$(_last_text | perl -0777 -ne '
   my @p = grep { /\S/ } split /\n[ \t]*\n/;
   my $p = $p[-1] // "";
   $p =~ s{(`+)(.+?)\1}{ my $c = $&; $c =~ tr/.!?/\x01\x02\x03/; $c }gse;

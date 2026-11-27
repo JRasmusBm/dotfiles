@@ -100,6 +100,28 @@ say 'Fixed it.
 ```'
 check 'a "?" in a closing code block stays fyi' 'test "$(rows blocked)" = 0'
 
+echo '# a "! " line hands me a command (RAS-133)'
+: > "$_inbox"
+say 'Ready, but the freeze hook blocks the merge. Run:
+
+```
+! FREEZE_OVERRIDE=1 gh pr merge 792 --squash -R JRasmusBm/dotfiles
+```
+
+Tests pass, including tests/pr-gate.sh.'
+check 'a fenced "! " line pings blocked, cut to 80' \
+  'test "$(cut -f4 "$_inbox")" = "asks: run: ! FREEZE_OVERRIDE=1 gh pr merge 792 --squash -R JRasmusBm/dotfiles"'
+: > "$_inbox"
+say 'Run this:
+! make install
+
+Or shall I?'
+check 'a "! " line beats the "?" rule' \
+  'test "$(cut -f4 "$_inbox")" = "asks: run: ! make install"'
+: > "$_inbox"
+say 'Done! Shipped it.'
+check 'a "!" mid-sentence stays fyi' 'test "$(rows blocked)" = 0'
+
 echo '# merge once per head sha'
 : > "$_inbox"
 pr aaa
