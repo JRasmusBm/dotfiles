@@ -18,7 +18,8 @@
 #     with no new threads sends nothing: a tell per push only re-read
 #     the PR mid-fix and burned tokens. From its 3rd such round, one
 #     still opening Critical or Major threads asks "split it, or ship
-#     with deferrals?", and pings me too (once per PR).
+#     with deferrals?", and pings me too (once per PR, counted once
+#     the row is in my inbox).
 #   - the stale bot labelled it (it closes the PR 7 days later; once
 #     per head sha).
 # Conflicts with dev get no tell: a rebase goes stale as dev moves and
@@ -146,10 +147,17 @@ deferrals? I got the same question; tell me your pick and why.
       if ! grep -qxF "$1	cr-rounds:$2" "$_told" 2>/dev/null; then
         _pane="$(tmux display-message -p -t "=$(basename "$1"):cli" \
           '#{pane_id}' 2>/dev/null)" || _pane=""
+        _at="$(date +%s)"
         ( cd "$1" && TMUX_PANE="$_pane" NOTIFY_CLASS=blocked \
+          NOTIFY_REF="cr-rounds:$2" \
           notify "Claude: $(basename "$1")" "#$2: $_round CodeRabbit \
 rounds, Majors $_majors. Split it, or ship with deferrals?" )
-        echo "$1	cr-rounds:$2" >> "$_told"
+        # Told only once its row is in my inbox: a dropped ping comes
+        # again with the next such round (RAS-134).
+        awk -F'\t' -v r="cr-rounds:$2" -v t="$_at" \
+          '$1 >= t && $10 == r { f = 1 } END { exit !f }' \
+          "$LOCAL_CONFIG/notifications" 2>/dev/null \
+          && echo "$1	cr-rounds:$2" >> "$_told"
       fi
     fi
     wt-tell "$1" "cr:$2:$_id" \

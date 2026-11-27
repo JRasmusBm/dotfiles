@@ -20,20 +20,28 @@ _msg="${2:-done}"
 _sound="${3:-/System/Library/Sounds/Glass.aiff}"
 
 _cfg="${LOCAL_CONFIG:-$HOME/.config/jrasmusbm}"
+_class="${NOTIFY_CLASS:-}"
+# A snooze quiets progress, never an ask (RAS-134): a snoozed
+# worktree's fyi is dropped; anything else wakes its board row
+# (`wt wake <slug>`) and lands in the inbox.
 _here="$PWD"
 [ -n "$TMUX_PANE" ] && _here="$(tmux display-message -p -t "$TMUX_PANE" \
   '#{pane_current_path}' 2>/dev/null || echo "$PWD")"
 case "$_here" in
   */.worktrees/?*)
     _wt="${_here#*/.worktrees/}"
+    _wt="${_wt%%/*}"
     _repo="${_here%%/.worktrees/*}"
     _sf="$_cfg/worktrees/${_repo##*/}.snoozed"
-    [ -f "$_sf" ] && awk -F '\t' -v s="${_wt%%/*}" '$1 == s { f = 1 }
-      END { exit !f }' "$_sf" && exit 0
+    if [ -f "$_sf" ] && awk -F '\t' -v s="$_wt" '$1 == s { f = 1 }
+      END { exit !f }' "$_sf"; then
+      [ "$_class" = fyi ] && exit 0
+      ( cd "$_repo" && LOCAL_CONFIG="$_cfg" wt wake "$_wt" ) \
+        >/dev/null 2>&1 || true
+    fi
     ;;
 esac
 
-_class="${NOTIFY_CLASS:-}"
 case "$_class" in fyi|stalled|step) ;; *)
 osascript -e "display notification \"$_msg\" with title \"$_title\""
 afplay "$_sound" &

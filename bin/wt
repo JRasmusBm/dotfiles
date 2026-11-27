@@ -321,17 +321,25 @@ _wt_pr_gone() {
 # its notification inbox. Runs on every wt invocation, and wt-sync
 # (launchd, every minute, back after a reboot) runs `wt wake` in each
 # repo, so a timed snooze fires within a minute of its time.
+# `wt wake <slug>` wakes that one now, whatever its date, and tells
+# its agent nothing: `notify` runs it when a snoozed worktree asks me
+# something (RAS-134), so the agent is the one awake already.
 _wt_wake() {
   git rev-parse --git-dir >/dev/null 2>&1 || return 0
   _sf="$(_snoozed_file)"
   test -f "$_sf" || return 0
   _now="$(date +%FT%H:%M)"
+  _wk_only="${1:-}"
   # A date without a time wakes at 08:00, not at midnight (wt-sync
   # wakes every minute).
   _due_aw='{ d = $3; if (d !~ /T/) d = d "T08:00" }'
-  _due="$(awk -F '\t' -v t="$_now" "$_due_aw d <= t" "$_sf")"
+  _due_is="d <= t"
+  test -z "$_wk_only" || _due_is='$1 == s'
+  _due="$(awk -F '\t' -v t="$_now" -v s="$_wk_only" \
+    "$_due_aw $_due_is" "$_sf")"
   test -n "$_due" || return 0
-  awk -F '\t' -v t="$_now" "$_due_aw d > t" "$_sf" | sponge "$_sf"
+  awk -F '\t' -v t="$_now" -v s="$_wk_only" "$_due_aw !($_due_is)" \
+    "$_sf" | sponge "$_sf"
   echo "$_due" \
     | while IFS="$(printf '\t')" read -r \
       _wk_slug _wk_branch _wk_date _wk_sec _wk_from _; do
@@ -341,6 +349,7 @@ _wt_wake() {
       test -n "$_wk_sec" && _board_has_section "$_wk_sec" \
         || _wk_sec='IN PROGRESS'
       _board_move "$_wk_branch" "$_wk_slug" "$_wk_sec"
+      test -z "$_wk_only" || continue
       _wk_pane="$(tmux display-message -p -t "=$_wk_slug:cli" \
         '#{pane_id}' 2>/dev/null || true)"
       _wk_woke="$(date '+%F %H:%M')"
@@ -1956,7 +1965,7 @@ case "${1:-}" in
   sz|snooze) shift; _wt_snooze "$@" ;;
   w8|wait) shift; _wt_w8 "$@" ;;
   night) shift; exec wt-night "$@" ;;
-  wake) _wt_wake ;;
+  wake) shift; _wt_wake "$@" ;;
   ip) _wt_park 'IN PROGRESS' 'In Progress' ;;
   rt) _wt_park 'TEAM REVIEW' 'Team review' ;;
   rd) _wt_park 'READY TO DEPLOY' 'Ready to deploy' ;;
