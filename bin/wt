@@ -1774,20 +1774,17 @@ _wt_dedup() {
 
 # Remove Claude Code's isolated subagent worktrees
 # (`.claude/worktrees/agent-*`) untouched for WT_AGENT_TTL hours
-# (default 72, a weekend) while the session that spawned it (its
-# transcript under $CLAUDE_CONFIG_DIR/projects) was idle as long.
-# Claude only auto-removes the unchanged ones, and `wt` never
-# shows them, so the rest are invisible work that piles up GBs.
-# Skips one a live process has as cwd or a live Claude pid has
-# locked. Uncommitted changes get a snapshot
+# (default 6). Claude only auto-removes the unchanged ones, and
+# `wt` never shows them, so the rest are invisible work that
+# piles up GBs. Skips one a live process has as cwd or a live
+# Claude pid has locked. Uncommitted changes get a snapshot
 # commit; every head is pinned to refs/wt/<id> and logged to the
 # registry first. The dir moves into <git-common-dir>/wt-trash
 # and is deleted in the background (utility QoS, nice 19).
 # `wt clean --agents` runs only this (hourly: wt-agent-sweep).
 _wt_clean_agents() {
   _root="$(_main_root)"
-  _ttl=$(( ${WT_AGENT_TTL:-72} * 3600 ))
-  _cc="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
+  _ttl=$(( ${WT_AGENT_TTL:-6} * 3600 ))
   _now="$(date +%s)"
   _n=0
   _tmp="${TMPDIR:-/tmp}/wt-agents.$$"
@@ -1815,11 +1812,6 @@ _wt_clean_agents() {
     _mt="$(cd "$_p" && git status --porcelain 2>/dev/null \
       | cut -c4- | xargs stat -f %m 2>/dev/null | sort -n | tail -1)"
     test "${_mt:-0}" -gt "$_at" && _at="$_mt"
-    test $((_now - _at)) -ge "$_ttl" || continue
-    for _s in "$_cc"/projects/*/*/subagents/"$_id".jsonl; do
-      _s="$(stat -f %m "${_s%/subagents/*}.jsonl" 2>/dev/null || echo 0)"
-      test "$_s" -gt "$_at" && _at="$_s"
-    done
     test $((_now - _at)) -ge "$_ttl" || continue
     if test -n "$(git -C "$_p" status --porcelain 2>/dev/null)"; then
       git -C "$_p" add -A
